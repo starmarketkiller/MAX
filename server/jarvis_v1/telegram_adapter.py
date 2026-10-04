@@ -13,6 +13,11 @@ from .service import JarvisService, classify
 
 
 class TelegramAdapter:
+    _STATE_CODES = {"Q": "QUEUED", "R": "RUNNING", "B": "BLOCKED",
+                    "E": "ESCALATION_REQUIRED", "A": "WAITING_APPROVAL",
+                    "C": "COMPLETED", "F": "FAILED", "X": "CANCELLED",
+                    "P": "WAITING_PROVIDER", "D": "WAITING_DEPENDENCY"}
+    _STATE_TO_CODE = {value: key for key, value in _STATE_CODES.items()}
     def __init__(self, service: JarvisService, state_path=None, token=None, allowed_users=None,
                  gateway=None):
         self.service = service
@@ -55,7 +60,32 @@ class TelegramAdapter:
         text = callback.get("data") or msg.get("text")
         if not user_id or not chat_id or not isinstance(text, str): raise ValueError("malformed Telegram update")
         metadata = {"telegram_update_id": update.get("update_id"), "telegram_chat_id": chat_id}
-        if callback and ":" in text:
+        if callback and text.startswith("J1|"):
+            parts = text.split("|")
+            if len(parts) < 3 or any(len(part) > 48 for part in parts):
+                raise ValueError("invalid Telegram callback")
+            code = parts[1]
+            task_actions = {"TS": "TASK_STATUS", "TD": "TECHNICAL_DETAILS",
+                            "DG": "DIAGNOSTICS", "LC": "LIFECYCLE",
+                            "AP": "APPROVE", "RJ": "REJECT", "RS": "RESUME"}
+            agent_actions = {"AD": "AGENT_DETAILS", "AC": "AGENT_CAPABILITIES",
+                             "PS": "PROVIDER_STATUS"}
+            if code in task_actions:
+                metadata.update({"ui_action": task_actions[code], "task_id": parts[2]})
+                if code == "LC":
+                    metadata["lifecycle_page"] = int(parts[3]) if len(parts) > 3 else 0
+                elif len(parts) > 3 and parts[3] in self._STATE_CODES:
+                    metadata["expected_state"] = self._STATE_CODES[parts[3]]
+                text = f"Telegram action {task_actions[code]} for {parts[2]}"
+            elif code in agent_actions:
+                metadata.update({"ui_action": agent_actions[code], "agent_id": parts[2]})
+                text = f"Telegram action {agent_actions[code]} for {parts[2]}"
+            elif code == "Q" and parts[2] in ("STATUS", "TASKS", "AGENTS", "HELP"):
+                metadata.update({"ui_action": "QUICK_ACTION", "quick_action": parts[2]})
+                text = f"Telegram quick action {parts[2]}"
+            else:
+                raise ValueError("unsupported Telegram callback")
+        elif callback and ":" in text:
             action, task_id = text.split(":", 1)
             metadata["task_id"] = task_id
             if action.upper() in ("APPROVE", "REJECT"):
@@ -114,13 +144,9 @@ class TelegramAdapter:
         if not self.configured: return {"sent": False, "reason": "UNAVAILABLE"}
         payload = {"chat_id": str(chat_id), "text": self.render_response(response),
                    "disable_web_page_preview": True}
-        if response.get("status") == "WAITING_APPROVAL" and response.get("task_id"):
-            task_id = response["task_id"]
-            payload["reply_markup"] = {"inline_keyboard": [[
-                {"text": "APPROVE", "callback_data": f"APPROVE:{task_id}"},
-                {"text": "REJECT", "callback_data": f"REJECT:{task_id}"},
-                {"text": "DETAILS", "callback_data": f"DETAILS:{task_id}"},
-            ]]}
+        keyboard = self.build_keyboard(response)
+        if keyboard:
+            payload["reply_markup"] = {"inline_keyboard": keyboard}
         elif response.get("status") == "CONFIRMATION_REQUIRED" and response.get("task_id"):
             task_id = response["task_id"]
             payload["reply_markup"] = {"inline_keyboard": [[
@@ -140,6 +166,54 @@ class TelegramAdapter:
                                        {"channel": "TELEGRAM", "priority": response.get("priority")},
                                        actor="telegram_adapter")
         return {"sent": ok, "reason": None if ok else "PROVIDER_UNAVAILABLE"}
+
+    @classmethod
+    def build_keyboard(cls, response):
+        """Build contextual UI only; mutations remain owned by JarvisService."""
+        task_id = response.get("task_id")
+        status = response.get("status")
+        details = response.get("details") or {}
+        if task_id and details.get("state"):
+            state_code = cls._STATE_TO_CODE.get(status, "")
+            suffix = f"|{state_code}" if state_code else ""
+            rows = [[
+                {"text": "Aggiorna stato", "callback_data": f"J1|TS|{task_id}{suffix}"},
+                {"text": "Dettagli tecnici", "callback_data": f"J1|TD|{task_id}{suffix}"},
+            ], [
+                {"text": "Lifecycle", "callback_data": f"J1|LC|{task_id}|0"},
+                {"text": "Diagnostica", "callback_data": f"J1|DG|{task_id}{suffix}"},
+            ]]
+            recovery = (details.get("recovery") or {}).get("classification")
+            if status == "BLOCKED" and recovery == "ORPHANED_RUNNING_AFTER_RESTART":
+                rows.append([{"text": "Riprendi", "callback_data": f"J1|RS|{task_id}|B"}])
+            if status == "WAITING_APPROVAL":
+                rows.append([
+                    {"text": "Approva", "callback_data": f"J1|AP|{task_id}|A"},
+                    {"text": "Rifiuta", "callback_data": f"J1|RJ|{task_id}|A"},
+                ])
+            if details.get("view") == "TASK_LIFECYCLE" and details.get("lifecycle_has_more"):
+                next_page = int(details.get("lifecycle_page") or 0) + 1
+                rows.append([{"text": "Mostra altro", "callback_data": f"J1|LC|{task_id}|{next_page}"}])
+            return rows
+        if details.get("view") == "AGENT_LIST":
+            rows = []
+            for agent in (details.get("items") or [])[:8]:
+                agent_id = agent.get("agent_id")
+                if agent_id:
+                    rows.append([{"text": f"Dettagli · {agent_id[:24]}",
+                                  "callback_data": f"J1|AD|{agent_id}"}])
+            return rows
+        if details.get("view") in ("AGENT_DETAIL", "AGENT_CAPABILITIES", "PROVIDER_STATUS"):
+            agent_id = (details.get("agent") or {}).get("agent_id")
+            if agent_id:
+                return [[{"text": "Capabilities", "callback_data": f"J1|AC|{agent_id}"},
+                         {"text": "Provider status", "callback_data": f"J1|PS|{agent_id}"}]]
+        if response.get("status") == "PARTIAL" or response.get("response_type") == "ERROR":
+            return [[{"text": "Stato NEXUS", "callback_data": "J1|Q|STATUS"},
+                     {"text": "Le mie task", "callback_data": "J1|Q|TASKS"}],
+                    [{"text": "Agenti", "callback_data": "J1|Q|AGENTS"},
+                     {"text": "Help", "callback_data": "J1|Q|HELP"}]]
+        return []
 
     @staticmethod
     def _time(value):
@@ -186,6 +260,24 @@ class TelegramAdapter:
                 f"Dispatcher: {dispatcher.get('status') or 'UNKNOWN'}",
             ])
 
+        elif details.get("view") == "AGENT_LIST":
+            lines = [summary, ""]
+            for item in (details.get("items") or [])[:10]:
+                caps = ", ".join((item.get("capabilities") or [])[:3]) or "—"
+                lines.append(f"{item.get('agent_id') or 'UNKNOWN'} · {item.get('status') or 'UNKNOWN'}")
+                lines.append(f"  {item.get('role') or 'ruolo —'} · {item.get('provider') or 'provider —'}")
+                lines.append(f"  capability: {caps}")
+
+        elif details.get("view") in ("AGENT_DETAIL", "AGENT_CAPABILITIES", "PROVIDER_STATUS"):
+            agent = details.get("agent") or {}
+            lines.extend(["", f"ID: {agent.get('agent_id') or '—'}",
+                          f"Ruolo: {agent.get('role') or '—'}",
+                          f"Provider: {agent.get('provider') or '—'}",
+                          f"Stato: {agent.get('status') or 'UNKNOWN'}",
+                          f"Integrazione: {agent.get('integration_status') or 'UNKNOWN'}"])
+            if details.get("view") != "PROVIDER_STATUS":
+                lines.extend(["", "Capabilities:", *[f"• {cap}" for cap in (agent.get("capabilities") or [])]])
+
         elif response.get("task_id") and details.get("state"):
             lines.extend(["", f"Stato: {details.get('state')}"])
             if details.get("title"):
@@ -200,16 +292,28 @@ class TelegramAdapter:
                 lines.append(f"Recovery: {recovery['classification']}")
             escalation = details.get("escalation") or {}
             if escalation:
-                reason = escalation.get("classification") or escalation.get("target")
-                lines.append(f"Escalation: {reason}")
+                lines.append(f"Escalation classification: {escalation.get('classification') or '—'}")
+                lines.append(f"Escalation target/provider: {escalation.get('target') or '—'}")
+            verifier = details.get("verifier") or {}
+            if verifier:
+                lines.append(f"Verifier: {verifier.get('passed') if verifier.get('passed') is not None else '—'}")
+                if verifier.get("failure_class"):
+                    lines.append(f"Failure class: {verifier['failure_class']}")
+            if details.get("result_decision"):
+                lines.append(f"Result decision: {details['result_decision']}")
             lines.append(f"Ultimo aggiornamento: {cls._time(details.get('updated_at'))}")
             if details.get("next_step"):
                 lines.extend(["", f"Prossimo passo: {details['next_step']}"])
             lifecycle = details.get("lifecycle") or []
             if lifecycle:
-                lines.extend(["", "Lifecycle:"])
-                for event in lifecycle[-6:]:
+                page = details.get("lifecycle_page")
+                heading = "Lifecycle:" if page is None else f"Lifecycle · pagina {int(page) + 1}:"
+                lines.extend(["", heading])
+                visible = lifecycle[-6:] if page is None else lifecycle
+                for event in visible:
                     lines.append(f"• {cls._time(event.get('timestamp'))} {event.get('event_type', 'UNKNOWN')}")
+                if details.get("lifecycle_has_more"):
+                    lines.append(f"… {details.get('lifecycle_total', 0) - ((int(page or 0) + 1) * 6)} eventi precedenti")
 
         rendered = "\n".join(lines).strip()
         if len(rendered) > 3900:

@@ -188,6 +188,8 @@ class JarvisService:
         self.ledger.append("USER_MESSAGE_RECEIVED", None,
                            {"message_id": message["message_id"], "channel": message["channel"],
                             "request_class": request_class}, actor="jarvis_gateway")
+        if message.get("metadata", {}).get("ui_action"):
+            return self.interactive_action(message)
         if request_class == "QUERY":
             return self.query(message)
         if request_class in ("TASK", "TASK_REQUEST"):
@@ -325,13 +327,13 @@ class JarvisService:
         self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
                                        user_id=str(message["user_id"]))
         record = self.queue.get(task_id)
+        details = self._task_details(record, technical=False)
+        details.update({"approval_required": manifest["approval_required"],
+                        "work_type": work_type, "execution_plan": programming_plan,
+                        "review_required": get_matrix_entry(work_type)["review_required"],
+                        "source_refs": ["TASK_MANIFEST_V1", "orchestrator queue"]})
         return self._response(message, "TASK_ACK", f"Task {task_id} created.", task_id=task_id,
-                              status=record["state"], details={"executor": record.get("executor"),
-                              "approval_required": manifest["approval_required"],
-                              "work_type": work_type,
-                              "execution_plan": programming_plan,
-                              "review_required": get_matrix_entry(work_type)["review_required"],
-                              "source_refs": ["TASK_MANIFEST_V1", "orchestrator queue"]})
+                              status=record["state"], details=details)
 
     def _latest_compatible_task(self, message):
         conversation_id = message["conversation_id"]
@@ -374,17 +376,73 @@ class JarvisService:
             escalation = record.get("escalation") or {}
             safe_event_keys = {"reason", "failure_class", "classification", "target", "tier",
                                "executor", "attempt", "final_state", "released", "actor"}
+            latest_failure = next((event.get("payload") or {} for event in reversed(events)
+                                   if (event.get("payload") or {}).get("failure_class")), {})
+            verifier = (record.get("result_packet") or {}).get("verifier") or {}
             details.update({
                 "action": record.get("action"),
                 "dispatch_last_error": record.get("dispatch_last_error"), "recovery": record.get("recovery"),
                 "escalation": {key: escalation.get(key) for key in ("target", "classification")
                                if escalation.get(key) is not None},
                 "result_decision": (record.get("result_packet") or {}).get("decision"),
+                "verifier": {"passed": verifier.get("passed"),
+                             "failure_class": latest_failure.get("failure_class"),
+                             "errors": verifier.get("errors") or []},
                 "lifecycle": [{"event_type": event.get("event_type"), "timestamp": event.get("timestamp"),
                                "payload": {key: value for key, value in (event.get("payload") or {}).items()
                                            if key in safe_event_keys}} for event in events],
             })
         return details
+
+    def _state_matches(self, record, message):
+        expected = message.get("metadata", {}).get("expected_state")
+        return not expected or record.get("state") == expected
+
+    def interactive_action(self, message):
+        """Execute Telegram UI intents through canonical service methods only."""
+        meta = message.get("metadata", {})
+        action = meta.get("ui_action")
+        if action in ("TASK_STATUS", "TECHNICAL_DETAILS", "DIAGNOSTICS"):
+            if action != "TASK_STATUS":
+                meta["technical_details"] = True
+            return self.follow_up(message)
+        if action == "LIFECYCLE":
+            return self.task_lifecycle(message)
+        if action in ("APPROVE", "REJECT"):
+            meta["approval_action"] = action
+            return self.approval(message)
+        if action == "RESUME":
+            return self.resume_orphaned(message)
+        if action in ("AGENT_DETAILS", "AGENT_CAPABILITIES", "PROVIDER_STATUS"):
+            return self.agent_view(message)
+        if action == "QUICK_ACTION":
+            command = {"STATUS": "/status", "TASKS": "/tasks", "AGENTS": "/agents",
+                       "HELP": "/help"}.get(meta.get("quick_action"))
+            if command:
+                message["text"] = command
+                return self.command(message)
+        return self._response(message, "ERROR", "Azione interattiva non valida.",
+                              status="UNKNOWN", confidence="HIGH")
+
+    def task_lifecycle(self, message):
+        task_id = self._resolve_task_id(message)
+        if not task_id:
+            return self._response(message, "ERROR", "Task context unavailable.", status="UNKNOWN")
+        try:
+            record = self.queue.get(task_id)
+        except KeyError:
+            return self._response(message, "ERROR", "Task not found.", task_id=task_id, status="UNKNOWN")
+        page = max(0, int(message.get("metadata", {}).get("lifecycle_page") or 0))
+        page_size = 6
+        events = self._task_details(record, technical=True).get("lifecycle") or []
+        events = list(reversed(events))
+        start = page * page_size
+        details = self._task_details(record, technical=False)
+        details.update({"view": "TASK_LIFECYCLE", "lifecycle": events[start:start + page_size],
+                        "lifecycle_page": page, "lifecycle_has_more": start + page_size < len(events),
+                        "lifecycle_total": len(events)})
+        return self._response(message, "TASK_STATUS", f"Lifecycle di {task_id}.", task_id=task_id,
+                              status=record["state"], details=details)
 
     @staticmethod
     def _next_step(record):
@@ -426,9 +484,10 @@ class JarvisService:
                 "gestire approval e mostrare stato NEXUS, agenti e approval. Comandi: /status /tasks /approvals /agents.",
                 details={"commands": ["/start", "/help", "/status", "/tasks", "/approvals", "/agents"]})
         if value == "/agents" or re.search(r"\b(agents|agenti)\b", value):
-            items = self.agents()
+            items = self.agents(detailed=True)
             return self._response(message, "ANSWER", f"Agenti registrati: {len(items)}.",
-                                  details={"items": items, "source_refs": ["agent registry"]})
+                                  details={"view": "AGENT_LIST", "items": items,
+                                           "source_refs": ["agent registry"]})
         if value == "/approvals" or "approval" in value:
             items = self.queue.list_by_state("WAITING_APPROVAL")
             return self._response(message, "ANSWER", f"Approval pendenti: {len(items)}.",
@@ -525,6 +584,10 @@ class JarvisService:
             return self._response(message, "ERROR", "Non trovo una task da riprendere.",
                                   status="UNKNOWN")
         try:
+            current = self.queue.get(task_id)
+            if not self._state_matches(current, message):
+                return self._response(message, "ERROR", "La card non è più valida: aggiorna lo stato.",
+                                      task_id=task_id, status=current["state"])
             record = self.orchestrator.resume_orphaned_task(
                 task_id, requested_by=f"jarvis:{message['user_id']}")
         except KeyError:
@@ -535,7 +598,8 @@ class JarvisService:
                                   task_id=task_id, status="REFUSED")
         return self._response(message, "TASK_STATUS",
                               f"Task {task_id} ripresa: torna in coda per il dispatcher normale.",
-                              task_id=task_id, status=record["state"])
+                              task_id=task_id, status=record["state"],
+                              details=self._task_details(record, technical=True))
 
     def _run_review_pipeline(self, task_id, record):
         """NEXUS TASK #0009 - collega la Multi-Agent Review & Finalization
@@ -610,6 +674,9 @@ class JarvisService:
             return self._response(message, "ERROR", "Approval requires task_id.", status="UNKNOWN")
         try: record = self.queue.get(task_id)
         except KeyError: return self._response(message, "ERROR", "Task not found.", task_id=task_id, status="UNKNOWN")
+        if not self._state_matches(record, message):
+            return self._response(message, "ERROR", "La card non è più valida: aggiorna lo stato.",
+                                  task_id=task_id, status=record["state"])
         if record["state"] != "WAITING_APPROVAL":
             return self._response(message, "ERROR", "Task is not waiting for approval.", task_id=task_id,
                                   status=record["state"])
@@ -632,12 +699,30 @@ class JarvisService:
         return self._response(message, "APPROVAL", f"{task_id}: {updated['state']}", task_id=task_id,
                               status=updated["state"])
 
-    def agents(self):
+    def agents(self, detailed=False):
         agents = []
         for agent in load_registry().get("agents", []):
             state = agent.get("quota_state") or agent.get("availability") or "UNKNOWN"
             if agent.get("availability") != "ONLINE": state = "OFFLINE"
-            agents.append({"agent_id": agent.get("agent_id"), "provider": agent.get("provider"),
-                           "status": state, "availability": agent.get("availability"),
-                           "quota_state": agent.get("quota_state")})
+            item = {"agent_id": agent.get("agent_id"), "provider": agent.get("provider"),
+                    "status": state, "availability": agent.get("availability"),
+                    "quota_state": agent.get("quota_state")}
+            if detailed:
+                item.update({"role": agent.get("specialist_role"),
+                             "capabilities": agent.get("capabilities") or [],
+                             "model_or_runtime": agent.get("model_or_runtime"),
+                             "integration_status": agent.get("integration_status")})
+            agents.append(item)
         return agents
+
+    def agent_view(self, message):
+        meta = message.get("metadata", {})
+        agent_id = meta.get("agent_id")
+        agent = next((item for item in self.agents(detailed=True) if item.get("agent_id") == agent_id), None)
+        if not agent:
+            return self._response(message, "ERROR", "Agent not found.", status="UNKNOWN")
+        view = {"AGENT_DETAILS": "AGENT_DETAIL", "AGENT_CAPABILITIES": "AGENT_CAPABILITIES",
+                "PROVIDER_STATUS": "PROVIDER_STATUS"}.get(meta.get("ui_action"), "AGENT_DETAIL")
+        return self._response(message, "ANSWER", f"{agent_id} · {agent.get('role') or 'ruolo non disponibile'}.",
+                              details={"view": view, "agent": agent,
+                                       "source_refs": ["agent registry"]})
