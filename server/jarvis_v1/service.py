@@ -100,6 +100,38 @@ _EXECUTIVE_INTENT_RE = re.compile(
 _CONFIRM_RE = re.compile(r"\b(s[iì]|conferma|procedi|vai|ok|va bene)\b", re.I)
 _DECLINE_RE = re.compile(r"\b(no|annulla|lascia stare|non (?:ora|adesso))\b", re.I)
 
+# STATE_QUERY (reactive fix for the "Fammi vedere le task bloccate"/"Bloccate"
+# live smoke gap): colloquial Italian state words -> real NEXUS states. Users
+# don't speak in queue-state enum names, and a bare state word with no verb
+# ("Bloccate") is a normal reply to "quali task hai?", not a new sentence -
+# both forms must resolve to a real filtered list instead of UNKNOWN.
+# "bloccat*" intentionally maps to BOTH BLOCKED and ESCALATION_REQUIRED: in
+# this system almost nothing sits in the technical BLOCKED state day-to-day,
+# while ESCALATION_REQUIRED ("stuck, needs you") is what a human actually
+# means by "bloccata". Checked only after every more specific intent above
+# (including the _REJECT_VERB_RE/FOLLOW_UP "perché è bloccata" diagnostic
+# path) and only if nothing else has already classified the message.
+_STATE_QUERY_SYNONYMS = (
+    (re.compile(r"\bbloccat\w*\b", re.I), ("BLOCKED", "ESCALATION_REQUIRED")),
+    (re.compile(r"\bin corso\b|\brunning\b", re.I), ("RUNNING",)),
+    (re.compile(r"\bcompletat\w*\b|\bfinit\w*\b", re.I), ("COMPLETED",)),
+    (re.compile(r"\bfallit\w*\b|\bin errore\b", re.I), ("FAILED",)),
+    (re.compile(r"\bin coda\b|\bqueued\b", re.I), ("QUEUED",)),
+    (re.compile(r"\bda approvare\b|\bin attesa di approvazione\b", re.I), ("WAITING_APPROVAL",)),
+    (re.compile(r"\bda rivedere\b|\bin revisione\b|\bescalation\b", re.I), ("ESCALATION_REQUIRED",)),
+    (re.compile(r"\bannullat\w*\b|\bcancellat\w*\b", re.I), ("CANCELLED",)),
+)
+
+
+def _match_state_query(value: str) -> tuple[str, ...]:
+    matched: list[str] = []
+    for pattern, states in _STATE_QUERY_SYNONYMS:
+        if pattern.search(value):
+            for state in states:
+                if state not in matched:
+                    matched.append(state)
+    return tuple(matched)
+
 
 def _extract_task_id(text):
     match = _TASK_ID_RE.search(text or "")
@@ -186,6 +218,8 @@ def classify(text: str, metadata: dict | None = None) -> str:
     if re.search(r"\b(a che punto|stato|status|come procede)\b", value) or re.search(
             r"\bperch[eé]\b.{0,20}\b(bloccat\w*|fallit\w*|non va|non funziona)\b", value):
         return "FOLLOW_UP"
+    if _match_state_query(value):
+        return "STATE_QUERY"
     if "?" in value or re.search(r"\b(cosa|quali|chi|perché|perche|why|what|today|oggi)\b", value):
         return "QUERY"
     return "UNKNOWN"
@@ -326,6 +360,8 @@ class JarvisService:
             return self.propose_task_from_goal(message)
         if request_class == "EXECUTIVE_INTENT":
             return self.executive_intent(message)
+        if request_class == "STATE_QUERY":
+            return self.state_query(message)
         return self._response(message, "ANSWER",
             "Non ho riconosciuto una richiesta operativa precisa. Posso creare o controllare task, "
             "mostrare dettagli, approval, agenti e stato NEXUS. Scrivi /help per esempi.",
@@ -792,6 +828,31 @@ class JarvisService:
             return self.cancel(message)
         return self._response(message, "ANSWER", "Comando non riconosciuto. Scrivi /help per le opzioni disponibili.",
                               status="PARTIAL", confidence="MEDIUM")
+
+    def state_query(self, message):
+        """STATE_QUERY: 'fammi vedere le task bloccate'/'Bloccate' and similar
+        colloquial state-filter phrasing (see _match_state_query). Reuses the
+        same ownership scoping as every other V4 resolver and the same
+        TASK_LIST rendering shape already used by /tasks - no new UI code."""
+        text = (message.get("text") or "").strip()
+        states = _match_state_query(text.lower())
+        items = self._user_scoped_tasks(message, states=set(states))
+        recent = items[:10]
+        counts = {}
+        for record in recent:
+            counts[record["state"]] = counts.get(record["state"], 0) + 1
+        label = "/".join(s.lower() for s in states)
+        if not recent:
+            return self._response(message, "ANSWER", f"Nessuna tua task in stato {label} al momento.",
+                                  details={"view": "TASK_LIST", "items": [], "counts": {},
+                                           "source_refs": ["orchestrator queue"]})
+        return self._response(message, "ANSWER", f"Hai {len(recent)} task in stato {label}.",
+                              details={"view": "TASK_LIST", "items": [{
+                                  "task_id": r["task_id"], "state": r["state"],
+                                  "title": (r.get("manifest") or {}).get("title"),
+                                  "updated_at": r.get("updated_at")}
+                                  for r in recent], "counts": counts,
+                                  "source_refs": ["orchestrator queue"]})
 
     def cancel(self, message):
         task_id = self._resolve_task_id(message)
