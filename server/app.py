@@ -1414,6 +1414,12 @@ def _jarvis_proactive_notify(chat_id, response):
     # Best-effort only: TelegramAdapter.send() already no-ops when the bot
     # token isn't configured, and ProviderConnectorV1._notify() swallows any
     # exception from this callable - a failed push never affects task state.
+    # NATURAL_CONVERSATION_V3: the actual filtering decision (notification_mode)
+    # lives in JarvisService.should_notify(), not here - this wrapper only
+    # consults it, never duplicates the rule.
+    task_id = response.get("task_id")
+    if task_id and not JARVIS_SERVICE.should_notify(task_id, response.get("status")):
+        return
     JARVIS_TELEGRAM.send(chat_id, response)
 
 

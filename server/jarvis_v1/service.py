@@ -52,6 +52,33 @@ _EXPLICIT_RESUME_TASK = re.compile(
     r"\b(riprendi|riattiva|resume)\b.*\bTASK_[A-Z0-9_]+\b|"
     r"\bTASK_[A-Z0-9_]+\b.*\b(riprendi|riattiva|resume)\b", re.I)
 
+# NATURAL_CONVERSATION_V3 -----------------------------------------------------
+# Explicit mutation verbs - including common Italian clitic-pronoun
+# contractions ("approvala", "rifiutala", "riprendila", "annullala") that the
+# older plain \bapprova\b-style regexes never matched (no word boundary
+# between the verb stem and "la"/"lo").
+_TASK_ID_RE = re.compile(r"\bTASK_[A-Z0-9_]+\b", re.I)
+_RESUME_VERB_RE = re.compile(r"\b(riprendi(?:la|lo)?|riattiva(?:la|lo)?|resume)\b", re.I)
+_APPROVE_VERB_RE = re.compile(r"\bapprova(?:la|lo)?\b|\bapprove\b", re.I)
+_REJECT_VERB_RE = re.compile(r"\brifiuta(?:la|lo)?\b|\breject\b", re.I)
+_CANCEL_VERB_RE = re.compile(r"\b(annulla(?:la|lo)?|cancella(?:la|lo)?|cancel)\b", re.I)
+# A bare reference word with no explicit TASK_<id> - resolved ONLY against
+# this conversation's own last_task_id (see _resolve_contextual_task_id),
+# never guessed from a repo-wide "most recent task" heuristic.
+_REFERENCE_WORD_RE = re.compile(
+    r"\b(quella|quello|questa|questo|l[’']ultima|l[’']ultimo|prima)\b", re.I)
+_TECHNICAL_VIEW_RE = re.compile(r"\b(pi[uù]\s+tecnic\w*|tecnic\w*)\b", re.I)
+_NOTIFICATION_PREF_RE = re.compile(
+    r"\b(non disturbarmi|fammi sapere solo|dimmi solo|avvisami|aggiornami)\b", re.I)
+_PROVIDER_PREF_RE = re.compile(
+    r"\b(falla controllare da|fammi fare (?:la )?review da|usa (?:groq|codex|claude|locale)|"
+    r"non usare premium|niente premium|solo locale|premium solo se serve)\b", re.I)
+
+
+def _extract_task_id(text):
+    match = _TASK_ID_RE.search(text or "")
+    return match.group(0).upper() if match else None
+
 
 def classify(text: str, metadata: dict | None = None) -> str:
     value = (text or "").strip().lower()
@@ -69,6 +96,39 @@ def classify(text: str, metadata: dict | None = None) -> str:
     # before (TASK_REQUEST -> conversational follow-up), zero regression.
     if _EXPLICIT_RESUME_TASK.search(text or ""):
         return "COMMAND"
+    # NATURAL_CONVERSATION_V3: an explicit mutation verb paired with EITHER
+    # an explicit TASK_<id> OR a resolvable contextual reference word must
+    # win over every generic/task-creation branch below (is_programming_request()
+    # already claims several of these bare verbs for a different, pre-existing
+    # meaning). A bare verb alone (no id, no reference word) is left
+    # completely untouched here - it falls through to the exact same
+    # branches as before this change, zero regression.
+    def _ends_with_clitic(match):
+        # "approvala"/"rifiutala"/"annullala"/"riprendila" - the attached
+        # "la"/"lo" IS the contextual reference, no separate word needed.
+        return bool(match) and match.group(0).lower().endswith(("la", "lo"))
+
+    explicit_task_id = _extract_task_id(text)
+    has_reference = bool(_REFERENCE_WORD_RE.search(value))
+    mutation_ready = bool(explicit_task_id or has_reference)
+    approve_match = _APPROVE_VERB_RE.search(value)
+    reject_match = _REJECT_VERB_RE.search(value)
+    cancel_match = _CANCEL_VERB_RE.search(value)
+    resume_match = _RESUME_VERB_RE.search(value)
+    if approve_match and (mutation_ready or _ends_with_clitic(approve_match)):
+        return "APPROVAL"
+    if reject_match and (mutation_ready or _ends_with_clitic(reject_match)):
+        return "REJECTION"
+    if cancel_match and (mutation_ready or _ends_with_clitic(cancel_match)):
+        return "COMMAND"
+    if resume_match and (has_reference or _ends_with_clitic(resume_match)):
+        return "COMMAND"
+    if _TECHNICAL_VIEW_RE.search(value) and not is_programming_request(value):
+        return "COMMAND"
+    if _NOTIFICATION_PREF_RE.search(value):
+        return "NOTIFICATION_PREFERENCE"
+    if _PROVIDER_PREF_RE.search(value):
+        return "PROVIDER_PREFERENCE"
     if value.startswith("/") or re.search(
             r"\b(help|aiuto|dettagli|details|annulla|cancella|cancel|continua|agents|agenti|approvals)\b", value):
         return "COMMAND"
@@ -178,6 +238,9 @@ class JarvisService:
         }
 
     def handle(self, message: dict) -> dict:
+        # NATURAL_CONVERSATION_V3: bounded conversational memory - opportunistic,
+        # cheap cleanup rather than a background scheduler this module doesn't have.
+        self.conversation_store.purge_stale()
         if message.get("input_type") != "TEXT":
             return self._response(message, "ERROR", "Input type not supported in V1.",
                                   status="UNAVAILABLE", confidence="HIGH")
@@ -200,6 +263,10 @@ class JarvisService:
             return self.approval(message)
         if request_class == "COMMAND":
             return self.command(message)
+        if request_class == "NOTIFICATION_PREFERENCE":
+            return self.set_notification_preference(message)
+        if request_class == "PROVIDER_PREFERENCE":
+            return self.set_provider_preference(message)
         return self._response(message, "ANSWER",
             "Non ho riconosciuto una richiesta operativa precisa. Posso creare o controllare task, "
             "mostrare dettagli, approval, agenti e stato NEXUS. Scrivi /help per esempi.",
@@ -273,12 +340,17 @@ class JarvisService:
     def create_task(self, message):
         text = (message.get("text") or "").strip()
         attrs = message.get("metadata", {})
+        # NATURAL_CONVERSATION_V3: bounded per-conversation preferences
+        # (set_provider_preference/set_notification_preference) ride along
+        # as ordinary metadata/policy_hints on the task this creates - never
+        # a bypass of _policy()/select_reviewer_candidates(), which are
+        # completely untouched.
+        prefs = self.conversation_store.get(message["conversation_id"])
         programming_plan = None
         if is_programming_request(text):
-            context = self.conversation_store.get(message["conversation_id"])
             allowed_paths = list(attrs.get("files_allowed") or extract_repo_paths(text))
             programming_plan = build_plan(
-                text, last_task_id=context.get("last_task_id"),
+                text, last_task_id=prefs.get("last_task_id"),
                 allowed_paths=allowed_paths)
         required = ["summaries"]
         if programming_plan:
@@ -287,6 +359,8 @@ class JarvisService:
         task_id = new_task_id()
         work_type = "complex_code" if programming_plan else classify_work_type(text, attrs)
         premium_allowed = work_type in ("scientific_research", "complex_code")
+        if prefs.get("premium_allowed") is False:
+            premium_allowed = False
         scientific_risk = "MEDIUM" if work_type == "scientific_research" else "LOW"
         code_risk = "HIGH" if work_type == "complex_code" else "NONE"
         manifest = {
@@ -317,6 +391,13 @@ class JarvisService:
         if programming_plan:
             action_params["execution_plan"] = programming_plan
             action_params["test_commands"] = list(attrs.get("test_commands") or [])
+        policy_hints = {}
+        if prefs.get("preferred_provider"):
+            policy_hints["preferred_provider"] = prefs["preferred_provider"]
+        if prefs.get("notification_mode"):
+            policy_hints["notification_mode"] = prefs["notification_mode"]
+        if policy_hints:
+            action_params["policy_hints"] = policy_hints
         self.orchestrator.submit(manifest, dependencies=manifest["dependencies"], action=action,
                                  action_params=action_params)
         if programming_plan and programming_plan["approval_required"] == "EXPLICIT_USER_APPROVAL":
@@ -358,6 +439,58 @@ class JarvisService:
             self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
                                            user_id=str(message["user_id"]))
         return task_id
+
+    def _resolve_contextual_task_id(self, message):
+        """NATURAL_CONVERSATION_V3: strict, fail-closed resolution used ONLY
+        by mutation intents (approve/reject/resume via a bare reference word
+        or clitic contraction - 'approva quella', 'rifiutala'). An explicit
+        TASK_<id> in text or metadata always wins outright. Otherwise this
+        resolves against THIS conversation's own last_task_id and nothing
+        else - deliberately never falling back to _latest_compatible_task()'s
+        looser cross-task heuristic (that stays reserved for the older,
+        non-mutating commands - cancel/follow_up/resume_orphaned via
+        _resolve_task_id - so they keep behaving exactly as before).
+        Returns (task_id_or_None, ambiguous)."""
+        explicit = message.get("metadata", {}).get("task_id") or _extract_task_id(message.get("text") or "")
+        if explicit:
+            return explicit, False
+        context = self.conversation_store.get(message["conversation_id"])
+        last_task_id = context.get("last_task_id")
+        if not last_task_id:
+            return None, True
+        return last_task_id, False
+
+    def _resume_or_continue(self, message):
+        """riprendi/riattiva/resume: an explicit TASK_<id> always goes
+        straight to resume_orphaned_task() (existing, already-shipped
+        behaviour, unchanged). A bare reference ('riprendi quella' /
+        'riprendila', no explicit id) tries that SAME orphan-resume first
+        and only falls back to the older conversational-programming
+        continuation (create_task(), itself unchanged) when the resolved
+        task is not actually BLOCKED/ORPHANED_RUNNING_AFTER_RESTART - one
+        observable fact decides it, never a guess."""
+        explicit = message.get("metadata", {}).get("task_id") or _extract_task_id(message.get("text") or "")
+        if explicit:
+            message.setdefault("metadata", {})["task_id"] = explicit
+            return self.resume_orphaned(message)
+        task_id, ambiguous = self._resolve_contextual_task_id(message)
+        if ambiguous:
+            return self._response(message, "CLARIFICATION_REQUIRED",
+                "Non ho un riferimento chiaro a quale task riprendere - puoi indicarmi il task_id?",
+                status="AMBIGUOUS")
+        if not task_id:
+            return self.create_task(message)
+        try:
+            record = self.queue.get(task_id)
+        except KeyError:
+            return self.create_task(message)
+        recovery = record.get("recovery") or {}
+        if record["state"] == "BLOCKED" and recovery.get("classification") == "ORPHANED_RUNNING_AFTER_RESTART":
+            self.ledger.append("CONVERSATION_REFERENCE_RESOLVED", task_id,
+                {"message_id": message["message_id"], "resolved_as": "RESUME"}, actor="jarvis_service")
+            message.setdefault("metadata", {})["task_id"] = task_id
+            return self.resume_orphaned(message)
+        return self.create_task(message)
 
     def _task_details(self, record, technical=False):
         task_id = record["task_id"]
@@ -524,16 +657,17 @@ class JarvisService:
                                            "completed_recent": completed_recent,
                                            "dispatcher": dispatcher, "agents": self.agents(),
                                            "source_refs": ["orchestrator queue", "agent registry"]})
-        if re.search(r"\b(dettagli|details|diagnostic)\b", value):
+        if re.search(r"\b(dettagli|details|diagnostic)\b", value) or (
+                _TECHNICAL_VIEW_RE.search(value) and not is_programming_request(value)):
             if re.search(r"\b(tecnic|technical|diagnostic)\w*\b", value):
                 message.setdefault("metadata", {})["technical_details"] = True
             return self.follow_up(message)
         if re.search(r"\b(continua|continue)\b", value):
             return self.follow_up(message)
-        if re.search(r"\b(riprendi|riattiva|resume)\b", value):
-            return self.resume_orphaned(message)
-        if message.get("metadata", {}).get("confirm_cancel") or re.search(
-                r"\b(annulla|annullamento|cancella|cancel)\b", value):
+        if _RESUME_VERB_RE.search(value):
+            return self._resume_or_continue(message)
+        if message.get("metadata", {}).get("confirm_cancel") or _CANCEL_VERB_RE.search(value) or re.search(
+                r"\bannullamento\b", value):
             return self.cancel(message)
         return self._response(message, "ANSWER", "Comando non riconosciuto. Scrivi /help per le opzioni disponibili.",
                               status="PARTIAL", confidence="MEDIUM")
@@ -596,10 +730,102 @@ class JarvisService:
         except AssertionError as exc:
             return self._response(message, "ERROR", f"Non posso riprendere {task_id}: {exc}",
                                   task_id=task_id, status="REFUSED")
+        self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
+                                       last_action="RESUME", user_id=str(message["user_id"]))
         return self._response(message, "TASK_STATUS",
                               f"Task {task_id} ripresa: torna in coda per il dispatcher normale.",
                               task_id=task_id, status=record["state"],
                               details=self._task_details(record, technical=True))
+
+    def set_provider_preference(self, message):
+        """NATURAL_CONVERSATION_V3: captures a provider/premium preference as
+        a bounded, per-conversation hint - never a direct provider call and
+        never a bypass of ProviderConnectorV1's existing availability/policy
+        gate. 'non usare premium' sets manifest.premium_allowed=False on the
+        NEXT task this conversation creates (the already-wired _policy()
+        check in provider_connector.py, untouched). A named provider
+        ('usa groq', 'falla controllare da codex') is attached as
+        action_params.policy_hints.preferred_provider for visibility/audit -
+        select_reviewer_candidates()'s capability>availability>cost>preference
+        ordering is deliberately NOT modified by this task (see residual
+        risks); the hint is stored, never enforced as a bypass."""
+        text = message.get("text") or ""
+        value = text.lower()
+        no_premium = bool(re.search(
+            r"\b(non usare premium|niente premium|solo locale|usa locale)\b", value))
+        provider_match = re.search(r"\b(groq|codex|claude)\b", value, re.I)
+        updates = {}
+        if no_premium:
+            updates["premium_allowed"] = False
+        if provider_match:
+            updates["preferred_provider"] = provider_match.group(1).upper()
+        if not updates:
+            return self._response(message, "ANSWER",
+                "Non ho capito quale preferenza di provider impostare.", status="PARTIAL")
+        self.conversation_store.update(message["conversation_id"], user_id=str(message["user_id"]),
+                                       **updates)
+        self.ledger.append("CONVERSATION_PREFERENCE_SET", None,
+            {"message_id": message["message_id"], **updates}, actor="jarvis_service")
+        parts = []
+        if "premium_allowed" in updates: parts.append("nessun provider premium")
+        if "preferred_provider" in updates: parts.append(f"reviewer preferito: {updates['preferred_provider']}")
+        return self._response(message, "PREFERENCE_SET", "Impostato: " + ", ".join(parts),
+                              details={"preferences": updates})
+
+    def set_notification_preference(self, message):
+        """NATURAL_CONVERSATION_V3: a per-conversation notification_mode,
+        consulted by JarvisService.should_notify() - never logic baked into
+        telegram_adapter.py's formatter (TELEGRAM_INTERACTIVE_UX_V1 owns
+        that surface)."""
+        text = message.get("text") or ""
+        value = text.lower()
+        if re.search(r"\bnon disturbarmi\b", value):
+            mode = "SILENT"
+        elif re.search(r"\b(fammi sapere solo se si blocca|avvisami se (si )?blocca)\b", value):
+            mode = "BLOCKED_ONLY"
+        elif re.search(r"\b(dimmi solo quando finisce|aggiornami (solo )?quando finisce)\b", value):
+            mode = "ON_COMPLETE"
+        elif re.search(r"\bavvisami se serve approvazione\b", value):
+            mode = "APPROVAL_ONLY"
+        else:
+            return self._response(message, "ANSWER",
+                "Non ho capito quale preferenza di notifica impostare.", status="PARTIAL")
+        self.conversation_store.update(message["conversation_id"], notification_mode=mode,
+                                       user_id=str(message["user_id"]))
+        self.ledger.append("CONVERSATION_PREFERENCE_SET", None,
+            {"message_id": message["message_id"], "notification_mode": mode}, actor="jarvis_service")
+        return self._response(message, "PREFERENCE_SET", f"Impostata preferenza di notifica: {mode}.",
+                              details={"notification_mode": mode})
+
+    _NOTIFY_STATUS_RULES = {
+        "SILENT": frozenset(),
+        "BLOCKED_ONLY": frozenset({"BLOCKED", "MANUAL_REVIEW", "WAITING_REVIEW_PROVIDER"}),
+        "ON_COMPLETE": frozenset({"WAITING_APPROVAL", "COMPLETED", "FINALIZED"}),
+        "APPROVAL_ONLY": frozenset({"WAITING_APPROVAL"}),
+    }
+
+    def should_notify(self, task_id, status):
+        """Per-task (falling back to the creating conversation's own
+        preference) gate for a proactive push - the filtering decision lives
+        here, in the service layer, not in telegram_adapter.py. Fails open
+        (notify) on any lookup error or when no preference was ever set -
+        silence must be an explicit choice, never an accidental default."""
+        try:
+            record = self.queue.get(task_id)
+        except KeyError:
+            return True
+        hints = (record.get("action_params") or {}).get("policy_hints") or {}
+        mode = hints.get("notification_mode")
+        if not mode:
+            conversation_id = (record.get("action_params") or {}).get("conversation_id")
+            if conversation_id:
+                mode = self.conversation_store.get(conversation_id).get("notification_mode")
+        if not mode or mode == "ALL":
+            return True
+        allowed = self._NOTIFY_STATUS_RULES.get(mode)
+        if allowed is None:
+            return True
+        return status in allowed
 
     def _run_review_pipeline(self, task_id, record):
         """NEXUS TASK #0009 - collega la Multi-Agent Review & Finalization
@@ -668,8 +894,33 @@ class JarvisService:
                               details={"blocked_reason": wp["blocked_reason"]}, confidence="LOW")
 
     def approval(self, message):
-        meta = message.get("metadata", {}); task_id = meta.get("task_id")
-        action = str(meta.get("approval_action") or message.get("text") or "").upper()
+        meta = message.get("metadata", {})
+        text = message.get("text") or ""
+        approval_action = str(meta.get("approval_action") or "").upper()
+        if approval_action in ("APPROVE", "APPROVAL", "APPROVA"):
+            action = "APPROVE"
+        elif approval_action in ("REJECT", "RIFIUTA"):
+            action = "REJECT"
+        elif _APPROVE_VERB_RE.search(text):
+            action = "APPROVE"
+        elif _REJECT_VERB_RE.search(text):
+            action = "REJECT"
+        else:
+            action = ""
+        task_id = meta.get("task_id") or _extract_task_id(text)
+        ambiguous = False
+        if not task_id:
+            # NATURAL_CONVERSATION_V3: a free-text "approva quella"/"rifiutala"
+            # with no explicit id resolves strictly against this
+            # conversation's own last_task_id - fails closed (no mutation,
+            # ask for clarification) rather than ever guessing.
+            task_id, ambiguous = self._resolve_contextual_task_id(message)
+        if ambiguous:
+            self.ledger.append("CONVERSATION_CLARIFICATION_REQUESTED", None,
+                {"message_id": message["message_id"], "intent": action or "APPROVAL"}, actor="jarvis_service")
+            return self._response(message, "CLARIFICATION_REQUIRED",
+                "Non ho un riferimento chiaro a quale task - puoi indicarmi il task_id?",
+                status="AMBIGUOUS")
         if not task_id:
             return self._response(message, "ERROR", "Approval requires task_id.", status="UNKNOWN")
         try: record = self.queue.get(task_id)
@@ -680,10 +931,13 @@ class JarvisService:
         if record["state"] != "WAITING_APPROVAL":
             return self._response(message, "ERROR", "Task is not waiting for approval.", task_id=task_id,
                                   status=record["state"])
-        if action in ("APPROVE", "APPROVAL", "APPROVA"):
+        if not (meta.get("task_id")):
+            self.ledger.append("CONVERSATION_REFERENCE_RESOLVED", task_id,
+                {"message_id": message["message_id"], "resolved_as": action or "APPROVAL"}, actor="jarvis_service")
+        if action == "APPROVE":
             self.queue.transition(task_id, "QUEUED")
             self.ledger.append("APPROVAL_GRANTED", task_id, {"message_id": message["message_id"]}, actor="jarvis_gateway")
-        elif action in ("REJECT", "RIFIUTA"):
+        elif action == "REJECT":
             self.ledger.append("APPROVAL_REJECTED", task_id, {"message_id": message["message_id"]}, actor="jarvis_gateway")
             # NEXUS Dynamic Specialist Review: only meaningful when a local
             # worker actually exists to rework the patch (conversational_programming)
@@ -696,6 +950,8 @@ class JarvisService:
         else:
             return self._response(message, "ERROR", "Unknown approval action.", task_id=task_id, status=record["state"])
         updated = self.queue.get(task_id)
+        self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
+                                       last_action=action, user_id=str(message["user_id"]))
         return self._response(message, "APPROVAL", f"{task_id}: {updated['state']}", task_id=task_id,
                               status=updated["state"])
 
