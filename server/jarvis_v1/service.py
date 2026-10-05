@@ -32,7 +32,9 @@ from review_matrix import get_matrix_entry  # noqa: E402
 from .conversation_store import ConversationStore
 from .programming import build_plan, extract_repo_paths, is_programming_request
 from .free_coding_worker import FreeCodingWorkerHandler
+from .local_bounded_task_handler import BoundedLocalTaskHandler
 from . import ministral_router
+from . import ministral_task_compiler
 
 # JARVIS_MINISTRAL_ROUTER_V1 - OFF by default everywhere; flipping ENABLED
 # to true with MODE still SHADOW costs nothing but a background ledger
@@ -318,6 +320,13 @@ class JarvisService:
         self.orchestrator.register_local_handler(
             "conversational_programming",
             FreeCodingWorkerHandler(project_root=ROOT, workspace_root=workspace_root))
+        # MINISTRAL_TASK_COMPILER_V1 - one shared handler instance, registered
+        # once per template (action == template_id by convention). Adding a
+        # future template never needs a new line here beyond adding it to
+        # ministral_task_compiler.TEMPLATES.
+        bounded_handler = BoundedLocalTaskHandler(project_root=ROOT)
+        for template_id in ministral_task_compiler.TEMPLATES:
+            self.orchestrator.register_local_handler(template_id, bounded_handler)
         # NEXUS TASK #0009 - cache process-local (stessa disciplina gia'
         # dichiarata per self.conversations): un WORK_PRODUCT_V1 va calcolato
         # una sola volta per task_id, mai ricalcolato/ri-escalato a ogni
@@ -347,6 +356,20 @@ class JarvisService:
         hands off to the Core component that already owns provider state/
         policy/calls."""
         self.provider_connector = connector
+
+    def delegate_to_ministral(self, template_id, *, goal, relevant_paths,
+                              created_by="jarvis:claude_supervisor", conversation_id=None,
+                              verifier_feedback=None):
+        """MINISTRAL_TASK_COMPILER_V1 entry point - compiles a bounded task
+        from an already-registered template and submits it through the
+        EXACT SAME Orchestrator.submit() every other task-creation path
+        uses. Does not decide local-vs-escalation itself (core/router.py's
+        route() does, at claim time) and never calls any API directly -
+        this only builds and queues data. Returns the new task_id."""
+        manifest, action, action_params = ministral_task_compiler.compile_task(
+            template_id, goal=goal, relevant_paths=relevant_paths, created_by=created_by,
+            conversation_id=conversation_id, verifier_feedback=verifier_feedback)
+        return self.orchestrator.submit(manifest, action=action, action_params=action_params)
 
     def _response(self, message, response_type, summary, *, details=None, task_id=None,
                   status="COMPLETED", actions=None, confidence="HIGH", generated_by="jarvis_v1"):
