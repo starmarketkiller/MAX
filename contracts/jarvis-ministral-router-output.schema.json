@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/jarvis-ministral-router-output.schema.json",
+  "title": "NEXUS JARVIS_MINISTRAL_ROUTER_OUTPUT_V1",
+  "description": "Structured interpretation produced by the local Ministral cognitive router for a single Jarvis message. This is an INTERPRETATION only - it never mutates anything itself. 'intent' deliberately reuses the same values as jarvis-message.schema.json's request_class so JarvisService can dispatch it through the exact same canonical methods classify() already uses. 'referenced_task_id' must be one of the candidate_task_ids given in the router's input context, or null - enforced both by the gateway (schema) and again by the Render-side caller (membership check) before anything is dispatched.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["intent", "confidence", "referenced_task_id", "needs_clarification", "risk_level", "reason_summary"],
+  "properties": {
+    "intent": {"enum": ["QUERY", "TASK_REQUEST", "APPROVAL", "REJECTION", "COMMAND", "FOLLOW_UP",
+                        "NOTIFICATION_PREFERENCE", "PROVIDER_PREFERENCE", "EXECUTIVE_APPROVAL_REFERENCE",
+                        "GOAL_TO_TASK", "EXECUTIVE_INTENT", "STATE_QUERY", "UNKNOWN"]},
+    "goal": {"type": ["string", "null"], "maxLength": 2000},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "referenced_task_id": {"type": ["string", "null"], "maxLength": 64},
+    "recommended_action": {"type": ["string", "null"], "maxLength": 64},
+    "target_agent": {"type": ["string", "null"], "maxLength": 64},
+    "skill": {"type": ["string", "null"], "maxLength": 64},
+    "provider_preference": {"type": ["string", "null"], "maxLength": 32},
+    "needs_clarification": {"type": "boolean"},
+    "clarification_question": {"type": ["string", "null"], "maxLength": 500},
+    "risk_level": {"enum": ["LOW", "MEDIUM", "HIGH", "UNKNOWN"]},
+    "reason_summary": {"type": "string", "maxLength": 500}
+  }
+}

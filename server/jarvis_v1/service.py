@@ -9,6 +9,7 @@ import json
 import os
 import re
 import sys
+import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,6 +32,21 @@ from review_matrix import get_matrix_entry  # noqa: E402
 from .conversation_store import ConversationStore
 from .programming import build_plan, extract_repo_paths, is_programming_request
 from .free_coding_worker import FreeCodingWorkerHandler
+from . import ministral_router
+
+# JARVIS_MINISTRAL_ROUTER_V1 - OFF by default everywhere; flipping ENABLED
+# to true with MODE still SHADOW costs nothing but a background ledger
+# write per message (see _maybe_route_via_ministral). Only a later, explicit
+# MODE=ACTIVE lets the router's own decision ever drive a real response -
+# and even then only through the exact same canonical JarvisService methods
+# every other path already uses (see _dispatch_via_router_output). Read at
+# call time (not frozen at import) so tests can monkeypatch the env per case.
+def _ministral_router_enabled():
+    return os.environ.get("JARVIS_MINISTRAL_ROUTER_ENABLED", "false").lower() == "true"
+
+
+def _ministral_router_mode():
+    return os.environ.get("JARVIS_MINISTRAL_ROUTER_MODE", "SHADOW").upper()
 
 # NEXUS TASK #0009 - default per le task create da Jarvis quando nessun
 # work_type esplicito e' dichiarato in metadata. 'business_analysis' impone
@@ -145,6 +161,17 @@ def _join_it(parts):
 def _extract_task_id(text):
     match = _TASK_ID_RE.search(text or "")
     return match.group(0).upper() if match else None
+
+
+def _has_explicit_mutation_signal(text):
+    """True when the text ALREADY unambiguously names a task (id, reference
+    word like 'quella', or the 'l'ultima'/'quali devo approvare' phrasing) -
+    shared by _resolve_contextual_mutation and JARVIS_MINISTRAL_ROUTER_V1's
+    deterministic-first gate (an explicit, already-unambiguous mutation
+    command never needs an LLM in the loop - see _maybe_route_via_ministral)."""
+    value = (text or "").lower()
+    return bool(_extract_task_id(text) or _REFERENCE_WORD_RE.search(value)
+               or _LAST_PENDING_APPROVAL_RE.search(value))
 
 
 def classify(text: str, metadata: dict | None = None) -> str:
@@ -298,10 +325,19 @@ class JarvisService:
         self._work_product_cache: dict[str, tuple] = {}
         self.dispatcher_status_provider = None
         self.provider_connector = None
+        self.shared_cognitive_state = None
 
     def set_dispatcher_status_provider(self, provider):
         """Attach a read-only runtime status projection without owning dispatcher logic."""
         self.dispatcher_status_provider = provider
+
+    def set_shared_cognitive_state(self, state):
+        """Attach the existing SharedCognitiveState (NEXUS_SHARED_COGNITIVE_STATE_V1)
+        so JARVIS_MINISTRAL_ROUTER_V1's context builder can read a compact
+        project summary (current_milestone/blockers_count/roadmap_completion)
+        - read-only, optional, never instantiated fresh here (reuses app.py's
+        single wired instance instead of guessing its on-disk path)."""
+        self.shared_cognitive_state = state
 
     def set_provider_connector(self, connector):
         """Attach the existing ProviderConnectorV1 so a human REJECT on a
@@ -346,6 +382,22 @@ class JarvisService:
         mutation_reply = self._resolve_contextual_mutation(message)
         if mutation_reply is not None:
             return mutation_reply
+        # JARVIS_MINISTRAL_ROUTER_V1: tried only for messages with no
+        # explicit, already-unambiguous mutation signal and no ui_action -
+        # see _maybe_route_via_ministral for the full gate. SHADOW never
+        # affects what's returned here; ACTIVE may, but only through the
+        # exact same canonical methods _dispatch_classifier itself uses.
+        router_reply = self._maybe_route_via_ministral(message)
+        if router_reply is not None:
+            return router_reply
+        return self._dispatch_classifier(message)
+
+    def _dispatch_classifier(self, message: dict) -> dict:
+        """The deterministic regex classifier chain - JARVIS_MINISTRAL_ROUTER_V1's
+        fallback net, and (in SHADOW mode, or whenever the router is
+        disabled/skipped) the ONLY thing that ever produces the real
+        response. Unchanged from the classify()-based dispatch this file
+        has always had."""
         request_class = message.get("request_class")
         if request_class in (None, "UNKNOWN"):
             request_class = classify(message.get("text", ""), message.get("metadata"))
@@ -393,6 +445,143 @@ class JarvisService:
             "mostrare dettagli, approval, agenti e stato NEXUS. Scrivi /help per esempi.",
             status="PARTIAL", confidence="MEDIUM",
             actions=[{"type": "HELP", "label": "Mostra aiuto"}])
+
+    def _maybe_route_via_ministral(self, message):
+        """Returns a real response ONLY in MODE=ACTIVE with a valid, confident,
+        in-bounds router decision - None in every other case, which means
+        "fall through to _dispatch_classifier unchanged". SHADOW mode always
+        returns None here (the real response always comes from the
+        classifier) and instead fires a background, non-blocking comparison
+        - see _shadow_router_comparison. Never invoked for button/callback
+        flows or for text that already carries an explicit, unambiguous
+        mutation signal (classify()'s existing deterministic paths handle
+        those with zero added latency/risk - see _has_explicit_mutation_signal)."""
+        if not _ministral_router_enabled():
+            return None
+        if message.get("metadata", {}).get("ui_action"):
+            return None
+        text = message.get("text") or ""
+        if _has_explicit_mutation_signal(text):
+            return None
+        mode = _ministral_router_mode()
+        classifier_decision = classify(text, message.get("metadata"))
+        if mode == "SHADOW":
+            thread = threading.Thread(target=self._shadow_router_comparison,
+                                      args=(dict(message), classifier_decision), daemon=True)
+            thread.start()
+            return None
+        if mode != "ACTIVE":
+            return None
+        result = ministral_router.resolve_intent_via_router(self, message)
+        if not result["ok"]:
+            self.ledger.append("MINISTRAL_ROUTER_FALLBACK", None,
+                               {"message_id": message["message_id"], "mode": mode,
+                                "reason": result["error"], "latency_ms": result["latency_ms"]},
+                               actor="jarvis_ministral_router")
+            return None
+        output = result["output"]
+        if not ministral_router.is_confident_enough(output):
+            self.ledger.append("MINISTRAL_ROUTER_FALLBACK", None,
+                               {"message_id": message["message_id"], "mode": mode,
+                                "reason": "LOW_CONFIDENCE_OR_NEEDS_CLARIFICATION",
+                                "confidence": output.get("confidence"),
+                                "latency_ms": result["latency_ms"]}, actor="jarvis_ministral_router")
+            return None
+        response = self._dispatch_via_router_output(message, output)
+        if response is None:
+            self.ledger.append("MINISTRAL_ROUTER_FALLBACK", None,
+                               {"message_id": message["message_id"], "mode": mode,
+                                "reason": "INTENT_NOT_EXECUTABLE_FROM_RAW_TEXT",
+                                "intent": output.get("intent"), "latency_ms": result["latency_ms"]},
+                               actor="jarvis_ministral_router")
+            return None
+        self.ledger.append("MINISTRAL_ROUTER_ACTIVE_DECISION", response.get("task_id"),
+                           {"message_id": message["message_id"], "intent": output.get("intent"),
+                            "confidence": output.get("confidence"), "risk_level": output.get("risk_level"),
+                            "classifier_decision": classifier_decision,
+                            "latency_ms": result["latency_ms"]}, actor="jarvis_ministral_router")
+        return response
+
+    def _shadow_router_comparison(self, message, classifier_decision):
+        """Runs entirely in a background daemon thread AFTER the real
+        response has already been returned to the caller - a slow or
+        offline router adds zero latency and zero risk to the user's actual
+        Telegram reply. Any exception here is swallowed: a comparison that
+        fails to log is a lost data point, never a user-visible failure."""
+        try:
+            result = ministral_router.resolve_intent_via_router(self, message)
+        except Exception as exc:  # noqa: BLE001 - background thread must never raise
+            try:
+                self.ledger.append("MINISTRAL_ROUTER_SHADOW_COMPARISON", None,
+                                   {"message_id": message["message_id"],
+                                    "classifier_decision": classifier_decision,
+                                    "ministral_decision": None, "schema_valid": False,
+                                    "disagreement": None, "error": f"UNEXPECTED: {type(exc).__name__}"},
+                                   actor="jarvis_ministral_router")
+            except Exception:  # noqa: BLE001
+                pass
+            return
+        if result["ok"]:
+            ministral_decision = result["output"].get("intent")
+            self.ledger.append("MINISTRAL_ROUTER_SHADOW_COMPARISON", None,
+                               {"message_id": message["message_id"],
+                                "classifier_decision": classifier_decision,
+                                "ministral_decision": ministral_decision,
+                                "confidence": result["output"].get("confidence"),
+                                "latency_ms": result["latency_ms"], "schema_valid": True,
+                                "disagreement": ministral_decision != classifier_decision},
+                               actor="jarvis_ministral_router")
+        else:
+            self.ledger.append("MINISTRAL_ROUTER_SHADOW_COMPARISON", None,
+                               {"message_id": message["message_id"],
+                                "classifier_decision": classifier_decision,
+                                "ministral_decision": None, "schema_valid": False,
+                                "disagreement": None, "latency_ms": result["latency_ms"],
+                                "error": result["error"]}, actor="jarvis_ministral_router")
+
+    def _dispatch_via_router_output(self, message, output):
+        """Maps the router's intent to the EXACT SAME canonical method
+        _dispatch_classifier uses - Ministral only ever picks which method
+        and (via referenced_task_id, already validated against live
+        candidates) which task. It does not rewrite message text: the
+        parsing each method still does internally (e.g. STATE_QUERY's own
+        state-word matching, GOAL_TO_TASK's imperative/exploratory split)
+        is untouched, so this conservatively returns None - "not something
+        the deterministic executor can actually act on yet" - rather than
+        force a call that would behave unpredictably. None here always
+        means "fall back to the classifier", never an error."""
+        intent = output.get("intent")
+        text = message.get("text") or ""
+        meta = message.setdefault("metadata", {})
+        referenced = output.get("referenced_task_id")
+        if referenced:
+            meta.setdefault("task_id", referenced)
+        if intent == "QUERY":
+            return self.query(message)
+        if intent == "TASK_REQUEST":
+            return self.create_task(message)
+        if intent == "FOLLOW_UP":
+            return self.follow_up(message)
+        if intent in ("APPROVAL", "REJECTION"):
+            meta["approval_action"] = "REJECT" if intent == "REJECTION" else "APPROVE"
+            return self.approval(message)
+        if intent == "COMMAND":
+            return self.command(message)
+        if intent == "NOTIFICATION_PREFERENCE":
+            return self.set_notification_preference(message)
+        if intent == "PROVIDER_PREFERENCE":
+            return self.set_provider_preference(message)
+        if intent == "EXECUTIVE_APPROVAL_REFERENCE":
+            return self.executive_approval_reference(message)
+        if intent == "GOAL_TO_TASK":
+            return self.propose_task_from_goal(message)
+        if intent == "EXECUTIVE_INTENT":
+            return self.executive_intent(message)
+        if intent == "STATE_QUERY":
+            if not _match_state_query(text.lower()):
+                return None
+            return self.state_query(message)
+        return None
 
     def _facts_today(self):
         today = datetime.now(timezone.utc).date().isoformat()
@@ -1342,9 +1531,7 @@ class JarvisService:
         if not text:
             return None
         value = text.lower()
-        has_explicit_signal = bool(_extract_task_id(text) or _REFERENCE_WORD_RE.search(value)
-                                   or _LAST_PENDING_APPROVAL_RE.search(value))
-        if has_explicit_signal:
+        if _has_explicit_mutation_signal(text):
             return None
         approve_match = _APPROVE_VERB_RE.search(value)
         reject_match = _REJECT_VERB_RE.search(value)

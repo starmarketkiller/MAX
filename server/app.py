@@ -1403,6 +1403,7 @@ NEXUS_SHARED_STATE = SharedCognitiveState(
     _JARVIS_STATE_DIR / "shared_cognitive_state_v1.json",
     task_queue=JARVIS_SERVICE.queue,
     ledger=JARVIS_SERVICE.ledger)
+JARVIS_SERVICE.set_shared_cognitive_state(NEXUS_SHARED_STATE)
 JARVIS_GATEWAY = JarvisGateway(JARVIS_SERVICE)
 JARVIS_TELEGRAM = TelegramAdapter(JARVIS_SERVICE,
                                   state_path=str(_JARVIS_STATE_DIR / "telegram_updates_v1.json"),
