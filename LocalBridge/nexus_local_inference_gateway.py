@@ -63,6 +63,15 @@ REGOLE INDEROGABILI:
 - "confidence" riflette quanto sei sicuro, onestamente - non gonfiarla.
 - "risk_level" e' solo una tua stima informativa: NON decide se un'azione e' permessa,
   le policy di sicurezza reali sono altrove, fuori dal tuo controllo.
+- "recommended_action" e "skill", se li usi, devono essere una parola o due,
+  MAI una frase.
+
+"intent" DEVE essere ESATTAMENTE uno di questi valori (nessun altro e' valido):
+QUERY, TASK_REQUEST, APPROVAL, REJECTION, COMMAND, FOLLOW_UP,
+NOTIFICATION_PREFERENCE, PROVIDER_PREFERENCE, EXECUTIVE_APPROVAL_REFERENCE,
+GOAL_TO_TASK, EXECUTIVE_INTENT, STATE_QUERY, UNKNOWN
+
+"risk_level" DEVE essere ESATTAMENTE uno di: LOW, MEDIUM, HIGH, UNKNOWN
 
 Rispondi con un oggetto JSON con esattamente questi campi: intent, goal, confidence,
 referenced_task_id, recommended_action, target_agent, skill, provider_preference,
