@@ -211,8 +211,12 @@ class Orchestrator:
 
         start = now_iso()
         prompt = handler.build_prompt(record)
-        call = ollama_worker.call_local_model(prompt, model=decision.agent["model_or_runtime"]
-                                             .split(" ")[0])
+        call_kwargs = {"model": decision.agent["model_or_runtime"].split(" ")[0]}
+        # Additive opt-in: legacy handlers and their test doubles retain the
+        # exact two-argument call contract.
+        if bool(getattr(handler, "json_mode", False)):
+            call_kwargs["json_mode"] = True
+        call = ollama_worker.call_local_model(prompt, **call_kwargs)
         self.ledger.append("TOOL_USED", task_id, {"tool": "ollama_local_model",
                           "model": call["model"], "wall_seconds": call.get("wall_seconds")})
 

@@ -1,0 +1,16 @@
+{
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "$id":"https://nexus.local/contracts/lead-v1.schema.json",
+  "title":"NEXUS LEAD_V1",
+  "type":"object","additionalProperties":false,
+  "required":["lead_id","opportunity_id","offer_id","display_name","customer_type","source","status","outreach_approval","created_at","updated_at","provenance"],
+  "properties":{
+    "lead_id":{"type":"string","pattern":"^LEAD_[A-Za-z0-9_]+$"},
+    "opportunity_id":{"type":"string"},"offer_id":{"type":"string"},
+    "display_name":{"type":"string"},"customer_type":{"type":"string"},"source":{"type":"string"},
+    "status":{"enum":["DISCOVERED","QUALIFIED","CONTACT_READY","CONTACTED","REPLIED","INTERESTED","WON","LOST"]},
+    "outreach_approval":{"type":"object"},
+    "delivery_task_id":{"type":["string","null"]},
+    "created_at":{"type":"string"},"updated_at":{"type":"string"},"provenance":{"type":"object"}
+  }
+}

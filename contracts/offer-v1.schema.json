@@ -1,0 +1,20 @@
+{
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "$id":"https://nexus.local/contracts/offer-v1.schema.json",
+  "title":"NEXUS OFFER_V1",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["offer_id","opportunity_id","problem","deliverable","price","delivery_time","included","excluded","status","created_at","updated_at","provenance"],
+  "properties":{
+    "offer_id":{"type":"string","pattern":"^OFFER_[A-Za-z0-9_]+$"},
+    "opportunity_id":{"type":"string"},
+    "problem":{"type":"string"},
+    "deliverable":{"type":"string"},
+    "price":{"type":"object","additionalProperties":false,"required":["amount","currency","reviewed"],"properties":{"amount":{"type":"number"},"currency":{"type":"string"},"reviewed":{"type":"boolean"}}},
+    "delivery_time":{"type":"string"},
+    "included":{"type":"array","items":{"type":"string"}},
+    "excluded":{"type":"array","items":{"type":"string"}},
+    "status":{"enum":["DRAFT","REVIEWED","ACTIVE","PAUSED","RETIRED"]},
+    "created_at":{"type":"string"},"updated_at":{"type":"string"},"provenance":{"type":"object"}
+  }
+}

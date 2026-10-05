@@ -1,0 +1,51 @@
+{
+  "schema_version": "FIRST_REVENUE_MARKET_SCOUT_EXAMPLE_V1",
+  "classification": "EVALUATION_ONLY",
+  "task_id": "TASK_F714D0F95103",
+  "executor": "LOCAL_STRONG_MINISTRAL3B",
+  "model": "ministral-3:3b",
+  "network_allowed": false,
+  "outreach_allowed": false,
+  "payment_allowed": false,
+  "attempts": [
+    {
+      "attempt": 1,
+      "wall_seconds": 50.19,
+      "verifier": "FAIL",
+      "errors": ["missing_info must be array max 2"]
+    },
+    {
+      "attempt": 2,
+      "wall_seconds": 40.97,
+      "verifier": "PASS",
+      "errors": []
+    }
+  ],
+  "result": {
+    "problem": "Lack of customer engagement and trust signals (no visible reviews or follow-up mechanisms) may hinder prospect's ability to attract or retain clients for local services.",
+    "evidence": [
+      "Prospect provides local services",
+      "Website has no visible review follow-up"
+    ],
+    "possible_offer": "Offer to design and implement a simple review system (e.g., embedded review widget, testimonial showcase) to improve credibility and client acquisition.",
+    "fit_score": 65,
+    "reason": "The prospect's niche in local services is vulnerable to trust gaps, and a review system directly addresses this. The offer is low-cost and scalable.",
+    "missing_info": [
+      "Specific types of local services offered",
+      "Current client acquisition channels"
+    ]
+  },
+  "codex_review": {
+    "schema_valid": true,
+    "grounding": "PASS",
+    "commercial_decision": "NOT_PERFORMED",
+    "outreach_approved": false,
+    "payment_authorized": false
+  },
+  "canonical_business_decision": false,
+  "limitations": [
+    "The result classifies only the two supplied facts.",
+    "Fit score is a draft model assessment, not observed market demand.",
+    "Offer, target and price still require review and approval."
+  ]
+}

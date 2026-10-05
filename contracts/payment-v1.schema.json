@@ -1,0 +1,14 @@
+{
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "$id":"https://nexus.local/contracts/payment-v1.schema.json",
+  "title":"NEXUS PAYMENT_V1",
+  "type":"object","additionalProperties":false,
+  "required":["payment_id","offer_id","lead_id","amount","currency","method","status","external_reference","observed_at","provenance","money_movement_capability"],
+  "properties":{
+    "payment_id":{"type":"string","pattern":"^PAY_[A-Za-z0-9_]+$"},
+    "offer_id":{"type":"string"},"lead_id":{"type":"string"},"amount":{"type":"number"},"currency":{"type":"string"},
+    "method":{"const":"REVOLUT"},"status":{"enum":["PENDING","PAID","FAILED","REFUNDED"]},
+    "external_reference":{"type":["string","null"]},"observed_at":{"type":"string"},"provenance":{"type":"object"},
+    "money_movement_capability":{"const":false}
+  }
+}

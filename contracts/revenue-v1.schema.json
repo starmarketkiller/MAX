@@ -1,0 +1,13 @@
+{
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "$id":"https://nexus.local/contracts/revenue-v1.schema.json",
+  "title":"NEXUS REVENUE_V1",
+  "type":"object","additionalProperties":false,
+  "required":["revenue_id","payment_id","amount","currency","cost","gross_margin","offer_id","lead_id","payment_method","payment_status","time_spent","acquisition_source","recorded_at","provenance"],
+  "properties":{
+    "revenue_id":{"type":"string","pattern":"^REV_[A-Za-z0-9_]+$"},"payment_id":{"type":"string"},
+    "amount":{"type":"number"},"currency":{"type":"string"},"cost":{"type":"number"},"gross_margin":{"type":"number"},
+    "offer_id":{"type":"string"},"lead_id":{"type":"string"},"payment_method":{"const":"REVOLUT"},"payment_status":{"const":"PAID"},
+    "time_spent":{"type":"string"},"acquisition_source":{"type":"string"},"recorded_at":{"type":"string"},"provenance":{"type":"object"}
+  }
+}
