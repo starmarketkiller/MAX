@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/edge-validation-registry.schema.json",
+  "title": "NEXUS EDGE_VALIDATION_REGISTRY_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generated_at", "base_registry", "status_vocabulary",
+    "component_value_vocabulary", "role_vocabulary", "strategies"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "base_registry": {"type": "object"},
+    "status_vocabulary": {"type": "array", "items": {"type": "string"}},
+    "component_value_vocabulary": {"type": "array", "items": {"type": "string"}},
+    "role_vocabulary": {"type": "array", "items": {"type": "string"}},
+    "strategies": {
+      "type": "array", "minItems": 1,
+      "items": {"$ref": "#/definitions/strategy"}
+    }
+  },
+  "definitions": {
+    "strategy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["strategy_id", "implementation_status", "default_enabled",
+        "standalone_edge_status", "component_value_status", "role_in_system",
+        "potential_reusable_components", "needs_reimplementation_review",
+        "edge_validation_date", "edge_validation_source",
+        "edge_validation_sha", "edge_validation_evidence_grade", "known_defects",
+        "defect_status", "forward_validation_status", "latest_relevant_note_date", "validation_notes"],
+      "properties": {
+        "strategy_id": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+        "implementation_status": {"type": "string"},
+        "default_enabled": {"type": "boolean"},
+        "standalone_edge_status": {"enum": ["UNVALIDATED", "CANDIDATE", "BORDERLINE", "VALIDATED", "FAILED", "DEFECT_BLOCKED", "FORWARD_REQUIRED"]},
+        "component_value_status": {"enum": ["UNKNOWN", "PROMISING", "SUPPORTED", "WEAK", "REDUNDANT", "NOT_EVALUATED"]},
+        "role_in_system": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/definitions/role"}},
+        "potential_reusable_components": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/component"}
+        },
+        "needs_reimplementation_review": {"type": "boolean"},
+        "edge_validation_date": {"type": ["string", "null"]},
+        "edge_validation_source": {"type": "array", "items": {"type": "string"}},
+        "edge_validation_sha": {"type": "array", "items": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
+        "edge_validation_evidence_grade": {"type": ["string", "null"]},
+        "known_defects": {"type": "array", "items": {"type": "object"}},
+        "defect_status": {"enum": ["NONE_KNOWN", "DEFECT_BLOCKED", "REMEDIATED", "UNKNOWN_REMEDIATION", "SUSPECT"]},
+        "forward_validation_status": {"enum": ["NOT_REQUIRED", "NOT_STARTED", "ACCUMULATING", "INSUFFICIENT", "NEGATIVE_INSUFFICIENT", "COMPLETE_SUPPORTIVE", "COMPLETE_NEGATIVE", "UNKNOWN"]},
+        "latest_relevant_note_date": {"type": ["string", "null"]},
+        "validation_notes": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "role": {
+      "enum": ["REGIME_DETECTOR", "CONTEXT_FEATURE", "LOCATION_FEATURE", "MOMENTUM_FEATURE",
+        "VOLATILITY_FEATURE", "LIQUIDITY_EVENT", "ENTRY_TRIGGER", "CONFIRMATION", "FILTER",
+        "RISK_FEATURE", "EXIT_FEATURE", "POSITION_MANAGEMENT", "RESEARCH_ONLY"]
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component", "role", "evidence_status", "evidence_references"],
+      "properties": {
+        "component": {"type": "string", "minLength": 1},
+        "role": {"$ref": "#/definitions/role"},
+        "evidence_status": {"enum": ["UNKNOWN", "PROMISING", "SUPPORTED", "WEAK", "REDUNDANT", "NOT_EVALUATED"]},
+        "evidence_references": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "note": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

@@ -1,0 +1,2305 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-06T00:01:09+02:00",
+  "base_registry": {
+    "source": "contracts/strategy-registry.json",
+    "sha256": "0bd410ab58daec9aadd4336f0dbea3d588bae2c5a3d5ea2be92bf34bc84cc7cf",
+    "strategy_count": 83,
+    "runtime_behavior_changed": false,
+    "reconciliation_input": {
+      "name": "TRADING_EDGE_STATUS_RECONCILIATION_V1",
+      "artifact_availability": "CANONICAL_SOURCE_VISIBLE",
+      "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+      "source_sha256": "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1",
+      "source_commit": "364deec32476d35509dbc97d5a8d3263cd9d44e1",
+      "handling": "Part 4 final table is authoritative; AMBIGUOUS is conservatively represented as UNVALIDATED with an explicit note."
+    }
+  },
+  "status_vocabulary": [
+    "UNVALIDATED",
+    "CANDIDATE",
+    "BORDERLINE",
+    "VALIDATED",
+    "FAILED",
+    "DEFECT_BLOCKED",
+    "FORWARD_REQUIRED"
+  ],
+  "component_value_vocabulary": [
+    "UNKNOWN",
+    "PROMISING",
+    "SUPPORTED",
+    "WEAK",
+    "REDUNDANT",
+    "NOT_EVALUATED"
+  ],
+  "role_vocabulary": [
+    "REGIME_DETECTOR",
+    "CONTEXT_FEATURE",
+    "LOCATION_FEATURE",
+    "MOMENTUM_FEATURE",
+    "VOLATILITY_FEATURE",
+    "LIQUIDITY_EVENT",
+    "ENTRY_TRIGGER",
+    "CONFIRMATION",
+    "FILTER",
+    "RISK_FEATURE",
+    "EXIT_FEATURE",
+    "POSITION_MANAGEMENT",
+    "RESEARCH_ONLY"
+  ],
+  "strategies": [
+    {
+      "strategy_id": "3COMMAS_BOT",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "ADX_RSI",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "CANDIDATE",
+      "component_value_status": "NOT_EVALUATED",
+      "role_in_system": [
+        "REGIME_DETECTOR",
+        "MOMENTUM_FEATURE",
+        "ENTRY_TRIGGER"
+      ],
+      "potential_reusable_components": [
+        {
+          "component": "adx_trend_strength",
+          "role": "REGIME_DETECTOR",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - Market Intelligence Foundation.md"
+          ]
+        },
+        {
+          "component": "rsi_momentum_condition",
+          "role": "MOMENTUM_FEATURE",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - Market Intelligence Foundation.md"
+          ]
+        },
+        {
+          "component": "adx_rsi_entry_trigger",
+          "role": "ENTRY_TRIGGER",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh"
+          ]
+        }
+      ],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Regime-confounded in Phase 7.27; standalone confidence reduced, not falsified."
+      ]
+    },
+    {
+      "strategy_id": "AMD_CONT",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "AMD_REVERSAL",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation marks the evidence AMBIGUOUS; represented conservatively as UNVALIDATED."
+      ]
+    },
+    {
+      "strategy_id": "BAR_UPDN",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": true,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "COOLDOWN_STATE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "DEFECT_BLOCKED"
+        }
+      ],
+      "defect_status": "DEFECT_BLOCKED",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "BB_SQUEEZE",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": true,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "DEFECT_BLOCKED"
+        }
+      ],
+      "defect_status": "DEFECT_BLOCKED",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "BJORGUM",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "BOLLINGER",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "BORDERLINE",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "SUSPECT"
+        }
+      ],
+      "defect_status": "SUSPECT",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Prior confirmation invalidated by buy-and-hold comparison; contamination remains suspect only."
+      ]
+    },
+    {
+      "strategy_id": "BREAKOUT_ACC",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "FORWARD_REQUIRED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "COOLDOWN_STATE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "REMEDIATED"
+        }
+      ],
+      "defect_status": "REMEDIATED",
+      "forward_validation_status": "INSUFFICIENT",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Defect remediated; CI95 includes zero and forward sample remains insufficient."
+      ]
+    },
+    {
+      "strategy_id": "CISD_TRUE",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "CRT",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "FAILED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "CRT_MINSTOP_FILTER",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "DARVAS_BOX",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "DISP_REBAL",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "DONCHIAN_TURTLE",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "ELLIOTT",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "EMA_CROSS_BENCHMARK",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "EMA_PULLBACK",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "CANDIDATE",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "FVG_CONT",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "CANDIDATE",
+      "component_value_status": "NOT_EVALUATED",
+      "role_in_system": [
+        "LOCATION_FEATURE",
+        "ENTRY_TRIGGER"
+      ],
+      "potential_reusable_components": [
+        {
+          "component": "fair_value_gap_location",
+          "role": "LOCATION_FEATURE",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - 37 Strategy Cost-Calibrated Re-Evaluation.md"
+          ]
+        },
+        {
+          "component": "fvg_continuation_trigger",
+          "role": "ENTRY_TRIGGER",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - 37 Strategy Cost-Calibrated Re-Evaluation.md"
+          ]
+        }
+      ],
+      "needs_reimplementation_review": true,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "SLRECLAIM_ACCOUNT_PROTECTION_BYPASS",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "UNKNOWN_REMEDIATION"
+        }
+      ],
+      "defect_status": "UNKNOWN_REMEDIATION",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Research candidate; SLReclaim remediation is not confirmed."
+      ]
+    },
+    {
+      "strategy_id": "FVG_CONT_V2",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "FVG_MIT",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "FVG_MIT_WINDOW",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "ICHIMOKU",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "CANDIDATE",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "ICHIMOKU_HULL_MACD",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "IFVG",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "IFVG_CHOCH_WINDOW",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "JUDAS_SWING",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "CANDIDATE",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "LDN_REVERSAL",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "LEVEL_CONFLUENCE",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "LEVEL_CONFLUENCE_M5",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "LEVEL_REACTION",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "LEVEL_REACTION_M5",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "LIQ_SWEEP",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "CANDIDATE",
+      "component_value_status": "NOT_EVALUATED",
+      "role_in_system": [
+        "LIQUIDITY_EVENT",
+        "ENTRY_TRIGGER"
+      ],
+      "potential_reusable_components": [
+        {
+          "component": "liquidity_sweep_detection",
+          "role": "LIQUIDITY_EVENT",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - Phase 7.25 LIQ_SWEEP Edge Validation V1.md"
+          ]
+        },
+        {
+          "component": "sweep_reversal_trigger",
+          "role": "ENTRY_TRIGGER",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - Phase 7.25 LIQ_SWEEP Edge Validation V1.md"
+          ]
+        }
+      ],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "NEGATIVE_INSUFFICIENT",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "OOS n=6 is negative but insufficient for final refutation."
+      ]
+    },
+    {
+      "strategy_id": "LIQ_VOID",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "LONDON_BO",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "BORDERLINE",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "MACD",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "FAILED",
+      "component_value_status": "NOT_EVALUATED",
+      "role_in_system": [
+        "MOMENTUM_FEATURE",
+        "CONFIRMATION",
+        "ENTRY_TRIGGER"
+      ],
+      "potential_reusable_components": [
+        {
+          "component": "macd_momentum",
+          "role": "MOMENTUM_FEATURE",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - First Serious 3Y Validation SAR MACD.md"
+          ]
+        },
+        {
+          "component": "macd_cross_trigger",
+          "role": "ENTRY_TRIGGER",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - First Serious 3Y Validation SAR MACD.md"
+          ]
+        }
+      ],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "COMPLETE_NEGATIVE",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "SERIOUS_VALIDATION_FAIL; two of three years negative."
+      ]
+    },
+    {
+      "strategy_id": "MACD_SMA200",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "MALAYSIAN_SNR",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "CANDIDATE",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "MALAYSIAN_SNR_BREAKOUT",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "MALAYSIAN_SNR_V2_RETEST",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "MALAYSIAN_SNR_V2_RETEST_OUTRANGE",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "MALAYSIAN_SNR_V2_STAGE1",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "MALAYSIAN_SNR_V2_STAGE3",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "NY_REVERSAL",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "BORDERLINE",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "NY_REVERSAL_CHOCH_WINDOW",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "OB_MIT",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "ORDER_BLOCK",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "FORWARD_REQUIRED",
+      "component_value_status": "NOT_EVALUATED",
+      "role_in_system": [
+        "LOCATION_FEATURE",
+        "ENTRY_TRIGGER"
+      ],
+      "potential_reusable_components": [
+        {
+          "component": "order_block_zone_location",
+          "role": "LOCATION_FEATURE",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - Phase 7.22 ORDER_BLOCK Edge Validation V1.md"
+          ]
+        },
+        {
+          "component": "order_block_retest_trigger",
+          "role": "ENTRY_TRIGGER",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - Phase 7.22 ORDER_BLOCK Edge Validation V1.md"
+          ]
+        }
+      ],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "STATE_MACHINE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "REMEDIATED"
+        }
+      ],
+      "defect_status": "REMEDIATED",
+      "forward_validation_status": "INSUFFICIENT",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Defect remediated; CI95 includes zero and forward evidence remains insufficient."
+      ]
+    },
+    {
+      "strategy_id": "ORDER_BLOCK_V2",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "OTE_CONT",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation marks the evidence AMBIGUOUS; represented conservatively as UNVALIDATED."
+      ]
+    },
+    {
+      "strategy_id": "OTE_CONT_V2",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "PIVOT_WICK",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": true,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "COOLDOWN_STATE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "DEFECT_BLOCKED"
+        }
+      ],
+      "defect_status": "DEFECT_BLOCKED",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "PMAX",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": true,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "RECURSIVE_VALUE_STATE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "DEFECT_BLOCKED"
+        }
+      ],
+      "defect_status": "DEFECT_BLOCKED",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "PO3",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation marks the evidence AMBIGUOUS; represented conservatively as UNVALIDATED."
+      ]
+    },
+    {
+      "strategy_id": "RANGE_FADE",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": true,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "STATE_MACHINE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "DEFECT_BLOCKED"
+        }
+      ],
+      "defect_status": "DEFECT_BLOCKED",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "RSI_DIV",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "FAILED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "RSI_DIV_PINE",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "SAR",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "BORDERLINE",
+      "component_value_status": "NOT_EVALUATED",
+      "role_in_system": [
+        "MOMENTUM_FEATURE",
+        "ENTRY_TRIGGER"
+      ],
+      "potential_reusable_components": [
+        {
+          "component": "parabolic_sar_trend_direction",
+          "role": "MOMENTUM_FEATURE",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - First Serious 3Y Validation SAR MACD.md"
+          ]
+        },
+        {
+          "component": "sar_flip_trigger",
+          "role": "ENTRY_TRIGGER",
+          "evidence_status": "NOT_EVALUATED",
+          "evidence_references": [
+            "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+            "vault/01-Trading/NEXUS - First Serious 3Y Validation SAR MACD.md"
+          ]
+        }
+      ],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "SERIOUS_VALIDATION_BORDERLINE; this supersedes the incomplete placeholder UNVALIDATED state."
+      ]
+    },
+    {
+      "strategy_id": "SAR_ADX20",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "SAR_FLIP",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "SCALP_BB_FADE",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "SCALP_EMA",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "SCALP_RANGE_BRK",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "SCALP_RSI_SNAP",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "SH_BMS_RTO",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": true,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "DEFECT_BLOCKED"
+        }
+      ],
+      "defect_status": "DEFECT_BLOCKED",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "SH_BMS_RTO_V2",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": true,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "STATE_MACHINE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "DEFECT_BLOCKED"
+        }
+      ],
+      "defect_status": "DEFECT_BLOCKED",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "SILVER_BULLET",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": true,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "DEFECT_BLOCKED"
+        }
+      ],
+      "defect_status": "DEFECT_BLOCKED",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "SILVER_BULLET_V2",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "SMS_BMS_RTO",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation marks the evidence AMBIGUOUS; represented conservatively as UNVALIDATED."
+      ]
+    },
+    {
+      "strategy_id": "SMS_BMS_RTO_CHOCH_WINDOW",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "STRUCT_REACT",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "CANDIDATE",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "SWING_FALSEBREAK",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "THREE_BAR_DELIVERY_BREAK",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "TSI",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": true,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [
+        {
+          "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+          "remediation_state": "DEFECT_BLOCKED"
+        }
+      ],
+      "defect_status": "DEFECT_BLOCKED",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    },
+    {
+      "strategy_id": "TSI_EXTREME",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "TURTLE_SOUP",
+      "implementation_status": "DISABLED",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "TURTLE_SOUP_CHOCH",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "TURTLE_SOUP_CHOCH_DBLBODY",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "TURTLE_SOUP_CHOCH_NEAR",
+      "implementation_status": "RESEARCH_ONLY",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+      "implementation_status": "EXPERIMENTAL",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "WEEKLY_EXP",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation marks the evidence AMBIGUOUS; represented conservatively as UNVALIDATED."
+      ]
+    },
+    {
+      "strategy_id": "WICK_SWEEP_RECLAIM",
+      "implementation_status": "EXPERIMENTAL",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "WICK_SWEEP_REV",
+      "implementation_status": "EXPERIMENTAL",
+      "default_enabled": false,
+      "standalone_edge_status": "UNVALIDATED",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": [
+        "Canonical reconciliation groups this identity among strategies without a scientific decision."
+      ]
+    },
+    {
+      "strategy_id": "Z_SCORE_BREAKOUT",
+      "implementation_status": "ACTIVE",
+      "default_enabled": true,
+      "standalone_edge_status": "CANDIDATE",
+      "component_value_status": "UNKNOWN",
+      "role_in_system": [],
+      "potential_reusable_components": [],
+      "needs_reimplementation_review": false,
+      "edge_validation_date": "2026-10-06",
+      "edge_validation_source": [
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+      ],
+      "edge_validation_sha": [
+        "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
+      ],
+      "edge_validation_evidence_grade": null,
+      "known_defects": [],
+      "defect_status": "NONE_KNOWN",
+      "forward_validation_status": "UNKNOWN",
+      "latest_relevant_note_date": "2026-10-06",
+      "validation_notes": []
+    }
+  ]
+}
