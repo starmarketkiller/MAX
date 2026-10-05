@@ -4,7 +4,7 @@ domain: opportunity-funding
 status: adopted
 tags: [business, funding, opportunity, nexus]
 created: 2026-09-29
-updated: 2026-09-29
+updated: 2026-10-05
 ---
 
 # 💰 Opportunity & Funding
@@ -40,15 +40,22 @@ bypassare (capitale, capacità mancanti, rischio legale/policy, dati insufficien
   TIER0/Ministral, zero escalation premium.
 - **NEXUS TASK #0007** (questo spostamento) — adozione formale + pulizia
   namespace Vault, nessuna modifica a schema/scoring/gate.
+- **[[NEXUS TASK 0010 - First Revenue Execution V1 (Codex)]]** — bookkeeping
+  operativo (Offer/Lead/Payment/Revenue) aggiunto al framework, lavoro
+  parallelo di Codex (`01e6180`), nessuna modifica a scoring/gate.
+- **[[NEXUS TASK 0011 - First Revenue Manual Experiment (Lead Research Service)]]**
+  — primo test reale: `OPP_LEAD_RESEARCH_SERVICE` portato fuori da
+  PROVISIONAL, 10 prospect verificati, primo outreach manuale inviato
+  (PNT Solutions, 2026-10-05).
 
-## Stato attuale (18 opportunity, tutte PROVISIONAL/HYPOTHESIS_BASED)
+## Stato attuale (2026-10-05)
 
-Nessuna opportunity oggi `READY_FOR_MVP` o oltre — tutte richiedono ancora
-validazione reale prima di qualunque azione commerciale. Prossimo passo naturale
-(non ancora una NEXUS TASK): usare il framework su opportunity reali, a partire
-da quelle con miglior rapporto time-to-cash / capitale / capability coverage,
-seguendo sempre il `next_cheapest_validation_step` dichiarato per ciascuna —
-mai un'azione commerciale reale senza approval esplicita.
+17 delle 18 opportunity restano PROVISIONAL/HYPOTHESIS_BASED, non validate.
+**`OPP_LEAD_RESEARCH_SERVICE` è l'unica in test di mercato reale** (primo
+outreach manuale inviato, esito ancora in attesa — vedi NEXUS TASK #0011).
+Nessuna opportunity ha ancora generato revenue osservata. Prossimo passo
+naturale per le altre 17: restare `next_cheapest_validation_step` dichiarato
+per ciascuna, mai un'azione commerciale reale senza approval esplicita.
 
 ## Come compilarlo
 

@@ -4,12 +4,22 @@ domain: system
 status: active
 tags: [jarvis, sistema, architettura]
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-10-05
 ---
 
 # ⚙️ Sistema JARVIS — come si parlano i pezzi
 
-## I tre bracci
+> **Aggiornamento 2026-10-05:** il contenuto sotto (3 bracci n8n/Midjourney,
+> "non ancora costruiti") descrive il piano del 12 luglio 2026 ed è superato.
+> JARVIS oggi è l'**Orchestrator V1 / Jarvis V1** reale: Task Queue/Router/
+> Ledger, bot Telegram live su Render, Dynamic Specialist Review, e un router
+> cognitivo locale opzionale (Ministral) — vedi
+> **[[NEXUS - Jarvis Ministral Router V1]]** e
+> **[[NEXUS - Ministral Task Compiler V1]]**. Stato operativo aggiornato:
+> **[[CURRENT_STATE]]**. La sezione storica sotto resta per memoria del
+> ragionamento originale, non riscritta.
+
+## I tre bracci (piano originale, luglio 2026 — storico)
 
 ### 🧠 Obsidian (memoria)
 Questo vault. JARVIS lo consulta come RAG prima di rispondere: legge le note

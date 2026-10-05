@@ -2,6 +2,17 @@
 
 Generato: 19/07/2026 · Baseline: `e6ce816` (branch `baseline-post-infra-audit`, EA 2.50) · Solo lettura: nessun codice, configurazione o dato originale modificato.
 
+> **Nota 2026-10-05:** questo indice e i 4 database sotto restano fermi al
+> 19/07 (nessuna rigenerazione automatica eseguita da allora — non esiste
+> uno script che li scrive, sono curati a mano). La sezione "Stato del
+> progetto in 5 righe" qui sotto è quindi **storica, non lo stato attuale**:
+> per lo stato trading corrente usa **[[NEXUS EA - MASTER ROADMAP v3]]**
+> (ultimo aggiornamento reale 2026-08-17) e `vault/01-Trading/Decisions/`;
+> per lo stato generale del progetto (Jarvis + Business + Trading) usa
+> **[[CURRENT_STATE]]**. Non sono stati inventati numeri di sweep/PF
+> aggiornati in questa nota — servirebbe rigenerare i 4 database dai dati
+> reali più recenti, non ancora fatto.
+
 Base dati per il futuro **Nexus Core**. Ogni valore riporta la fonte; nessuna interpretazione aggiunta oltre a quanto già documentato nei sorgenti citati.
 
 ---
