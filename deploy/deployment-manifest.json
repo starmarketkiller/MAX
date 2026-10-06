@@ -8,9 +8,9 @@
     },
     {
       "path": "LocalBridge/nexus_local_worker.py",
-      "sha256": "4ef2232097f43bc77354027533e2e37e81966315a4b4d744cdbad9f5d273da1e"
+      "sha256": "d4ce581276700eddad44d125b82a2a38fc6f23f76dc6488f1a66d7cab27a50cb"
     }
   ],
   "minimum_worker_version": "2.0.0",
-  "sha256": "527f66c87c964bb2f7638e975abae003e95c0f39efc6bfdcc884433ae365cefe"
+  "sha256": "1b57d17d5222d9413c9dbbad7166fac3c2fab291e4590fd8edbee9266d109ac0"
 }
