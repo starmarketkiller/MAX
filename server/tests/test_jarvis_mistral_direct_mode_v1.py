@@ -118,6 +118,33 @@ def test_mistral_text_never_misrouted_by_other_classifiers(service, monkeypatch)
     assert response["generated_by"] == "ministral-3:3b-direct"
 
 
+def test_mistral_prompt_includes_vault_context_when_relevant(service, monkeypatch):
+    captured = {}
+
+    def _capture(prompt, timeout=None, ensure_single_resident=True):
+        captured["prompt"] = prompt
+        return {"success": True, "response_text": "ok", "error": None}
+
+    monkeypatch.setattr("jarvis_v1.service.is_ollama_reachable", lambda timeout=1: True)
+    monkeypatch.setattr("jarvis_v1.service.call_local_model", _capture)
+    service.handle(message("/mistral quali sono le decisioni di funding recenti?"))
+    assert "CONTESTO DI RIFERIMENTO DAL VAULT" in captured["prompt"]
+    assert "namespace=REVENUE" in captured["prompt"]
+
+
+def test_mistral_prompt_has_no_vault_section_when_nothing_matches(service, monkeypatch):
+    captured = {}
+
+    def _capture(prompt, timeout=None, ensure_single_resident=True):
+        captured["prompt"] = prompt
+        return {"success": True, "response_text": "ok", "error": None}
+
+    monkeypatch.setattr("jarvis_v1.service.is_ollama_reachable", lambda timeout=1: True)
+    monkeypatch.setattr("jarvis_v1.service.call_local_model", _capture)
+    service.handle(message("/mistral xyzzyqwertyneverseenterm12345"))
+    assert "CONTESTO DI RIFERIMENTO DAL VAULT" not in captured["prompt"]
+
+
 def test_different_conversations_have_independent_history(service, monkeypatch):
     monkeypatch.setattr("jarvis_v1.service.is_ollama_reachable", lambda timeout=1: True)
     monkeypatch.setattr("jarvis_v1.service.call_local_model", _ok_call("ok"))
