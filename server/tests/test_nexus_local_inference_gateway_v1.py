@@ -243,3 +243,31 @@ def test_live_chat_endpoint_succeeds(live_server):
 def test_live_chat_endpoint_requires_auth(live_server):
     status, _ = _post(live_server, "/v1/jarvis/chat", {"text": "ciao"})
     assert status == 401
+
+
+# LOCAL_INFERENCE_CONNECTIVITY_V1 - default timeout + startup warmup -------
+def test_default_timeout_has_real_margin_for_a_cold_model_call():
+    # Misurato direttamente su questa macchina: ~49s a freddo, ~6s a caldo.
+    # Il vecchio default (8s) falliva quasi sempre la prima richiesta reale.
+    assert gw.DEFAULT_TIMEOUT_SECONDS >= 30
+
+
+def test_warmup_model_calls_ollama_once_and_never_raises(monkeypatch):
+    calls = []
+
+    def _fake_call(prompt, model=None, timeout=None, json_mode=False, ensure_single_resident=True):
+        calls.append({"prompt": prompt, "model": model, "json_mode": json_mode})
+        return {"success": True, "wall_seconds": 1.23}
+
+    monkeypatch.setattr(gw.ollama_worker, "call_local_model", _fake_call)
+    gw._warmup_model()
+    assert len(calls) == 1
+    assert calls[0]["json_mode"] is False
+
+
+def test_warmup_model_never_raises_even_if_ollama_call_fails(monkeypatch):
+    def _raising_call(*a, **kw):
+        raise ConnectionError("ollama down")
+
+    monkeypatch.setattr(gw.ollama_worker, "call_local_model", _raising_call)
+    gw._warmup_model()  # non deve mai propagare - solo loggare

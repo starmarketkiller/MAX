@@ -32,6 +32,7 @@ import hmac
 import json
 import os
 import sys
+import threading
 import time
 from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -54,7 +55,13 @@ DEFAULT_PORT = int(os.environ.get("NEXUS_LOCAL_INFERENCE_GATEWAY_PORT", "8765"))
 MAX_REQUEST_BYTES = int(os.environ.get("NEXUS_LOCAL_INFERENCE_GATEWAY_MAX_BYTES", "32768"))
 MAX_TEXT_LENGTH = 4000
 RATE_LIMIT_PER_MINUTE = int(os.environ.get("NEXUS_LOCAL_INFERENCE_GATEWAY_RATE_LIMIT", "30"))
-DEFAULT_TIMEOUT_SECONDS = int(os.environ.get("NEXUS_LOCAL_INFERENCE_GATEWAY_TIMEOUT_SECONDS", "8"))
+#: LOCAL_INFERENCE_CONNECTIVITY_V1 (2026-10-06): misurato direttamente su questa
+#: macchina - una chiamata a freddo (modello non ancora residente in Ollama,
+#: es. dopo l'avvio del gateway o 5+ minuti di inattivita', il default
+#: keep_alive di Ollama) ha richiesto ~49s per ministral-3:3b; una chiamata a
+#: caldo ~6s. Il default precedente (8s) falliva quasi sempre la prima
+#: richiesta reale con MODEL_CALL_FAILED/502 - vedi anche il warmup in run().
+DEFAULT_TIMEOUT_SECONDS = int(os.environ.get("NEXUS_LOCAL_INFERENCE_GATEWAY_TIMEOUT_SECONDS", "60"))
 
 SYSTEM_PROMPT = """Sei il motore di interpretazione di Jarvis, un assistente NEXUS via Telegram.
 Il tuo UNICO compito e' interpretare il messaggio dell'utente e produrre UN oggetto
@@ -266,6 +273,24 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self._json(result.get("status", 502), {"ok": False, "error": result["error"]})
 
 
+def _warmup_model():
+    """LOCAL_INFERENCE_CONNECTIVITY_V1: a cold call to Ollama (model not yet
+    resident) measured ~49s on this machine vs ~6s warm - without this, the
+    first real /interpret or /chat request after the gateway starts (or
+    after Ollama's keep_alive window expires) was the one most likely to
+    time out. Best-effort, non-fatal, never blocks the server from accepting
+    connections (runs in a background thread) - a failed/slow warmup just
+    means the first real request pays the cold-start cost instead."""
+    try:
+        result = ollama_worker.call_local_model(
+            "ciao", model=ollama_worker.DEFAULT_MODEL, timeout=90, json_mode=False,
+            ensure_single_resident=False)
+        print(f"[gateway] warmup {'ok' if result.get('success') else 'failed'} "
+             f"({result.get('wall_seconds')}s)", flush=True)
+    except Exception as exc:  # noqa: BLE001 - warmup is best-effort, never fatal
+        print(f"[gateway] warmup raised {type(exc).__name__} (non-fatal)", flush=True)
+
+
 def run(port=None):
     token = os.environ.get("NEXUS_LOCAL_INFERENCE_GATEWAY_TOKEN", "")
     if len(token) < 32:
@@ -274,6 +299,7 @@ def run(port=None):
     server = ThreadingHTTPServer(("127.0.0.1", port or DEFAULT_PORT), GatewayHandler)
     print(f"[gateway] listening on 127.0.0.1:{port or DEFAULT_PORT} "
           f"(expose only via an authenticated tunnel, never directly)", flush=True)
+    threading.Thread(target=_warmup_model, daemon=True).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:

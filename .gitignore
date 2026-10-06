@@ -15,6 +15,10 @@ frontend/.env.*.local
 LocalBridge/nexus_worker.config.json
 LocalBridge/*.config.json
 server/mt5_data_v1/_private/
+LocalBridge/cloudflared.exe
+LocalBridge/*.log
+LocalBridge/*.log.err
+LocalBridge/current_gateway_url.txt
 scripts/run_sweep37.ps1
 scripts/*credentials*
 scripts/*.local.ps1

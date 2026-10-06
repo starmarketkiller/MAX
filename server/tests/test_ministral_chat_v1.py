@@ -100,3 +100,11 @@ def test_bounded_history_keeps_only_most_recent_turns():
 
 def test_bounded_history_ignores_non_dict_entries():
     assert ministral_chat.bounded_history(["not-a-dict", 42, None]) == []
+
+
+def test_default_timeout_has_real_margin_for_a_cold_gateway_call():
+    # LOCAL_INFERENCE_CONNECTIVITY_V1: misurato ~49s per una chiamata a
+    # freddo a ministral-3:3b su Ollama - il vecchio default (20s) falliva
+    # la prima richiesta reale dopo l'avvio del gateway o dopo che il
+    # keep_alive di Ollama scadeva.
+    assert ministral_chat.DEFAULT_TIMEOUT_SECONDS >= 30

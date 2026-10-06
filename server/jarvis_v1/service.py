@@ -556,7 +556,10 @@ class JarvisService:
 
         history = self.conversation_store.get(conversation_id).get("mistral_history") or []
         prompt = self._build_mistral_direct_prompt(user_text, history)
-        call = call_local_model(prompt, timeout=45, ensure_single_resident=False)
+        # LOCAL_INFERENCE_CONNECTIVITY_V1: 60s, not the previous 45s - measured
+        # ~49s for a genuinely cold ministral-3:3b call on this machine (model
+        # not yet resident in Ollama) vs ~6s warm; 45s failed real traffic.
+        call = call_local_model(prompt, timeout=60, ensure_single_resident=False)
         if not call.get("success") or not (call.get("response_text") or "").strip():
             self.ledger.append("MISTRAL_DIRECT_FAILED", None,
                                {"message_id": message["message_id"], "error": call.get("error")},
@@ -791,7 +794,7 @@ class JarvisService:
         if is_ollama_reachable(timeout=1):
             prompt = ("Riassumi in italiano questi fatti canonici senza aggiungere fatti o giudizi. "
                       "Rispondi in massimo 6 frasi. JSON:\n" + json.dumps(facts, ensure_ascii=False))
-            call = call_local_model(prompt, timeout=45, ensure_single_resident=False)
+            call = call_local_model(prompt, timeout=60, ensure_single_resident=False)
             if call["success"] and call.get("response_text"):
                 summary = call["response_text"].strip(); local_used = True
         self.ledger.append("QUERY_EXECUTED", None,

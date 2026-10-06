@@ -17,7 +17,14 @@ import time
 import urllib.error
 import urllib.request
 
-DEFAULT_TIMEOUT_SECONDS = float(os.environ.get("JARVIS_MINISTRAL_CHAT_TIMEOUT_SECONDS", "20"))
+# LOCAL_INFERENCE_CONNECTIVITY_V1 (2026-10-06): measured ~49s for a cold
+# ministral-3:3b call on the operator's machine (model not yet resident in
+# Ollama) vs ~6s warm - 20s failed the first real request after the gateway
+# started or after Ollama's keep_alive window expired. The gateway itself
+# now warms the model on startup (see nexus_local_inference_gateway.py's
+# _warmup_model()), but this client-side timeout still needs real margin
+# for whenever that warmup hasn't happened yet or has expired.
+DEFAULT_TIMEOUT_SECONDS = float(os.environ.get("JARVIS_MINISTRAL_CHAT_TIMEOUT_SECONDS", "60"))
 MAX_HISTORY_TURNS = int(os.environ.get("JARVIS_MINISTRAL_CHAT_HISTORY_TURNS", "6"))
 
 
