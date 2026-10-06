@@ -17,6 +17,14 @@ TaskQueue, no Orchestrator, no EventLedger, no shell, no filesystem writes
 beyond reading the bounded output schema already checked into contracts/.
 A request here can, at most, ask Ollama a question and get back a single
 JSON object that is schema-validated before it ever leaves this process.
+
+TELEGRAM_MISTRAL_DIRECT_MODE_V1 (2026-10-06) adds a third route:
+  POST /v1/jarvis/chat - free-form chat, no forced output schema (unlike
+  /interpret, which always forces a structured router decision). Same
+  security boundary (auth, rate limit, size limit, localhost-only Ollama),
+  same ollama_worker.call_local_model() - just json_mode=False and a
+  different, much shorter system prompt. Still never mutates anything: the
+  reply text is the only thing returned, nothing is written to disk here.
 """
 from __future__ import annotations
 
@@ -82,6 +90,53 @@ def build_prompt(text: str, context_packet: dict) -> str:
     return (f"{SYSTEM_PROMPT}\n\nCONTESTO (JSON):\n"
             f"{json.dumps(context_packet, ensure_ascii=False)}\n\n"
             f"MESSAGGIO UTENTE: {json.dumps(text, ensure_ascii=False)}")
+
+
+CHAT_SYSTEM_PROMPT = """Sei Mistral, un assistente locale accessibile direttamente via Telegram (modalita'
+diretta, distinta da Jarvis). Rispondi in linguaggio naturale, in italiano salvo richiesta diversa,
+in modo conciso e diretto. Non esegui azioni, non hai accesso a file o task reali in questa modalita' -
+se l'utente ti chiede di fare qualcosa che richiede accesso a dati/file/task reali, dillo chiaramente
+invece di inventare una risposta plausibile."""
+
+CHAT_MAX_HISTORY_TURNS = 12  # difesa in profondita' - il chiamante (Render) e' gia' responsabile
+                            # di limitare la finestra inviata, ma questo gateway non si fida
+                            # ciecamente di un body arbitrario
+
+
+def build_chat_prompt(text: str, history: list) -> str:
+    bounded = [h for h in (history or []) if isinstance(h, dict)][-CHAT_MAX_HISTORY_TURNS:]
+    lines = [CHAT_SYSTEM_PROMPT, ""]
+    for turn in bounded:
+        role = "Utente" if turn.get("role") == "user" else "Mistral"
+        lines.append(f"{role}: {str(turn.get('text') or '')[:MAX_TEXT_LENGTH]}")
+    lines.append(f"Utente: {text}")
+    lines.append("Mistral:")
+    return "\n".join(lines)
+
+
+def chat(text, history, *, model=None, timeout=None, call_local_model=None):
+    """Pure core logic, no HTTP - mirrors interpret() but free-form: no
+    forced JSON schema, no candidate_task_ids validation (this mode never
+    references a task). Returns {"ok": True, "output": {"reply": "<text>"}}
+    or {"ok": False, "error": "<reason>", "status": <http status>} - never
+    raises."""
+    call_local_model = call_local_model or ollama_worker.call_local_model
+    text = (text or "")[:MAX_TEXT_LENGTH]
+    if not text.strip():
+        return {"ok": False, "error": "EMPTY_TEXT", "status": 400}
+    prompt = build_chat_prompt(text, history)
+    try:
+        call = call_local_model(prompt, model=model or ollama_worker.DEFAULT_MODEL,
+                                timeout=timeout or DEFAULT_TIMEOUT_SECONDS,
+                                json_mode=False, ensure_single_resident=False)
+    except Exception as exc:  # noqa: BLE001 - never leak an unhandled error to the caller
+        return {"ok": False, "error": f"MODEL_CALL_FAILED: {type(exc).__name__}", "status": 502}
+    if not call.get("success"):
+        return {"ok": False, "error": f"MODEL_CALL_FAILED: {call.get('error')}", "status": 502}
+    reply = (call.get("response_text") or "").strip()
+    if not reply:
+        return {"ok": False, "error": "EMPTY_MODEL_RESPONSE", "status": 502}
+    return {"ok": True, "output": {"reply": reply}}
 
 
 def interpret(text, context_packet, *, model=None, timeout=None, call_local_model=None):
@@ -179,7 +234,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
         self._json(200, {"ok": True, "ollama_reachable": ollama_worker.is_ollama_reachable(timeout=2)})
 
     def do_POST(self):  # noqa: N802 - stdlib handler naming
-        if self.path != "/v1/jarvis/interpret":
+        if self.path not in ("/v1/jarvis/interpret", "/v1/jarvis/chat"):
             self._json(404, {"ok": False, "error": "NOT_FOUND"})
             return
         if not _check_auth(self.headers.get("Authorization"), self.auth_token):
@@ -201,7 +256,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
         if not isinstance(body, dict):
             self._json(400, {"ok": False, "error": "INVALID_BODY"})
             return
-        result = interpret(body.get("text"), body.get("context_packet"))
+        if self.path == "/v1/jarvis/chat":
+            result = chat(body.get("text"), body.get("history"))
+        else:
+            result = interpret(body.get("text"), body.get("context_packet"))
         if result["ok"]:
             self._json(200, {"ok": True, "output": result["output"]})
         else:

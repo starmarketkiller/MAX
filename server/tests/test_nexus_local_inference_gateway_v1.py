@@ -187,3 +187,59 @@ def test_rate_limit_rejects_after_threshold(live_server, monkeypatch):
     statuses = [_post(live_server, "/v1/jarvis/interpret", body, token="a" * 32)[0] for _ in range(3)]
     assert statuses[:2] == [200, 200]
     assert statuses[2] == 429
+
+
+# chat() / /v1/jarvis/chat - TELEGRAM_MISTRAL_DIRECT_MODE_V1 ----------------
+def _fake_chat_call(success=True, response_text=None, error=None):
+    def _call(prompt, model=None, timeout=None, json_mode=False, ensure_single_resident=True):
+        assert json_mode is False  # chat() non deve mai forzare lo schema JSON del router
+        return {"success": success, "response_text": response_text, "error": error}
+    return _call
+
+
+def test_chat_returns_reply_for_well_formed_model_response():
+    call = _fake_chat_call(response_text="Ciao! Come posso aiutarti?")
+    result = gw.chat("ciao", [], call_local_model=call)
+    assert result["ok"] is True
+    assert result["output"]["reply"] == "Ciao! Come posso aiutarti?"
+
+
+def test_chat_rejects_empty_text():
+    result = gw.chat("   ", [], call_local_model=_fake_chat_call(response_text="x"))
+    assert result["ok"] is False
+    assert result["error"] == "EMPTY_TEXT"
+
+
+def test_chat_handles_model_call_failure_cleanly():
+    call = _fake_chat_call(success=False, error="connection refused")
+    result = gw.chat("ciao", [], call_local_model=call)
+    assert result["ok"] is False
+    assert "MODEL_CALL_FAILED" in result["error"]
+
+
+def test_chat_handles_empty_model_response():
+    call = _fake_chat_call(response_text="   ")
+    result = gw.chat("ciao", [], call_local_model=call)
+    assert result["ok"] is False
+    assert result["error"] == "EMPTY_MODEL_RESPONSE"
+
+
+def test_chat_prompt_includes_bounded_history_not_unbounded():
+    history = [{"role": "user", "text": f"msg{i}"} for i in range(50)]
+    prompt = gw.build_chat_prompt("ultimo messaggio", history)
+    assert prompt.count("msg") <= gw.CHAT_MAX_HISTORY_TURNS
+    assert "msg49" in prompt  # solo la coda piu' recente, non l'inizio
+    assert "msg0" not in prompt
+
+
+def test_live_chat_endpoint_succeeds(live_server):
+    status, payload = _post(live_server, "/v1/jarvis/chat",
+                            {"text": "ciao", "history": []}, token="a" * 32)
+    assert status == 200
+    assert payload["ok"] is True
+    assert "reply" in payload["output"]
+
+
+def test_live_chat_endpoint_requires_auth(live_server):
+    status, _ = _post(live_server, "/v1/jarvis/chat", {"text": "ciao"})
+    assert status == 401

@@ -295,6 +295,14 @@ def classify_work_type(text: str, metadata: dict | None = None) -> str:
     return _DEFAULT_JARVIS_WORK_TYPE
 
 
+TELEGRAM_MISTRAL_DIRECT_MODE_V1_SYSTEM_PROMPT = (
+    "Sei Mistral, un assistente locale in modalita' diretta via Telegram (distinta da Jarvis). "
+    "Rispondi in linguaggio naturale, in italiano salvo richiesta diversa, in modo conciso. "
+    "Non esegui azioni e non hai accesso a file o task reali in questa modalita' - se la richiesta "
+    "lo richiede, dillo chiaramente invece di inventare una risposta plausibile.")
+MISTRAL_DIRECT_HISTORY_TURNS = int(os.environ.get("JARVIS_MISTRAL_DIRECT_HISTORY_TURNS", "6"))
+
+
 _STATE_MESSAGES = {
     "QUEUED": "è in coda e attende il dispatcher",
     "RUNNING": "è in esecuzione",
@@ -390,6 +398,14 @@ class JarvisService:
         if message.get("input_type") != "TEXT":
             return self._response(message, "ERROR", "Input type not supported in V1.",
                                   status="UNAVAILABLE", confidence="HIGH")
+        # TELEGRAM_MISTRAL_DIRECT_MODE_V1: a hard /mistral, /jarvis or /new
+        # prefix must win over every other routing decision below (classify()'s
+        # heuristics could otherwise misfire on the free-form text that follows
+        # /mistral) - same "short-circuit before classify()" discipline already
+        # used for pending drafts/mutations/router below.
+        direct_reply = self._maybe_handle_mistral_direct(message)
+        if direct_reply is not None:
+            return direct_reply
         # JARVIS_EXECUTIVE_CONVERSATION_V4 (A): a pending TASK_DRAFT
         # confirmation is resolved BEFORE normal classify()-based routing -
         # a bare "sì"/"no" reply has no intent signal of its own and would
@@ -468,6 +484,72 @@ class JarvisService:
             "mostrare dettagli, approval, agenti e stato NEXUS. Scrivi /help per esempi.",
             status="PARTIAL", confidence="MEDIUM",
             actions=[{"type": "HELP", "label": "Mostra aiuto"}])
+
+    def _build_mistral_direct_prompt(self, text, history):
+        lines = [TELEGRAM_MISTRAL_DIRECT_MODE_V1_SYSTEM_PROMPT, ""]
+        for turn in (history or [])[-MISTRAL_DIRECT_HISTORY_TURNS * 2:]:
+            role = "Utente" if turn.get("role") == "user" else "Mistral"
+            lines.append(f"{role}: {turn.get('text', '')}")
+        lines.append(f"Utente: {text}")
+        lines.append("Mistral:")
+        return "\n".join(lines)
+
+    def _maybe_handle_mistral_direct(self, message):
+        """TELEGRAM_MISTRAL_DIRECT_MODE_V1. Returns a real response for
+        /mistral, /jarvis and /new; None for everything else (falls through
+        to normal routing unchanged). Direct local call (is_ollama_reachable/
+        call_local_model), same pattern query() already uses on this same
+        machine - not the Render-side gateway tunnel (ministral_router.py/
+        LocalBridge's /v1/jarvis/chat route), which exists for when Jarvis
+        itself runs off-machine and is currently dormant (JARVIS_MINISTRAL_
+        ROUTER_V1 is OFF by default everywhere, see module docstring above)."""
+        text = (message.get("text") or "").strip()
+        conversation_id = message["conversation_id"]
+
+        if text.lower() == "/new":
+            self.conversation_store.update(conversation_id, mistral_history=[])
+            return self._response(message, "ANSWER",
+                "Nuova conversazione iniziata: cronologia della modalità diretta Mistral azzerata.")
+
+        if text.lower() == "/jarvis" or text.lower().startswith("/jarvis "):
+            # Modalita' Jarvis esplicita: nessuna risposta propria qui, solo
+            # rimuove il prefisso cosi' il routing normale vede il testo reale.
+            message["text"] = text[len("/jarvis"):].strip() or "/help"
+            return None
+
+        if not (text.lower() == "/mistral" or text.lower().startswith("/mistral ")):
+            return None
+
+        user_text = text[len("/mistral"):].strip()
+        if not user_text:
+            return self._response(message, "ANSWER",
+                "Usa /mistral seguito dal tuo messaggio, es.: "
+                "/mistral secondo te perché questo backtest è sospetto?")
+
+        if not is_ollama_reachable(timeout=2):
+            return self._response(message, "ANSWER",
+                "Mistral locale non è raggiungibile in questo momento (Ollama non risponde). Riprova più tardi.",
+                status="UNAVAILABLE", confidence="HIGH")
+
+        history = self.conversation_store.get(conversation_id).get("mistral_history") or []
+        prompt = self._build_mistral_direct_prompt(user_text, history)
+        call = call_local_model(prompt, timeout=45, ensure_single_resident=False)
+        if not call.get("success") or not (call.get("response_text") or "").strip():
+            self.ledger.append("MISTRAL_DIRECT_FAILED", None,
+                               {"message_id": message["message_id"], "error": call.get("error")},
+                               actor="jarvis_service")
+            return self._response(message, "ANSWER",
+                f"Mistral locale non ha risposto correttamente ({call.get('error') or 'risposta vuota'}).",
+                status="UNAVAILABLE", confidence="MEDIUM")
+
+        reply = call["response_text"].strip()
+        new_history = (history + [{"role": "user", "text": user_text},
+                                  {"role": "assistant", "text": reply}])[-MISTRAL_DIRECT_HISTORY_TURNS * 2:]
+        self.conversation_store.update(conversation_id, mistral_history=new_history)
+        self.ledger.append("MISTRAL_DIRECT_REPLY", None,
+                           {"message_id": message["message_id"], "channel": message["channel"]},
+                           actor="jarvis_service")
+        return self._response(message, "ANSWER", reply, generated_by="ministral-3:3b-direct")
 
     def _maybe_route_via_ministral(self, message):
         """Returns a real response ONLY in MODE=ACTIVE with a valid, confident,
@@ -1050,8 +1132,11 @@ class JarvisService:
         if value in ("/start", "/help") or re.search(r"\b(help|aiuto)\b", value):
             return self._response(message, "ANSWER",
                 "Sono Jarvis. Posso creare task, mostrarne stato e dettagli, annullare task non in esecuzione, "
-                "gestire approval e mostrare stato NEXUS, agenti e approval. Comandi: /status /tasks /approvals /agents.",
-                details={"commands": ["/start", "/help", "/status", "/tasks", "/approvals", "/agents"]})
+                "gestire approval e mostrare stato NEXUS, agenti e approval. Comandi: /status /tasks /approvals "
+                "/agents. Per parlare direttamente con Mistral locale: /mistral <messaggio> (poi /new per "
+                "azzerare la cronologia, /jarvis per tornare qui esplicitamente).",
+                details={"commands": ["/start", "/help", "/status", "/tasks", "/approvals", "/agents",
+                                      "/mistral", "/new", "/jarvis"]})
         if value == "/agents" or re.search(r"\b(agents|agenti)\b", value):
             items = self.agents(detailed=True)
             return self._response(message, "ANSWER", f"Agenti registrati: {len(items)}.",
