@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "REVENUE_VENTURE_REGISTRY_V1",
+  "type": "object",
+  "required": ["schema_version", "revision", "ventures", "idempotency_keys"],
+  "properties": {
+    "schema_version": {"const": "REVENUE_VENTURE_REGISTRY_V1"},
+    "revision": {"type": "integer", "minimum": 0},
+    "idempotency_keys": {"type": "array", "items": {"type": "string"}},
+    "ventures": {"type": "array", "minItems": 4, "maxItems": 4, "items": {
+      "type": "object", "required": ["venture_id", "name", "status", "offer_description",
+        "status_meaning", "target_customer", "required_inputs", "deliverable", "estimated_human_time_minutes",
+        "estimated_automation_share", "current_price_hypothesis", "cost_month_eur", "revenue_eur",
+        "incremental_monthly_cost_eur", "leads", "sales", "hours_spent", "updated_at"],
+      "properties": {"venture_id": {"enum": ["LEAD_RESEARCH_SERVICE", "EA_MQL5_AUDIT_SERVICE",
+        "STRATEGY_ROBUSTNESS_AUDIT", "COMPETITOR_SUPPLIER_INTELLIGENCE"]},
+        "status": {"enum": ["IDEA", "READY_TO_TEST", "TESTING", "KEEP", "SCALE", "PAUSE", "KILL"]},
+        "status_meaning": {"const": "STRUCTURE_READY_FOR_REAL_MARKET_TEST_NOT_VALIDATED"},
+        "cost_month_eur": {"const": 0}, "incremental_monthly_cost_eur": {"const": 0}}, "additionalProperties": true}}
+  }, "additionalProperties": false
+}
