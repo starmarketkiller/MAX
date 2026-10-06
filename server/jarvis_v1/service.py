@@ -35,6 +35,7 @@ from .free_coding_worker import FreeCodingWorkerHandler
 from .local_bounded_task_handler import BoundedLocalTaskHandler
 from . import ministral_router
 from . import ministral_task_compiler
+from . import task_handoff
 
 # JARVIS_MINISTRAL_ROUTER_V1 - OFF by default everywhere; flipping ENABLED
 # to true with MODE still SHADOW costs nothing but a background ledger
@@ -406,6 +407,14 @@ class JarvisService:
         direct_reply = self._maybe_handle_mistral_direct(message)
         if direct_reply is not None:
             return direct_reply
+        # NEXUS_LOCAL_TASK_LEDGER_V1: same discipline - /task's free-form
+        # objective text, or a /handoff task_id, must never be reinterpreted
+        # by classify()'s heuristics (a /task objective containing "approva"
+        # or "analizza" could otherwise be misrouted before command() ever
+        # sees it).
+        ledger_reply = self._maybe_handle_task_ledger_command(message)
+        if ledger_reply is not None:
+            return ledger_reply
         # JARVIS_EXECUTIVE_CONVERSATION_V4 (A): a pending TASK_DRAFT
         # confirmation is resolved BEFORE normal classify()-based routing -
         # a bare "sì"/"no" reply has no intent signal of its own and would
@@ -550,6 +559,38 @@ class JarvisService:
                            {"message_id": message["message_id"], "channel": message["channel"]},
                            actor="jarvis_service")
         return self._response(message, "ANSWER", reply, generated_by="ministral-3:3b-direct")
+
+    def _maybe_handle_task_ledger_command(self, message):
+        """NEXUS_LOCAL_TASK_LEDGER_V1. Returns a real response for /task and
+        /handoff; None for everything else. /task reuses create_task() as-is
+        (same manifest, same Orchestrator.submit(), same approval gate -
+        this is only an explicit-prefix entry point, never a second task
+        pipeline). /handoff renders the already-canonical task record +
+        RESULT_PACKET_V1 + ledger events into the artifact set
+        (task_handoff.py) - pure read, never mutates the task."""
+        text = (message.get("text") or "").strip()
+        value = text.lower()
+
+        if value == "/task" or value.startswith("/task "):
+            objective = text[len("/task"):].strip()
+            if not objective:
+                return self._response(message, "ANSWER",
+                    "Usa /task seguito dall'obiettivo, es.: /task analizza gli ultimi CSV MT5 e trova anomalie")
+            return self.create_task(dict(message, text=objective))
+
+        if value == "/handoff" or value.startswith("/handoff "):
+            task_id = text[len("/handoff"):].strip()
+            if not task_id:
+                return self._response(message, "ANSWER", "Usa /handoff <task_id>, es.: /handoff TASK_0001")
+            paths = task_handoff.write_task_artifacts(self, task_id)
+            if paths is None:
+                return self._response(message, "ANSWER", f"Nessuna task trovata con id {task_id}.",
+                                      status="PARTIAL", confidence="HIGH")
+            return self._response(message, "ANSWER",
+                f"Handoff salvato per {task_id}: {paths['handoff.md']}",
+                details={"view": "TASK_HANDOFF", "task_id": task_id, "artifact_paths": paths})
+
+        return None
 
     def _maybe_route_via_ministral(self, message):
         """Returns a real response ONLY in MODE=ACTIVE with a valid, confident,
@@ -1109,6 +1150,12 @@ class JarvisService:
         try: record = self.queue.get(task_id)
         except KeyError: return self._response(message, "ERROR", "Task not found.", task_id=task_id, status="UNKNOWN")
         self.ledger.append("TASK_STATUS_REQUESTED", task_id, {"message_id": message["message_id"]}, actor="jarvis_service")
+        # NEXUS_LOCAL_TASK_LEDGER_V1: lazily (re)render the handoff artifact
+        # set the first (and every later) time a terminal task's details are
+        # viewed - idempotent, pure read of already-canonical state, no new
+        # hook into orchestrator.py's dispatch loop required.
+        if record["state"] in ("COMPLETED", "FAILED", "CANCELLED", "BLOCKED"):
+            task_handoff.write_task_artifacts(self, task_id)
         if record["state"] == "COMPLETED":
             return self._deliver_finalized_result(message, task_id, record)
         technical = record["state"] == "BLOCKED" or bool(message.get("metadata", {}).get("technical_details")) or bool(
@@ -1133,10 +1180,10 @@ class JarvisService:
             return self._response(message, "ANSWER",
                 "Sono Jarvis. Posso creare task, mostrarne stato e dettagli, annullare task non in esecuzione, "
                 "gestire approval e mostrare stato NEXUS, agenti e approval. Comandi: /status /tasks /approvals "
-                "/agents. Per parlare direttamente con Mistral locale: /mistral <messaggio> (poi /new per "
-                "azzerare la cronologia, /jarvis per tornare qui esplicitamente).",
+                "/agents /task /handoff. Per parlare direttamente con Mistral locale: /mistral <messaggio> (poi "
+                "/new per azzerare la cronologia, /jarvis per tornare qui esplicitamente).",
                 details={"commands": ["/start", "/help", "/status", "/tasks", "/approvals", "/agents",
-                                      "/mistral", "/new", "/jarvis"]})
+                                      "/task", "/handoff", "/mistral", "/new", "/jarvis"]})
         if value == "/agents" or re.search(r"\b(agents|agenti)\b", value):
             items = self.agents(detailed=True)
             return self._response(message, "ANSWER", f"Agenti registrati: {len(items)}.",
