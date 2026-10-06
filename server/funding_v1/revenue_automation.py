@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import csv
 import json
 import os
 import threading
@@ -67,6 +68,131 @@ class ProspectAcquisition:
             except (AttributeError, TypeError, ValueError) as exc:
                 rejected.append({"index": index, "reason": str(exc)})
         return {"accepted": accepted, "duplicates": duplicates, "rejected": rejected}
+
+
+class ProspectFileIntake:
+    """Poll an explicitly configured structured file; never browses the web."""
+
+    def __init__(self, path, acquisition, state_path, *, source="STRUCTURED_FILE"):
+        self.path = Path(path)
+        self.acquisition = acquisition
+        self.state_path = Path(state_path)
+        self.source = source
+        self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        if not self.state_path.exists():
+            self._save({"processed_sha256": []})
+
+    def _save(self, value):
+        temp = self.state_path.with_suffix(".tmp")
+        temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
+        os.replace(temp, self.state_path)
+
+    def _records(self):
+        suffix = self.path.suffix.casefold()
+        if suffix == ".csv":
+            with self.path.open(encoding="utf-8-sig", newline="") as handle:
+                rows = list(csv.DictReader(handle))
+            for row in rows:
+                evidence = row.get("evidence")
+                row["evidence"] = ([item.strip() for item in evidence.split("|") if item.strip()]
+                                   if isinstance(evidence, str) else [])
+            return rows
+        text = self.path.read_text(encoding="utf-8")
+        if suffix == ".jsonl":
+            return [json.loads(line) for line in text.splitlines() if line.strip()]
+        value = json.loads(text)
+        return value.get("prospects", []) if isinstance(value, dict) else value
+
+    def poll(self):
+        if not self.path.exists():
+            return {"status": "UNAVAILABLE", "accepted": [], "duplicates": [], "rejected": []}
+        raw = self.path.read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
+        state = json.loads(self.state_path.read_text(encoding="utf-8"))
+        if digest in state.get("processed_sha256", []):
+            return {"status": "ALREADY_PROCESSED", "accepted": [],
+                    "duplicates": [], "rejected": []}
+        records = self._records()
+        if not isinstance(records, list):
+            raise ValueError("prospect feed must contain a list")
+        result = self.acquisition.ingest(
+            records, source=self.source,
+            source_reference=f"file:{self.path.name}:sha256:{digest}")
+        state["processed_sha256"] = (state.get("processed_sha256", []) + [digest])[-100:]
+        self._save(state)
+        return {"status": "PROCESSED", **result}
+
+
+class RevenueTelemetry:
+    DEFAULTS = {
+        "local_tasks_total": 0, "local_tasks_passed": 0,
+        "local_tasks_retried": 0, "premium_escalations": 0,
+        "verifier_rejections": 0, "jarvis_events_emitted": 0,
+        "human_decisions_requested": 0,
+    }
+
+    def __init__(self, path):
+        self.path = Path(path)
+        self._lock = threading.RLock()
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        if not self.path.exists():
+            self._save({"schema_version": 1, **self.DEFAULTS,
+                        "recorded_task_ids": [], "recorded_event_ids": []})
+
+    def _load(self):
+        value = json.loads(self.path.read_text(encoding="utf-8"))
+        for key, default in self.DEFAULTS.items():
+            value.setdefault(key, default)
+        return value
+
+    def _save(self, value):
+        temp = self.path.with_suffix(".tmp")
+        temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
+        os.replace(temp, self.path)
+
+    def record_task(self, record, ledger_events):
+        with self._lock:
+            state = self._load()
+            task_id = record["task_id"]
+            if task_id in state["recorded_task_ids"]:
+                return self.snapshot()
+            events = [event for event in ledger_events if event.get("task_id") == task_id]
+            executor = str(record.get("executor") or "")
+            if executor.startswith("LOCAL_"):
+                state["local_tasks_total"] += 1
+                if record.get("state") == "COMPLETED":
+                    state["local_tasks_passed"] += 1
+            if any(event.get("event_type") == "RETRY_STARTED" for event in events):
+                state["local_tasks_retried"] += 1
+            state["verifier_rejections"] += sum(
+                event.get("event_type") == "TEST_FAILED" for event in events)
+            if record.get("state") == "ESCALATION_REQUIRED":
+                target = str((record.get("escalation") or {}).get("target") or "")
+                if target in {"TIER3_CLAUDE", "TIER4_CODEX"}:
+                    state["premium_escalations"] += 1
+            state["recorded_task_ids"] = (state["recorded_task_ids"] + [task_id])[-2000:]
+            self._save(state)
+            return self.snapshot()
+
+    def record_jarvis_event(self, event_id, *, human_decision=False):
+        with self._lock:
+            state = self._load()
+            if event_id in state["recorded_event_ids"]:
+                return self.snapshot()
+            state["jarvis_events_emitted"] += 1
+            state["human_decisions_requested"] += int(bool(human_decision))
+            state["recorded_event_ids"] = (state["recorded_event_ids"] + [event_id])[-2000:]
+            self._save(state)
+            return self.snapshot()
+
+    def snapshot(self):
+        with self._lock:
+            state = self._load()
+            completed = state["local_tasks_passed"] + state["premium_escalations"]
+            state["local_task_share"] = (
+                round(state["local_tasks_passed"] / completed, 4) if completed else None)
+            state["estimated_premium_cost_avoided"] = None
+            return state
 
 
 class RevenueScheduler:
@@ -163,10 +289,12 @@ class RevenueResultDelivery:
 
     TERMINAL_OR_ATTENTION = ("COMPLETED", "WAITING_APPROVAL", "ESCALATION_REQUIRED", "BLOCKED")
 
-    def __init__(self, path, queue, notification_sink):
+    def __init__(self, path, queue, notification_sink, *, ledger=None, telemetry=None):
         self.path = Path(path)
         self.queue = queue
         self.notification_sink = notification_sink
+        self.ledger = ledger
+        self.telemetry = telemetry
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if not self.path.exists():
             self.path.write_text(json.dumps({"delivered": []}), encoding="utf-8")
@@ -184,6 +312,8 @@ class RevenueResultDelivery:
                     continue
                 packet = record.get("result_packet") or {}
                 output = decode_bounded_output(packet.get("artifacts_created", []))
+                task_type = (record.get("action_params") or {}).get("revenue_task_type")
+                event_type = self._event_type(task_type, task_state, output)
                 response = {
                     "response_type": "REVENUE_AGENT_RESULT",
                     "summary": f"Revenue Agent: {record['manifest']['title']} → {task_state}",
@@ -192,6 +322,7 @@ class RevenueResultDelivery:
                     "priority": "IMPORTANT" if task_state != "COMPLETED" else "INFO",
                     "details": {
                         "view": "REVENUE_RESULT", "state": task_state,
+                        "event_type": event_type,
                         "verified_output": output,
                         "references": (record.get("action_params") or {}).get("references", {}),
                         "premium_calls": 0,
@@ -201,13 +332,50 @@ class RevenueResultDelivery:
                                 [{"type": "REVIEW_TASK", "task_id": task_id}]),
                     "generated_by": "NEXUS_REVENUE_AGENT_V1",
                 }
+                if event_type:
+                    response["summary"] = self._summary(event_type, record, output)
+                    response["details"]["human_decision_required"] = event_type in {
+                        "REPLY_REQUIRES_REVIEW", "WORKER_ESCALATED"}
                 self.notification_sink(response)
+                if self.telemetry:
+                    self.telemetry.record_task(
+                        record, self.ledger.read_all() if self.ledger else [])
+                    if event_type:
+                        self.telemetry.record_jarvis_event(
+                            f"{task_id}:{event_type}",
+                            human_decision=response["details"].get(
+                                "human_decision_required", False))
                 delivered.add(task_id)
                 sent.append(task_id)
         temp = self.path.with_suffix(".tmp")
         temp.write_text(json.dumps({"delivered": sorted(delivered)}, indent=2), encoding="utf-8")
         os.replace(temp, self.path)
         return sent
+
+    @staticmethod
+    def _event_type(task_type, state, output):
+        if state in {"ESCALATION_REQUIRED", "BLOCKED"}:
+            return "WORKER_ESCALATED"
+        if state != "COMPLETED" or not isinstance(output, dict):
+            return None
+        if task_type == "LEAD_QUALIFICATION" and output.get("decision") == "FIT" and output.get("fit_score", 0) >= 70:
+            return "NEW_HIGH_FIT_PROSPECT"
+        return {"FOLLOW_UP_DRAFT": "FOLLOWUP_DUE",
+                "PIPELINE_SUMMARY": "LEAD_STAGNANT",
+                "INBOUND_CLASSIFICATION": "REPLY_REQUIRES_REVIEW"}.get(task_type)
+
+    @staticmethod
+    def _summary(event_type, record, output):
+        reference = (record.get("action_params") or {}).get("references", {})
+        subject = reference.get("lead_id") or reference.get("prospect_id") or record["task_id"]
+        messages = {
+            "NEW_HIGH_FIT_PROSPECT": f"Prospect {subject}: high fit verificato. Nessuna azione esterna eseguita.",
+            "FOLLOWUP_DUE": f"Follow-up dovuto per {subject}. Draft pronto per review.",
+            "LEAD_STAGNANT": f"Lead {subject} senza avanzamento: review proposta.",
+            "REPLY_REQUIRES_REVIEW": f"Lead {subject} ha risposto: classificazione pronta per decisione.",
+            "WORKER_ESCALATED": f"Revenue worker escalato per {subject}: revisione richiesta.",
+        }
+        return messages[event_type]
 
 
 class RevenueAutomationRunner:
@@ -219,11 +387,13 @@ class RevenueAutomationRunner:
     """
 
     def __init__(self, scheduler, delivery, *, interval_seconds=60,
-                 error_sink=None):
+                 error_sink=None, intake=None, telemetry=None):
         self.scheduler = scheduler
         self.delivery = delivery
         self.interval_seconds = max(1.0, float(interval_seconds))
         self.error_sink = error_sink
+        self.intake = intake
+        self.telemetry = telemetry
         self._stop = threading.Event()
         self._thread = None
         self.last_tick_at = None
@@ -249,11 +419,14 @@ class RevenueAutomationRunner:
         return not self.running
 
     def run_once(self):
+        intake_result = self.intake.poll() if self.intake else None
         scheduled = self.scheduler.tick()
         delivered = self.delivery.poll()
         self.last_tick_at = _now()
         self.last_error_class = None
-        return {"scheduled": scheduled["scheduled"], "delivered": delivered}
+        return {"intake": intake_result, "scheduled": scheduled["scheduled"],
+                "delivered": delivered,
+                "telemetry": self.telemetry.snapshot() if self.telemetry else None}
 
     def status(self):
         return {"running": self.running, "last_tick_at": self.last_tick_at,
@@ -266,7 +439,11 @@ class RevenueAutomationRunner:
                 self.run_once()
             except Exception as exc:  # fail isolated; never log payloads or secrets
                 self.last_error_class = type(exc).__name__
+                if self.telemetry:
+                    self.telemetry.record_jarvis_event(
+                        f"runner-error:{self.last_error_class}:{_now()}")
                 if self.error_sink:
                     self.error_sink({"type": "REVENUE_AUTOMATION_DEGRADED",
+                                     "event_type": "REVENUE_RUNNER_ERROR",
                                      "failure_class": self.last_error_class})
             self._stop.wait(self.interval_seconds)

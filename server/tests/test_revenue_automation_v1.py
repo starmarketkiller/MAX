@@ -5,7 +5,8 @@ from pathlib import Path
 from funding_v1.first_revenue import FirstRevenueStore
 from funding_v1.revenue_agent import RevenueAgentCoordinator
 from funding_v1.revenue_automation import (
-    ProspectAcquisition, RevenueAutomationRunner, RevenueResultDelivery, RevenueScheduler,
+    ProspectAcquisition, ProspectFileIntake, RevenueAutomationRunner,
+    RevenueResultDelivery, RevenueScheduler, RevenueTelemetry,
 )
 from funding_v1.revenue_skill_pack import REVENUE_SKILLS
 from orchestrator_v1.core.orchestrator import Orchestrator
@@ -29,7 +30,7 @@ def test_skill_pack_is_complete_local_first_and_single_retry():
         "PIPELINE_SUMMARY", "REVENUE_EXPERIMENT_SUMMARY",
     }
     assert all(skill.max_retries == 1 for skill in REVENUE_SKILLS.values())
-    assert all(skill.default_executor == "LOCAL_STRONG_MINISTRAL3B"
+    assert all(skill.default_executor == "LOCAL_FAST_MINISTRAL3B"
                for skill in REVENUE_SKILLS.values())
     assert all("premium_calls" in skill.telemetry for skill in REVENUE_SKILLS.values())
 
@@ -61,6 +62,23 @@ def test_acquisition_rejects_missing_evidence_and_unusable_identity(tmp_path):
         source="AUTHORIZED_FEED", source_reference="feed://bad")
     assert len(result["rejected"]) == 2
     assert store.snapshot()["prospects"] == []
+
+
+def test_structured_file_intake_has_provenance_and_persisted_idempotency(tmp_path):
+    store, _, _ = build(tmp_path)
+    feed = tmp_path / "prospects.json"
+    feed.write_text(json.dumps({"prospects": [{
+        "display_name": "Example", "website": "example.test",
+        "evidence": ["Authorized directory record"]}]}), encoding="utf-8")
+    intake = ProspectFileIntake(feed, ProspectAcquisition(store), tmp_path / "intake.json")
+    first = intake.poll()
+    second = ProspectFileIntake(
+        feed, ProspectAcquisition(store), tmp_path / "intake.json").poll()
+    assert first["status"] == "PROCESSED" and len(first["accepted"]) == 1
+    assert second["status"] == "ALREADY_PROCESSED"
+    prospect = store.snapshot()["prospects"][0]
+    assert prospect["source"] == "STRUCTURED_FILE"
+    assert prospect["source_reference"].startswith("file:prospects.json:sha256:")
 
 
 def test_scheduler_is_persistent_idempotent_and_notifies_jarvis_sink(tmp_path):
@@ -180,6 +198,32 @@ def test_verified_result_is_delivered_to_jarvis_sink_once(tmp_path, monkeypatch)
     assert notifications[0]["response_type"] == "REVENUE_AGENT_RESULT"
     assert notifications[0]["details"]["verified_output"]["decision"] == "FIT"
     assert notifications[0]["details"]["premium_calls"] == 0
+    assert notifications[0]["details"]["event_type"] == "NEW_HIGH_FIT_PROSPECT"
+
+
+def test_persistent_telemetry_counts_local_retry_and_jarvis_attention(tmp_path):
+    store, coordinator, orchestrator = build(tmp_path)
+    task_id = coordinator.submit("LEAD_QUALIFICATION",
+                                 context={"prospect_facts": ["Fact"]}, references={})
+    orchestrator.queue.transition(task_id, "RUNNING", executor="LOCAL_STRONG_MINISTRAL3B")
+    orchestrator.ledger.append("TEST_FAILED", task_id, {"errors": ["schema"]})
+    orchestrator.ledger.append("RETRY_STARTED", task_id, {"attempt": 2})
+    orchestrator.queue.transition(task_id, "COMPLETED", retry_count=1,
+                                  result_packet={"artifacts_created": []})
+    telemetry = RevenueTelemetry(tmp_path / "telemetry.json")
+    record = orchestrator.queue.get(task_id)
+    telemetry.record_task(record, orchestrator.ledger.read_all())
+    telemetry.record_task(record, orchestrator.ledger.read_all())
+    telemetry.record_jarvis_event("event:1", human_decision=True)
+    telemetry.record_jarvis_event("event:1", human_decision=True)
+    value = RevenueTelemetry(tmp_path / "telemetry.json").snapshot()
+    assert value["local_tasks_total"] == 1
+    assert value["local_tasks_passed"] == 1
+    assert value["local_tasks_retried"] == 1
+    assert value["verifier_rejections"] == 1
+    assert value["jarvis_events_emitted"] == 1
+    assert value["human_decisions_requested"] == 1
+    assert value["local_task_share"] == 1.0
 
 
 def test_background_runner_is_idempotent_and_stops_cleanly(tmp_path):
@@ -216,4 +260,5 @@ def test_background_runner_isolates_failure_without_sensitive_details(tmp_path):
     finally:
         runner.stop()
     assert errors == [{"type": "REVENUE_AUTOMATION_DEGRADED",
+                       "event_type": "REVENUE_RUNNER_ERROR",
                        "failure_class": "RuntimeError"}]

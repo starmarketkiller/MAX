@@ -71,6 +71,12 @@ from orchestrator_v1.core.groq_evaluation import GroqEvaluationAdapterV1
 from orchestrator_v1.core.local_agent_bridge import LocalAgentBridgeV1
 from orchestrator_v1.core.shared_cognitive_state import SharedCognitiveState
 from jarvis_v1.telegram_adapter import TelegramAdapter
+from funding_v1.first_revenue import FirstRevenueStore
+from funding_v1.revenue_agent import RevenueAgentCoordinator
+from funding_v1.revenue_automation import (
+    ProspectAcquisition, ProspectFileIntake, RevenueAutomationRunner,
+    RevenueResultDelivery, RevenueScheduler, RevenueTelemetry,
+)
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -1408,6 +1414,9 @@ JARVIS_GATEWAY = JarvisGateway(JARVIS_SERVICE)
 JARVIS_TELEGRAM = TelegramAdapter(JARVIS_SERVICE,
                                   state_path=str(_JARVIS_STATE_DIR / "telegram_updates_v1.json"),
                                   gateway=JARVIS_GATEWAY)
+REVENUE_AUTOMATION_ENABLED = _env_flag("NEXUS_REVENUE_AUTOMATION_ENABLED", False)
+REVENUE_AUTOMATION_INTERVAL_SECONDS = float(
+    os.environ.get("NEXUS_REVENUE_AUTOMATION_INTERVAL_SECONDS", "60"))
 QUEUE_DISPATCHER_ENABLED = os.environ.get(
     "NEXUS_QUEUE_DISPATCHER_ENABLED", "true" if HARDENED else "false").lower() == "true"
 JARVIS_PROVIDER_POLICY = ProviderPolicyRegistryV1()
@@ -1427,6 +1436,57 @@ def _jarvis_proactive_notify(chat_id, response):
     if task_id and not JARVIS_SERVICE.should_notify(task_id, response.get("status")):
         return
     JARVIS_TELEGRAM.send(chat_id, response)
+
+
+def _revenue_jarvis_sink(response):
+    """Ledger-first Revenue notification sink; only attention events push."""
+    details = response.get("details") or {}
+    event_type = details.get("event_type") or response.get("event_type") or response.get("type")
+    if event_type == "REVENUE_RUNNER_ERROR" and not response.get("summary"):
+        response = {**response, "summary": "Revenue Agent degradato: esecuzione sospesa in sicurezza.",
+                    "status": "DEGRADED", "priority": "IMPORTANT",
+                    "details": {**details, "event_type": event_type,
+                                "failure_class": response.get("failure_class"),
+                                "human_decision_required": False}}
+        details = response["details"]
+    canonical_events = {"NEW_HIGH_FIT_PROSPECT", "FOLLOWUP_DUE", "LEAD_STAGNANT",
+                        "REPLY_REQUIRES_REVIEW", "WORKER_ESCALATED",
+                        "REVENUE_RUNNER_ERROR"}
+    JARVIS_SERVICE.ledger.append(
+        event_type if event_type in canonical_events else "REVENUE_JARVIS_EVENT",
+        response.get("task_id"),
+        {"event_type": event_type or "REVENUE_INFORMATION",
+         "status": response.get("status"),
+         "human_decision_required": bool(details.get("human_decision_required"))},
+        actor="revenue_automation_v1")
+    if event_type not in {"FOLLOWUP_DUE", "REPLY_REQUIRES_REVIEW", "WORKER_ESCALATED",
+                          "REVENUE_RUNNER_ERROR"}:
+        return
+    for chat_id in sorted(JARVIS_TELEGRAM.allowed_users):
+        _jarvis_proactive_notify(chat_id, response)
+
+
+REVENUE_STORE = FirstRevenueStore(
+    _JARVIS_STATE_DIR / "first_revenue_execution_v1.json", ledger=JARVIS_SERVICE.ledger)
+REVENUE_COORDINATOR = RevenueAgentCoordinator(REVENUE_STORE, JARVIS_SERVICE.orchestrator)
+REVENUE_TELEMETRY = RevenueTelemetry(_JARVIS_STATE_DIR / "revenue_telemetry_v1.json")
+REVENUE_ACQUISITION = ProspectAcquisition(REVENUE_STORE)
+_REVENUE_FEED_PATH = os.environ.get("NEXUS_REVENUE_PROSPECT_FEED_PATH", "").strip()
+REVENUE_FILE_INTAKE = (ProspectFileIntake(
+    _REVENUE_FEED_PATH, REVENUE_ACQUISITION,
+    _JARVIS_STATE_DIR / "revenue_prospect_file_intake_v1.json")
+    if _REVENUE_FEED_PATH else None)
+REVENUE_SCHEDULER = RevenueScheduler(
+    _JARVIS_STATE_DIR / "revenue_scheduler_v1.json", REVENUE_COORDINATOR,
+    REVENUE_STORE, notification_sink=_revenue_jarvis_sink)
+REVENUE_DELIVERY = RevenueResultDelivery(
+    _JARVIS_STATE_DIR / "revenue_delivery_v1.json", JARVIS_SERVICE.queue,
+    _revenue_jarvis_sink, ledger=JARVIS_SERVICE.ledger, telemetry=REVENUE_TELEMETRY)
+REVENUE_AUTOMATION_RUNNER = RevenueAutomationRunner(
+    REVENUE_SCHEDULER, REVENUE_DELIVERY,
+    interval_seconds=REVENUE_AUTOMATION_INTERVAL_SECONDS,
+    error_sink=_revenue_jarvis_sink, intake=REVENUE_FILE_INTAKE,
+    telemetry=REVENUE_TELEMETRY)
 
 
 JARVIS_PROVIDER_CONNECTOR = ProviderConnectorV1(JARVIS_SERVICE.orchestrator,
@@ -1720,10 +1780,22 @@ def _startup() -> None:
         print("[NEXUS] durable queue dispatcher avviato (max_concurrency=1)")
     else:
         print("[NEXUS] durable queue dispatcher disattivato")
+    if REVENUE_AUTOMATION_ENABLED:
+        try:
+            REVENUE_AUTOMATION_RUNNER.start()
+            print("[NEXUS] revenue automation runner avviato")
+        except Exception as exc:
+            # Revenue automation is non-critical and must never block backend startup.
+            print(f"[NEXUS][WARN] revenue automation non avviato: {type(exc).__name__}")
+    else:
+        print("[NEXUS] revenue automation runner disattivato")
 
 
 @app.on_event("shutdown")
 def _shutdown() -> None:
+    if REVENUE_AUTOMATION_RUNNER.running:
+        stopped = REVENUE_AUTOMATION_RUNNER.stop()
+        print(f"[NEXUS] revenue automation runner stop={'yes' if stopped else 'no'}")
     if QUEUE_DISPATCHER_ENABLED and JARVIS_DISPATCHER.running:
         drained = JARVIS_DISPATCHER.stop()
         print(f"[NEXUS] durable queue dispatcher stop drained={'yes' if drained else 'no'}")
@@ -1820,6 +1892,44 @@ def jarvis_shared_context(user: str = Depends(require_user)):
     return NEXUS_SHARED_STATE.build_context_packet(
         agent_states=JARVIS_SERVICE.agents(), provider_states=provider_states,
         production_identity=production)
+
+
+@app.post("/api/revenue/prospects/intake")
+async def revenue_prospect_intake(request: Request,
+                                  user: str = Depends(require_mutation)):
+    """Authenticated structured intake only; no browsing or lead promotion."""
+    body = await read_json_body(request)
+    records = body.get("prospects")
+    source = str(body.get("source") or "").strip()
+    source_reference = str(body.get("source_reference") or "").strip()
+    if not isinstance(records, list) or not source or not source_reference:
+        raise HTTPException(status_code=422, detail={
+            "code": "INVALID_PROSPECT_INTAKE",
+            "message": "prospects, source and source_reference are required"})
+    result = REVENUE_ACQUISITION.ingest(
+        records, source=source, source_reference=source_reference,
+        confidence=str(body.get("confidence") or "VERIFIED"))
+    JARVIS_SERVICE.ledger.append(
+        "REVENUE_PROSPECT_INTAKE", None,
+        {"source": source, "source_reference": source_reference,
+         "accepted": len(result["accepted"]),
+         "duplicates": len(result["duplicates"]),
+         "rejected": len(result["rejected"])},
+        actor=user)
+    return result
+
+
+@app.get("/api/revenue/automation/status")
+def revenue_automation_status(user: str = Depends(require_user)):
+    return {"enabled": REVENUE_AUTOMATION_ENABLED,
+            **REVENUE_AUTOMATION_RUNNER.status(),
+            "file_intake_configured": REVENUE_FILE_INTAKE is not None,
+            "commercial_actions_enabled": False}
+
+
+@app.get("/api/revenue/telemetry")
+def revenue_automation_telemetry(user: str = Depends(require_user)):
+    return REVENUE_TELEMETRY.snapshot()
 
 
 @app.get("/api/jarvis/agents")

@@ -10,7 +10,7 @@ class RevenueSkill:
     output_fields: frozenset[str]
     output_example: dict
     max_retries: int = 1
-    default_executor: str = "LOCAL_STRONG_MINISTRAL3B"
+    default_executor: str = "LOCAL_FAST_MINISTRAL3B"
     escalation_rule: str = "VERIFIER_FAILURE_AFTER_RETRY_OR_AMBIGUITY_OR_HIGH_RISK"
     telemetry: tuple[str, ...] = (
         "attempts", "verifier_status", "latency_seconds", "executor",

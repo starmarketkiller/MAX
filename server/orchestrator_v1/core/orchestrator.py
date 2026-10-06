@@ -286,7 +286,21 @@ class Orchestrator:
             classification = retry_escalation.classify_failure(
                 errors, is_logic_error_not_crash=vr.is_logic_error)
 
-        if _attempt <= retry_escalation.RETRY_MAX_ATTEMPTS:
+        if (getattr(handler, "retry_on_stronger_local", False) and
+                decision.tier == "TIER1_LOCAL_CHEAP"):
+            self.ledger.append("RETRY_STARTED", task_id,
+                              {"attempt": _attempt + 1,
+                               "classification": classification,
+                               "escalation": "LOCAL_FAST->LOCAL_STRONG"})
+            self.queue.transition(task_id, "RUNNING", retry_count=_attempt)
+            target = retry_escalation.decide_escalation_target(
+                "LOCAL_MODEL_CAPABILITY", record["manifest"],
+                already_tried_stronger_local=False)
+            return self._escalate(task_id, self.queue.get(task_id), target,
+                                  classification, errors)
+
+        if (not getattr(handler, "retry_on_stronger_local", False) and
+                _attempt <= retry_escalation.RETRY_MAX_ATTEMPTS):
             self.ledger.append("RETRY_STARTED", task_id, {"attempt": _attempt + 1,
                               "classification": classification})
             self.queue.transition(task_id, "RUNNING", retry_count=_attempt)
@@ -422,8 +436,9 @@ class Orchestrator:
             from core.router import RouteDecision
             decision = RouteDecision("TIER2_LOCAL_STRONG", executor=strong_agent["agent_id"],
                                     agent=strong_agent, reason="escalation locale FAST->STRONG")
+            self.queue.transition(task_id, "RUNNING", executor=strong_agent["agent_id"])
             self.ledger.append("RETRY_STARTED", task_id, {"escalation": "LOCAL_FAST->LOCAL_STRONG"})
-            return self._run_local(task_id, record, decision, _attempt=1)
+            return self._run_local(task_id, self.queue.get(task_id), decision, _attempt=1)
 
         if target == "APPROVAL_REQUIRED":
             self.ledger.append("APPROVAL_REQUIRED", task_id, {"classification": classification})

@@ -55,6 +55,14 @@ def test_grounded_qualification_and_invented_facts_rejected(tmp_path):
     ok, errors = verify_revenue_output("LEAD_QUALIFICATION", bad, ctx)
     assert not ok and "invented or ungrounded evidence" in errors
 
+    fact_context = {"prospect_facts": ["Example is a local business"],
+                    "evidence_records": [{"evidence_id": "E1",
+                                          "text": "Example is a local business"}]}
+    invented = {"facts": [{"claim": "Example has 10 employees", "evidence": "E1"}],
+                "missing_info": []}
+    ok, errors = verify_revenue_output("PROSPECT_FACT_EXTRACTION", invented, fact_context)
+    assert not ok and "facts require grounded claim/evidence pairs" in errors
+
 
 def test_invalid_lifecycle_and_unapproved_price_are_rejected(tmp_path):
     store, _ = build_store(tmp_path); ctx = context(store)
@@ -123,6 +131,7 @@ def test_local_execution_uses_orchestrator_and_produces_proposal(tmp_path, monke
                                  references={"lead_id": "LEAD_1"})
     record = orch.process_task(task_id)
     assert record["state"] == "COMPLETED"
+    assert record["executor"] == "LOCAL_FAST_MINISTRAL3B"
     proposal = coordinator.proposal(task_id, response, recommended_action="REVIEW_OUTREACH_DRAFT",
                                     required_approval="REVIEW_REQUIRED", lead_id="LEAD_1",
                                     opportunity_id="OPP_1")
@@ -150,6 +159,31 @@ def test_second_verifier_failure_escalates_without_premium(tmp_path, monkeypatch
     assert record["manifest"]["premium_allowed"] is False
     assert record["escalation"]["target"] == "TIER3_CLAUDE"
     assert all(event["event_type"] != "PROVIDER_CALL_COMPLETED" for event in orch.ledger.read_all())
+
+
+def test_fast_rejection_is_corrected_once_by_strong_local(tmp_path, monkeypatch):
+    store, _ = build_store(tmp_path)
+    orch = Orchestrator(queue_path=str(tmp_path / "queue.json"),
+                        ledger_path=str(tmp_path / "ledger.jsonl"))
+    coordinator = RevenueAgentCoordinator(store, orch)
+    valid = {"decision": "FIT", "fit_score": 70,
+             "evidence": ["Prospect is a local business"],
+             "reason": "Grounded fit.", "missing_info": []}
+    responses = ['{"invalid":true}', json.dumps(valid)]
+    module = sys.modules[Orchestrator.__module__]
+    monkeypatch.setattr(module.ollama_worker, "call_local_model", lambda *a, **k: {
+        "success": True, "response_text": responses.pop(0),
+        "model": "ministral-3:3b", "wall_seconds": 0.1})
+    task_id = coordinator.submit("LEAD_QUALIFICATION", context=context(store), references={})
+    record = orch.process_task(task_id)
+    assert record["state"] == "COMPLETED"
+    assert record["executor"] == "LOCAL_STRONG_MINISTRAL3B"
+    assert record["retry_count"] == 1
+    events = orch.ledger.read_for_task(task_id)
+    assert sum(event["event_type"] == "TEST_FAILED" for event in events) == 1
+    assert any(event["event_type"] == "RETRY_STARTED" and
+               event["payload"].get("escalation") == "LOCAL_FAST->LOCAL_STRONG"
+               for event in events)
 
 
 def test_metrics_separate_attention_from_approval_latency(tmp_path):

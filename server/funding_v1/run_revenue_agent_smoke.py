@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from funding_v1.first_revenue import FirstRevenueStore
 from funding_v1.revenue_agent import RevenueAgentCoordinator
+from funding_v1.revenue_automation import RevenueResultDelivery, RevenueTelemetry
 from jarvis_v1.ministral_task_compiler import decode_bounded_output
 from orchestrator_v1.core.orchestrator import Orchestrator
 
@@ -30,6 +31,12 @@ def run():
                                      references={"prospect_id": "SMOKE_1"},
                                      created_by="revenue_agent_real_smoke")
         record = orchestrator.process_task(task_id)
+        jarvis_events = []
+        telemetry = RevenueTelemetry(root / "telemetry.json")
+        delivery = RevenueResultDelivery(
+            root / "delivery.json", orchestrator.queue, jarvis_events.append,
+            ledger=orchestrator.ledger, telemetry=telemetry)
+        delivery.poll()
         artifacts = (record.get("result_packet") or {}).get("artifacts_created", [])
         return {
             "task_id": task_id,
@@ -40,6 +47,9 @@ def run():
             "verified_output": decode_bounded_output(artifacts),
             "verifier_errors": (record.get("result_packet") or {}).get("verifier_errors", []),
             "escalation": record.get("escalation"),
+            "telemetry": telemetry.snapshot(),
+            "jarvis_events": [item.get("details", {}).get("event_type")
+                              for item in jarvis_events],
             "external_action_performed": False,
         }
 

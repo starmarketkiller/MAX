@@ -60,9 +60,18 @@ def verify_revenue_output(task_type, output, context):
         errors.append("invented or ungrounded evidence")
     if task_type == "PROSPECT_FACT_EXTRACTION":
         facts = output.get("facts")
+        evidence_records = {item.get("evidence_id"): item.get("text", "")
+                            for item in context.get("evidence_records", [])
+                            if isinstance(item, dict)}
         if not isinstance(facts, list) or not all(
                 isinstance(item, dict) and set(item) == {"claim", "evidence"} and
-                item["evidence"].casefold() in supplied.casefold() for item in facts):
+                isinstance(item["claim"], str) and item["claim"].strip() and
+                isinstance(item["evidence"], str) and
+                (evidence_records.get(item["evidence"]) or item["evidence"]).casefold()
+                in supplied.casefold() and
+                item["claim"].casefold() in
+                (evidence_records.get(item["evidence"]) or item["evidence"]).casefold()
+                for item in facts):
             errors.append("facts require grounded claim/evidence pairs")
     elif task_type == "LEAD_QUALIFICATION":
         if output.get("decision") not in {"FIT", "NO_FIT"}:
@@ -105,6 +114,10 @@ def verify_revenue_output(task_type, output, context):
 
 class RevenueLocalTaskHandler:
     json_mode = True
+    # Opt-in consumed by the canonical Orchestrator. Revenue work gets one
+    # cheap attempt, then one stronger-local correction; legacy handlers keep
+    # their existing same-tier retry behavior.
+    retry_on_stronger_local = True
 
     def __init__(self):
         self.errors_by_task = {}
@@ -164,7 +177,7 @@ class RevenueAgentCoordinator:
             "priority": "NORMAL", "risk_level": "A1", "scientific_risk": "NONE",
             "code_risk": "NONE", "financial_risk": "NONE",
             "required_capabilities": ["json_structured_output", "artifact_field_extraction",
-                                      "native_tool_calling"],
+                                      ],
             "deterministic_tools_available": False, "repo_scope": "NONE",
             "files_allowed": [], "files_forbidden": ["**/*", ".env"],
             "dependencies": [], "blockers": [], "expected_artifacts": ["RESULT_PACKET_V1"],
@@ -231,7 +244,8 @@ def compute_revenue_metrics(snapshot, ledger_events=None):
     latencies = [item["approval_latency_seconds"] for item in attention]
     events = ledger_events or []
     return {
-        "prospects": len(leads), **{key.lower(): value for key, value in status_count.items()},
+        "prospects": len(snapshot.get("prospects", [])),
+        "leads": len(leads), **{key.lower(): value for key, value in status_count.items()},
         "revenue": sum(item["amount"] for item in revenue),
         "cost": sum(item["cost"] for item in revenue),
         "gross_margin": sum(item["gross_margin"] for item in revenue),
