@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "generated_from": "docs/MT5_TERMINAL_ISOLATION_POLICY_V1.md",
+  "updated": "2026-10-06",
+  "note": "Copia in nexus_terminal_profiles.config.json (già gitignored dal pattern LocalBridge/*.config.json) per sostituire questi path di esempio con quelli reali della tua macchina, se diversi. Il match e' sottostringa sul path assoluto risolto - NON e' una verifica crittografica: non esiste nel repo un meccanismo per riderivare indipendentemente l'hash interno di MT5 della cartella dati del terminale, quindi 'identity' qui significa path-matching (+ un pin esatto opzionale), non un hash verificato. Limite dichiarato, non nascosto.",
+  "profiles": {
+    "LIVE_TERMINAL": {
+      "expected_terminal_path_substring": "MetaTrader 5",
+      "expected_data_dir_substring": "MetaQuotes\\Terminal",
+      "pinned_terminal_id": null,
+      "allowed_operations": ["ping", "restart_mt5", "open_chart", "deploy_files", "apply_template"],
+      "forbidden_operations": ["compile_ea"],
+      "_forbidden_rationale": "Compilare contro il terminale live e' esattamente l'incidente reale gia' documentato (MetaEditor risolve gli include dalla cartella del terminale sbagliato) - vedi docs/MT5_TERMINAL_ISOLATION_POLICY_V1.md sez. Causal Research Thread 2 Phase A."
+    },
+    "TESTER_TERMINAL": {
+      "expected_terminal_path_substring": "MT5-Tester",
+      "expected_data_dir_substring": "MT5-Tester",
+      "pinned_terminal_id": null,
+      "allowed_operations": ["ping", "compile_ea", "apply_template", "deploy_files", "restart_mt5", "open_chart"],
+      "forbidden_operations": []
+    }
+  }
+}

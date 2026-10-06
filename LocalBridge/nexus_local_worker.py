@@ -23,6 +23,7 @@ CONFIG FILE (nexus_worker.config.json) — same dir as this script:
   "backend_url":   "https://il-tuo-backend.example",
   "bridge_token":  "<token generato dal backend, mai un valore di esempio>",
   "host_id":       "workstation-01",
+  "terminal_role": "LIVE_TERMINAL oppure TESTER_TERMINAL (MT5_TERMINAL_IDENTITY_GUARD_V1)",
   "mt5_path":      "C:/Program Files/MetaTrader 5/terminal64.exe",
   "metaeditor":    "C:/Program Files/MetaTrader 5/metaeditor64.exe",
   "mql5_include":  "C:/Users/<NAME>/AppData/Roaming/MetaQuotes/Terminal/<HASH>/MQL5/Include/NEXUS_v1",
@@ -60,6 +61,16 @@ REMEDIAZIONI APPLICATE (audit master, stream RP0-05)
 * AUD0-WORKER-SHELL-001 — esecuzione shell generica RIMOSSA.
 * AUD0-WORKER-LOG-001   — log senza payload completi.
 
+MT5_TERMINAL_IDENTITY_GUARD_V1 (2026-10-06, non parte dell'audit AUD0 sopra)
+----------------------------------------------------------------------------
+Ogni comando passa ora da nexus_terminal_identity_guard.py: verifica che
+terminal_role/mt5_path/mql5_experts corrispondano davvero a un profilo
+dichiarato (nexus_terminal_profiles.config.json o .example.json), rifiuta
+l'operazione (fail-closed, FAILED_FINAL) su mismatch, e acquisisce un lock
+esclusivo per ruolo con recovery automatico dei lock stale. Vedi
+docs/MT5_TERMINAL_ISOLATION_POLICY_V1.md e
+docs/MT5_TERMINAL_IDENTITY_GUARD_V1.md.
+
 DEPENDENCIES: only Python stdlib + 'requests' (pip install requests)
 """
 from __future__ import annotations
@@ -82,6 +93,12 @@ except ImportError:
     print("   pip install requests")
     sys.exit(1)
 
+# MT5_TERMINAL_IDENTITY_GUARD_V1 — enforcement minimo di
+# docs/MT5_TERMINAL_ISOLATION_POLICY_V1.md (2026-10-06). Verifica che il
+# terminale configurato corrisponda davvero al ruolo dichiarato prima di
+# eseguire qualunque azione; nessuna logica di trading/risk/execution qui.
+import nexus_terminal_identity_guard as terminal_guard
+
 
 CONFIG_PATH = Path(__file__).resolve().parent / "nexus_worker.config.json"
 JOURNAL_PATH = Path(__file__).resolve().parent / "nexus_worker.journal.json"
@@ -98,6 +115,10 @@ CONFIG_TEMPLATE = {
     "backend_url":   "https://il-tuo-backend.example",
     "bridge_token":  "",          # NESSUN default utilizzabile
     "host_id":       "",          # identificativo univoco di questa macchina
+    # MT5_TERMINAL_IDENTITY_GUARD_V1: quale ruolo serve questo worker. Deve
+    # corrispondere a un profilo in nexus_terminal_profiles.config(.example).json
+    # - nessun default sicuro possibile, il worker rifiuta di partire se manca.
+    "terminal_role": "",          # "LIVE_TERMINAL" oppure "TESTER_TERMINAL"
     "mt5_path":      r"C:\Program Files\MetaTrader 5\terminal64.exe",
     "metaeditor":    r"C:\Program Files\MetaTrader 5\metaeditor64.exe",
     "mql5_include":  "",
@@ -794,7 +815,22 @@ def main():
                         error=f"Unknown action: {action}")
                 else:
                     ack(cfg, cmd_id, lease_id, "RUNNING")
+                    lock_path = None
                     try:
+                        # MT5_TERMINAL_IDENTITY_GUARD_V1: verifica ruolo/path/
+                        # data-dir/operazione PRIMA di eseguire, poi lock
+                        # esclusivo per ruolo. Converte le eccezioni del guard
+                        # nelle stesse categorie già esistenti (permanente vs
+                        # ritentabile), nessuna nuova categoria di errore.
+                        try:
+                            identity = terminal_guard.resolve_and_verify(cfg, action)
+                            lock_path = terminal_guard.acquire_lock(identity, action, job_id=cmd_id)
+                        except terminal_guard.IdentityMismatch as e:
+                            raise PermanentCommandError(str(e)) from e
+                        except terminal_guard.LockBusy as e:
+                            raise RetryableCommandError(str(e)) from e
+                        print(f"[NEXUS Worker] identità terminale verificata: {identity}")
+
                         result = handler(cfg, payload)
                         journal_record(journal, cmd_id, "SUCCEEDED", result)
                         ack(cfg, cmd_id, lease_id, "SUCCEEDED", result=result)
@@ -810,6 +846,8 @@ def main():
                         print(f"[NEXUS Worker] ✗ {action} errore ritentabile: {e}")
                         journal_record(journal, cmd_id, "FAILED_RETRYABLE")
                         ack(cfg, cmd_id, lease_id, "FAILED_RETRYABLE", error=str(e))
+                    finally:
+                        terminal_guard.release_lock(lock_path)
             time.sleep(max(1, int(cfg.get("poll_sec", 3))))
         except KeyboardInterrupt:
             print("[NEXUS Worker] stopping...")

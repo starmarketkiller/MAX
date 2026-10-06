@@ -3,6 +3,7 @@
   "backend_url":   "https://il-tuo-backend.example",
   "bridge_token":  "",
   "host_id":       "workstation-01",
+  "terminal_role": "LIVE_TERMINAL",
   "mt5_path":      "C:/Program Files/MetaTrader 5/terminal64.exe",
   "metaeditor":    "C:/Program Files/MetaTrader 5/metaeditor64.exe",
   "mql5_experts":  "C:/Users/TUONOME/AppData/Roaming/MetaQuotes/Terminal/<HASH>/MQL5/Experts",
