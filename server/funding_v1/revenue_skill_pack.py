@@ -44,6 +44,17 @@ REVENUE_SKILLS = {
         "summary": "text", "blockers": [], "next_actions": []}),
     "REVENUE_EXPERIMENT_SUMMARY": _skill("revenue_experiment_summary", {
         "summary": "text", "observed_metrics": {}, "limitations": []}),
+    "VENTURE_LEAD_RESEARCH": _skill("venture_lead_research", {
+        "prospects": [], "summary": "text", "limitations": []}),
+    "VENTURE_EA_MQL5_AUDIT": _skill("venture_ea_mql5_audit", {
+        "issues": [], "summary": "text", "limitations": []}),
+    "VENTURE_STRATEGY_ROBUSTNESS_AUDIT": _skill("venture_strategy_robustness_audit", {
+        "verdict": "INSUFFICIENT_EVIDENCE", "checks": [], "summary": "text",
+        "limitations": []}),
+    "VENTURE_INTELLIGENCE": _skill("venture_intelligence", {
+        "mode": "COMPETITOR_ANALYSIS", "entities": [], "comparison": [],
+        "ranking": [], "risks": [], "opportunities": [], "facts": [],
+        "inferences": [], "limitations": []}),
 }
 
 

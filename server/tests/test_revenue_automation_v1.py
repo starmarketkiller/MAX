@@ -28,6 +28,8 @@ def test_skill_pack_is_complete_local_first_and_single_retry():
         "PROSPECT_FACT_EXTRACTION", "LEAD_QUALIFICATION", "OFFER_FIT_ANALYSIS",
         "OUTREACH_DRAFT", "INBOUND_CLASSIFICATION", "FOLLOW_UP_DRAFT",
         "PIPELINE_SUMMARY", "REVENUE_EXPERIMENT_SUMMARY",
+        "VENTURE_LEAD_RESEARCH", "VENTURE_EA_MQL5_AUDIT",
+        "VENTURE_STRATEGY_ROBUSTNESS_AUDIT", "VENTURE_INTELLIGENCE",
     }
     assert all(skill.max_retries == 1 for skill in REVENUE_SKILLS.values())
     assert all(skill.default_executor == "LOCAL_FAST_MINISTRAL3B"

@@ -106,6 +106,56 @@ def verify_revenue_output(task_type, output, context):
         lead = context.get("lead") or {}
         if lead.get("status") != "CONTACTED" or not lead.get("outreach_receipt"):
             errors.append("follow-up requires verified outreach")
+    elif task_type == "VENTURE_LEAD_RESEARCH":
+        prospects = output.get("prospects")
+        if not isinstance(prospects, list) or not 15 <= len(prospects) <= 20:
+            errors.append("lead research requires 15..20 prospects")
+        else:
+            required = {"name", "source_ref", "public_contact", "fit_reason", "priority"}
+            evidence = {item.get("evidence_id") for item in context.get("evidence_records", [])}
+            if not all(isinstance(item, dict) and set(item) == required and
+                       item.get("source_ref") in evidence and
+                       item.get("priority") in {"HIGH", "MEDIUM", "LOW"}
+                       for item in prospects):
+                errors.append("prospects require grounded source references and valid priority")
+    elif task_type == "VENTURE_EA_MQL5_AUDIT":
+        issues = output.get("issues")
+        required = {"severity", "evidence", "file", "line", "issue", "impact",
+                    "recommended_action", "confidence"}
+        allowed = {item.get("finding_id") for item in context.get("static_findings", [])}
+        if not isinstance(issues, list) or not all(
+                isinstance(item, dict) and set(item) == required and
+                item.get("severity") in {"CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"} and
+                item.get("evidence") in allowed and isinstance(item.get("line"), int)
+                for item in issues):
+            errors.append("EA issues must reference deterministic MQL5 findings")
+    elif task_type == "VENTURE_STRATEGY_ROBUSTNESS_AUDIT":
+        if output.get("verdict") not in {
+                "ROBUST", "BORDERLINE", "INSUFFICIENT_EVIDENCE", "FAILED"}:
+            errors.append("invalid robustness verdict")
+        required_checks = {"sample_size", "oos", "holdout", "cost_sensitivity",
+                           "parameter_sensitivity", "long_short_asymmetry",
+                           "regime_dependency", "drawdown", "clustering", "leakage",
+                           "proxy_broker_caveat", "multiple_testing"}
+        checks = output.get("checks")
+        if not isinstance(checks, list) or {x.get("check") for x in checks
+                                            if isinstance(x, dict)} != required_checks:
+            errors.append("robustness report requires the frozen check set")
+        if output.get("verdict") == "ROBUST" and context.get("true_holdout") is not True:
+            errors.append("ROBUST requires an explicit true holdout")
+    elif task_type == "VENTURE_INTELLIGENCE":
+        if output.get("mode") not in {"COMPETITOR_ANALYSIS", "SUPPLIER_RESEARCH"}:
+            errors.append("invalid intelligence mode")
+        evidence = {item.get("evidence_id") for item in context.get("evidence_records", [])}
+        facts = output.get("facts")
+        if not isinstance(facts, list) or not all(
+                isinstance(item, dict) and set(item) == {"claim", "source_ref"} and
+                item.get("source_ref") in evidence for item in facts):
+            errors.append("facts must reference supplied evidence")
+        if not isinstance(output.get("inferences"), list) or not all(
+                isinstance(item, dict) and set(item) == {"inference", "based_on"} and
+                set(item.get("based_on", [])).issubset(evidence) for item in output.get("inferences", [])):
+            errors.append("inferences must be explicitly separated and grounded")
     for key in ("missing_info", "conflicts", "blockers", "next_actions", "limitations"):
         if key in output and not isinstance(output[key], list):
             errors.append(f"{key} must be an array")
