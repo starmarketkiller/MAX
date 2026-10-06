@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/mt5-account-manifest-v1.schema.json",
+  "title": "NEXUS MT5_ACCOUNT_MANIFEST_V1",
+  "description": "Indice per-account: quali run sono noti, cosa e' stato importato (idempotenza), stato di qualita' dei dati. Vive in accounts/<account_id>/account_manifest.json. Non duplica i dati (deal/order/episode vivono nei file NORMALIZED_* referenziati dai run manifest) - e' solo l'indice.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "account_id", "generated_at", "runs", "import_log", "data_quality"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "account_id": {"type": "string", "pattern": "^acct_[a-f0-9]{16}$"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "environment": {"enum": ["REAL", "DEMO", "TESTER", "UNKNOWN"]},
+    "broker": {"type": ["string", "null"]},
+    "server": {"type": ["string", "null"]},
+    "base_currency": {"type": ["string", "null"]},
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["run_id", "artifact_count"],
+        "properties": {
+          "run_id": {"type": "string"},
+          "period_start": {"type": ["string", "null"], "format": "date-time"},
+          "period_end": {"type": ["string", "null"], "format": "date-time"},
+          "artifact_count": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "import_log": {
+      "type": "array",
+      "description": "Un elemento per ogni tentativo di import di un file raw - garantisce idempotenza (sec.15): rescan di un file gia' importato non duplica.",
+      "items": {"$ref": "#/definitions/import_entry"}
+    },
+    "data_quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checks_passed", "checks_failed"],
+      "properties": {
+        "last_verified_at": {"type": ["string", "null"], "format": "date-time"},
+        "status": {"enum": ["NOT_VERIFIED", "CLEAN", "WARNINGS", "FAILED"]},
+        "checks_passed": {"type": "array", "items": {"type": "string"}},
+        "checks_failed": {"type": "array", "items": {"$ref": "#/definitions/quality_failure"}}
+      }
+    },
+    "redaction_applied": {"type": "boolean", "description": "true se questo manifest e tutti i NORMALIZED_*/DERIVED_* referenziati sono passati dal layer di redaction (server/mt5_data_v1/redaction.py) prima di essere scritti."}
+  },
+  "definitions": {
+    "import_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_sha256", "import_mode", "imported_at"],
+      "properties": {
+        "source_path": {"type": ["string", "null"]},
+        "source_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "import_mode": {
+          "enum": ["IMPORT_NEW", "APPEND", "RESCAN", "SKIPPED_DUPLICATE"],
+          "description": "IMPORT_NEW = prima volta che questo hash viene visto. APPEND = file gia' noto ma con righe nuove in coda (stesso hash prefisso, piu' lungo). RESCAN = richiesto esplicitamente un reprocess. SKIPPED_DUPLICATE = hash identico gia' importato, nessuna azione."
+        },
+        "imported_at": {"type": "string", "format": "date-time"},
+        "rows_ingested": {"type": ["integer", "null"]}
+      }
+    },
+    "quality_failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check", "detail"],
+      "properties": {
+        "check": {"type": "string"},
+        "detail": {"type": "string"},
+        "affected_ids": {"type": "array", "items": {"type": ["string", "integer"]}}
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "account_id": "acct_9dea2cd40df8c343",
+  "generated_at": "2026-10-06T17:23:15.843049+00:00",
+  "environment": "REAL",
+  "broker": "XMGlobal",
+  "server": "XMGlobal-Real7",
+  "base_currency": "USD",
+  "runs": [
+    {
+      "run_id": "phase7_9h_diag_r003",
+      "artifact_count": 1
+    }
+  ],
+  "import_log": [
+    {
+      "source_sha256": "93953d93419a20b843e6bac0cb0271a6cf8cf3071ce3d0005d76b1ed353fc534",
+      "import_mode": "IMPORT_NEW",
+      "imported_at": "2026-10-06T17:23:15.843022+00:00",
+      "rows_ingested": 95
+    }
+  ],
+  "data_quality": {
+    "last_verified_at": "2026-10-06T17:23:15.836196+00:00",
+    "status": "CLEAN",
+    "checks_passed": [
+      "raw_hash_matches_disk",
+      "no_duplicate_deal_ids",
+      "no_negative_volume",
+      "exit_not_before_entry",
+      "account_id_matches_expected",
+      "no_missing_timestamps",
+      "no_ambiguous_fifo_pairing"
+    ],
+    "checks_failed": []
+  },
+  "redaction_applied": true
+}

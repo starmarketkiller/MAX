@@ -14,6 +14,7 @@ frontend/.env.local
 frontend/.env.*.local
 LocalBridge/nexus_worker.config.json
 LocalBridge/*.config.json
+server/mt5_data_v1/_private/
 scripts/run_sweep37.ps1
 scripts/*credentials*
 scripts/*.local.ps1

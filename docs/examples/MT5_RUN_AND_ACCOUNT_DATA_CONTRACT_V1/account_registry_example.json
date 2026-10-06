@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-06T17:23:15.836213+00:00",
+  "accounts": [
+    {
+      "account_id": "acct_9dea2cd40df8c343",
+      "display_label": "Example Real Account 1",
+      "environment": "REAL",
+      "broker": "XMGlobal",
+      "server": "XMGlobal-Real7",
+      "base_currency": "USD",
+      "leverage": 100,
+      "source_terminal_role": "TESTER_TERMINAL",
+      "identity_source": "DERIVED_FROM_DEAL_EXPORT",
+      "first_seen_at": "2026-10-06T17:23:15.836229+00:00",
+      "last_seen_at": "2026-10-06T17:23:15.836229+00:00",
+      "notes": []
+    }
+  ]
+}

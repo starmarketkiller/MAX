@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/mt5-account-registry-v1.schema.json",
+  "title": "NEXUS MT5_ACCOUNT_REGISTRY_V1",
+  "description": "Registro canonico degli account MT5 (reali, demo, tester) conosciuti dal sistema. Non contiene MAI login/password/token in chiaro - account_id e' un alias stabile derivato (vedi server/mt5_data_v1/identity.py), non il numero di conto del broker. Nota di reconciliation: server/app.py usa un account_id INTEGER grezzo (migrazione 010_trade_account_identity, motivato da AUD0-DB-003/NXS-DB-004) in un contesto diverso (ledger live via LocalBridge) - questo registro e' per il patrimonio dati file-based (tester/CSV/export) e deliberatamente non riusa quel valore grezzo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generated_at", "accounts"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "accounts": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/account"}
+    }
+  },
+  "definitions": {
+    "account": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["account_id", "environment", "identity_source", "first_seen_at", "last_seen_at"],
+      "properties": {
+        "account_id": {
+          "type": "string",
+          "pattern": "^acct_[a-f0-9]{16}$",
+          "description": "Alias stabile = sha256(login|broker|server)[:16], mai il login in chiaro. Deterministico: lo stesso conto reale produce sempre lo stesso alias."
+        },
+        "display_label": {
+          "type": ["string", "null"],
+          "description": "Etichetta leggibile scelta dall'utente (es. 'Real XM Global 1') - mai popolata automaticamente dal login."
+        },
+        "environment": {"enum": ["REAL", "DEMO", "TESTER"]},
+        "broker": {"type": ["string", "null"], "description": "Nome broker, non sensibile."},
+        "server": {"type": ["string", "null"], "description": "Nome server MT5 (es. 'XMGlobal-Real7'), non sensibile."},
+        "base_currency": {"type": ["string", "null"], "pattern": "^[A-Z]{3}$"},
+        "leverage": {"type": ["integer", "null"], "minimum": 1},
+        "source_terminal_role": {"enum": ["LIVE_TERMINAL", "TESTER_TERMINAL", "UNKNOWN"]},
+        "identity_source": {
+          "enum": ["DERIVED_FROM_TRADE_UID", "DERIVED_FROM_DEAL_EXPORT", "DECLARED_BY_USER", "TESTER_SYNTHETIC"],
+          "description": "Come e' stato ricavato questo account_id - mai un default silenzioso."
+        },
+        "first_seen_at": {"type": "string", "format": "date-time"},
+        "last_seen_at": {"type": "string", "format": "date-time"},
+        "notes": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

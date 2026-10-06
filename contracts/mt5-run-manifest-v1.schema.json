@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/mt5-run-manifest-v1.schema.json",
+  "title": "NEXUS MT5_RUN_MANIFEST_V1",
+  "description": "Generalizzazione del pattern IMMUTABLE_RUN_MANIFEST usato in server/research_scripts/phase7/phase7_8g|8h|8i/collect_immutable_run_manifest.py: raccolta e hash degli output RAW di un run (Tester o sessione reale/demo) PRIMA di qualunque interpretazione/verdetto. collected_before_any_interpretation e no_verdict_computed_here restano true per costruzione in questo contratto - un run manifest non contiene mai un giudizio su validita'/esito della strategia.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "account_id", "generated_at", "collected_before_any_interpretation",
+    "no_verdict_computed_here", "artifacts"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "account_id": {"type": "string", "pattern": "^acct_[a-f0-9]{16}$"},
+    "terminal_role": {"enum": ["LIVE_TERMINAL", "TESTER_TERMINAL", "UNKNOWN"]},
+    "ea_name": {"type": ["string", "null"]},
+    "ea_version": {"type": ["string", "null"]},
+    "strategy_registry_version": {"type": ["string", "null"]},
+    "symbol": {"type": ["string", "null"]},
+    "timeframe": {"type": ["string", "null"]},
+    "period_start": {"type": ["string", "null"], "format": "date-time"},
+    "period_end": {"type": ["string", "null"], "format": "date-time"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "collected_before_any_interpretation": {"type": "boolean", "const": true},
+    "no_verdict_computed_here": {"type": "boolean", "const": true},
+    "ea_build_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ex5_sha256": {"type": ["string", "null"]},
+        "source_sha256": {"type": ["string", "null"]},
+        "ex5_mtime": {"type": ["number", "null"]}
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/artifact_entry"}
+    }
+  },
+  "definitions": {
+    "artifact_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_type", "source_path", "sha256", "collected_at"],
+      "properties": {
+        "artifact_type": {
+          "enum": ["RAW_DEAL_EXPORT", "RAW_EA_TRADE_LOG", "RAW_TESTER_REPORT_HTML", "RAW_TESTER_INI",
+            "RAW_TESTER_JOURNAL", "RAW_ACCOUNT_STATEMENT", "NORMALIZED_DEAL_HISTORY", "NORMALIZED_ORDER_HISTORY",
+            "NORMALIZED_TRADE_EPISODES", "NORMALIZED_ACCOUNT_SNAPSHOT", "DERIVED_ANALYTICS", "DERIVED_REPORT", "OTHER"],
+          "description": "RAW_* = file originale mai modificato. NORMALIZED_* = output del layer di normalizzazione (raw->parser->canonico->verifier). DERIVED_* = analytics/report calcolati sopra il normalizzato."
+        },
+        "source_path": {"type": "string", "description": "Path originale del file al momento della raccolta (puo' essere fuori repo, es. terminal data dir)."},
+        "dest_path": {"type": ["string", "null"], "description": "Path relativo repo dopo la copia, forward-slash. Null se non copiato (solo referenziato)."},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "size_bytes": {"type": ["integer", "null"]},
+        "row_count": {"type": ["integer", "null"]},
+        "collected_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

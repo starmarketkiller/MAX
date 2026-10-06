@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/mt5-trade-history-v1.schema.json",
+  "title": "NEXUS MT5_TRADE_HISTORY_V1",
+  "description": "Storico canonico a tre livelli (Order/Deal/Trade Episode) + Account Snapshot. I tre livelli non vanno confusi: un Deal e' un evento atomico del broker (MT5 HistoryDealGet*), un Order e' un ordine (anche mai eseguito), un Trade Episode e' l'aggregazione di deal collegati dallo stesso position_id (una 'posizione' nel senso comune). Ogni record porta provenance (file raw di origine + hash) - mai inventato, mai inferito silenziosamente.",
+  "definitions": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_source_path", "raw_source_sha256", "parser_name", "parser_version", "normalized_at"],
+      "properties": {
+        "raw_source_path": {"type": "string", "description": "Path relativo repo del file raw da cui questo record e' stato normalizzato, forward-slash."},
+        "raw_source_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "raw_source_row_index": {"type": ["integer", "null"], "description": "Riga (0-based, header esclusa) del file raw - permette di tornare esattamente alla fonte."},
+        "parser_name": {"type": "string"},
+        "parser_version": {"type": "string"},
+        "normalized_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "strategy_attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["VERIFIED", "PARTIAL", "UNKNOWN"],
+          "description": "VERIFIED = stratName presente e univoco nella fonte raw. PARTIAL = inferito da magic/comment/euristica, da verificare. UNKNOWN = nessuna base per attribuire - MAI inferito silenziosamente a una strategia specifica."
+        },
+        "strategy_name": {"type": ["string", "null"]},
+        "inference_basis": {"type": ["string", "null"], "description": "Richiesto se status=PARTIAL: su cosa si basa l'inferenza (es. 'magic_number_match', 'comment_prefix')."}
+      }
+    },
+    "deal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deal_ticket", "position_id", "account_id", "time", "symbol", "type", "price", "volume", "provenance"],
+      "properties": {
+        "deal_ticket": {"type": "integer"},
+        "position_id": {"type": "integer"},
+        "order_ticket": {"type": ["integer", "null"]},
+        "account_id": {"type": "string", "pattern": "^acct_[a-f0-9]{16}$"},
+        "time": {"type": "string", "format": "date-time"},
+        "time_msc": {"type": ["integer", "null"]},
+        "symbol": {"type": ["string", "null"], "description": "Null solo per deal non di trading (es. DEAL_TYPE_BALANCE)."},
+        "magic": {"type": ["integer", "null"]},
+        "type": {"enum": ["DEAL_TYPE_BUY", "DEAL_TYPE_SELL", "DEAL_TYPE_BALANCE", "DEAL_TYPE_CREDIT",
+          "DEAL_TYPE_CHARGE", "DEAL_TYPE_CORRECTION", "DEAL_TYPE_BONUS", "DEAL_TYPE_COMMISSION",
+          "DEAL_TYPE_COMMISSION_DAILY", "DEAL_TYPE_COMMISSION_MONTHLY", "DEAL_TYPE_COMMISSION_AGENT_DAILY",
+          "DEAL_TYPE_COMMISSION_AGENT_MONTHLY", "DEAL_TYPE_INTEREST", "DEAL_TYPE_BUY_CANCELED",
+          "DEAL_TYPE_SELL_CANCELED", "DEAL_DIVIDEND", "DEAL_DIVIDEND_FRANKED", "DEAL_TAX", "UNKNOWN"]},
+        "entry": {"enum": ["DEAL_ENTRY_IN", "DEAL_ENTRY_OUT", "DEAL_ENTRY_INOUT", "DEAL_ENTRY_OUT_BY", "UNKNOWN", null]},
+        "price": {"type": "number"},
+        "volume": {"type": "number"},
+        "sl": {"type": ["number", "null"]},
+        "tp": {"type": ["number", "null"]},
+        "profit": {"type": ["number", "null"]},
+        "swap": {"type": ["number", "null"]},
+        "commission": {"type": ["number", "null"]},
+        "comment": {"type": ["string", "null"]},
+        "reason": {"enum": ["DEAL_REASON_CLIENT", "DEAL_REASON_MOBILE", "DEAL_REASON_WEB", "DEAL_REASON_EXPERT",
+          "DEAL_REASON_SL", "DEAL_REASON_TP", "DEAL_REASON_SO", "DEAL_REASON_ROLLOVER", "DEAL_REASON_VMARGIN",
+          "DEAL_REASON_SPLIT", "DEAL_REASON_CORPORATE_ACTION", "UNKNOWN", null]},
+        "strategy_attribution": {"$ref": "#/definitions/strategy_attribution"},
+        "provenance": {"$ref": "#/definitions/provenance"}
+      }
+    },
+    "order": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order_ticket", "account_id", "symbol", "provenance"],
+      "properties": {
+        "order_ticket": {"type": "integer"},
+        "position_id": {"type": ["integer", "null"]},
+        "account_id": {"type": "string", "pattern": "^acct_[a-f0-9]{16}$"},
+        "symbol": {"type": "string"},
+        "type": {"type": ["string", "null"]},
+        "state": {"type": ["string", "null"]},
+        "time_setup": {"type": ["string", "null"], "format": "date-time"},
+        "time_done": {"type": ["string", "null"], "format": "date-time"},
+        "price_open": {"type": ["number", "null"]},
+        "sl": {"type": ["number", "null"]},
+        "tp": {"type": ["number", "null"]},
+        "volume_initial": {"type": ["number", "null"]},
+        "volume_current": {"type": ["number", "null"]},
+        "comment": {"type": ["string", "null"]},
+        "provenance": {"$ref": "#/definitions/provenance"}
+      }
+    },
+    "trade_episode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["episode_id", "account_id", "position_id", "status", "deal_ids", "provenance"],
+      "properties": {
+        "episode_id": {"type": "string", "description": "'<account_id>:<position_id>' - univoco per account, mai riusato fra conti diversi."},
+        "account_id": {"type": "string", "pattern": "^acct_[a-f0-9]{16}$"},
+        "position_id": {"type": "integer"},
+        "symbol": {"type": ["string", "null"]},
+        "strategy_attribution": {"$ref": "#/definitions/strategy_attribution"},
+        "side": {"enum": ["BUY", "SELL", "UNKNOWN"]},
+        "open_time": {"type": ["string", "null"], "format": "date-time"},
+        "close_time": {"type": ["string", "null"], "format": "date-time", "description": "null = posizione ancora aperta alla fine della finestra osservata."},
+        "volume_opened": {"type": ["number", "null"]},
+        "volume_closed": {"type": ["number", "null"]},
+        "avg_open_price": {"type": ["number", "null"]},
+        "avg_close_price": {"type": ["number", "null"]},
+        "realized_pnl": {"type": ["number", "null"], "description": "Somma di profit sui deal OUT/OUT_BY - null se status=OPEN."},
+        "swap_total": {"type": ["number", "null"]},
+        "commission_total": {"type": ["number", "null"]},
+        "r_multiple": {"type": ["number", "null"]},
+        "status": {"enum": ["OPEN", "CLOSED", "PARTIALLY_CLOSED"]},
+        "deal_ids": {"type": "array", "items": {"type": "integer"}, "minItems": 1},
+        "provenance": {"$ref": "#/definitions/provenance"}
+      }
+    },
+    "account_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["account_id", "snapshot_time", "source", "provenance"],
+      "properties": {
+        "account_id": {"type": "string", "pattern": "^acct_[a-f0-9]{16}$"},
+        "snapshot_time": {"type": "string", "format": "date-time"},
+        "balance": {"type": ["number", "null"]},
+        "equity": {"type": ["number", "null"]},
+        "margin": {"type": ["number", "null"]},
+        "margin_free": {"type": ["number", "null"]},
+        "margin_level": {"type": ["number", "null"]},
+        "currency": {"type": ["string", "null"]},
+        "open_positions_count": {"type": ["integer", "null"]},
+        "source": {"enum": ["LIVE_BRIDGE", "CSV_EXPORT", "MANUAL", "TESTER_FINAL"]},
+        "provenance": {"$ref": "#/definitions/provenance"}
+      }
+    }
+  }
+}

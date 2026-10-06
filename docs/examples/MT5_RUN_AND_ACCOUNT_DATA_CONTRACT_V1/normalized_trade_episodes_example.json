@@ -1,0 +1,70 @@
+{
+  "trade_episodes": [
+    {
+      "episode_id": "acct_9dea2cd40df8c343:2",
+      "account_id": "acct_9dea2cd40df8c343",
+      "position_id": 2,
+      "symbol": "GOLD",
+      "strategy_attribution": {
+        "status": "UNKNOWN"
+      },
+      "side": "BUY",
+      "open_time": "2019-06-05T17:30:00+00:00",
+      "close_time": "2019-06-11T10:51:40+00:00",
+      "volume_opened": 0.01,
+      "volume_closed": 0.01,
+      "avg_open_price": 1333.51,
+      "avg_close_price": 1322.67,
+      "realized_pnl": -10.84,
+      "swap_total": -5.22,
+      "commission_total": 0.0,
+      "r_multiple": null,
+      "status": "CLOSED",
+      "deal_ids": [
+        2,
+        3
+      ],
+      "provenance": {
+        "raw_source_path": "server/research_scripts/phase7/phase7_9h/raw_data/nxs_diag_deals_export_r003.csv",
+        "raw_source_sha256": "93953d93419a20b843e6bac0cb0271a6cf8cf3071ce3d0005d76b1ed353fc534",
+        "parser_name": "normalize.normalize_native_deal_export",
+        "parser_version": "1.0.0",
+        "normalized_at": "2026-10-06T17:23:15.822357+00:00",
+        "pairing_method": "POSITION_ID_EXACT"
+      }
+    },
+    {
+      "episode_id": "acct_9dea2cd40df8c343:4",
+      "account_id": "acct_9dea2cd40df8c343",
+      "position_id": 4,
+      "symbol": "GOLD",
+      "strategy_attribution": {
+        "status": "UNKNOWN"
+      },
+      "side": "BUY",
+      "open_time": "2019-06-21T05:30:00+00:00",
+      "close_time": "2019-06-21T09:39:40+00:00",
+      "volume_opened": 0.01,
+      "volume_closed": 0.01,
+      "avg_open_price": 1407.33,
+      "avg_close_price": 1390.57,
+      "realized_pnl": -16.76,
+      "swap_total": 0.0,
+      "commission_total": 0.0,
+      "r_multiple": null,
+      "status": "CLOSED",
+      "deal_ids": [
+        4,
+        5
+      ],
+      "provenance": {
+        "raw_source_path": "server/research_scripts/phase7/phase7_9h/raw_data/nxs_diag_deals_export_r003.csv",
+        "raw_source_sha256": "93953d93419a20b843e6bac0cb0271a6cf8cf3071ce3d0005d76b1ed353fc534",
+        "parser_name": "normalize.normalize_native_deal_export",
+        "parser_version": "1.0.0",
+        "normalized_at": "2026-10-06T17:23:15.822357+00:00",
+        "pairing_method": "POSITION_ID_EXACT"
+      }
+    }
+  ]
+}

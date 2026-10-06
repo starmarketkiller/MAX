@@ -1,0 +1,40 @@
+{
+  "schema": "ACCOUNT_PERFORMANCE_SUMMARY_V1",
+  "account_id": "acct_9dea2cd40df8c343",
+  "generated_at": "2026-10-06T17:23:15.853559+00:00",
+  "account_metrics": {
+    "total_trades": 47,
+    "win_rate": 0.2978723404255319,
+    "profit_factor": 2.0374267231571075,
+    "expectancy": 20.370425531914893,
+    "total_realized_pnl": 957.41,
+    "max_drawdown": 280.69,
+    "max_drawdown_basis": "CUMULATIVE_REALIZED_PNL_PROXY_NOT_ACCOUNT_EQUITY"
+  },
+  "strategy_metrics": {
+    "__UNKNOWN__": {
+      "total_trades": 47,
+      "win_rate": 0.2978723404255319,
+      "profit_factor": 2.0374267231571075,
+      "expectancy": 20.370425531914893,
+      "total_realized_pnl": 957.41,
+      "max_drawdown": 280.69,
+      "max_drawdown_basis": "CUMULATIVE_REALIZED_PNL_PROXY_NOT_ACCOUNT_EQUITY",
+      "attribution_status_sample": "UNKNOWN"
+    }
+  },
+  "data_quality": {
+    "last_verified_at": "2026-10-06T17:23:15.836196+00:00",
+    "status": "CLEAN",
+    "checks_passed": [
+      "raw_hash_matches_disk",
+      "no_duplicate_deal_ids",
+      "no_negative_volume",
+      "exit_not_before_entry",
+      "account_id_matches_expected",
+      "no_missing_timestamps",
+      "no_ambiguous_fifo_pairing"
+    ],
+    "checks_failed": []
+  }
+}

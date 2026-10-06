@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "run_id": "phase7_9h_diag_r003",
+  "account_id": "acct_9dea2cd40df8c343",
+  "terminal_role": "TESTER_TERMINAL",
+  "ea_name": null,
+  "ea_version": null,
+  "strategy_registry_version": null,
+  "symbol": "GOLD",
+  "timeframe": null,
+  "period_start": null,
+  "period_end": null,
+  "generated_at": "2026-10-06T17:23:15.839808+00:00",
+  "collected_before_any_interpretation": true,
+  "no_verdict_computed_here": true,
+  "ea_build_identity": {
+    "ex5_sha256": null,
+    "source_sha256": null,
+    "ex5_mtime": null
+  },
+  "artifacts": [
+    {
+      "artifact_type": "RAW_DEAL_EXPORT",
+      "source_path": "server/research_scripts/phase7/phase7_9h/raw_data/nxs_diag_deals_export_r003.csv",
+      "dest_path": null,
+      "sha256": "93953d93419a20b843e6bac0cb0271a6cf8cf3071ce3d0005d76b1ed353fc534",
+      "size_bytes": 16123,
+      "row_count": 95,
+      "collected_at": "2026-10-06T17:23:15.839773+00:00"
+    }
+  ]
+}
