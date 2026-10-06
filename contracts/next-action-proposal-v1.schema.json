@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/next-action-proposal-v1.schema.json",
+  "title": "NEXUS NEXT_ACTION_PROPOSAL_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "proposal_id", "proposal_only", "lead_id", "opportunity_id", "recommended_next_action", "required_approval", "source_task_id", "verifier_status", "verifier_errors", "provenance"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "proposal_id": {"type": "string", "pattern": "^NAP_[A-Z0-9_]+$"},
+    "proposal_only": {"const": true},
+    "lead_id": {"type": ["string", "null"]},
+    "opportunity_id": {"type": ["string", "null"]},
+    "recommended_next_action": {"type": "string"},
+    "required_approval": {"enum": ["NONE", "REVIEW_REQUIRED", "EXPLICIT_USER_APPROVAL"]},
+    "source_task_id": {"type": "string", "pattern": "^TASK_[A-Za-z0-9_]+$"},
+    "verifier_status": {"enum": ["PASS", "FAIL"]},
+    "verifier_errors": {"type": "array", "items": {"type": "string"}},
+    "provenance": {"type": "object"}
+  }
+}

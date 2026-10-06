@@ -33,7 +33,8 @@ def _now():
 
 def _empty():
     return {"schema_version": "FIRST_REVENUE_EXECUTION_V1", "revision": 0,
-            "opportunities": [], "offers": [], "leads": [], "payments": [], "revenues": [],
+            "opportunities": [], "offers": [], "prospects": [], "leads": [], "payments": [], "revenues": [],
+            "attention_events": [],
             "idempotency_keys": []}
 
 
@@ -51,6 +52,8 @@ class FirstRevenueStore:
             value = json.load(handle)
         if value.get("schema_version") != "FIRST_REVENUE_EXECUTION_V1":
             raise RuntimeError("unsupported first revenue store")
+        value.setdefault("attention_events", [])
+        value.setdefault("prospects", [])
         return value
 
     def _save(self, value):
@@ -114,6 +117,28 @@ class FirstRevenueStore:
         self._event("OFFER", record["offer_id"], "CREATED")
         return result
 
+    def register_prospect(self, record, *, idempotency_key=None):
+        required = {"prospect_id", "dedup_key", "display_name", "source",
+                    "source_reference", "evidence", "observed_at", "provenance"}
+        if not required.issubset(record):
+            raise ValueError(f"prospect fields missing: {sorted(required-set(record))}")
+        if record["provenance"].get("confidence") not in {"VERIFIED", "DECLARED"}:
+            raise ValueError("unverified prospect cannot become canonical")
+        def apply(state):
+            existing = next((item for item in state["prospects"]
+                             if item["dedup_key"] == record["dedup_key"]), None)
+            if existing:
+                existing["duplicate_observations"] = existing.get("duplicate_observations", 0) + 1
+                existing["last_observed_at"] = record["observed_at"]
+                return
+            self._upsert(state["prospects"], "prospect_id", {
+                **record, "status": "DISCOVERED", "created_at": _now(),
+                "last_observed_at": record["observed_at"], "duplicate_observations": 0,
+            })
+        result = self._tx(idempotency_key, apply)
+        self._event("PROSPECT", record["prospect_id"], "INGESTED")
+        return result
+
     def create_lead(self, record, *, idempotency_key=None):
         now = _now()
         value = {**record, "status": "DISCOVERED", "delivery_task_id": None,
@@ -142,6 +167,49 @@ class FirstRevenueStore:
             lead["status"] = new_status; lead["updated_at"] = _now()
         result = self._tx(idempotency_key, apply)
         self._event("LEAD", lead_id, new_status)
+        return result
+
+    def record_manual_send(self, lead_id, *, approved_fingerprint, draft_fingerprint,
+                           approved_by, receipt_reference, idempotency_key=None):
+        """Record an observed manual Gmail send; never sends a message itself."""
+        if not all(isinstance(value, str) and value.strip() for value in
+                   (approved_fingerprint, draft_fingerprint, approved_by, receipt_reference)):
+            raise ValueError("manual send requires approval, matching fingerprint and receipt")
+        if approved_fingerprint != draft_fingerprint:
+            raise PermissionError("stale approval or message fingerprint mismatch")
+        def apply(state):
+            lead = next(item for item in state["leads"] if item["lead_id"] == lead_id)
+            if lead["status"] != "CONTACT_READY":
+                raise ValueError(f"invalid lead transition {lead['status']} -> CONTACTED")
+            lead["outreach_approval"] = {
+                "status": "APPROVED", "approved_by": approved_by,
+                "approved_at": _now(), "message_fingerprint": approved_fingerprint,
+            }
+            lead["outreach_receipt"] = {
+                "mode": "MANUAL_SEND_WITH_RECORDED_APPROVAL",
+                "reference": receipt_reference,
+                "message_fingerprint": draft_fingerprint,
+                "recorded_at": _now(),
+            }
+            lead["status"] = "CONTACTED"
+            lead["updated_at"] = _now()
+        result = self._tx(idempotency_key, apply)
+        self._event("LEAD", lead_id, "CONTACTED")
+        self._event("LEAD", lead_id, "MANUAL_SEND_RECORDED")
+        return result
+
+    def record_attention(self, record, *, idempotency_key=None):
+        required = {"experiment_id", "intervention_type", "active_decision_seconds",
+                    "approval_latency_seconds", "recorded_at", "provenance"}
+        if not required.issubset(record):
+            raise ValueError(f"attention fields missing: {sorted(required-set(record))}")
+        if record["active_decision_seconds"] < 0 or record["approval_latency_seconds"] < 0:
+            raise ValueError("attention durations cannot be negative")
+        value = {**record, "attention_id": record.get("attention_id") or
+                 f"ATTN_{uuid.uuid4().hex[:12].upper()}"}
+        result = self._tx(idempotency_key, lambda state: self._upsert(
+            state["attention_events"], "attention_id", value))
+        self._event("ATTENTION", value["attention_id"], "RECORDED")
         return result
 
     def link_delivery_task(self, lead_id, task_id, *, idempotency_key=None):
