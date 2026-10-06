@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "proposal_id": "PROP-MACD-COMPONENT-VALUE-PHASE1-001",
+  "strategy_id": "MACD",
+  "field": "component_value_status",
+  "current_value": "NOT_EVALUATED",
+  "proposed_value": "WEAK",
+  "automatic_mutation": false,
+  "requires_joint_review": true,
+  "scope": {
+    "timeframe": "H4",
+    "parameters": {
+      "fast": 12,
+      "slow": 26,
+      "signal": 9,
+      "price": "PRICE_CLOSE"
+    },
+    "representation": "CAUSAL_CROSSOVER",
+    "regime_source": "PHASE5_5_H4_REGIME_V1",
+    "pilot": "CONTEXTUAL_EDGE_PHASE1_MACD_V1"
+  },
+  "does_not_apply_to": [
+    "continuous MACD value",
+    "histogram slope",
+    "zero-line distance",
+    "acceleration",
+    "divergence",
+    "other MACD parameters, timeframes, regimes, or combinations"
+  ],
+  "evidence": {
+    "record": "macd_evidence_record_v1.json",
+    "result": "macd_contextual_edge_test_result_v1.json",
+    "result_sha256": "d2fbc42158def203e1dd35b3aa0e9704e65101619ac4980e5e7ef61d195ea24f",
+    "verdict": "WEAK",
+    "evidence_grade": "E1",
+    "validation_integrity": "DISCOVERY_REUSE"
+  },
+  "runtime_change": false
+}

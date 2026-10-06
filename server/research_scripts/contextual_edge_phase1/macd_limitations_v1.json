@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "limitations": [
+    "Dataset is DISCOVERY_REUSE, not TRUE_HOLDOUT.",
+    "Phase 5.5 and Phase 7.27 regime classifiers have PARTIAL semantic compatibility only.",
+    "Crossover observations and 40-bar windows overlap; three ESS diagnostics are reported separately.",
+    "Intrabar ordering is unavailable; target wins same-bar ties consistently with the reused Phase 5 outcome primitive.",
+    "Cost-stage path adjustment reuses the frozen repository convention: spread once, slippage at entry and market stop exit, no slippage at limit target.",
+    "No result may be interpreted as profitability, deployment eligibility, or a standalone MACD strategy validation.",
+    "The LOW_VOL / SELL / 1.0 ATR cell is post-hoc and unconfirmed because raw p=0.02249 did not survive the frozen 60-cell BH family (q=1.0)."
+  ],
+  "provenance": {
+    "preregistration": "8d04447c4542babe47b140bd0bbcabce7ca299335743f72c4d4efca3dc6477ad",
+    "selection": "3a70d28a56ff7f3dab2fdbe49630963d453e7bb45f1fdac20720d47ecfd6d23e",
+    "result": "d2fbc42158def203e1dd35b3aa0e9704e65101619ac4980e5e7ef61d195ea24f"
+  }
+}

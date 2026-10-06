@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "evidence_id": "EVD-MACD-CONTEXTUAL-PHASE1-001",
+  "component_id": "EC-MACD-CONTEXTUAL-H4-V1",
+  "evidence_grade": "E1",
+  "verdict": "WEAK",
+  "validation_integrity": "DISCOVERY_REUSE",
+  "source_result": "macd_contextual_edge_test_result_v1.json",
+  "source_result_sha256": "d2fbc42158def203e1dd35b3aa0e9704e65101619ac4980e5e7ef61d195ea24f",
+  "preregistration_sha256": "8d04447c4542babe47b140bd0bbcabce7ca299335743f72c4d4efca3dc6477ad",
+  "selection_manifest_sha256": "3a70d28a56ff7f3dab2fdbe49630963d453e7bb45f1fdac20720d47ecfd6d23e",
+  "facts": {
+    "crossovers": {
+      "total_crossovers": 372,
+      "BUY": 186,
+      "SELL": 186,
+      "missingness": {
+        "missing_regime": 7,
+        "missing_atr": 0,
+        "censored_horizon": 2
+      }
+    },
+    "selection_eligible_cells": 36,
+    "selection_ineligible_cells": 24,
+    "cells_with_positive_effect": 21,
+    "cells_meeting_primary_criterion": 0,
+    "cells_entering_economic_stage": 0,
+    "cells_with_low_ess": 1,
+    "verdict": "WEAK",
+    "evidence_grade": "E1",
+    "supported": false,
+    "rationale": "No frozen cell met the preregistered positive paired-effect plus BH q<=0.10 criterion."
+  },
+  "post_hoc_observations": [
+    {
+      "classification": "POST_HOC_OBSERVATION_NOT_CONFIRMED",
+      "cell_id": "MACD__LOW_VOL__SELL__T1_0_ATR",
+      "regime": "LOW_VOL",
+      "direction": "SELL",
+      "threshold_atr": 1.0,
+      "paired_effect": 0.11940298507462686,
+      "raw_p_value": 0.022488755622188907,
+      "bh_q_value": 1.0,
+      "interpretation": "Nominal observation only; it did not survive the frozen 60-cell BH family.",
+      "restrictions": [
+        "Do not promote this cell.",
+        "Do not narrow the frozen family to rescue it.",
+        "Do not immediately retest it on the same dataset.",
+        "A future test requires a new preregistration and independent data."
+      ]
+    }
+  ],
+  "is_validated_edge": false,
+  "is_deployable": false
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "decision_card_id": "DC-MACD-CONTEXTUAL-PHASE1-001",
+  "decision": "WEAK",
+  "evidence_grade": "E1",
+  "supported": false,
+  "rationale": "No frozen cell met the preregistered positive paired-effect plus BH q<=0.10 criterion.",
+  "automatic_registry_mutation": false,
+  "closure_status": "CLOSED_WEAK",
+  "post_hoc_observation": {
+    "classification": "POST_HOC_OBSERVATION_NOT_CONFIRMED",
+    "cell_id": "MACD__LOW_VOL__SELL__T1_0_ATR",
+    "regime": "LOW_VOL",
+    "direction": "SELL",
+    "threshold_atr": 1.0,
+    "paired_effect": 0.11940298507462686,
+    "raw_p_value": 0.022488755622188907,
+    "bh_q_value": 1.0,
+    "interpretation": "Nominal observation only; it did not survive the frozen 60-cell BH family.",
+    "restrictions": [
+      "Do not promote this cell.",
+      "Do not narrow the frozen family to rescue it.",
+      "Do not immediately retest it on the same dataset.",
+      "A future test requires a new preregistration and independent data."
+    ]
+  },
+  "next_step": "No immediate MACD retest. Any future test of the nominal observation requires a new preregistration and independent data.",
+  "source_evidence": "macd_evidence_record_v1.json"
+}

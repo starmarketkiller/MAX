@@ -146,3 +146,63 @@ def test_preregistration_hash_and_diagnostic_outcome_blindness(monkeypatch):
         item["scientific_outcomes_read"] is False
         for item in result["diagnostics"].values()
     )
+
+
+def test_selection_manifest_is_frozen_outcome_blind_and_complete():
+    selection = json.loads((FOUNDATION / "macd_selection_manifest_v1.json").read_text(encoding="utf-8"))
+    digest = _sha256(FOUNDATION / "macd_selection_manifest_v1.json")
+    sidecar = (FOUNDATION / "macd_selection_manifest_v1.sha256").read_text(encoding="ascii").split()[0]
+    assert digest == sidecar == "3a70d28a56ff7f3dab2fdbe49630963d453e7bb45f1fdac20720d47ecfd6d23e"
+    assert selection["status"] == "FROZEN_BEFORE_OUTCOME_TEST"
+    assert selection["outcome_data_read"] is False
+    assert selection["forbidden_inputs_used"] == []
+    assert len(selection["cells"]) == 60
+    assert selection["event_summary"]["BUY"] == selection["event_summary"]["SELL"] == 186
+
+
+def test_execution_result_preserves_frozen_family_and_no_promotion(monkeypatch):
+    monkeypatch.syspath_prepend(str(FOUNDATION))
+    verifier = _load_module("phase1_execution_verifier", "verify_macd_execution_result.py")
+    report = verifier.verify()
+    assert report["status"] == "PASS"
+    assert report["family_size"] == 60
+    assert report["primary_cells"] == report["economic_cells"]
+    result = json.loads((FOUNDATION / "macd_contextual_edge_test_result_v1.json").read_text(encoding="utf-8"))
+    assert result["validation_integrity"] == "DISCOVERY_REUSE"
+    assert result["summary"]["supported"] is False
+    assert all(cell["bh"]["m_family"] == 60 for cell in result["cells"])
+    assert all(
+        cell["raw_p_value"] == 1.0
+        for cell in result["cells"]
+        if not cell["selection_eligible"] or cell["test_reason_codes"]
+    )
+
+
+def test_macd_closure_is_weak_scoped_and_registry_update_is_proposal_only():
+    decision = json.loads((FOUNDATION / "macd_decision_card_v1.json").read_text(encoding="utf-8"))
+    evidence = json.loads((FOUNDATION / "macd_evidence_record_v1.json").read_text(encoding="utf-8"))
+    proposal = json.loads(
+        (FOUNDATION / "macd_component_value_registry_proposal_v1.json").read_text(encoding="utf-8")
+    )
+    assert decision["decision"] == "WEAK"
+    assert decision["closure_status"] == "CLOSED_WEAK"
+    assert decision["automatic_registry_mutation"] is False
+    observation = decision["post_hoc_observation"]
+    assert observation["classification"] == "POST_HOC_OBSERVATION_NOT_CONFIRMED"
+    assert observation["cell_id"] == "MACD__LOW_VOL__SELL__T1_0_ATR"
+    assert observation["raw_p_value"] < 0.05
+    assert observation["bh_q_value"] == 1.0
+    assert evidence["post_hoc_observations"] == [observation]
+    assert proposal["field"] == "component_value_status"
+    assert proposal["current_value"] == "NOT_EVALUATED"
+    assert proposal["proposed_value"] == "WEAK"
+    assert proposal["automatic_mutation"] is False
+    assert proposal["scope"]["timeframe"] == "H4"
+    assert proposal["scope"]["parameters"] == {
+        "fast": 12, "slow": 26, "signal": 9, "price": "PRICE_CLOSE"
+    }
+    assert proposal["scope"]["representation"] == "CAUSAL_CROSSOVER"
+    assert "continuous MACD value" in proposal["does_not_apply_to"]
+    registry = json.loads((ROOT / "contracts/edge-validation-registry.json").read_text(encoding="utf-8"))
+    macd = next(item for item in registry["strategies"] if item["strategy_id"] == "MACD")
+    assert macd["component_value_status"] == "NOT_EVALUATED"

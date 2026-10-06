@@ -1,0 +1,3637 @@
+{
+  "schema_version": 1,
+  "status": "EXECUTED_NOT_COMMITTED",
+  "component_id": "EC-MACD-CONTEXTUAL-H4-V1",
+  "preregistration_sha256": "8d04447c4542babe47b140bd0bbcabce7ca299335743f72c4d4efca3dc6477ad",
+  "selection_manifest_sha256": "3a70d28a56ff7f3dab2fdbe49630963d453e7bb45f1fdac20720d47ecfd6d23e",
+  "execution_commit": "284d12b617fd21a2115532de184966d9b0c41a33",
+  "dataset_id": "MARKET_STATE_V1_436265d450475aaa",
+  "validation_integrity": "DISCOVERY_REUSE",
+  "family_size": 60,
+  "bh_q": 0.1,
+  "permutation_defaults": {
+    "n_boot": 2000,
+    "seed": 42,
+    "source": "matched_pair_permutation_test.py canonical defaults"
+  },
+  "cells": [
+    {
+      "cell_id": "MACD__HIGH_VOL__BUY__T0_25_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "BUY",
+      "threshold_id": "T0_25_ATR",
+      "raw_crossover_count": 54,
+      "complete_horizon_count": 53,
+      "matched_event_count": 52,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 52,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.8461538461538461,
+      "matched_control_target_first_rate": 0.7923076923076924,
+      "paired_effect": 0.053846153846153835,
+      "raw_p_value": 0.37031484257871067,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 52,
+        "block_length": 4,
+        "n_blocks": 13,
+        "n_boot": 2000,
+        "t_observed": 0.053846153846153835,
+        "t_null_std": 0.05144414892463361,
+        "p_value": 0.37031484257871067,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 45,
+        "autocorrelation_ess": 52.0,
+        "block_bootstrap_variance_ess": 70.24776347101846,
+        "overlap_rate": 0.6923076923076923,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 52,
+            "lags": {
+              "1": -0.015151515151515112,
+              "2": -0.17272727272727273,
+              "3": -0.1799628942486085,
+              "4": 0.13257575757575765,
+              "5": 0.13152804642166352,
+              "6": 0.15612648221343875,
+              "7": -0.1858585858585858,
+              "8": -0.1673553719008264,
+              "9": -0.1479915433403805,
+              "10": 0.0270562770562771
+            }
+          },
+          "block_bootstrap": {
+            "n": 52,
+            "block_length": 4,
+            "n_blocks_needed": 13,
+            "n_boot": 2000,
+            "mean": 0.8532980769230769,
+            "ci_low": 0.7692307692307693,
+            "ci_high": 0.9230769230769231,
+            "std": 0.0422135655286896
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.37031484257871067,
+        "rank": 10,
+        "m_family": 60,
+        "bh_critical_value_q": 0.016666666666666666,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__HIGH_VOL__BUY__T0_5_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "BUY",
+      "threshold_id": "T0_5_ATR",
+      "raw_crossover_count": 54,
+      "complete_horizon_count": 53,
+      "matched_event_count": 52,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 52,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.7692307692307693,
+      "matched_control_target_first_rate": 0.6653846153846155,
+      "paired_effect": 0.10384615384615385,
+      "raw_p_value": 0.079960019990005,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 52,
+        "block_length": 4,
+        "n_blocks": 13,
+        "n_boot": 2000,
+        "t_observed": 0.10384615384615385,
+        "t_null_std": 0.057100927463218695,
+        "p_value": 0.079960019990005,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 45,
+        "autocorrelation_ess": 52.0,
+        "block_bootstrap_variance_ess": 75.93006489307218,
+        "overlap_rate": 0.6923076923076923,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 52,
+            "lags": {
+              "1": -0.06535947712418307,
+              "2": -0.18533333333333332,
+              "3": -0.08027210884353744,
+              "4": 0.02916666666666661,
+              "5": 0.023404255319148866,
+              "6": -0.07681159420289861,
+              "7": -0.0851851851851852,
+              "8": -0.0643939393939394,
+              "9": -0.04263565891472873,
+              "10": 0.08333333333333325
+            }
+          },
+          "block_bootstrap": {
+            "n": 52,
+            "block_length": 4,
+            "n_blocks_needed": 13,
+            "n_boot": 2000,
+            "mean": 0.7715480769230769,
+            "ci_low": 0.6730769230769231,
+            "ci_high": 0.8653846153846154,
+            "std": 0.048180579601532866
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.079960019990005,
+        "rank": 2,
+        "m_family": 60,
+        "bh_critical_value_q": 0.0033333333333333335,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__HIGH_VOL__BUY__T1_0_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "BUY",
+      "threshold_id": "T1_0_ATR",
+      "raw_crossover_count": 54,
+      "complete_horizon_count": 53,
+      "matched_event_count": 52,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 52,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.6153846153846154,
+      "matched_control_target_first_rate": 0.49230769230769234,
+      "paired_effect": 0.12307692307692308,
+      "raw_p_value": 0.16991504247876063,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 52,
+        "block_length": 4,
+        "n_blocks": 13,
+        "n_boot": 2000,
+        "t_observed": 0.12307692307692308,
+        "t_null_std": 0.08556091284980723,
+        "p_value": 0.16991504247876063,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 45,
+        "autocorrelation_ess": 52.0,
+        "block_bootstrap_variance_ess": 100.6282204103764,
+        "overlap_rate": 0.6923076923076923,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 52,
+            "lags": {
+              "1": -0.12058823529411763,
+              "2": -0.27199999999999996,
+              "3": -0.11785714285714283,
+              "4": 0.1307291666666667,
+              "5": -0.11489361702127654,
+              "6": -0.003804347826086935,
+              "7": 0.11222222222222225,
+              "8": 0.041477272727272745,
+              "9": -0.0325581395348837,
+              "10": -0.24940476190476182
+            }
+          },
+          "block_bootstrap": {
+            "n": 52,
+            "block_length": 4,
+            "n_blocks_needed": 13,
+            "n_boot": 2000,
+            "mean": 0.6189134615384615,
+            "ci_low": 0.5192307692307693,
+            "ci_high": 0.7115384615384616,
+            "std": 0.048413543655877196
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.16991504247876063,
+        "rank": 4,
+        "m_family": 60,
+        "bh_critical_value_q": 0.006666666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__HIGH_VOL__BUY__T1_5_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "BUY",
+      "threshold_id": "T1_5_ATR",
+      "raw_crossover_count": 54,
+      "complete_horizon_count": 53,
+      "matched_event_count": 52,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 51,
+      "censored_pair_count": 1,
+      "event_target_first_rate": 0.5098039215686274,
+      "matched_control_target_first_rate": 0.4156862745098039,
+      "paired_effect": 0.09411764705882353,
+      "raw_p_value": 0.2288855572213893,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 51,
+        "block_length": 4,
+        "n_blocks": 13,
+        "n_boot": 2000,
+        "t_observed": 0.09411764705882353,
+        "t_null_std": 0.07278963807435625,
+        "p_value": 0.2288855572213893,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 45,
+        "autocorrelation_ess": 51.0,
+        "block_bootstrap_variance_ess": 72.23876498192293,
+        "overlap_rate": 0.6862745098039216,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 51,
+            "lags": {
+              "1": -0.16046153846153846,
+              "2": -0.06166405023547877,
+              "3": -0.04211538461538463,
+              "4": 0.021669394435351916,
+              "5": -0.17444816053511708,
+              "6": -0.06717948717948716,
+              "7": 0.18048951048951045,
+              "8": 0.021824686940966016,
+              "9": -0.14439560439560437,
+              "10": -0.07377110694183862
+            }
+          },
+          "block_bootstrap": {
+            "n": 51,
+            "block_length": 4,
+            "n_blocks_needed": 13,
+            "n_boot": 2000,
+            "mean": 0.5113529411764706,
+            "ci_low": 0.39215686274509803,
+            "ci_high": 0.6274509803921569,
+            "std": 0.0588129369547955
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.2288855572213893,
+        "rank": 5,
+        "m_family": 60,
+        "bh_critical_value_q": 0.008333333333333333,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__HIGH_VOL__BUY__T2_0_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "BUY",
+      "threshold_id": "T2_0_ATR",
+      "raw_crossover_count": 54,
+      "complete_horizon_count": 53,
+      "matched_event_count": 52,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 51,
+      "censored_pair_count": 1,
+      "event_target_first_rate": 0.43137254901960786,
+      "matched_control_target_first_rate": 0.36862745098039224,
+      "paired_effect": 0.06274509803921566,
+      "raw_p_value": 0.3568215892053973,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 51,
+        "block_length": 4,
+        "n_blocks": 13,
+        "n_boot": 2000,
+        "t_observed": 0.06274509803921566,
+        "t_null_std": 0.060318355593717746,
+        "p_value": 0.3568215892053973,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 45,
+        "autocorrelation_ess": 51.0,
+        "block_bootstrap_variance_ess": 74.32139181565731,
+        "overlap_rate": 0.6862745098039216,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 51,
+            "lags": {
+              "1": -0.1015047021943574,
+              "2": -0.1663681146439767,
+              "3": -0.10070532915360506,
+              "4": 0.21606749816581075,
+              "5": 0.027020580618781535,
+              "6": -0.04075235109717868,
+              "7": 0.1263892846964947,
+              "8": -0.1318436976015164,
+              "9": -0.30530676220331393,
+              "10": 0.052832785381145365
+            }
+          },
+          "block_bootstrap": {
+            "n": 51,
+            "block_length": 4,
+            "n_blocks_needed": 13,
+            "n_boot": 2000,
+            "mean": 0.4330784313725491,
+            "ci_low": 0.3333333333333333,
+            "ci_high": 0.5490196078431373,
+            "std": 0.05747617395805494
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.3568215892053973,
+        "rank": 9,
+        "m_family": 60,
+        "bh_critical_value_q": 0.015,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__HIGH_VOL__BUY__T3_0_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "BUY",
+      "threshold_id": "T3_0_ATR",
+      "raw_crossover_count": 54,
+      "complete_horizon_count": 53,
+      "matched_event_count": 52,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 44,
+      "censored_pair_count": 8,
+      "event_target_first_rate": 0.3409090909090909,
+      "matched_control_target_first_rate": 0.25909090909090915,
+      "paired_effect": 0.08181818181818185,
+      "raw_p_value": 0.3218390804597701,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 44,
+        "block_length": 4,
+        "n_blocks": 11,
+        "n_boot": 2000,
+        "t_observed": 0.08181818181818185,
+        "t_null_std": 0.08258593120536846,
+        "p_value": 0.3218390804597701,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 39,
+        "autocorrelation_ess": 44.0,
+        "block_bootstrap_variance_ess": 59.81126257708535,
+        "overlap_rate": 0.6136363636363636,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 44,
+            "lags": {
+              "1": -0.023790430366212256,
+              "2": -0.10651340996168587,
+              "3": -0.23027754415475196,
+              "4": 0.12275862068965519,
+              "5": -0.0766872973769526,
+              "6": 0.024803387779794298,
+              "7": -0.10879155017086055,
+              "8": -0.16551724137931045,
+              "9": -0.22548440065681452,
+              "10": -0.07180527383367145
+            }
+          },
+          "block_bootstrap": {
+            "n": 44,
+            "block_length": 4,
+            "n_blocks_needed": 11,
+            "n_boot": 2000,
+            "mean": 0.3531818181818182,
+            "ci_low": 0.25,
+            "ci_high": 0.4772727272727273,
+            "std": 0.06180146832886178
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.3218390804597701,
+        "rank": 7,
+        "m_family": 60,
+        "bh_critical_value_q": 0.011666666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__HIGH_VOL__SELL__T0_25_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "SELL",
+      "threshold_id": "T0_25_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 47,
+      "matched_event_count": 47,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 47,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.8085106382978723,
+      "matched_control_target_first_rate": 0.8595744680851064,
+      "paired_effect": -0.05106382978723406,
+      "raw_p_value": 0.384807596201899,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 47,
+        "block_length": 4,
+        "n_blocks": 12,
+        "n_boot": 2000,
+        "t_observed": -0.05106382978723406,
+        "t_null_std": 0.055205733820205966,
+        "p_value": 0.384807596201899,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 40,
+        "autocorrelation_ess": 47.0,
+        "block_bootstrap_variance_ess": 62.85051500447727,
+        "overlap_rate": 0.574468085106383,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 47,
+            "lags": {
+              "1": -0.10672514619883047,
+              "2": 0.029174788823911554,
+              "3": -0.2410287081339713,
+              "4": 0.0770433836529307,
+              "5": -0.0805485937064885,
+              "6": 0.0994152046783625,
+              "7": -0.06549707602339186,
+              "8": -0.041535462588094214,
+              "9": -0.01631271160357037,
+              "10": 0.15141457246720397
+            }
+          },
+          "block_bootstrap": {
+            "n": 47,
+            "block_length": 4,
+            "n_blocks_needed": 12,
+            "n_boot": 2000,
+            "mean": 0.8005212765957447,
+            "ci_low": 0.7021276595744681,
+            "ci_high": 0.8936170212765957,
+            "std": 0.05040577649644979
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.384807596201899,
+        "rank": 11,
+        "m_family": 60,
+        "bh_critical_value_q": 0.018333333333333333,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__HIGH_VOL__SELL__T0_5_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "SELL",
+      "threshold_id": "T0_5_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 47,
+      "matched_event_count": 47,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 47,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.6808510638297872,
+      "matched_control_target_first_rate": 0.7021276595744682,
+      "paired_effect": -0.02127659574468086,
+      "raw_p_value": 0.7946026986506747,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 47,
+        "block_length": 4,
+        "n_blocks": 12,
+        "n_boot": 2000,
+        "t_observed": -0.02127659574468086,
+        "t_null_std": 0.08521148871462893,
+        "p_value": 0.7946026986506747,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 40,
+        "autocorrelation_ess": 47.0,
+        "block_bootstrap_variance_ess": 85.67524754671686,
+        "overlap_rate": 0.574468085106383,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 47,
+            "lags": {
+              "1": -0.18899456521739125,
+              "2": -0.0687037037037037,
+              "3": -0.223342803030303,
+              "4": 0.11579457364341086,
+              "5": -0.0021825396825396735,
+              "6": 0.13440040650406496,
+              "7": 0.01098958333333333,
+              "8": -0.31709401709401713,
+              "9": -0.05690789473684208,
+              "10": 0.21734234234234232
+            }
+          },
+          "block_bootstrap": {
+            "n": 47,
+            "block_length": 4,
+            "n_blocks_needed": 12,
+            "n_boot": 2000,
+            "mean": 0.6798191489361702,
+            "ci_low": 0.574468085106383,
+            "ci_high": 0.7872340425531915,
+            "std": 0.05040419581829203
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.7946026986506747,
+        "rank": 27,
+        "m_family": 60,
+        "bh_critical_value_q": 0.045000000000000005,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__HIGH_VOL__SELL__T1_0_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "SELL",
+      "threshold_id": "T1_0_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 47,
+      "matched_event_count": 47,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 47,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.46808510638297873,
+      "matched_control_target_first_rate": 0.5148936170212767,
+      "paired_effect": -0.0468085106382979,
+      "raw_p_value": 0.6636681659170415,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 47,
+        "block_length": 4,
+        "n_blocks": 12,
+        "n_boot": 2000,
+        "t_observed": -0.0468085106382979,
+        "t_null_std": 0.11025463552018779,
+        "p_value": 0.6636681659170415,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 40,
+        "autocorrelation_ess": 47.0,
+        "block_bootstrap_variance_ess": 58.78412948039229,
+        "overlap_rate": 0.574468085106383,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 47,
+            "lags": {
+              "1": 0.1703557312252964,
+              "2": -0.2498989898989899,
+              "3": -0.45814049586776845,
+              "4": 0.021479915433403777,
+              "5": 0.23705627705627694,
+              "6": 0.16926829268292676,
+              "7": -0.20313636363636361,
+              "8": -0.1279254079254079,
+              "9": 0.0007177033492822664,
+              "10": 0.24486486486486464
+            }
+          },
+          "block_bootstrap": {
+            "n": 47,
+            "block_length": 4,
+            "n_blocks_needed": 12,
+            "n_boot": 2000,
+            "mean": 0.47111702127659577,
+            "ci_low": 0.3404255319148936,
+            "ci_high": 0.5957446808510638,
+            "std": 0.0651049706076815
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.6636681659170415,
+        "rank": 20,
+        "m_family": 60,
+        "bh_critical_value_q": 0.03333333333333333,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__HIGH_VOL__SELL__T1_5_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "SELL",
+      "threshold_id": "T1_5_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 47,
+      "matched_event_count": 47,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 46,
+      "censored_pair_count": 1,
+      "event_target_first_rate": 0.41304347826086957,
+      "matched_control_target_first_rate": 0.3826086956521739,
+      "paired_effect": 0.03043478260869566,
+      "raw_p_value": 0.7661169415292354,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 46,
+        "block_length": 4,
+        "n_blocks": 12,
+        "n_boot": 2000,
+        "t_observed": 0.03043478260869566,
+        "t_null_std": 0.09744050581720644,
+        "p_value": 0.7661169415292354,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 40,
+        "autocorrelation_ess": 28.35465007609944,
+        "block_bootstrap_variance_ess": 34.27562883736512,
+        "overlap_rate": 0.5652173913043479,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 46,
+            "lags": {
+              "1": 0.31115442928308423,
+              "2": -0.034024455077086596,
+              "3": -0.14710548982274804,
+              "4": 0.029054116773415035,
+              "5": 0.11320306185517992,
+              "6": 0.09844054580896684,
+              "7": 0.020842705053231367,
+              "8": 0.11141889812249921,
+              "9": 0.14145724672040455,
+              "10": 0.05858782759367555
+            }
+          },
+          "block_bootstrap": {
+            "n": 46,
+            "block_length": 4,
+            "n_blocks_needed": 12,
+            "n_boot": 2000,
+            "mean": 0.414195652173913,
+            "ci_low": 0.2608695652173913,
+            "ci_high": 0.5869565217391305,
+            "std": 0.08413686920681317
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.7661169415292354,
+        "rank": 26,
+        "m_family": 60,
+        "bh_critical_value_q": 0.043333333333333335,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": true
+    },
+    {
+      "cell_id": "MACD__HIGH_VOL__SELL__T2_0_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "SELL",
+      "threshold_id": "T2_0_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 47,
+      "matched_event_count": 47,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 43,
+      "censored_pair_count": 4,
+      "event_target_first_rate": 0.32558139534883723,
+      "matched_control_target_first_rate": 0.32558139534883723,
+      "paired_effect": 0.0,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 43,
+        "block_length": 4,
+        "n_blocks": 11,
+        "n_boot": 2000,
+        "t_observed": 0.0,
+        "t_null_std": 0.08558575203774209,
+        "p_value": 1.0,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 37,
+        "autocorrelation_ess": 43.0,
+        "block_bootstrap_variance_ess": 38.783641902227714,
+        "overlap_rate": 0.5581395348837209,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 43,
+            "lags": {
+              "1": 0.1801548205489092,
+              "2": -0.12429412471464608,
+              "3": -0.02561576354679801,
+              "4": -0.03865100416824553,
+              "5": 0.18732175265750578,
+              "6": 0.3024231127679402,
+              "7": -0.040914066776135724,
+              "8": -0.31611541168191404,
+              "9": 0.062228339611706734,
+              "10": -0.04358859531273323
+            }
+          },
+          "block_bootstrap": {
+            "n": 43,
+            "block_length": 4,
+            "n_blocks_needed": 11,
+            "n_boot": 2000,
+            "mean": 0.3211395348837209,
+            "ci_low": 0.18604651162790697,
+            "ci_high": 0.46511627906976744,
+            "std": 0.0749743745658206
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 36,
+        "m_family": 60,
+        "bh_critical_value_q": 0.06,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__HIGH_VOL__SELL__T3_0_ATR",
+      "regime": "HIGH_VOL",
+      "direction": "SELL",
+      "threshold_id": "T3_0_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 47,
+      "matched_event_count": 47,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 41,
+      "censored_pair_count": 6,
+      "event_target_first_rate": 0.2926829268292683,
+      "matched_control_target_first_rate": 0.19999999999999998,
+      "paired_effect": 0.09268292682926826,
+      "raw_p_value": 0.35282358820589704,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 41,
+        "block_length": 4,
+        "n_blocks": 11,
+        "n_boot": 2000,
+        "t_observed": 0.09268292682926826,
+        "t_null_std": 0.09462780353398083,
+        "p_value": 0.35282358820589704,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 36,
+        "autocorrelation_ess": 41.0,
+        "block_bootstrap_variance_ess": 46.300160936060806,
+        "overlap_rate": 0.5121951219512195,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 41,
+            "lags": {
+              "1": 0.08390804597701149,
+              "2": -0.136015325670498,
+              "3": -0.023366606170598943,
+              "4": -0.03518173345759553,
+              "5": 0.22070561941251604,
+              "6": 0.21518883415435144,
+              "7": -0.03321501014198783,
+              "8": -0.19313827934517588,
+              "9": 0.08979885057471265,
+              "10": -0.18668891360771225
+            }
+          },
+          "block_bootstrap": {
+            "n": 41,
+            "block_length": 4,
+            "n_blocks_needed": 11,
+            "n_boot": 2000,
+            "mean": 0.2857317073170732,
+            "ci_low": 0.17073170731707318,
+            "ci_high": 0.4146341463414634,
+            "std": 0.06639244364736227
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.35282358820589704,
+        "rank": 8,
+        "m_family": 60,
+        "bh_critical_value_q": 0.013333333333333334,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__BUY__T0_25_ATR",
+      "regime": "LOW_VOL",
+      "direction": "BUY",
+      "threshold_id": "T0_25_ATR",
+      "raw_crossover_count": 64,
+      "complete_horizon_count": 64,
+      "matched_event_count": 64,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 64,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.828125,
+      "matched_control_target_first_rate": 0.815625,
+      "paired_effect": 0.012499999999999976,
+      "raw_p_value": 0.848575712143928,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 64,
+        "block_length": 4,
+        "n_blocks": 16,
+        "n_boot": 2000,
+        "t_observed": 0.012499999999999976,
+        "t_null_std": 0.04793967716291355,
+        "p_value": 0.848575712143928,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 54,
+        "autocorrelation_ess": 64.0,
+        "block_bootstrap_variance_ess": 67.87981883331749,
+        "overlap_rate": 0.828125,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 64,
+            "lags": {
+              "1": 0.008903046638895696,
+              "2": 0.005699109168372711,
+              "3": -0.1127857604813992,
+              "4": -0.09799885648942253,
+              "5": -0.20179085385353374,
+              "6": -0.18802862719583605,
+              "7": -0.05052511209412897,
+              "8": 0.19578534672874295,
+              "9": -0.1876500857632933,
+              "10": -0.06486246108887618
+            }
+          },
+          "block_bootstrap": {
+            "n": 64,
+            "block_length": 4,
+            "n_blocks_needed": 16,
+            "n_boot": 2000,
+            "mean": 0.8205078125,
+            "ci_low": 0.734375,
+            "ci_high": 0.90625,
+            "std": 0.046579390157046326
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.848575712143928,
+        "rank": 34,
+        "m_family": 60,
+        "bh_critical_value_q": 0.05666666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__BUY__T0_5_ATR",
+      "regime": "LOW_VOL",
+      "direction": "BUY",
+      "threshold_id": "T0_5_ATR",
+      "raw_crossover_count": 64,
+      "complete_horizon_count": 64,
+      "matched_event_count": 64,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 64,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.6875,
+      "matched_control_target_first_rate": 0.684375,
+      "paired_effect": 0.0031249999999999993,
+      "raw_p_value": 0.9825087456271864,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 64,
+        "block_length": 4,
+        "n_blocks": 16,
+        "n_boot": 2000,
+        "t_observed": 0.0031249999999999993,
+        "t_null_std": 0.06755139709880174,
+        "p_value": 0.9825087456271864,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 54,
+        "autocorrelation_ess": 64.0,
+        "block_bootstrap_variance_ess": 55.257422851609256,
+        "overlap_rate": 0.828125,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 64,
+            "lags": {
+              "1": 0.12207792207792208,
+              "2": -0.03343108504398827,
+              "3": -0.04143070044709389,
+              "4": -0.025454545454545452,
+              "5": -0.24560862865947614,
+              "6": 0.008150470219435737,
+              "7": 0.10749601275917066,
+              "8": 0.01818181818181818,
+              "9": -0.15900826446280994,
+              "10": 0.028956228956228954
+            }
+          },
+          "block_bootstrap": {
+            "n": 64,
+            "block_length": 4,
+            "n_blocks_needed": 16,
+            "n_boot": 2000,
+            "mean": 0.6720859375,
+            "ci_low": 0.546875,
+            "ci_high": 0.796875,
+            "std": 0.06315345458233931
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.9825087456271864,
+        "rank": 35,
+        "m_family": 60,
+        "bh_critical_value_q": 0.05833333333333334,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__BUY__T1_0_ATR",
+      "regime": "LOW_VOL",
+      "direction": "BUY",
+      "threshold_id": "T1_0_ATR",
+      "raw_crossover_count": 64,
+      "complete_horizon_count": 64,
+      "matched_event_count": 64,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 64,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.5625,
+      "matched_control_target_first_rate": 0.534375,
+      "paired_effect": 0.028124999999999983,
+      "raw_p_value": 0.8030984507746127,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 64,
+        "block_length": 4,
+        "n_blocks": 16,
+        "n_boot": 2000,
+        "t_observed": 0.028124999999999983,
+        "t_null_std": 0.08824786287913365,
+        "p_value": 0.8030984507746127,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 54,
+        "autocorrelation_ess": 64.0,
+        "block_bootstrap_variance_ess": 69.71886063641902,
+        "overlap_rate": 0.828125,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 64,
+            "lags": {
+              "1": 0.036029226505416984,
+              "2": 0.024065540194572452,
+              "3": -0.25474889409315643,
+              "4": -0.039153439153439155,
+              "5": 0.07613666935700833,
+              "6": 0.09469074986316366,
+              "7": -0.02868281815650237,
+              "8": -0.04308390022675737,
+              "9": -0.20577200577200577,
+              "10": -0.04056437389770723
+            }
+          },
+          "block_bootstrap": {
+            "n": 64,
+            "block_length": 4,
+            "n_blocks_needed": 16,
+            "n_boot": 2000,
+            "mean": 0.5393203125,
+            "ci_low": 0.421875,
+            "ci_high": 0.65625,
+            "std": 0.05969635027235621
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.8030984507746127,
+        "rank": 29,
+        "m_family": 60,
+        "bh_critical_value_q": 0.04833333333333334,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__BUY__T1_5_ATR",
+      "regime": "LOW_VOL",
+      "direction": "BUY",
+      "threshold_id": "T1_5_ATR",
+      "raw_crossover_count": 64,
+      "complete_horizon_count": 64,
+      "matched_event_count": 64,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 64,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.359375,
+      "matched_control_target_first_rate": 0.44062500000000004,
+      "paired_effect": -0.08125,
+      "raw_p_value": 0.4107946026986507,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 64,
+        "block_length": 4,
+        "n_blocks": 16,
+        "n_boot": 2000,
+        "t_observed": -0.08125,
+        "t_null_std": 0.09522176336715257,
+        "p_value": 0.4107946026986507,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 54,
+        "autocorrelation_ess": 64.0,
+        "block_bootstrap_variance_ess": 98.15735894827843,
+        "overlap_rate": 0.828125,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 64,
+            "lags": {
+              "1": -0.1155548822568971,
+              "2": -0.12646666438613896,
+              "3": -0.11214644576951828,
+              "4": 0.09381406857546837,
+              "5": 0.012276003379046318,
+              "6": -0.04516034665594032,
+              "7": -0.10461200721847036,
+              "8": -0.08862293591880017,
+              "9": 0.00692181625373566,
+              "10": 0.10600526295118023
+            }
+          },
+          "block_bootstrap": {
+            "n": 64,
+            "block_length": 4,
+            "n_blocks_needed": 16,
+            "n_boot": 2000,
+            "mean": 0.3468671875,
+            "ci_low": 0.25,
+            "ci_high": 0.4375,
+            "std": 0.04804198336379696
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.4107946026986507,
+        "rank": 13,
+        "m_family": 60,
+        "bh_critical_value_q": 0.021666666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__BUY__T2_0_ATR",
+      "regime": "LOW_VOL",
+      "direction": "BUY",
+      "threshold_id": "T2_0_ATR",
+      "raw_crossover_count": 64,
+      "complete_horizon_count": 64,
+      "matched_event_count": 64,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 64,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.328125,
+      "matched_control_target_first_rate": 0.371875,
+      "paired_effect": -0.04375000000000001,
+      "raw_p_value": 0.6906546726636682,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 64,
+        "block_length": 4,
+        "n_blocks": 16,
+        "n_boot": 2000,
+        "t_observed": -0.04375000000000001,
+        "t_null_std": 0.10117674235395886,
+        "p_value": 0.6906546726636682,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 54,
+        "autocorrelation_ess": 64.0,
+        "block_bootstrap_variance_ess": 94.20768845973424,
+        "overlap_rate": 0.828125,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 64,
+            "lags": {
+              "1": -0.12025171825836277,
+              "2": -0.05690708391383561,
+              "3": -0.11580705480819853,
+              "4": 0.17652270210409746,
+              "5": -0.05940649811363252,
+              "6": -0.12139611257494176,
+              "7": -0.10598200928678285,
+              "8": -0.09001740230976112,
+              "9": -0.018061008758683175,
+              "10": 0.08412288257249498
+            }
+          },
+          "block_bootstrap": {
+            "n": 64,
+            "block_length": 4,
+            "n_blocks_needed": 16,
+            "n_boot": 2000,
+            "mean": 0.327078125,
+            "ci_low": 0.234375,
+            "ci_high": 0.421875,
+            "std": 0.048335353484632505
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.6906546726636682,
+        "rank": 23,
+        "m_family": 60,
+        "bh_critical_value_q": 0.03833333333333334,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__BUY__T3_0_ATR",
+      "regime": "LOW_VOL",
+      "direction": "BUY",
+      "threshold_id": "T3_0_ATR",
+      "raw_crossover_count": 64,
+      "complete_horizon_count": 64,
+      "matched_event_count": 64,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 64,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.25,
+      "matched_control_target_first_rate": 0.28125,
+      "paired_effect": -0.031249999999999997,
+      "raw_p_value": 0.7956021989005497,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 64,
+        "block_length": 4,
+        "n_blocks": 16,
+        "n_boot": 2000,
+        "t_observed": -0.031249999999999997,
+        "t_null_std": 0.10020544087453223,
+        "p_value": 0.7956021989005497,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 54,
+        "autocorrelation_ess": 64.0,
+        "block_bootstrap_variance_ess": 75.7474264283801,
+        "overlap_rate": 0.828125,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 64,
+            "lags": {
+              "1": -0.005291005291005291,
+              "2": -0.09677419354838711,
+              "3": -0.01639344262295082,
+              "4": 0.24444444444444444,
+              "5": -0.02824858757062147,
+              "6": -0.011494252873563218,
+              "7": 0.005847953216374269,
+              "8": 0.0,
+              "9": -0.10303030303030303,
+              "10": 0.1111111111111111
+            }
+          },
+          "block_bootstrap": {
+            "n": 64,
+            "block_length": 4,
+            "n_blocks_needed": 16,
+            "n_boot": 2000,
+            "mean": 0.261875,
+            "ci_low": 0.171875,
+            "ci_high": 0.359375,
+            "std": 0.050515893229260034
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.7956021989005497,
+        "rank": 28,
+        "m_family": 60,
+        "bh_critical_value_q": 0.04666666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__SELL__T0_25_ATR",
+      "regime": "LOW_VOL",
+      "direction": "SELL",
+      "threshold_id": "T0_25_ATR",
+      "raw_crossover_count": 67,
+      "complete_horizon_count": 67,
+      "matched_event_count": 67,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 67,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.8656716417910447,
+      "matched_control_target_first_rate": 0.8388059701492537,
+      "paired_effect": 0.026865671641791027,
+      "raw_p_value": 0.6686656671664168,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 67,
+        "block_length": 5,
+        "n_blocks": 14,
+        "n_boot": 2000,
+        "t_observed": 0.026865671641791027,
+        "t_null_std": 0.053811134039160796,
+        "p_value": 0.6686656671664168,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 61,
+        "autocorrelation_ess": 67.0,
+        "block_bootstrap_variance_ess": 48.912181493618064,
+        "overlap_rate": 0.8208955223880597,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 67,
+            "lags": {
+              "1": 0.1007198420991524,
+              "2": 0.11765399351606247,
+              "3": 0.1170677681992337,
+              "4": -0.15654077723043244,
+              "5": -0.16156840934371527,
+              "6": 0.11519376923560078,
+              "7": -0.17212643678160924,
+              "8": -0.012338463536593326,
+              "9": -0.16349583828775271,
+              "10": -0.1488203266787659
+            }
+          },
+          "block_bootstrap": {
+            "n": 67,
+            "block_length": 5,
+            "n_blocks_needed": 14,
+            "n_boot": 2000,
+            "mean": 0.8677537313432836,
+            "ci_low": 0.7611940298507462,
+            "ci_high": 0.9552238805970149,
+            "std": 0.04843746901924146
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.6686656671664168,
+        "rank": 22,
+        "m_family": 60,
+        "bh_critical_value_q": 0.03666666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__SELL__T0_5_ATR",
+      "regime": "LOW_VOL",
+      "direction": "SELL",
+      "threshold_id": "T0_5_ATR",
+      "raw_crossover_count": 67,
+      "complete_horizon_count": 67,
+      "matched_event_count": 67,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 67,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.7611940298507462,
+      "matched_control_target_first_rate": 0.6656716417910448,
+      "paired_effect": 0.09552238805970148,
+      "raw_p_value": 0.12293853073463268,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 67,
+        "block_length": 5,
+        "n_blocks": 14,
+        "n_boot": 2000,
+        "t_observed": 0.09552238805970148,
+        "t_null_std": 0.05876379273877847,
+        "p_value": 0.12293853073463268,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 61,
+        "autocorrelation_ess": 39.711568938193345,
+        "block_bootstrap_variance_ess": 46.07524628486218,
+        "overlap_rate": 0.8208955223880597,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 67,
+            "lags": {
+              "1": 0.34358288770053474,
+              "2": 0.11035067873303167,
+              "3": -0.15069699754901958,
+              "4": -0.24538982259570488,
+              "5": -0.16567836812144204,
+              "6": 0.006830601092896239,
+              "7": 0.0017156862745098481,
+              "8": 0.11193502824858759,
+              "9": 0.013607167004732969,
+              "10": -0.16163570691434462
+            }
+          },
+          "block_bootstrap": {
+            "n": 67,
+            "block_length": 5,
+            "n_blocks_needed": 14,
+            "n_boot": 2000,
+            "mean": 0.7553507462686567,
+            "ci_low": 0.6268656716417911,
+            "ci_high": 0.8805970149253731,
+            "std": 0.06333043138779229
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.12293853073463268,
+        "rank": 3,
+        "m_family": 60,
+        "bh_critical_value_q": 0.005000000000000001,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__SELL__T1_0_ATR",
+      "regime": "LOW_VOL",
+      "direction": "SELL",
+      "threshold_id": "T1_0_ATR",
+      "raw_crossover_count": 67,
+      "complete_horizon_count": 67,
+      "matched_event_count": 67,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 67,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.5970149253731343,
+      "matched_control_target_first_rate": 0.47761194029850745,
+      "paired_effect": 0.11940298507462686,
+      "raw_p_value": 0.022488755622188907,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 67,
+        "block_length": 5,
+        "n_blocks": 14,
+        "n_boot": 2000,
+        "t_observed": 0.11940298507462686,
+        "t_null_std": 0.05533435975969717,
+        "p_value": 0.022488755622188907,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 61,
+        "autocorrelation_ess": 67.0,
+        "block_bootstrap_variance_ess": 74.64983471023699,
+        "overlap_rate": 0.8208955223880597,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 67,
+            "lags": {
+              "1": 0.060269360269360216,
+              "2": 0.012635327635327591,
+              "3": -0.2962673611111111,
+              "4": -0.0871693121693122,
+              "5": -0.2065262843488649,
+              "6": 0.05157862780813597,
+              "7": -0.0001697530864197939,
+              "8": 0.01677652228499683,
+              "9": 0.03430715197956574,
+              "10": -0.16630929174788822
+            }
+          },
+          "block_bootstrap": {
+            "n": 67,
+            "block_length": 5,
+            "n_blocks_needed": 14,
+            "n_boot": 2000,
+            "mean": 0.589320895522388,
+            "ci_low": 0.47761194029850745,
+            "ci_high": 0.7014925373134329,
+            "std": 0.05693938840453398
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.022488755622188907,
+        "rank": 1,
+        "m_family": 60,
+        "bh_critical_value_q": 0.0016666666666666668,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__SELL__T1_5_ATR",
+      "regime": "LOW_VOL",
+      "direction": "SELL",
+      "threshold_id": "T1_5_ATR",
+      "raw_crossover_count": 67,
+      "complete_horizon_count": 67,
+      "matched_event_count": 67,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 67,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.4626865671641791,
+      "matched_control_target_first_rate": 0.4,
+      "paired_effect": 0.0626865671641791,
+      "raw_p_value": 0.3868065967016492,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 67,
+        "block_length": 5,
+        "n_blocks": 14,
+        "n_boot": 2000,
+        "t_observed": 0.0626865671641791,
+        "t_null_std": 0.06642993679480523,
+        "p_value": 0.3868065967016492,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 61,
+        "autocorrelation_ess": 67.0,
+        "block_bootstrap_variance_ess": 77.67591863003697,
+        "overlap_rate": 0.8208955223880597,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 67,
+            "lags": {
+              "1": 0.05517541001411973,
+              "2": -0.11424041907912869,
+              "3": -0.16325044802867372,
+              "4": 0.10542185811003021,
+              "5": -0.006503642039542119,
+              "6": 0.04029320171572949,
+              "7": -0.14348864994026272,
+              "8": 0.14373367353137723,
+              "9": -0.04460202694351747,
+              "10": -0.13106017732503297
+            }
+          },
+          "block_bootstrap": {
+            "n": 67,
+            "block_length": 5,
+            "n_blocks_needed": 14,
+            "n_boot": 2000,
+            "mean": 0.4590074626865671,
+            "ci_low": 0.34328358208955223,
+            "ci_high": 0.5671641791044776,
+            "std": 0.05654084716454296
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.3868065967016492,
+        "rank": 12,
+        "m_family": 60,
+        "bh_critical_value_q": 0.020000000000000004,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__SELL__T2_0_ATR",
+      "regime": "LOW_VOL",
+      "direction": "SELL",
+      "threshold_id": "T2_0_ATR",
+      "raw_crossover_count": 67,
+      "complete_horizon_count": 67,
+      "matched_event_count": 67,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 67,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.40298507462686567,
+      "matched_control_target_first_rate": 0.34626865671641793,
+      "paired_effect": 0.05671641791044776,
+      "raw_p_value": 0.48575712143928035,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 67,
+        "block_length": 5,
+        "n_blocks": 14,
+        "n_boot": 2000,
+        "t_observed": 0.05671641791044776,
+        "t_null_std": 0.0743080578284161,
+        "p_value": 0.48575712143928035,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 61,
+        "autocorrelation_ess": 67.0,
+        "block_bootstrap_variance_ess": 68.98258478365798,
+        "overlap_rate": 0.8208955223880597,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 67,
+            "lags": {
+              "1": 0.08564814814814818,
+              "2": -0.08948717948717945,
+              "3": -0.07526041666666662,
+              "4": 0.005393885949441547,
+              "5": -0.07244623655913977,
+              "6": -0.09792046144505152,
+              "7": -0.08288580246913575,
+              "8": 0.21445386064030136,
+              "9": 0.020402298850574756,
+              "10": -0.06400259909031834
+            }
+          },
+          "block_bootstrap": {
+            "n": 67,
+            "block_length": 5,
+            "n_blocks_needed": 14,
+            "n_boot": 2000,
+            "mean": 0.3946865671641791,
+            "ci_low": 0.26865671641791045,
+            "ci_high": 0.5074626865671642,
+            "std": 0.05885001759705753
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.48575712143928035,
+        "rank": 17,
+        "m_family": 60,
+        "bh_critical_value_q": 0.028333333333333335,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__LOW_VOL__SELL__T3_0_ATR",
+      "regime": "LOW_VOL",
+      "direction": "SELL",
+      "threshold_id": "T3_0_ATR",
+      "raw_crossover_count": 67,
+      "complete_horizon_count": 67,
+      "matched_event_count": 67,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 65,
+      "censored_pair_count": 2,
+      "event_target_first_rate": 0.2923076923076923,
+      "matched_control_target_first_rate": 0.22153846153846155,
+      "paired_effect": 0.07076923076923076,
+      "raw_p_value": 0.3213393303348326,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 65,
+        "block_length": 5,
+        "n_blocks": 13,
+        "n_boot": 2000,
+        "t_observed": 0.07076923076923076,
+        "t_null_std": 0.06608470920366182,
+        "p_value": 0.3213393303348326,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 59,
+        "autocorrelation_ess": 65.0,
+        "block_bootstrap_variance_ess": 84.70517345658394,
+        "overlap_rate": 0.8,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 65,
+            "lags": {
+              "1": 0.10277817505720825,
+              "2": -0.26337583088155175,
+              "3": -0.196316527644497,
+              "4": 0.05460104287804331,
+              "5": -0.03194126620900077,
+              "6": -0.17940115580033358,
+              "7": 0.001440069438964719,
+              "8": 0.10381789714561003,
+              "9": 0.011972866949983653,
+              "10": 0.09257333055960057
+            }
+          },
+          "block_bootstrap": {
+            "n": 65,
+            "block_length": 5,
+            "n_blocks_needed": 13,
+            "n_boot": 2000,
+            "mean": 0.29557692307692307,
+            "ci_low": 0.2,
+            "ci_high": 0.4,
+            "std": 0.049578922201145306
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.3213393303348326,
+        "rank": 6,
+        "m_family": 60,
+        "bh_critical_value_q": 0.010000000000000002,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__BUY__T0_25_ATR",
+      "regime": "TRANSITION",
+      "direction": "BUY",
+      "threshold_id": "T0_25_ATR",
+      "raw_crossover_count": 53,
+      "complete_horizon_count": 53,
+      "matched_event_count": 53,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 53,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.8113207547169812,
+      "matched_control_target_first_rate": 0.8566037735849055,
+      "paired_effect": -0.04528301886792453,
+      "raw_p_value": 0.48225887056471767,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 53,
+        "block_length": 4,
+        "n_blocks": 14,
+        "n_boot": 2000,
+        "t_observed": -0.04528301886792453,
+        "t_null_std": 0.06138537738567527,
+        "p_value": 0.48225887056471767,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 49,
+        "autocorrelation_ess": 53.0,
+        "block_bootstrap_variance_ess": 66.25735471042181,
+        "overlap_rate": 0.6981132075471699,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 53,
+            "lags": {
+              "1": 0.03345259391771021,
+              "2": -0.22663018695850426,
+              "3": -0.0805116279069767,
+              "4": -0.08690080683436159,
+              "5": -0.06787790697674413,
+              "6": -0.18703612073231066,
+              "7": -0.05414560161779576,
+              "8": 0.2298191214470284,
+              "9": 0.22975687103594075,
+              "10": -0.1974040021633315
+            }
+          },
+          "block_bootstrap": {
+            "n": 53,
+            "block_length": 4,
+            "n_blocks_needed": 14,
+            "n_boot": 2000,
+            "mean": 0.8208679245283018,
+            "ci_low": 0.7169811320754716,
+            "ci_high": 0.9056603773584906,
+            "std": 0.04710925924773996
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.48225887056471767,
+        "rank": 16,
+        "m_family": 60,
+        "bh_critical_value_q": 0.02666666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__BUY__T0_5_ATR",
+      "regime": "TRANSITION",
+      "direction": "BUY",
+      "threshold_id": "T0_5_ATR",
+      "raw_crossover_count": 53,
+      "complete_horizon_count": 53,
+      "matched_event_count": 53,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 53,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.7169811320754716,
+      "matched_control_target_first_rate": 0.7622641509433962,
+      "paired_effect": -0.04528301886792455,
+      "raw_p_value": 0.4472763618190905,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 53,
+        "block_length": 4,
+        "n_blocks": 14,
+        "n_boot": 2000,
+        "t_observed": -0.04528301886792455,
+        "t_null_std": 0.06177903077618996,
+        "p_value": 0.4472763618190905,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 49,
+        "autocorrelation_ess": 53.0,
+        "block_bootstrap_variance_ess": 74.73086230097074,
+        "overlap_rate": 0.6981132075471699,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 53,
+            "lags": {
+              "1": -0.1935560053981107,
+              "2": -0.011833505331957367,
+              "3": -0.09063157894736844,
+              "4": 0.2011815252416756,
+              "5": -0.08179824561403508,
+              "6": 0.04259051885031726,
+              "7": 0.03493516399694887,
+              "8": 0.05793372319688107,
+              "9": 0.2742822966507177,
+              "10": -0.26911464708282334
+            }
+          },
+          "block_bootstrap": {
+            "n": 53,
+            "block_length": 4,
+            "n_blocks_needed": 14,
+            "n_boot": 2000,
+            "mean": 0.7201415094339623,
+            "ci_low": 0.6226415094339622,
+            "ci_high": 0.8301886792452831,
+            "std": 0.05193117741406652
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.4472763618190905,
+        "rank": 15,
+        "m_family": 60,
+        "bh_critical_value_q": 0.025,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__BUY__T1_0_ATR",
+      "regime": "TRANSITION",
+      "direction": "BUY",
+      "threshold_id": "T1_0_ATR",
+      "raw_crossover_count": 53,
+      "complete_horizon_count": 53,
+      "matched_event_count": 53,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 53,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.5660377358490566,
+      "matched_control_target_first_rate": 0.6037735849056604,
+      "paired_effect": -0.03773584905660377,
+      "raw_p_value": 0.655672163918041,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 53,
+        "block_length": 4,
+        "n_blocks": 14,
+        "n_boot": 2000,
+        "t_observed": -0.03773584905660377,
+        "t_null_std": 0.07157338545270846,
+        "p_value": 0.655672163918041,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 49,
+        "autocorrelation_ess": 127.6782597018934,
+        "block_bootstrap_variance_ess": 94.94140038210809,
+        "overlap_rate": 0.6981132075471699,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 53,
+            "lags": {
+              "1": -0.2924470457079153,
+              "2": 0.08590508667235014,
+              "3": -0.2180579710144927,
+              "4": 0.09417332150251409,
+              "5": -0.05265700483091784,
+              "6": 0.0050878815911193625,
+              "7": -0.09996849401386261,
+              "8": 0.14022544283413851,
+              "9": 0.1259881422924901,
+              "10": -0.0371755982473879
+            }
+          },
+          "block_bootstrap": {
+            "n": 53,
+            "block_length": 4,
+            "n_blocks_needed": 14,
+            "n_boot": 2000,
+            "mean": 0.5613679245283019,
+            "ci_low": 0.4528301886792453,
+            "ci_high": 0.660377358490566,
+            "std": 0.05092677489154791
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.655672163918041,
+        "rank": 19,
+        "m_family": 60,
+        "bh_critical_value_q": 0.03166666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__BUY__T1_5_ATR",
+      "regime": "TRANSITION",
+      "direction": "BUY",
+      "threshold_id": "T1_5_ATR",
+      "raw_crossover_count": 53,
+      "complete_horizon_count": 53,
+      "matched_event_count": 53,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 53,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.4339622641509434,
+      "matched_control_target_first_rate": 0.5094339622641509,
+      "paired_effect": -0.07547169811320753,
+      "raw_p_value": 0.42628685657171417,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 53,
+        "block_length": 4,
+        "n_blocks": 14,
+        "n_boot": 2000,
+        "t_observed": -0.07547169811320753,
+        "t_null_std": 0.08850284172809382,
+        "p_value": 0.42628685657171417,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 49,
+        "autocorrelation_ess": 53.0,
+        "block_bootstrap_variance_ess": 59.462673864629714,
+        "overlap_rate": 0.6981132075471699,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 53,
+            "lags": {
+              "1": -0.1358695652173913,
+              "2": 0.20036942313157158,
+              "3": -0.18272463768115943,
+              "4": 0.03617272996154987,
+              "5": -0.148671497584541,
+              "6": 0.0050878815911193555,
+              "7": -0.061562696912413346,
+              "8": 0.10096618357487926,
+              "9": 0.03346508563899871,
+              "10": -0.03717559824738791
+            }
+          },
+          "block_bootstrap": {
+            "n": 53,
+            "block_length": 4,
+            "n_blocks_needed": 14,
+            "n_boot": 2000,
+            "mean": 0.43302830188679253,
+            "ci_low": 0.3018867924528302,
+            "ci_high": 0.5660377358490566,
+            "std": 0.06425643310551261
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.42628685657171417,
+        "rank": 14,
+        "m_family": 60,
+        "bh_critical_value_q": 0.023333333333333334,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__BUY__T2_0_ATR",
+      "regime": "TRANSITION",
+      "direction": "BUY",
+      "threshold_id": "T2_0_ATR",
+      "raw_crossover_count": 53,
+      "complete_horizon_count": 53,
+      "matched_event_count": 53,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 53,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.39622641509433965,
+      "matched_control_target_first_rate": 0.4264150943396226,
+      "paired_effect": -0.030188679245283005,
+      "raw_p_value": 0.7561219390304847,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 53,
+        "block_length": 4,
+        "n_blocks": 14,
+        "n_boot": 2000,
+        "t_observed": -0.030188679245283005,
+        "t_null_std": 0.08521626240169472,
+        "p_value": 0.7561219390304847,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 49,
+        "autocorrelation_ess": 53.0,
+        "block_bootstrap_variance_ess": 64.20161768454822,
+        "overlap_rate": 0.6981132075471699,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 53,
+            "lags": {
+              "1": -0.1673248626373626,
+              "2": 0.14437441643323995,
+              "3": -0.16714285714285715,
+              "4": -0.031037414965986432,
+              "5": -0.2195250496031746,
+              "6": 0.11759118541033431,
+              "7": -0.03985507246376813,
+              "8": 0.13045634920634916,
+              "9": -0.033854166666666706,
+              "10": 0.08582502768549273
+            }
+          },
+          "block_bootstrap": {
+            "n": 53,
+            "block_length": 4,
+            "n_blocks_needed": 14,
+            "n_boot": 2000,
+            "mean": 0.4026509433962264,
+            "ci_low": 0.2830188679245283,
+            "ci_high": 0.5283018867924528,
+            "std": 0.061207616237775986
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.7561219390304847,
+        "rank": 25,
+        "m_family": 60,
+        "bh_critical_value_q": 0.04166666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__BUY__T3_0_ATR",
+      "regime": "TRANSITION",
+      "direction": "BUY",
+      "threshold_id": "T3_0_ATR",
+      "raw_crossover_count": 53,
+      "complete_horizon_count": 53,
+      "matched_event_count": 53,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 49,
+      "censored_pair_count": 4,
+      "event_target_first_rate": 0.30612244897959184,
+      "matched_control_target_first_rate": 0.37959183673469393,
+      "paired_effect": -0.07346938775510203,
+      "raw_p_value": 0.5382308845577212,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 49,
+        "block_length": 4,
+        "n_blocks": 13,
+        "n_boot": 2000,
+        "t_observed": -0.07346938775510203,
+        "t_null_std": 0.11304894179211292,
+        "p_value": 0.5382308845577212,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 46,
+        "autocorrelation_ess": 49.0,
+        "block_bootstrap_variance_ess": 45.56178118921362,
+        "overlap_rate": 0.6734693877551021,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 49,
+            "lags": {
+              "1": -0.037214052287581706,
+              "2": 0.05277430120984562,
+              "3": 0.07566069906223359,
+              "4": -0.1096732026143791,
+              "5": -0.2291889483065954,
+              "6": 0.1931600547195623,
+              "7": 0.2215686274509804,
+              "8": -0.013438546150167386,
+              "9": 0.128921568627451,
+              "10": 0.037154348919054794
+            }
+          },
+          "block_bootstrap": {
+            "n": 49,
+            "block_length": 4,
+            "n_blocks_needed": 13,
+            "n_boot": 2000,
+            "mean": 0.3049591836734694,
+            "ci_low": 0.1836734693877551,
+            "ci_high": 0.42857142857142855,
+            "std": 0.06820648452636473
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.5382308845577212,
+        "rank": 18,
+        "m_family": 60,
+        "bh_critical_value_q": 0.03,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__SELL__T0_25_ATR",
+      "regime": "TRANSITION",
+      "direction": "SELL",
+      "threshold_id": "T0_25_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 48,
+      "matched_event_count": 48,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 48,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.7916666666666666,
+      "matched_control_target_first_rate": 0.7708333333333334,
+      "paired_effect": 0.020833333333333315,
+      "raw_p_value": 0.8065967016491754,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 48,
+        "block_length": 4,
+        "n_blocks": 12,
+        "n_boot": 2000,
+        "t_observed": 0.020833333333333315,
+        "t_null_std": 0.06857983676283187,
+        "p_value": 0.8065967016491754,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 47,
+        "autocorrelation_ess": 48.0,
+        "block_bootstrap_variance_ess": 39.42701260522105,
+        "overlap_rate": 0.6458333333333333,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 48,
+            "lags": {
+              "1": 0.16640537513997755,
+              "2": -0.09931350114416476,
+              "3": 0.027368421052631566,
+              "4": 0.022009569377990416,
+              "5": 0.016401468788249676,
+              "6": -0.13383458646616544,
+              "7": -0.11270860077021824,
+              "8": 0.029473684210526294,
+              "9": 0.023481781376518195,
+              "10": -0.07590027700831026
+            }
+          },
+          "block_bootstrap": {
+            "n": 48,
+            "block_length": 4,
+            "n_blocks_needed": 12,
+            "n_boot": 2000,
+            "mean": 0.8113020833333334,
+            "ci_low": 0.6875,
+            "ci_high": 0.9166666666666666,
+            "std": 0.06231289266983154
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.8065967016491754,
+        "rank": 30,
+        "m_family": 60,
+        "bh_critical_value_q": 0.05,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__SELL__T0_5_ATR",
+      "regime": "TRANSITION",
+      "direction": "SELL",
+      "threshold_id": "T0_5_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 48,
+      "matched_event_count": 48,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 48,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.5833333333333334,
+      "matched_control_target_first_rate": 0.6041666666666667,
+      "paired_effect": -0.020833333333333353,
+      "raw_p_value": 0.8180909545227386,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 48,
+        "block_length": 4,
+        "n_blocks": 12,
+        "n_boot": 2000,
+        "t_observed": -0.020833333333333353,
+        "t_null_std": 0.09060293323296253,
+        "p_value": 0.8180909545227386,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 47,
+        "autocorrelation_ess": 30.334229734921244,
+        "block_bootstrap_variance_ess": 33.29338377190679,
+        "overlap_rate": 0.6458333333333333,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 48,
+            "lags": {
+              "1": 0.29118541033434653,
+              "2": 0.08819875776397512,
+              "3": -0.0704761904761905,
+              "4": -0.08831168831168834,
+              "5": -0.29833887043189367,
+              "6": -0.12653061224489798,
+              "7": -0.10522648083623692,
+              "8": 0.2857142857142857,
+              "9": 0.21318681318681318,
+              "10": 0.29022556390977455
+            }
+          },
+          "block_bootstrap": {
+            "n": 48,
+            "block_length": 4,
+            "n_blocks_needed": 12,
+            "n_boot": 2000,
+            "mean": 0.6155416666666667,
+            "ci_low": 0.4583333333333333,
+            "ci_high": 0.7916666666666666,
+            "std": 0.08430908948295222
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.8180909545227386,
+        "rank": 31,
+        "m_family": 60,
+        "bh_critical_value_q": 0.05166666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__SELL__T1_0_ATR",
+      "regime": "TRANSITION",
+      "direction": "SELL",
+      "threshold_id": "T1_0_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 48,
+      "matched_event_count": 48,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 48,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.375,
+      "matched_control_target_first_rate": 0.4000000000000001,
+      "paired_effect": -0.024999999999999994,
+      "raw_p_value": 0.8210894552723638,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 48,
+        "block_length": 4,
+        "n_blocks": 12,
+        "n_boot": 2000,
+        "t_observed": -0.024999999999999994,
+        "t_null_std": 0.08705850832358533,
+        "p_value": 0.8210894552723638,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 47,
+        "autocorrelation_ess": 48.0,
+        "block_bootstrap_variance_ess": 59.91854879604564,
+        "overlap_rate": 0.6458333333333333,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 48,
+            "lags": {
+              "1": -0.17163120567375886,
+              "2": 0.1826086956521739,
+              "3": -0.2651851851851852,
+              "4": 0.006060606060606061,
+              "5": -0.16899224806201552,
+              "6": 0.05396825396825397,
+              "7": -0.024390243902439025,
+              "8": 0.32,
+              "9": -0.19316239316239317,
+              "10": 0.45964912280701753
+            }
+          },
+          "block_bootstrap": {
+            "n": 48,
+            "block_length": 4,
+            "n_blocks_needed": 12,
+            "n_boot": 2000,
+            "mean": 0.3948125,
+            "ci_low": 0.2708333333333333,
+            "ci_high": 0.5208333333333334,
+            "std": 0.06314802591596456
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.8210894552723638,
+        "rank": 32,
+        "m_family": 60,
+        "bh_critical_value_q": 0.05333333333333334,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__SELL__T1_5_ATR",
+      "regime": "TRANSITION",
+      "direction": "SELL",
+      "threshold_id": "T1_5_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 48,
+      "matched_event_count": 48,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 48,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.3125,
+      "matched_control_target_first_rate": 0.28750000000000003,
+      "paired_effect": 0.02500000000000001,
+      "raw_p_value": 0.7201399300349826,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 48,
+        "block_length": 4,
+        "n_blocks": 12,
+        "n_boot": 2000,
+        "t_observed": 0.02500000000000001,
+        "t_null_std": 0.07171438285541704,
+        "p_value": 0.7201399300349826,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 47,
+        "autocorrelation_ess": 48.0,
+        "block_bootstrap_variance_ess": 72.61762372856597,
+        "overlap_rate": 0.6458333333333333,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 48,
+            "lags": {
+              "1": -0.2758220502901354,
+              "2": 0.21422924901185772,
+              "3": -0.27595959595959596,
+              "4": -0.08099173553719008,
+              "5": -0.16786469344608881,
+              "6": -0.03722943722943722,
+              "7": 0.09977827050997784,
+              "8": 0.24363636363636365,
+              "9": -0.20186480186480185,
+              "10": 0.2708133971291866
+            }
+          },
+          "block_bootstrap": {
+            "n": 48,
+            "block_length": 4,
+            "n_blocks_needed": 12,
+            "n_boot": 2000,
+            "mean": 0.3273020833333334,
+            "ci_low": 0.20833333333333334,
+            "ci_high": 0.4375,
+            "std": 0.05506344884256252
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.7201399300349826,
+        "rank": 24,
+        "m_family": 60,
+        "bh_critical_value_q": 0.04000000000000001,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__SELL__T2_0_ATR",
+      "regime": "TRANSITION",
+      "direction": "SELL",
+      "threshold_id": "T2_0_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 48,
+      "matched_event_count": 48,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 48,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.2708333333333333,
+      "matched_control_target_first_rate": 0.23333333333333336,
+      "paired_effect": 0.0375,
+      "raw_p_value": 0.6676661669165417,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 48,
+        "block_length": 4,
+        "n_blocks": 12,
+        "n_boot": 2000,
+        "t_observed": 0.0375,
+        "t_null_std": 0.07449954837670718,
+        "p_value": 0.6676661669165417,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 47,
+        "autocorrelation_ess": 48.0,
+        "block_bootstrap_variance_ess": 63.86187649053683,
+        "overlap_rate": 0.6458333333333333,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 48,
+            "lags": {
+              "1": -0.1717559036707972,
+              "2": 0.14667940754897277,
+              "3": -0.2779487179487179,
+              "4": -0.06253746253746253,
+              "5": -0.04073600817786865,
+              "6": -0.01789638932496075,
+              "7": 0.253068882337175,
+              "8": 0.12351648351648352,
+              "9": -0.10735418427726122,
+              "10": 0.1465587044534413
+            }
+          },
+          "block_bootstrap": {
+            "n": 48,
+            "block_length": 4,
+            "n_blocks_needed": 12,
+            "n_boot": 2000,
+            "mean": 0.28284375,
+            "ci_low": 0.16666666666666666,
+            "ci_high": 0.3958333333333333,
+            "std": 0.05635849009139567
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.6676661669165417,
+        "rank": 21,
+        "m_family": 60,
+        "bh_critical_value_q": 0.034999999999999996,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRANSITION__SELL__T3_0_ATR",
+      "regime": "TRANSITION",
+      "direction": "SELL",
+      "threshold_id": "T3_0_ATR",
+      "raw_crossover_count": 48,
+      "complete_horizon_count": 48,
+      "matched_event_count": 48,
+      "selection_eligible": true,
+      "reason_codes": [],
+      "resolved_pair_count": 48,
+      "censored_pair_count": 0,
+      "event_target_first_rate": 0.16666666666666666,
+      "matched_control_target_first_rate": 0.15,
+      "paired_effect": 0.016666666666666666,
+      "raw_p_value": 0.8450774612693653,
+      "test_reason_codes": [],
+      "permutation": {
+        "n": 48,
+        "block_length": 4,
+        "n_blocks": 12,
+        "n_boot": 2000,
+        "t_observed": 0.016666666666666666,
+        "t_null_std": 0.07228697042863257,
+        "p_value": 0.8450774612693653,
+        "method": "block_sign_flip_permutation"
+      },
+      "dependence": {
+        "cluster_count_ess": 47,
+        "autocorrelation_ess": 48.0,
+        "block_bootstrap_variance_ess": 56.1912908540557,
+        "overlap_rate": 0.6458333333333333,
+        "dependence_flag": "HIGH",
+        "method_details": {
+          "cluster_gap_threshold_bars": 10,
+          "autocorrelation": {
+            "n": 48,
+            "lags": {
+              "1": -0.2085106382978723,
+              "2": 0.25217391304347825,
+              "3": -0.19999999999999998,
+              "4": -0.04545454545454546,
+              "5": 0.14418604651162792,
+              "6": -0.20000000000000004,
+              "7": 0.3463414634146342,
+              "8": -0.19,
+              "9": 0.16923076923076924,
+              "10": -0.021052631578947368
+            }
+          },
+          "block_bootstrap": {
+            "n": 48,
+            "block_length": 4,
+            "n_blocks_needed": 12,
+            "n_boot": 2000,
+            "mean": 0.17225,
+            "ci_low": 0.08333333333333333,
+            "ci_high": 0.2708333333333333,
+            "std": 0.05037263917820643
+          }
+        }
+      },
+      "bh": {
+        "raw_p": 0.8450774612693653,
+        "rank": 33,
+        "m_family": 60,
+        "bh_critical_value_q": 0.05500000000000001,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__BUY__T0_25_ATR",
+      "regime": "TRENDING",
+      "direction": "BUY",
+      "threshold_id": "T0_25_ATR",
+      "raw_crossover_count": 3,
+      "complete_horizon_count": 3,
+      "matched_event_count": 2,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 2,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 37,
+        "m_family": 60,
+        "bh_critical_value_q": 0.061666666666666675,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__BUY__T0_5_ATR",
+      "regime": "TRENDING",
+      "direction": "BUY",
+      "threshold_id": "T0_5_ATR",
+      "raw_crossover_count": 3,
+      "complete_horizon_count": 3,
+      "matched_event_count": 2,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 2,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 38,
+        "m_family": 60,
+        "bh_critical_value_q": 0.06333333333333334,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__BUY__T1_0_ATR",
+      "regime": "TRENDING",
+      "direction": "BUY",
+      "threshold_id": "T1_0_ATR",
+      "raw_crossover_count": 3,
+      "complete_horizon_count": 3,
+      "matched_event_count": 2,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 2,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 39,
+        "m_family": 60,
+        "bh_critical_value_q": 0.065,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__BUY__T1_5_ATR",
+      "regime": "TRENDING",
+      "direction": "BUY",
+      "threshold_id": "T1_5_ATR",
+      "raw_crossover_count": 3,
+      "complete_horizon_count": 3,
+      "matched_event_count": 2,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 2,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 40,
+        "m_family": 60,
+        "bh_critical_value_q": 0.06666666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__BUY__T2_0_ATR",
+      "regime": "TRENDING",
+      "direction": "BUY",
+      "threshold_id": "T2_0_ATR",
+      "raw_crossover_count": 3,
+      "complete_horizon_count": 3,
+      "matched_event_count": 2,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 2,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 41,
+        "m_family": 60,
+        "bh_critical_value_q": 0.06833333333333334,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__BUY__T3_0_ATR",
+      "regime": "TRENDING",
+      "direction": "BUY",
+      "threshold_id": "T3_0_ATR",
+      "raw_crossover_count": 3,
+      "complete_horizon_count": 3,
+      "matched_event_count": 2,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 2,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 42,
+        "m_family": 60,
+        "bh_critical_value_q": 0.06999999999999999,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__SELL__T0_25_ATR",
+      "regime": "TRENDING",
+      "direction": "SELL",
+      "threshold_id": "T0_25_ATR",
+      "raw_crossover_count": 6,
+      "complete_horizon_count": 6,
+      "matched_event_count": 4,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 4,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 43,
+        "m_family": 60,
+        "bh_critical_value_q": 0.07166666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__SELL__T0_5_ATR",
+      "regime": "TRENDING",
+      "direction": "SELL",
+      "threshold_id": "T0_5_ATR",
+      "raw_crossover_count": 6,
+      "complete_horizon_count": 6,
+      "matched_event_count": 4,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 4,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 44,
+        "m_family": 60,
+        "bh_critical_value_q": 0.07333333333333333,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__SELL__T1_0_ATR",
+      "regime": "TRENDING",
+      "direction": "SELL",
+      "threshold_id": "T1_0_ATR",
+      "raw_crossover_count": 6,
+      "complete_horizon_count": 6,
+      "matched_event_count": 4,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 4,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 45,
+        "m_family": 60,
+        "bh_critical_value_q": 0.07500000000000001,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__SELL__T1_5_ATR",
+      "regime": "TRENDING",
+      "direction": "SELL",
+      "threshold_id": "T1_5_ATR",
+      "raw_crossover_count": 6,
+      "complete_horizon_count": 6,
+      "matched_event_count": 4,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 4,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 46,
+        "m_family": 60,
+        "bh_critical_value_q": 0.07666666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__SELL__T2_0_ATR",
+      "regime": "TRENDING",
+      "direction": "SELL",
+      "threshold_id": "T2_0_ATR",
+      "raw_crossover_count": 6,
+      "complete_horizon_count": 6,
+      "matched_event_count": 4,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 4,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 47,
+        "m_family": 60,
+        "bh_critical_value_q": 0.07833333333333334,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__TRENDING__SELL__T3_0_ATR",
+      "regime": "TRENDING",
+      "direction": "SELL",
+      "threshold_id": "T3_0_ATR",
+      "raw_crossover_count": 6,
+      "complete_horizon_count": 6,
+      "matched_event_count": 4,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 4,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 48,
+        "m_family": 60,
+        "bh_critical_value_q": 0.08000000000000002,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__BUY__T0_25_ATR",
+      "regime": "RANGING",
+      "direction": "BUY",
+      "threshold_id": "T0_25_ATR",
+      "raw_crossover_count": 12,
+      "complete_horizon_count": 12,
+      "matched_event_count": 11,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 11,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 49,
+        "m_family": 60,
+        "bh_critical_value_q": 0.08166666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__BUY__T0_5_ATR",
+      "regime": "RANGING",
+      "direction": "BUY",
+      "threshold_id": "T0_5_ATR",
+      "raw_crossover_count": 12,
+      "complete_horizon_count": 12,
+      "matched_event_count": 11,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 11,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 50,
+        "m_family": 60,
+        "bh_critical_value_q": 0.08333333333333334,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__BUY__T1_0_ATR",
+      "regime": "RANGING",
+      "direction": "BUY",
+      "threshold_id": "T1_0_ATR",
+      "raw_crossover_count": 12,
+      "complete_horizon_count": 12,
+      "matched_event_count": 11,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 11,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 51,
+        "m_family": 60,
+        "bh_critical_value_q": 0.085,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__BUY__T1_5_ATR",
+      "regime": "RANGING",
+      "direction": "BUY",
+      "threshold_id": "T1_5_ATR",
+      "raw_crossover_count": 12,
+      "complete_horizon_count": 12,
+      "matched_event_count": 11,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 11,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 52,
+        "m_family": 60,
+        "bh_critical_value_q": 0.08666666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__BUY__T2_0_ATR",
+      "regime": "RANGING",
+      "direction": "BUY",
+      "threshold_id": "T2_0_ATR",
+      "raw_crossover_count": 12,
+      "complete_horizon_count": 12,
+      "matched_event_count": 11,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 11,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 53,
+        "m_family": 60,
+        "bh_critical_value_q": 0.08833333333333333,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__BUY__T3_0_ATR",
+      "regime": "RANGING",
+      "direction": "BUY",
+      "threshold_id": "T3_0_ATR",
+      "raw_crossover_count": 12,
+      "complete_horizon_count": 12,
+      "matched_event_count": 11,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 11,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 54,
+        "m_family": 60,
+        "bh_critical_value_q": 0.09000000000000001,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__SELL__T0_25_ATR",
+      "regime": "RANGING",
+      "direction": "SELL",
+      "threshold_id": "T0_25_ATR",
+      "raw_crossover_count": 17,
+      "complete_horizon_count": 17,
+      "matched_event_count": 13,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 13,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 55,
+        "m_family": 60,
+        "bh_critical_value_q": 0.09166666666666667,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__SELL__T0_5_ATR",
+      "regime": "RANGING",
+      "direction": "SELL",
+      "threshold_id": "T0_5_ATR",
+      "raw_crossover_count": 17,
+      "complete_horizon_count": 17,
+      "matched_event_count": 13,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 13,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 56,
+        "m_family": 60,
+        "bh_critical_value_q": 0.09333333333333334,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__SELL__T1_0_ATR",
+      "regime": "RANGING",
+      "direction": "SELL",
+      "threshold_id": "T1_0_ATR",
+      "raw_crossover_count": 17,
+      "complete_horizon_count": 17,
+      "matched_event_count": 13,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 13,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 57,
+        "m_family": 60,
+        "bh_critical_value_q": 0.095,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__SELL__T1_5_ATR",
+      "regime": "RANGING",
+      "direction": "SELL",
+      "threshold_id": "T1_5_ATR",
+      "raw_crossover_count": 17,
+      "complete_horizon_count": 17,
+      "matched_event_count": 13,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 13,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 58,
+        "m_family": 60,
+        "bh_critical_value_q": 0.09666666666666668,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__SELL__T2_0_ATR",
+      "regime": "RANGING",
+      "direction": "SELL",
+      "threshold_id": "T2_0_ATR",
+      "raw_crossover_count": 17,
+      "complete_horizon_count": 17,
+      "matched_event_count": 13,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 13,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 59,
+        "m_family": 60,
+        "bh_critical_value_q": 0.09833333333333333,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    },
+    {
+      "cell_id": "MACD__RANGING__SELL__T3_0_ATR",
+      "regime": "RANGING",
+      "direction": "SELL",
+      "threshold_id": "T3_0_ATR",
+      "raw_crossover_count": 17,
+      "complete_horizon_count": 17,
+      "matched_event_count": 13,
+      "selection_eligible": false,
+      "reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "resolved_pair_count": 0,
+      "censored_pair_count": 13,
+      "event_target_first_rate": null,
+      "matched_control_target_first_rate": null,
+      "paired_effect": null,
+      "raw_p_value": 1.0,
+      "test_reason_codes": [
+        "INSUFFICIENT_RAW_SAMPLE",
+        "INSUFFICIENT_CONTROLS"
+      ],
+      "permutation": {
+        "n": 0,
+        "p_value": 1.0,
+        "method": "NOT_TESTED_FIXED_P_ONE"
+      },
+      "dependence": null,
+      "bh": {
+        "raw_p": 1.0,
+        "rank": 60,
+        "m_family": 60,
+        "bh_critical_value_q": 0.1,
+        "adjusted_p_bh": 1.0,
+        "significant_at_q": false
+      },
+      "primary_statistical_criterion_met": false,
+      "low_ess_interpretation": false
+    }
+  ],
+  "economic_stage": [],
+  "summary": {
+    "crossovers": {
+      "total_crossovers": 372,
+      "BUY": 186,
+      "SELL": 186,
+      "missingness": {
+        "missing_regime": 7,
+        "missing_atr": 0,
+        "censored_horizon": 2
+      }
+    },
+    "selection_eligible_cells": 36,
+    "selection_ineligible_cells": 24,
+    "cells_with_positive_effect": 21,
+    "cells_meeting_primary_criterion": 0,
+    "cells_entering_economic_stage": 0,
+    "cells_with_low_ess": 1,
+    "verdict": "WEAK",
+    "evidence_grade": "E1",
+    "supported": false,
+    "rationale": "No frozen cell met the preregistered positive paired-effect plus BH q<=0.10 criterion."
+  },
+  "guardrails": {
+    "preregistration_modified": false,
+    "selection_recomputed_after_outcome": false,
+    "dependence_modified_p_or_bh": false,
+    "supported_impossible_on_discovery_reuse": true,
+    "registry_mutated": false
+  }
+}
