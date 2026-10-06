@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "status": "MACD_PARITY_PASS",
+  "feature_definition": {
+    "fast": 12,
+    "slow": 26,
+    "signal": 9,
+    "price_field": "close",
+    "main_line": "EMA(close,12)-EMA(close,26)",
+    "signal_line": "SMA(macd_main,9)",
+    "observation_point": "closed H4 bar only"
+  },
+  "parity_policy": {
+    "absolute_tolerance": 2e-05,
+    "warmup_bars_excluded": 200,
+    "warmup_reason": "Fixture starts without MT5 pre-window EMA accumulator state; fixed convergence exclusion, never tuned against scientific outcomes."
+  },
+  "fixtures": [
+    {
+      "source_file": "results/cost_calibration_67_rerun/mt5_macd_indicators_may_aug.csv",
+      "sha256": "38334638b7c2f18ea7b5870e8aca1e9529f3aeac3eb8fd248823c14d495d001c",
+      "rows_total": 334,
+      "rows_compared": 134,
+      "warmup_bars_excluded": 200,
+      "absolute_tolerance": 2e-05,
+      "max_abs_error_macd_main": 1.172041947938851e-05,
+      "max_abs_error_macd_signal": 1.6262157718216486e-05,
+      "mean_abs_error_macd_main": 1.1807488733846177e-06,
+      "mean_abs_error_macd_signal": 1.6382968689689177e-06,
+      "status": "PASS"
+    },
+    {
+      "source_file": "results/cost_calibration_67_rerun/mt5_macd_indicators_may_aug_extended.csv",
+      "sha256": "0c22d9f322bc0ddcb432777b6a08c5b1c33fc7199356de3e5aeccdcd24fc88a0",
+      "rows_total": 454,
+      "rows_compared": 254,
+      "warmup_bars_excluded": 200,
+      "absolute_tolerance": 2e-05,
+      "max_abs_error_macd_main": 1.172041947938851e-05,
+      "max_abs_error_macd_signal": 1.6262157718216486e-05,
+      "mean_abs_error_macd_main": 6.229355442822359e-07,
+      "mean_abs_error_macd_signal": 8.643271608501258e-07,
+      "status": "PASS"
+    }
+  ],
+  "scientific_outcomes_read": false
+}

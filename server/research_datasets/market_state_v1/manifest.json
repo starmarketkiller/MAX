@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "dataset_id": "MARKET_STATE_V1_436265d450475aaa",
+  "dataset_version": "V1_RECOVERED_BYTE_IDENTICAL",
+  "validation_integrity": "DISCOVERY_REUSE",
+  "symbol": "XAUUSD",
+  "timeframe": "H4",
+  "timezone": "UTC",
+  "bar_boundaries_utc": [0, 4, 8, 12, 16, 20],
+  "source": {
+    "provider": "Dukascopy",
+    "price_side": "BID",
+    "bar_construction": "H4 OHLC from ticks; average spread retained separately",
+    "tick_manifest_summary_sha256": "f84a12c7cdde4fc59b754040a462974c9040eb4801811a8199f03803fdc13e7e",
+    "tick_manifest_days": 1097,
+    "raw_tick_manifest_materialized": false
+  },
+  "coverage": {
+    "first_bar_utc": "2019-02-03T20:00:00+00:00",
+    "last_bar_utc": "2022-02-03T20:00:00+00:00",
+    "row_count": 4809
+  },
+  "files": {
+    "market_state_dataset_v1.csv": {
+      "sha256": "886c48342a0b29e6cd4aef7154e1b0cf9ba18acd8826e14eaad206dc1bb1df17",
+      "rows": 4809
+    },
+    "xauusd_h4_bars.csv": {
+      "sha256": "4f4a248ddfab4f0dafcab5274633e3001c9b6adcb922b71c733069668cf7ebcb",
+      "rows": 4809
+    }
+  },
+  "canonical_provenance": [
+    "server/research_scripts/phase5_5/dataset_version_v1.json",
+    "server/research_scripts/phase5_5/reproducibility_report_v1.json",
+    "vault/01-Trading/_phase4_artifacts/phase5_market_state_dataset_schema.md",
+    "vault/01-Trading/_phase4_artifacts/missing_data_policy_v1.md"
+  ],
+  "recovery": {
+    "method": "byte-for-byte copy from historical working copy",
+    "regenerated": false,
+    "reclassified_as_v2": false,
+    "caveat": "The raw tick manifest is not materialized; declared hashes, deterministic builder hashes, and byte-identical rebuild evidence are consistent."
+  }
+}

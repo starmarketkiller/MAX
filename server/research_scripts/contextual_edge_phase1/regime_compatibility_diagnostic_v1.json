@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "diagnostic_only": true,
+  "scientific_outcomes_read": false,
+  "semantic_compatibility": "PARTIAL",
+  "full_compatibility_possible": false,
+  "full_compatibility_blocker": "Different timeframe and ontology: H4 priority-ordered single state versus D1 trend x volatility facets.",
+  "sources": {
+    "phase5_5_h4": {
+      "file": "server/research_scripts/phase5_5/regime_layer_v1.csv",
+      "sha256": "ed69b7986dbea948a6826602621011150f12600bea867de5c7834d1d506c29bd",
+      "timeframe": "H4",
+      "states": [
+        "HIGH_VOL",
+        "LOW_VOL",
+        "TRENDING",
+        "RANGING",
+        "TRANSITION"
+      ],
+      "threshold_fit": "discovery rows [0,3366)"
+    },
+    "phase7_27_d1": {
+      "file": "server/research_scripts/phase7/phase7_9h/raw_data/nxs_d1_gold_phase79h.csv",
+      "sha256": "b6c2b8916c6fe649d9b6a7a0844daef43651d0dbdf765b674638aab8d8b1b07b",
+      "timeframe": "D1",
+      "dimensions": [
+        "sma50_slope",
+        "vol_tercile"
+      ],
+      "known_limitation": "ATR tercile boundaries are fitted on the full D1 dataset; diagnostic comparison only."
+    }
+  },
+  "crosswalk": {
+    "HIGH_VOL": {
+      "d1_dimension": "vol_tercile",
+      "accepted_values": [
+        "HIGH"
+      ]
+    },
+    "LOW_VOL": {
+      "d1_dimension": "vol_tercile",
+      "accepted_values": [
+        "LOW"
+      ]
+    },
+    "TRENDING": {
+      "d1_dimension": "sma50_slope",
+      "accepted_values": [
+        "UP",
+        "DOWN"
+      ]
+    },
+    "RANGING": {
+      "d1_dimension": "sma50_slope",
+      "accepted_values": [
+        "FLAT"
+      ]
+    },
+    "TRANSITION": {
+      "d1_dimension": null,
+      "accepted_values": []
+    }
+  },
+  "coverage": {
+    "h4_rows_in_calendar_overlap": 4809,
+    "h4_rows_matched_to_d1_calendar_date": 4650,
+    "calendar_date_coverage_rate": 0.9669369931378665
+  },
+  "missingness": {
+    "h4_regime_missing": 72,
+    "d1_trend_unknown": 186,
+    "d1_volatility_unknown": 0
+  },
+  "comparable_facets": {
+    "n": 3345,
+    "agreement_rate": 0.41076233183856503,
+    "disagreement_rate": 0.589237668161435,
+    "per_h4_state": {
+      "HIGH_VOL": {
+        "n": 1449,
+        "n_comparable": 1449,
+        "n_compatible": 254,
+        "agreement_rate": 0.17529330572808835,
+        "comparable": true
+      },
+      "LOW_VOL": {
+        "n": 1553,
+        "n_comparable": 1553,
+        "n_compatible": 988,
+        "agreement_rate": 0.6361880231809401,
+        "comparable": true
+      },
+      "TRENDING": {
+        "n": 120,
+        "n_comparable": 117,
+        "n_compatible": 93,
+        "agreement_rate": 0.7948717948717948,
+        "comparable": true
+      },
+      "RANGING": {
+        "n": 236,
+        "n_comparable": 226,
+        "n_compatible": 39,
+        "agreement_rate": 0.17256637168141592,
+        "comparable": true
+      },
+      "TRANSITION": {
+        "n": 1220,
+        "comparable": false,
+        "reason": "No direct D1 semantic equivalent"
+      }
+    }
+  },
+  "phase1_regime_source": "PHASE5_5_H4_REGIME_V1",
+  "selection_reason": "H4 granularity and discovery-only threshold fitting; selected before and without MACD outcomes.",
+  "not_permitted": [
+    "No classifier tuning",
+    "No third classifier",
+    "No classifier choice based on MACD outcome",
+    "No use of this diagnostic as an effect-significance gate"
+  ]
+}
