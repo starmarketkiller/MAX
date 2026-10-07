@@ -48,6 +48,28 @@ def _approvals(s):
     return items
 
 
+WORKER_ERROR_CODES = {"ENVIRONMENT": "LOCAL_WORKER_UNREACHABLE",
+                      "LOGIC": "LOCAL_WORKER_OUTPUT_REJECTED_BY_VERIFIER"}
+
+
+def _worker_blockers(tasks):
+    """Agency skill tasks the local worker could not complete, with the real cause."""
+    blockers = []
+    for task in tasks:
+        if task["state"] not in {"ESCALATION_REQUIRED", "FAILED", "BLOCKED"}:
+            continue
+        escalation = task.get("escalation") or {}
+        classification = escalation.get("classification") or task.get("dispatch_last_error")
+        failures = (escalation.get("context_packet") or {}).get("failures") or []
+        blockers.append({"task_id": task["task_id"],
+                         "skill": (task.get("action_params") or {}).get("agency_task_type"),
+                         "state": task["state"],
+                         "error_code": WORKER_ERROR_CODES.get(classification,
+                                                              classification or "UNKNOWN"),
+                         "detail": str(failures[-1])[:200] if failures else None})
+    return blockers
+
+
 def agency_state(store, *, queue=None):
     s = store.snapshot()
     models, briefs, packs = s["models"], s["briefs"], s["generation_packs"]
@@ -89,6 +111,9 @@ def agency_state(store, *, queue=None):
               "AMBER" if waiting_packs or blocked or rejected else "GREEN")
     tasks = [t for t in (queue.list_all() if queue else [])
              if t.get("action") == "agency_bounded_task"]
+    worker_blockers = _worker_blockers(tasks)
+    for code in sorted({b["error_code"] for b in worker_blockers}):
+        alerts.append(f"skill Agency bloccate: {code}")
     return {
         "schema_version": "AI_FASHION_AGENCY_STATE_V1", "health": health,
         "models_total": len(models),
@@ -124,6 +149,7 @@ def agency_state(store, *, queue=None):
         "agency_tasks": {"total": len(tasks),
                          "open": sum(t["state"] not in {"COMPLETED", "FAILED", "CANCELLED"}
                                      for t in tasks)},
+        "worker_blockers": worker_blockers,
         "alerts": alerts, "next_actions": next_actions,
         "commercial_actions_enabled": False, "publishing_enabled": False,
         "generated_at": _now(),
@@ -145,6 +171,9 @@ def jarvis_summary(state):
                  f"({state['credits_pending_approval']:g} crediti)")
     text += f". Ricavi €{state['revenue_eur']:.2f}, costi €{state['costs_eur']:.2f}, " \
             f"crediti spesi {state['credits_spent']:g}."
+    codes = sorted({b["error_code"] for b in state.get("worker_blockers", [])})
+    if codes:
+        text += f" Blocker worker: {', '.join(codes)}."
     return text
 
 
@@ -239,3 +268,14 @@ def business_unit_state(store, *, queue=None):
         next_gate="FIRST_CHARACTER_SHEET_APPROVAL" if st["models_active"] == 0
         else "FIRST_PUBLISHED_CONTENT",
         decision=decision)
+
+
+def executive_slice(store, *, queue=None):
+    """EXECUTIVE_SLICE_KEYS projection for the future NEXUS_EXECUTIVE_STATE_V1."""
+    st = agency_state(store, queue=queue)
+    return {"business_unit_id": "AI_FASHION_AGENCY", "health": st["health"],
+            "models_active": st["models_active"], "campaigns_active": st["campaigns_active"],
+            "products_found": st["products_found"], "store_ready": st["store_ready"],
+            "content_ready": st["content_ready"], "awaiting_approval": st["awaiting_approval"],
+            "revenue": st["revenue_eur"], "costs": st["costs_eur"], "profit": st["profit_eur"],
+            "alerts": st["alerts"], "next_actions": st["next_actions"]}

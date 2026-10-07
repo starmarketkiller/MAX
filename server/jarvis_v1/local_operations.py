@@ -246,3 +246,10 @@ class OperationsProjection:
             return []
         from business_units.ai_fashion_agency.projection import business_unit_state
         return [business_unit_state(self.agency_store, queue=self.queue)]
+
+    def executive_slices(self):
+        """Per-unit flat slices for NEXUS_EXECUTIVE_STATE_V1 (next milestone)."""
+        if not self.agency_store:
+            return []
+        from business_units.ai_fashion_agency.projection import executive_slice
+        return [executive_slice(self.agency_store, queue=self.queue)]
