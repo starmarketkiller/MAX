@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AGENCY_CONTENT_PACKAGE_V1",
+  "description": "Generated + reviewed media ready for social drafting.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "package_id",
+    "brief_id",
+    "model_id",
+    "media_refs",
+    "review",
+    "state",
+    "social_ready"
+  ],
+  "properties": {
+    "package_id": {
+      "type": "string",
+      "pattern": "^PKG_"
+    },
+    "state": {
+      "enum": [
+        "READY"
+      ]
+    },
+    "review": {
+      "type": "object",
+      "required": [
+        "verdict"
+      ],
+      "properties": {
+        "verdict": {
+          "const": "APPROVE"
+        }
+      }
+    },
+    "social_ready": {
+      "const": true
+    }
+  }
+}

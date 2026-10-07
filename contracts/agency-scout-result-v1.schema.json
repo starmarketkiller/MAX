@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AGENCY_SCOUT_RESULT_V1",
+  "description": "Provenance-safe scouting record (captured evidence, never inferred).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "scout_result_id",
+    "kind",
+    "title",
+    "source",
+    "url",
+    "observed_at",
+    "evidence",
+    "confidence",
+    "collector",
+    "dedup_key",
+    "input_id",
+    "sightings"
+  ],
+  "properties": {
+    "scout_result_id": {
+      "type": "string",
+      "pattern": "^SCR_"
+    },
+    "kind": {
+      "enum": [
+        "TREND_SCOUT",
+        "VIRAL_FORMAT_SCOUT",
+        "PRODUCT_SCOUT",
+        "FASHION_ITEM_SCOUT"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string",
+      "pattern": "^https?://"
+    },
+    "observed_at": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "quote"
+        ]
+      }
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "collector": {
+      "enum": [
+        "SUPPLIED_SESSION_TOOL",
+        "MANUAL"
+      ]
+    },
+    "dedup_key": {
+      "type": "string",
+      "pattern": "^[A-Z_]+:[0-9a-f]{16}$"
+    },
+    "input_id": {
+      "type": "string",
+      "pattern": "^AIN_"
+    },
+    "sightings": {
+      "type": "array"
+    }
+  }
+}

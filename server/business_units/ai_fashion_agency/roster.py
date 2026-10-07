@@ -16,6 +16,19 @@ GLOBAL_RESTRICTED = [
     "reposting third-party footage",
 ]
 
+PLANNED_PLATFORMS = ("tiktok", "instagram", "youtube_shorts")
+ACCOUNT_STATUSES = ("NOT_CREATED", "PENDING_CREATION", "ACTIVE", "SUSPENDED", "RETIRED")
+
+
+def planned_social_accounts(model_id):
+    """Account slots only. Handles are never invented: None until a human creates them."""
+    return [{"social_account_id": f"SA_{model_id}_{platform.upper()}", "platform": platform,
+             "handle": None, "status": "NOT_CREATED", "followers": None, "engagement": None,
+             "last_post": None, "content_count": 0, "monetization_state": "NOT_ELIGIBLE",
+             "ai_label_enabled": None}
+            for platform in PLANNED_PLATFORMS]
+
+
 _BASE_SHEET = {"tool": "higgsfield.ai_influencer_prepare", "tier": "normal",
                "randomize": False, "batch_size": 2}
 
@@ -30,20 +43,65 @@ def _model(model_id, stage_name, archetype, style, tone, personality, categories
         "age_presentation": "ADULT_21_PLUS", "style": style, "archetype": archetype,
         "tone": tone, "personality": personality, "content_categories": categories,
         "allowed_content": allowed, "restricted_content": list(GLOBAL_RESTRICTED),
-        "social_accounts": [], "brand_fit": brand_fit,
+        "social_accounts": planned_social_accounts(model_id), "brand_fit": brand_fit,
         "visual_consistency_rules": [
             "same face/character sheet reference on every generation",
             "signature elements visible in the first frame",
             "phone-camera realism, natural skin texture",
         ],
-        "prompt_seed": None, "voice_profile_future": None,
+        "prompt_seed": (SEED_PACKS.get(model_id) or {}).get("prompt_seed"),
+        "voice_profile_future": None,
         "ai_disclosure": {"profile_label": "AI-generated profile", "bio_tag": "AI creator",
                           "content_label_required": True},
-        "status": "CASTING_DRAFT", "last_quote": quote,
+        "status": "CASTING_DRAFT", "last_quote": quote, "seed_pack": SEED_PACKS.get(model_id),
         "performance_metrics": {"followers": 0, "views": 0, "engagement": 0, "comments": 0,
                                 "content_published": 0, "sales": 0, "revenue_eur": 0.0},
         "campaigns": [], "assigned_tasks": [],
     }
+
+
+# GENERATION_PACK_V2 seed candidates (Phase 8).  Planning only: nothing here
+# is executed; every paid step still needs a fresh quote and explicit approval.
+SEED_PACKS = {
+    "MDL_LUXE_ELENA": {
+        "identity_sheet": "Adult European woman, tall, slim, blonde hair in a sleek low bun, "
+                          "blue eyes, high cheekbones, fine gold jewelry, neutral palette.",
+        "prompt_seed": 410721,
+        "consistency_rules": ["low bun visible in frame 1", "gold hoops + thin chain always",
+                              "neutral/camel/ivory palette", "same character sheet reference"],
+        "wardrobe_direction": ["tailored blazers", "slip and midi dresses", "fine knitwear",
+                               "suede and leather outerwear", "structured bags"],
+        "lighting_camera": "soft window light, 35mm phone look, eye-level, slow handheld "
+                           "push-ins; no beauty filter",
+        "content_archetypes": ["quiet-luxury lookbook", "honest 'worth it?' review",
+                               "event outfit planning"],
+        "viral_adaptations": ["Fan Transition: overhead flat-lay outfit swaps hidden by fan blade",
+                              "POV: hoodie to date night beat-drop reveal",
+                              "'Did I nail it?' look reveal with comment question"],
+        "product_placement_formats": ["styled-three-ways carousel/video",
+                                      "detail close-up + fit check with #ad disclosure"],
+    },
+    "MDL_STREET_NOVA": {
+        "identity_sheet": "Adult European woman, olive skin, long dark-brown hair, hazel eyes, "
+                          "freckles and dimples, white over-ear headphones around the neck, "
+                          "small silver hoops, oversized streetwear.",
+        "prompt_seed": 520314,
+        "consistency_rules": ["headphones visible in frame 1", "silver hoops always",
+                              "oversized fit", "selfie-distance framing",
+                              "same character sheet reference"],
+        "wardrobe_direction": ["oversized hoodies", "baggy denim", "sneakers", "caps",
+                               "colorful statement pieces (boots, socks)"],
+        "lighting_camera": "phone front camera, natural daylight or bedroom LED, fast cuts "
+                           "every 3-5 s, captions always on",
+        "content_archetypes": ["trying viral trends so you don't have to", "relatable POV skits",
+                               "pet vs me humor"],
+        "viral_adaptations": ["Fan Transition with streetwear looks",
+                              "costume/outfit reveal on drum drop + 'did I win?' caption",
+                              "text-on-screen 'I just want to be OK' overlay format"],
+        "product_placement_formats": ["unbox + first reaction with #ad",
+                                      "cheap vs expensive side-by-side test"],
+    },
+}
 
 
 def initial_roster():

@@ -81,6 +81,7 @@ from funding_v1.revenue_portfolio import RevenueVentureRegistry
 from jarvis_v1.local_operations import SkillRegistry, CapabilityResolver, OperationsProjection
 from business_units.ai_fashion_agency.store import AgencyStore
 from business_units.ai_fashion_agency.skills import AgencyTaskCoordinator
+from business_units.ai_fashion_agency.events import ledger_sink as agency_ledger_sink
 from jarvis_v1.multi_stage_executor import MultiStageExecutor
 from orchestrator_v1.core.capability import load_registry as load_agent_capability_registry
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
@@ -1496,7 +1497,21 @@ REVENUE_AUTOMATION_RUNNER = RevenueAutomationRunner(
     telemetry=REVENUE_TELEMETRY)
 REVENUE_VENTURE_REGISTRY = RevenueVentureRegistry(
     _JARVIS_STATE_DIR / "revenue_venture_registry_v1.json")
-AGENCY_STORE = AgencyStore(_JARVIS_STATE_DIR / "ai_fashion_agency_registry_v1.json")
+def _agency_jarvis_notify(event):
+    """Attention-only AGENCY_* push through the existing Jarvis proactive path."""
+    for chat_id in sorted(JARVIS_TELEGRAM.allowed_users):
+        _jarvis_proactive_notify(chat_id, {
+            "response_type": "TASK_STATUS", "summary": event["summary"], "task_id": None,
+            "status": "WAITING_APPROVAL" if event["requires_human_action"] else "INFO",
+            "priority": "IMPORTANT" if event["requires_human_action"] else "INFO",
+            "details": {"event_type": event["event_type"], "entity_id": event["entity_id"],
+                        "business_unit_id": "AI_FASHION_AGENCY"},
+            "actions": [], "generated_by": "ai_fashion_agency_v2"})
+
+
+AGENCY_STORE = AgencyStore(_JARVIS_STATE_DIR / "ai_fashion_agency_registry_v1.json",
+                           event_sink=agency_ledger_sink(JARVIS_SERVICE.ledger,
+                                                         _agency_jarvis_notify))
 AGENCY_COORDINATOR = AgencyTaskCoordinator(JARVIS_SERVICE.orchestrator)
 JARVIS_SKILL_REGISTRY = SkillRegistry(Path(__file__).resolve().parent.parent)
 JARVIS_CAPABILITY_RESOLVER = CapabilityResolver(
