@@ -68,6 +68,11 @@ def render_task_md(record: dict) -> str:
         f"- **Path vietati (forbidden_capabilities):** {', '.join(m.get('files_forbidden') or []) or '-'}",
         f"- **Approvazione richiesta:** {m.get('approval_required') or '-'}",
     ]
+    plan = record.get("multi_stage_execution")
+    if plan:
+        lines.extend(["", "## Piano multi-stage", *[
+            f"- {step['step_id']}: {step['state']} — {step['required_capability']} "
+            f"({step['authorization_result']})" for step in plan.get("steps", [])]])
     return "\n".join(lines) + "\n"
 
 
@@ -130,6 +135,9 @@ def write_task_artifacts(service, task_id: str, out_dir: Optional[Path] = None) 
     events = service.ledger.read_for_task(task_id)
     out = Path(out_dir) if out_dir else task_artifacts_dir(service, task_id)
     out.mkdir(parents=True, exist_ok=True)
+    # Reserved output location for bounded task artifacts.  Creating the
+    # directory grants no write capability to a model or remote process.
+    (out / "artifacts").mkdir(exist_ok=True)
 
     (out / "task.md").write_text(render_task_md(record), encoding="utf-8")
     (out / "result.md").write_text(render_result_md(record), encoding="utf-8")

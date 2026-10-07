@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/multi-stage-execution-plan-v1.schema.json",
+  "title": "NEXUS MULTI_STAGE_EXECUTION_PLAN_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "objective", "created_at", "steps", "current_step", "sync_chat_budget_seconds", "local_model_step_timeout_seconds", "task_total_budget_seconds"],
+  "properties": {
+    "schema_version": {"const": "MULTI_STAGE_EXECUTION_PLAN_V1"},
+    "objective": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string"},
+    "current_step": {"type": ["string", "null"]},
+    "sync_chat_budget_seconds": {"type": "integer", "minimum": 1},
+    "local_model_step_timeout_seconds": {"type": "integer", "minimum": 1},
+    "task_total_budget_seconds": {"type": "integer", "minimum": 1},
+    "steps": {"type": "array", "minItems": 1, "items": {
+      "type": "object", "additionalProperties": true,
+      "required": ["step_id", "state", "required_capability", "authorization_result", "verifier"],
+      "properties": {
+        "step_id": {"type": "string"},
+        "state": {"enum": ["PENDING", "RUNNING", "VERIFIED", "RETRY_REQUIRED", "WAITING_CONTEXT", "WAITING_APPROVAL", "WAITING_FOR_PREMIUM", "BLOCKED", "COMPLETED", "FAILED"]},
+        "required_capability": {"type": "string"},
+        "authorization_result": {"enum": ["AUTHORIZED", "DENIED"]},
+        "verifier": {"type": "string"}
+      }
+    }}
+  }
+}

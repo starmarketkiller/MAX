@@ -77,6 +77,9 @@ from funding_v1.revenue_automation import (
     ProspectAcquisition, ProspectFileIntake, RevenueAutomationRunner,
     RevenueResultDelivery, RevenueScheduler, RevenueTelemetry,
 )
+from funding_v1.revenue_portfolio import RevenueVentureRegistry
+from jarvis_v1.local_operations import SkillRegistry, CapabilityResolver, OperationsProjection
+from orchestrator_v1.core.capability import load_registry as load_agent_capability_registry
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -1487,6 +1490,16 @@ REVENUE_AUTOMATION_RUNNER = RevenueAutomationRunner(
     interval_seconds=REVENUE_AUTOMATION_INTERVAL_SECONDS,
     error_sink=_revenue_jarvis_sink, intake=REVENUE_FILE_INTAKE,
     telemetry=REVENUE_TELEMETRY)
+REVENUE_VENTURE_REGISTRY = RevenueVentureRegistry(
+    _JARVIS_STATE_DIR / "revenue_venture_registry_v1.json")
+JARVIS_SKILL_REGISTRY = SkillRegistry(Path(__file__).resolve().parent.parent)
+JARVIS_CAPABILITY_RESOLVER = CapabilityResolver(
+    load_agent_capability_registry(), JARVIS_SKILL_REGISTRY)
+JARVIS_OPERATIONS = OperationsProjection(
+    revenue_store=REVENUE_STORE, revenue_runner=REVENUE_AUTOMATION_RUNNER,
+    revenue_scheduler=REVENUE_SCHEDULER, portfolio_registry=REVENUE_VENTURE_REGISTRY,
+    queue=JARVIS_SERVICE.queue, ledger=JARVIS_SERVICE.ledger)
+JARVIS_SERVICE.set_operations_projection(JARVIS_OPERATIONS, JARVIS_CAPABILITY_RESOLVER)
 
 
 JARVIS_PROVIDER_CONNECTOR = ProviderConnectorV1(JARVIS_SERVICE.orchestrator,

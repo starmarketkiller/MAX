@@ -38,6 +38,7 @@ from . import ministral_chat
 from . import ministral_task_compiler
 from . import task_handoff
 from . import vault_context
+from .local_operations import is_complex_mistral_request, build_execution_plan
 
 # JARVIS_MINISTRAL_ROUTER_V1 - OFF by default everywhere; flipping ENABLED
 # to true with MODE still SHADOW costs nothing but a background ledger
@@ -346,6 +347,8 @@ class JarvisService:
         self.dispatcher_status_provider = None
         self.provider_connector = None
         self.shared_cognitive_state = None
+        self.operations_projection = None
+        self.capability_resolver = None
 
     def set_dispatcher_status_provider(self, provider):
         """Attach a read-only runtime status projection without owning dispatcher logic."""
@@ -367,6 +370,10 @@ class JarvisService:
         hands off to the Core component that already owns provider state/
         policy/calls."""
         self.provider_connector = connector
+
+    def set_operations_projection(self, projection, capability_resolver=None):
+        self.operations_projection = projection
+        self.capability_resolver = capability_resolver
 
     def delegate_to_ministral(self, template_id, *, goal, relevant_paths,
                               created_by="jarvis:claude_supervisor", conversation_id=None,
@@ -562,6 +569,33 @@ class JarvisService:
             return self._response(message, "ANSWER",
                 "Usa /mistral seguito dal tuo messaggio, es.: "
                 "/mistral secondo te perché questo backtest è sospetto?")
+
+        # Operational/long requests become ordinary durable Queue tasks.  We
+        # return immediately instead of holding Telegram open for minutes.
+        if is_complex_mistral_request(user_text):
+            relevant_paths = list((message.get("metadata") or {}).get("files_allowed") or [])
+            if not relevant_paths and re.search(r"\brevenue\b", user_text, re.I):
+                relevant_paths = ["server/funding_v1/revenue_automation.py",
+                                  "server/funding_v1/revenue_agent.py",
+                                  "server/funding_v1/revenue_portfolio.py"]
+            task_id = self.delegate_to_ministral(
+                "repo_inspection_v1", goal=user_text, relevant_paths=relevant_paths,
+                created_by=f"jarvis:{message['user_id']}",
+                conversation_id=message["conversation_id"])
+            record = self.queue.get(task_id)
+            authorized = record["manifest"].get("required_capabilities") or []
+            plan = build_execution_plan(user_text, authorized_capabilities=authorized,
+                                        resolver=self.capability_resolver)
+            self.queue.annotate(task_id, multi_stage_execution=plan)
+            task_handoff.write_task_artifacts(self, task_id)
+            self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
+                                           user_id=str(message["user_id"]))
+            return self._response(
+                message, "TASK_ACK",
+                f"Questa richiesta richiede una task più lunga. {task_id} avviata in background.",
+                task_id=task_id, status=record["state"],
+                details={"view": "MULTI_STAGE_TASK", "multi_stage_execution": plan,
+                         "source_refs": ["TASK_MANIFEST_V1", "orchestrator queue"]})
 
         history = self.conversation_store.get(conversation_id).get("mistral_history") or []
         prompt = self._build_mistral_direct_prompt(user_text, history)
@@ -1246,7 +1280,40 @@ class JarvisService:
                 "/agents /task /handoff. Per parlare direttamente con Mistral locale: /mistral <messaggio> (poi "
                 "/new per azzerare la cronologia, /jarvis per tornare qui esplicitamente).",
                 details={"commands": ["/start", "/help", "/status", "/tasks", "/approvals", "/agents",
-                                      "/task", "/handoff", "/mistral", "/new", "/jarvis"]})
+                                      "/task", "/handoff", "/revenue", "/leads", "/drafts", "/followups",
+                                      "/ventures", "/mistral", "/mistral_status", "/new", "/jarvis"]})
+        if value == "/revenue":
+            if not self.operations_projection:
+                return self._response(message, "ANSWER", "Revenue operations non configurate.", status="UNKNOWN")
+            enabled = os.environ.get("NEXUS_REVENUE_AUTOMATION_ENABLED", "false").lower() == "true"
+            data = self.operations_projection.revenue(automation_enabled=enabled)
+            return self._response(message, "ANSWER",
+                f"Revenue: {data['prospects_count']} prospect, {data['leads_count']} lead, "
+                f"{data['drafts_ready']} bozze pronte, {data['followups_due']} follow-up dovuti.",
+                details={"view": "REVENUE_STATUS", **data})
+        if value == "/leads" or value.startswith("/lead "):
+            data = self.operations_projection.leads() if self.operations_projection else {"count": 0, "items": []}
+            if value.startswith("/lead "):
+                target = text.split(None, 1)[1].casefold()
+                data["items"] = [x for x in data["items"] if target in str(x.get("lead_id", "")).casefold()
+                                 or target in str(x.get("display_name", "")).casefold()]
+                if not data["items"] and self.operations_projection:
+                    data["items"] = self.operations_projection.find_contact(target)
+                data["count"] = len(data["items"])
+            return self._response(message, "ANSWER", f"Lead registrati: {data['count']}.",
+                                  details={"view": "REVENUE_LEADS", **data})
+        if value == "/drafts":
+            data = self.operations_projection.drafts() if self.operations_projection else {"count": 0, "items": []}
+            return self._response(message, "ANSWER", f"Bozze Revenue: {data['count']}.",
+                                  details={"view": "REVENUE_DRAFTS", **data})
+        if value == "/followups":
+            data = self.operations_projection.followups() if self.operations_projection else {"count": 0, "items": []}
+            return self._response(message, "ANSWER", f"Follow-up dovuti: {data['count']}.",
+                                  details={"view": "REVENUE_FOLLOWUPS", **data})
+        if value == "/ventures":
+            data = self.operations_projection.ventures() if self.operations_projection else {"count": 0, "items": []}
+            return self._response(message, "ANSWER", f"Venture registrate: {data['count']}.",
+                                  details={"view": "REVENUE_VENTURES", **data})
         if value == "/agents" or re.search(r"\b(agents|agenti)\b", value):
             items = self.agents(detailed=True)
             return self._response(message, "ANSWER", f"Agenti registrati: {len(items)}.",
