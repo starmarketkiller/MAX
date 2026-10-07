@@ -247,7 +247,8 @@ def classify(text: str, metadata: dict | None = None) -> str:
     if _EXECUTIVE_INTENT_RE.search(value):
         return "EXECUTIVE_INTENT"
     if value.startswith("/") or re.search(
-            r"\b(help|aiuto|dettagli|details|annulla|cancella|cancel|continua|agents|agenti|approvals)\b", value):
+            r"\b(help|aiuto|dettagli|details|annulla|cancella|cancel|continua|agents|agenti|approvals|"
+            r"agenzia|modelle)\b", value):
         return "COMMAND"
     if action in ("REJECT", "RIFIUTA") or re.search(r"\b(rifiuta|reject)\b", value):
         return "REJECTION"
@@ -1287,7 +1288,7 @@ class JarvisService:
                 "/new per azzerare la cronologia, /jarvis per tornare qui esplicitamente).",
                 details={"commands": ["/start", "/help", "/status", "/tasks", "/approvals", "/agents",
                                       "/task", "/handoff", "/revenue", "/leads", "/drafts", "/followups",
-                                      "/ventures", "/mistral", "/mistral_status", "/new", "/jarvis"]})
+                                      "/ventures", "/agency", "/mistral", "/mistral_status", "/new", "/jarvis"]})
         if value == "/revenue":
             if not self.operations_projection:
                 return self._response(message, "ANSWER", "Revenue operations non configurate.", status="UNKNOWN")
@@ -1320,6 +1321,8 @@ class JarvisService:
             data = self.operations_projection.ventures() if self.operations_projection else {"count": 0, "items": []}
             return self._response(message, "ANSWER", f"Venture registrate: {data['count']}.",
                                   details={"view": "REVENUE_VENTURES", **data})
+        if value == "/agency":
+            return self._agency_status(message)
         if value == "/agents" or re.search(r"\b(agents|agenti)\b", value):
             items = self.agents(detailed=True)
             return self._response(message, "ANSWER", f"Agenti registrati: {len(items)}.",
@@ -1373,8 +1376,21 @@ class JarvisService:
         if message.get("metadata", {}).get("confirm_cancel") or _CANCEL_VERB_RE.search(value) or re.search(
                 r"\bannullamento\b", value):
             return self.cancel(message)
+        # Natural-language agency questions only after every other command
+        # keyword (dettagli/continua/annulla/approval...) had its chance.
+        if re.search(r"\b(agenzia|fashion agency|modelle)\b", value):
+            return self._agency_status(message)
         return self._response(message, "ANSWER", "Comando non riconosciuto. Scrivi /help per le opzioni disponibili.",
                               status="PARTIAL", confidence="MEDIUM")
+
+    def _agency_status(self, message):
+        """AI_FASHION_AGENCY_STATE_V1 via the read-only operations projection."""
+        data = self.operations_projection.agency() if self.operations_projection else None
+        if data is None:
+            return self._response(message, "ANSWER", "AI Fashion Agency non configurata.",
+                                  status="UNKNOWN")
+        return self._response(message, "ANSWER", data["summary"],
+                              details={"view": "AI_FASHION_AGENCY_STATE", **data})
 
     def state_query(self, message):
         """STATE_QUERY: 'fammi vedere le task bloccate'/'Bloccate' and similar

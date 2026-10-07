@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AGENCY_REVENUE_EVENT_V1",
+  "description": "Observed revenue attributed to model/campaign/product/content/channel. Optional link to REVENUE_V1.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "revenue_event_id",
+    "stream",
+    "amount_eur",
+    "model_id",
+    "campaign_id",
+    "product_id",
+    "content_id",
+    "channel",
+    "external_reference",
+    "revenue_v1_id",
+    "recorded_at"
+  ],
+  "properties": {
+    "revenue_event_id": {
+      "type": "string",
+      "pattern": "^ARV_"
+    },
+    "stream": {
+      "enum": [
+        "affiliate",
+        "own_store",
+        "sponsored_product",
+        "ugc_service",
+        "brand_campaign",
+        "creator_sponsorship",
+        "fashion_promotion",
+        "digital_product",
+        "agency_service",
+        "model_licensing",
+        "social_monetization"
+      ]
+    },
+    "amount_eur": {
+      "type": "number"
+    },
+    "model_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "campaign_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "product_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "content_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "channel": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "external_reference": {
+      "type": "string"
+    },
+    "revenue_v1_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^REV_"
+    },
+    "recorded_at": {
+      "type": "string"
+    }
+  }
+}

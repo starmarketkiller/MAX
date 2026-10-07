@@ -1,0 +1,152 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI_FASHION_AGENCY_STATE_V1",
+  "description": "Read-only Agency projection consumed by Jarvis (/agency).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "health",
+    "models_total",
+    "models_active",
+    "models_casting",
+    "campaigns_active",
+    "content_queue",
+    "store_ready",
+    "store_blocked",
+    "awaiting_approval",
+    "credits_pending_approval",
+    "credits_spent",
+    "published",
+    "views",
+    "engagement",
+    "followers",
+    "revenue_eur",
+    "costs_eur",
+    "profit_eur",
+    "top_model",
+    "top_campaign",
+    "agency_tasks",
+    "alerts",
+    "next_actions",
+    "commercial_actions_enabled",
+    "publishing_enabled",
+    "generated_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "AI_FASHION_AGENCY_STATE_V1"
+    },
+    "health": {
+      "enum": [
+        "GREEN",
+        "AMBER",
+        "RED",
+        "NOT_STARTED"
+      ]
+    },
+    "models_total": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "models_active": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "models_casting": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "campaigns_active": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "content_queue": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "store_ready": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "store_blocked": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "awaiting_approval": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "published": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "views": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "engagement": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "followers": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "credits_pending_approval": {
+      "type": "number"
+    },
+    "credits_spent": {
+      "type": "number"
+    },
+    "revenue_eur": {
+      "type": "number"
+    },
+    "costs_eur": {
+      "type": "number"
+    },
+    "profit_eur": {
+      "type": "number"
+    },
+    "top_model": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "top_campaign": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "agency_tasks": {
+      "type": "object",
+      "required": [
+        "total",
+        "open"
+      ]
+    },
+    "alerts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "commercial_actions_enabled": {
+      "const": false
+    },
+    "publishing_enabled": {
+      "const": false
+    },
+    "generated_at": {
+      "type": "string"
+    }
+  }
+}

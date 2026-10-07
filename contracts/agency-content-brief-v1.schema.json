@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AGENCY_CONTENT_BRIEF_V1",
+  "description": "Original content brief; viral references keep structure only, never media.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "brief_id",
+    "title",
+    "content_category",
+    "hook",
+    "script",
+    "caption",
+    "commercial",
+    "audio_source",
+    "production_method",
+    "ai_label",
+    "ad_disclosure",
+    "status",
+    "compliance"
+  ],
+  "properties": {
+    "brief_id": {
+      "type": "string",
+      "pattern": "^BRF_"
+    },
+    "title": {
+      "type": "string"
+    },
+    "content_category": {
+      "type": "string"
+    },
+    "hook": {
+      "type": "string"
+    },
+    "script": {
+      "type": "string"
+    },
+    "caption": {
+      "type": "string"
+    },
+    "commercial": {
+      "type": "boolean"
+    },
+    "audio_source": {
+      "enum": [
+        "PLATFORM_LIBRARY",
+        "ORIGINAL",
+        "LICENSED"
+      ]
+    },
+    "production_method": {
+      "const": "ORIGINAL_RECREATION"
+    },
+    "ai_label": {
+      "const": true
+    },
+    "ad_disclosure": {
+      "type": "boolean"
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "ASSIGNED",
+        "PACK_READY",
+        "WAITING_APPROVAL",
+        "APPROVED",
+        "GENERATED",
+        "IN_REVIEW",
+        "PUBLISHED",
+        "REJECTED"
+      ]
+    },
+    "compliance": {
+      "type": "object",
+      "required": [
+        "passed",
+        "issues"
+      ]
+    }
+  }
+}

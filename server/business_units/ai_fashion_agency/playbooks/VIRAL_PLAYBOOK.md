@@ -1,8 +1,13 @@
-# AI Creator — Viral Playbook v1
+# AI Fashion Agency — Viral Playbook v1
 
-Obiettivo: un creator AI (umano realistico, inglese, lifestyle/intrattenimento) che rifà
-trend virali nella propria versione, cresce un pubblico e poi monetizza con prodotti
-trovati dalle automazioni NEXUS (trend-product research) + sponsorizzazioni.
+Playbook creativo della Business Unit AI_FASHION_AGENCY (migrato da
+`marketing/ai-creator/`). È il know-how usato dalle skill `VIRAL_FORMAT_ANALYSIS`,
+`CONTENT_BRIEF_DRAFT` e `CONTENT_REVIEW`; le regole vincolanti (store gate, compliance,
+approvazione crediti) sono codificate in `pipeline.py` e prevalgono su questo testo.
+
+Obiettivo: creator AI (umani realistici, inglese, lifestyle/intrattenimento/fashion) che
+rifanno i format virali nella propria versione, crescono un pubblico e monetizzano con
+prodotti trovati dalle automazioni NEXUS, sempre dopo lo STORE_READY.
 
 ## 1. Il "modello ad hoc": anatomia di un video che prende like e commenti
 
@@ -30,13 +35,14 @@ Leve emotive che funzionano: sorpresa, cringe/imbarazzo simpatico, soddisfazione
 
 ## 3. Pipeline: video virale → versione del creator
 
-1. **Input**: link/clip di un trend del momento (dalle automazioni NEXUS o scelto a mano).
-2. **Analisi**: estrarre format, audio, hook, struttura dei tagli (non il contenuto altrui).
-3. **Remake** su Higgsfield: motion transfer (Genjutsu / motion control) sul personaggio,
-   oppure generazione nuova dello stesso format con il creator.
-4. **Check virale** (virality predictor Higgsfield) prima di pubblicare.
-5. **Pubblicazione**: TikTok (connettore Higgsfield), Reels, Shorts; audio di tendenza
-   preso dalla libreria della piattaforma.
+1. **Input**: `TREND_VIDEO` / `TREND_FORMAT` / `TREND_AUDIO` sull'Agency Input Bus.
+2. **Analisi**: skill `VIRAL_FORMAT_ANALYSIS` (Orchestrator) → solo struttura: hook, beat,
+   payoff, comment bait, strategia audio. Nessun media conservato.
+3. **Brief + modella**: `CONTENT_BRIEF` → compliance → `MODEL_ASSIGNMENT`.
+4. **Remake** su Higgsfield (motion transfer / generazione nuova) tramite Generation Pack:
+   preventivo → approvazione esplicita → esecuzione.
+5. **Pubblicazione**: futura, tramite il Social subsystem; audio dalla libreria della
+   piattaforma, etichetta AI attiva.
 
 Regola d'oro: si copia il **format**, mai il video. Ripubblicare clip altrui con il
 personaggio sopra = rischio strike/copyright e ban del monetization.

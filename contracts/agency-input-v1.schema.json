@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AGENCY_INPUT_V1",
+  "description": "Agency Input Bus record produced by any NEXUS automation.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "input_id",
+    "input_type",
+    "payload",
+    "source",
+    "state",
+    "workflow",
+    "received_at"
+  ],
+  "properties": {
+    "input_id": {
+      "type": "string",
+      "pattern": "^AIN_"
+    },
+    "input_type": {
+      "enum": [
+        "TREND_VIDEO",
+        "TREND_AUDIO",
+        "TREND_FORMAT",
+        "PRODUCT",
+        "FASHION_ITEM",
+        "SERVICE",
+        "CAMPAIGN",
+        "AFFILIATE_OFFER",
+        "BRAND_REQUEST",
+        "CONTENT_IDEA",
+        "SEASON_EVENT"
+      ]
+    },
+    "payload": {
+      "type": "object"
+    },
+    "source": {
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "RECEIVED",
+        "CLASSIFIED",
+        "ROUTED",
+        "REJECTED"
+      ]
+    },
+    "workflow": {
+      "enum": [
+        "STORE_GATE",
+        "VIRAL_ADAPTER",
+        "CONTENT_BRIEF",
+        "CAMPAIGN_MANAGER"
+      ]
+    },
+    "received_at": {
+      "type": "string"
+    }
+  }
+}

@@ -132,8 +132,9 @@ class OperationsProjection:
     """Read-only operational view; canonical stores remain authoritative."""
 
     def __init__(self, *, revenue_store, revenue_runner, revenue_scheduler,
-                 portfolio_registry=None, queue=None, ledger=None):
+                 portfolio_registry=None, queue=None, ledger=None, agency_store=None):
         self.revenue_store = revenue_store
+        self.agency_store = agency_store
         self.revenue_runner = revenue_runner
         self.revenue_scheduler = revenue_scheduler
         self.portfolio_registry = portfolio_registry
@@ -225,3 +226,11 @@ class OperationsProjection:
                           "next_action": ("RUN_FIRST_REAL_MARKET_TEST" if not real_started
                                           else "HUMAN_REVIEW")})
         return {"count": len(items), "items": items}
+
+    def agency(self):
+        """AI_FASHION_AGENCY_STATE_V1 + Jarvis sentence; None when not configured."""
+        if not self.agency_store:
+            return None
+        from business_units.ai_fashion_agency.projection import agency_state, jarvis_summary
+        state = agency_state(self.agency_store, queue=self.queue)
+        return {**state, "summary": jarvis_summary(state)}

@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AGENCY_MODEL_PROFILE_V1",
+  "description": "Persistent AI model entity of the AI Fashion Agency.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "model_id",
+    "stage_name",
+    "visual_identity",
+    "age_presentation",
+    "style",
+    "archetype",
+    "tone",
+    "personality",
+    "content_categories",
+    "allowed_content",
+    "restricted_content",
+    "social_accounts",
+    "brand_fit",
+    "visual_consistency_rules",
+    "prompt_seed",
+    "voice_profile_future",
+    "ai_disclosure",
+    "status",
+    "performance_metrics",
+    "campaigns",
+    "assigned_tasks"
+  ],
+  "properties": {
+    "model_id": {
+      "type": "string",
+      "pattern": "^MDL_[A-Z0-9_]+$"
+    },
+    "stage_name": {
+      "type": "string"
+    },
+    "visual_identity": {
+      "type": "object"
+    },
+    "age_presentation": {
+      "const": "ADULT_21_PLUS"
+    },
+    "style": {
+      "type": "string"
+    },
+    "archetype": {
+      "type": "string"
+    },
+    "tone": {
+      "type": "string"
+    },
+    "personality": {
+      "type": "string"
+    },
+    "content_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allowed_content": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "restricted_content": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "social_accounts": {
+      "type": "array"
+    },
+    "brand_fit": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "visual_consistency_rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "prompt_seed": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "voice_profile_future": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "ai_disclosure": {
+      "type": "object",
+      "required": [
+        "profile_label",
+        "bio_tag",
+        "content_label_required"
+      ],
+      "properties": {
+        "content_label_required": {
+          "const": true
+        }
+      }
+    },
+    "status": {
+      "enum": [
+        "CASTING_DRAFT",
+        "DESIGN_PENDING_APPROVAL",
+        "CHARACTER_SHEET_READY",
+        "ACTIVE",
+        "PAUSED",
+        "RETIRED"
+      ]
+    },
+    "performance_metrics": {
+      "type": "object"
+    },
+    "campaigns": {
+      "type": "array"
+    },
+    "assigned_tasks": {
+      "type": "array"
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BUSINESS_UNIT_STATE_V1",
+  "description": "Common projection every NEXUS Business Unit publishes for Jarvis and NEXUS_EXECUTIVE_STATE_V1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "unit_id",
+    "name",
+    "mission",
+    "state",
+    "health",
+    "inputs",
+    "workers",
+    "capabilities",
+    "kpis",
+    "costs_eur",
+    "revenue_eur",
+    "net_eur",
+    "risks",
+    "tasks",
+    "evidence",
+    "next_gate",
+    "decision",
+    "generated_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "BUSINESS_UNIT_STATE_V1"
+    },
+    "unit_id": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]+$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "mission": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "health": {
+      "enum": [
+        "GREEN",
+        "AMBER",
+        "RED",
+        "NOT_STARTED"
+      ]
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "workers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "kpis": {
+      "type": "object"
+    },
+    "costs_eur": {
+      "type": "number"
+    },
+    "revenue_eur": {
+      "type": "number"
+    },
+    "net_eur": {
+      "type": "number"
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tasks": {
+      "type": "object"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_gate": {
+      "type": "string"
+    },
+    "decision": {
+      "type": "object",
+      "required": [
+        "status",
+        "items"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "NONE",
+            "HUMAN_APPROVAL_REQUIRED",
+            "HUMAN_REVIEW_REQUIRED"
+          ]
+        },
+        "items": {
+          "type": "array"
+        }
+      }
+    },
+    "generated_at": {
+      "type": "string"
+    }
+  }
+}

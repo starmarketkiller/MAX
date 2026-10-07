@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AGENCY_GENERATION_PACK_V1",
+  "description": "Planned paid Higgsfield calls. Cost -> explicit approval -> execute; NEXUS never executes it itself.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "pack_id",
+    "brief_id",
+    "model_id",
+    "provider",
+    "steps",
+    "state",
+    "quoted_credits",
+    "unquoted_steps",
+    "credits_spent",
+    "approved_by",
+    "approval_required"
+  ],
+  "properties": {
+    "pack_id": {
+      "type": "string",
+      "pattern": "^GEN_"
+    },
+    "provider": {
+      "const": "HIGGSFIELD"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "step_id",
+          "tool",
+          "params",
+          "quote",
+          "state"
+        ],
+        "properties": {
+          "state": {
+            "enum": [
+              "WAITING_QUOTE",
+              "WAITING_APPROVAL",
+              "APPROVED",
+              "COMPLETED"
+            ]
+          }
+        }
+      }
+    },
+    "state": {
+      "enum": [
+        "WAITING_QUOTE",
+        "WAITING_APPROVAL",
+        "APPROVED",
+        "SUBMITTED",
+        "COMPLETED",
+        "REJECTED",
+        "CANCELLED"
+      ]
+    },
+    "quoted_credits": {
+      "type": "number"
+    },
+    "unquoted_steps": {
+      "type": "array"
+    },
+    "credits_spent": {
+      "type": "number"
+    },
+    "approved_by": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "approval_required": {
+      "const": true
+    }
+  }
+}

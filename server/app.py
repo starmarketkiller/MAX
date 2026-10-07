@@ -79,6 +79,8 @@ from funding_v1.revenue_automation import (
 )
 from funding_v1.revenue_portfolio import RevenueVentureRegistry
 from jarvis_v1.local_operations import SkillRegistry, CapabilityResolver, OperationsProjection
+from business_units.ai_fashion_agency.store import AgencyStore
+from business_units.ai_fashion_agency.skills import AgencyTaskCoordinator
 from jarvis_v1.multi_stage_executor import MultiStageExecutor
 from orchestrator_v1.core.capability import load_registry as load_agent_capability_registry
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
@@ -1494,13 +1496,15 @@ REVENUE_AUTOMATION_RUNNER = RevenueAutomationRunner(
     telemetry=REVENUE_TELEMETRY)
 REVENUE_VENTURE_REGISTRY = RevenueVentureRegistry(
     _JARVIS_STATE_DIR / "revenue_venture_registry_v1.json")
+AGENCY_STORE = AgencyStore(_JARVIS_STATE_DIR / "ai_fashion_agency_registry_v1.json")
+AGENCY_COORDINATOR = AgencyTaskCoordinator(JARVIS_SERVICE.orchestrator)
 JARVIS_SKILL_REGISTRY = SkillRegistry(Path(__file__).resolve().parent.parent)
 JARVIS_CAPABILITY_RESOLVER = CapabilityResolver(
     load_agent_capability_registry(), JARVIS_SKILL_REGISTRY)
 JARVIS_OPERATIONS = OperationsProjection(
     revenue_store=REVENUE_STORE, revenue_runner=REVENUE_AUTOMATION_RUNNER,
     revenue_scheduler=REVENUE_SCHEDULER, portfolio_registry=REVENUE_VENTURE_REGISTRY,
-    queue=JARVIS_SERVICE.queue, ledger=JARVIS_SERVICE.ledger)
+    queue=JARVIS_SERVICE.queue, ledger=JARVIS_SERVICE.ledger, agency_store=AGENCY_STORE)
 JARVIS_SERVICE.set_operations_projection(JARVIS_OPERATIONS, JARVIS_CAPABILITY_RESOLVER)
 
 

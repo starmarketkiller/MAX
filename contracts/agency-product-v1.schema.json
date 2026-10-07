@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AGENCY_PRODUCT_V1",
+  "description": "Product lifecycle; commercial content only from STORE_READY onwards (PRODUCT -> STORE FIRST).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "product_id",
+    "title",
+    "revenue_stream",
+    "status",
+    "store_listing",
+    "history"
+  ],
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "pattern": "^PRD_"
+    },
+    "title": {
+      "type": "string"
+    },
+    "revenue_stream": {
+      "enum": [
+        "own_store",
+        "affiliate"
+      ]
+    },
+    "status": {
+      "enum": [
+        "DISCOVERED",
+        "EVALUATING",
+        "STORE_PENDING",
+        "STORE_READY",
+        "CONTENT_READY",
+        "PUBLISHED",
+        "MONETIZING",
+        "RETIRED"
+      ]
+    },
+    "store_listing": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "history": {
+      "type": "array"
+    }
+  }
+}

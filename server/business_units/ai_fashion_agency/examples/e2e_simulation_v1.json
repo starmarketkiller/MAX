@@ -1,0 +1,410 @@
+{
+  "trace": [
+    [
+      "PRODUCT_RECEIVED",
+      "DISCOVERED"
+    ],
+    [
+      "COMMERCIAL_BRIEF_BEFORE_STORE",
+      "REJECTED"
+    ],
+    [
+      "STORE_GATE",
+      "STORE_READY"
+    ],
+    [
+      "VIRAL_ADAPTER",
+      "COMPLETED",
+      "LOCAL_FAST_MINISTRAL3B"
+    ],
+    [
+      "CONTENT_BRIEF",
+      "DRAFT"
+    ],
+    [
+      "MODEL_ASSIGNMENT",
+      "MDL_LUXE_ELENA"
+    ],
+    [
+      "GENERATION_PACK",
+      "WAITING_APPROVAL",
+      2.25
+    ]
+  ],
+  "product": {
+    "product_id": "PRD_287378DE50",
+    "title": "Satin slip midi dress",
+    "category": "dresses",
+    "source_url": "simulation://scout/slip-dress",
+    "supplier": "SIM_SUPPLIER_1",
+    "unit_cost_eur": 14.0,
+    "target_price_eur": 39.0,
+    "trend_evidence": [
+      "E1: 'slip dress' search interest rising (scout record)"
+    ],
+    "revenue_stream": "own_store",
+    "input_id": "AIN_E2204753F4",
+    "status": "STORE_READY",
+    "viability": {
+      "viable": true,
+      "gross_margin": 0.6410256410256411,
+      "reasons": [],
+      "evaluated_at": "2026-10-07T20:41:18.528149+00:00"
+    },
+    "store_listing": {
+      "kind": "OWN_STORE",
+      "url": "simulation://store/slip-dress",
+      "simulated": true,
+      "approved_by": "SIMULATION_USER",
+      "verified_at": "2026-10-07T20:41:18.532215+00:00"
+    },
+    "history": [
+      {
+        "from": "DISCOVERED",
+        "to": "EVALUATING",
+        "actor": "store_gate",
+        "at": "2026-10-07T20:41:18.528845+00:00"
+      },
+      {
+        "from": "EVALUATING",
+        "to": "STORE_PENDING",
+        "actor": "store_gate",
+        "at": "2026-10-07T20:41:18.530521+00:00"
+      },
+      {
+        "from": "STORE_PENDING",
+        "to": "STORE_READY",
+        "actor": "store_gate",
+        "at": "2026-10-07T20:41:18.532226+00:00"
+      }
+    ],
+    "updated_at": "2026-10-07T20:41:18.532370+00:00",
+    "created_at": "2026-10-07T20:41:18.524865+00:00"
+  },
+  "brief_rejected_before_store": {
+    "brief_id": "BRF_B081BE6D93",
+    "title": "Slip dress try-on",
+    "content_category": "fashion",
+    "hook": "This dress?",
+    "script": "try-on",
+    "caption": "Link in bio #ad",
+    "cta": null,
+    "viral_reference": null,
+    "product_id": "PRD_287378DE50",
+    "campaign_id": null,
+    "commercial": true,
+    "audio_source": "PLATFORM_LIBRARY",
+    "production_method": "ORIGINAL_RECREATION",
+    "aspect_ratio": "9:16",
+    "duration_seconds": 15,
+    "ai_label": true,
+    "ad_disclosure": true,
+    "status": "REJECTED",
+    "model_id": null,
+    "compliance": {
+      "passed": false,
+      "issues": [
+        "product PRD_287378DE50 is DISCOVERED; promotion requires STORE_READY"
+      ],
+      "checked_at": "2026-10-07T20:41:18.526745+00:00"
+    },
+    "updated_at": "2026-10-07T20:41:18.527027+00:00",
+    "created_at": "2026-10-07T20:41:18.527027+00:00"
+  },
+  "brief": {
+    "brief_id": "BRF_59527C1750",
+    "title": "Satin slip dress transition",
+    "content_category": "fashion",
+    "hook": "POV: hoodie to date night",
+    "script": "mirror selfie in hoodie / hand covers lens on beat drop / reveal in trend dress / spin + caption question",
+    "caption": "Look 1 or look 2? #ad #AIcreator",
+    "cta": "Shop the dress in bio",
+    "viral_reference": {
+      "reference_id": "VRF_1447790F05",
+      "input_id": "AIN_4F98E2C9D4",
+      "source_url": "simulation://tiktok/trend-123",
+      "platform": "tiktok",
+      "structure": {
+        "audio_strategy": "PLATFORM_LIBRARY",
+        "beats": [
+          "mirror selfie in hoodie",
+          "hand covers lens on beat drop",
+          "reveal in trend dress",
+          "spin + caption question"
+        ],
+        "comment_bait": "Look 1 or look 2?",
+        "duration_seconds": 12,
+        "format_name": "Outfit transition on the beat",
+        "hook_pattern": "POV mid-action reveal",
+        "payoff": "full look reveal synced to drop"
+      },
+      "media_retained": false
+    },
+    "product_id": "PRD_287378DE50",
+    "campaign_id": null,
+    "commercial": true,
+    "audio_source": "PLATFORM_LIBRARY",
+    "production_method": "ORIGINAL_RECREATION",
+    "aspect_ratio": "9:16",
+    "duration_seconds": 15,
+    "ai_label": true,
+    "ad_disclosure": true,
+    "status": "WAITING_APPROVAL",
+    "model_id": "MDL_LUXE_ELENA",
+    "compliance": {
+      "passed": true,
+      "issues": [],
+      "checked_at": "2026-10-07T20:41:18.549521+00:00"
+    },
+    "updated_at": "2026-10-07T20:41:18.555181+00:00",
+    "created_at": "2026-10-07T20:41:18.545284+00:00"
+  },
+  "assignment": {
+    "assignment_id": "ASG_A841B93D97",
+    "brief_id": "BRF_59527C1750",
+    "model_id": "MDL_LUXE_ELENA",
+    "ranking": [
+      {
+        "model_id": "MDL_LUXE_ELENA",
+        "score": 3,
+        "keyword_overlap": [
+          "dresses"
+        ],
+        "load": 0
+      },
+      {
+        "model_id": "MDL_BOLD_SIENNA",
+        "score": 0,
+        "keyword_overlap": [],
+        "load": 0
+      },
+      {
+        "model_id": "MDL_STREET_NOVA",
+        "score": 0,
+        "keyword_overlap": [],
+        "load": 0
+      }
+    ],
+    "selected_by": "model_assignment",
+    "status": "ASSIGNED",
+    "updated_at": "2026-10-07T20:41:18.549704+00:00",
+    "created_at": "2026-10-07T20:41:18.549704+00:00"
+  },
+  "generation_pack": {
+    "pack_id": "GEN_88C1317C0D",
+    "brief_id": "BRF_59527C1750",
+    "model_id": "MDL_LUXE_ELENA",
+    "provider": "HIGGSFIELD",
+    "steps": [
+      {
+        "step_id": "S1_CHARACTER_SHEET",
+        "tool": "higgsfield.ai_influencer_generate",
+        "quote_tool": "higgsfield.ai_influencer_prepare",
+        "params": {
+          "tier": "normal",
+          "randomize": false,
+          "batch_size": 2,
+          "selection": {
+            "gender": [
+              "female"
+            ],
+            "age": [
+              "adult"
+            ],
+            "ethnicity_origin_base": [
+              "european"
+            ],
+            "skin_tone": [
+              "st_fair"
+            ],
+            "hair": [
+              "hair_long"
+            ],
+            "hair_colour": [
+              "hc_blonde"
+            ],
+            "eye_color": [
+              "eye_blue"
+            ],
+            "freak_face": [
+              "fn_cheekbones"
+            ],
+            "accessory": [
+              "acc_jewelry"
+            ],
+            "aesthetic": [
+              "suits"
+            ],
+            "body_type": [
+              "body_slim"
+            ],
+            "height": [
+              "h_tall"
+            ]
+          },
+          "brief": "Elegant quiet-luxury fashion creator, adult, calm confident presence, editorial but believable. Signature: low bun, gold jewelry, neutral tones."
+        },
+        "quote": {
+          "credits": 2.25,
+          "batch_size": 2,
+          "quoted_at": "2026-10-07",
+          "source": "higgsfield.ai_influencer_prepare",
+          "stale_after_days": 7
+        },
+        "state": "WAITING_APPROVAL"
+      },
+      {
+        "step_id": "S2_VIDEO",
+        "tool": "higgsfield.generate_video:motion_transfer",
+        "quote_tool": "higgsfield (quote before submit)",
+        "params": {
+          "model_id": "MDL_LUXE_ELENA",
+          "aspect_ratio": "9:16",
+          "duration_seconds": 15,
+          "hook": "POV: hoodie to date night",
+          "script": "mirror selfie in hoodie / hand covers lens on beat drop / reveal in trend dress / spin + caption question",
+          "character_reference": "S1_CHARACTER_SHEET output"
+        },
+        "quote": null,
+        "state": "WAITING_QUOTE"
+      }
+    ],
+    "state": "WAITING_APPROVAL",
+    "quoted_credits": 2.25,
+    "unquoted_steps": [
+      "S2_VIDEO"
+    ],
+    "credits_spent": 0,
+    "approved_by": null,
+    "approval_required": true,
+    "updated_at": "2026-10-07T20:41:18.553810+00:00",
+    "created_at": "2026-10-07T20:41:18.553810+00:00"
+  },
+  "agency_state": {
+    "schema_version": "AI_FASHION_AGENCY_STATE_V1",
+    "health": "AMBER",
+    "models_total": 5,
+    "models_active": 0,
+    "models_casting": 5,
+    "campaigns_active": 1,
+    "content_queue": 1,
+    "store_ready": 1,
+    "store_blocked": 0,
+    "awaiting_approval": 1,
+    "credits_pending_approval": 2.25,
+    "credits_spent": 0,
+    "published": 0,
+    "views": 0,
+    "engagement": 0,
+    "followers": 0,
+    "revenue_eur": 0,
+    "costs_eur": 0,
+    "profit_eur": 0,
+    "top_model": null,
+    "top_campaign": null,
+    "agency_tasks": {
+      "total": 1,
+      "open": 0
+    },
+    "alerts": [
+      "GEN_88C1317C0D: 1 step senza preventivo",
+      "1 brief bloccati dalla compliance",
+      "nessun account social collegato"
+    ],
+    "next_actions": [
+      {
+        "action": "APPROVE_OR_REJECT_GENERATION_PACK",
+        "pack_id": "GEN_88C1317C0D",
+        "credits": 2.25,
+        "requires": "EXPLICIT_USER_APPROVAL"
+      },
+      {
+        "action": "APPROVE_FIRST_CHARACTER_SHEET",
+        "requires": "EXPLICIT_USER_APPROVAL"
+      }
+    ],
+    "commercial_actions_enabled": false,
+    "publishing_enabled": false,
+    "generated_at": "2026-10-07T20:41:18.556907+00:00"
+  },
+  "business_unit_state": {
+    "schema_version": "BUSINESS_UNIT_STATE_V1",
+    "unit_id": "AI_FASHION_AGENCY",
+    "name": "AI Fashion Agency",
+    "mission": "Coordinate a roster of disclosed AI fashion/lifestyle creators that turn NEXUS trend and product opportunities into original content and revenue.",
+    "state": "OPERATING",
+    "health": "AMBER",
+    "inputs": [
+      "TREND_VIDEO",
+      "TREND_AUDIO",
+      "TREND_FORMAT",
+      "PRODUCT",
+      "FASHION_ITEM",
+      "SERVICE",
+      "CAMPAIGN",
+      "AFFILIATE_OFFER",
+      "BRAND_REQUEST",
+      "CONTENT_IDEA",
+      "SEASON_EVENT"
+    ],
+    "workers": [
+      "canonical Orchestrator (agency_bounded_task)",
+      "local Ministral",
+      "Higgsfield via approved Claude session"
+    ],
+    "capabilities": [
+      "viral_format_analysis",
+      "product_opportunity_scout",
+      "store_gate",
+      "model_casting",
+      "content_brief",
+      "compliance_check",
+      "generation_pack",
+      "revenue_attribution"
+    ],
+    "kpis": {
+      "models_active": 0,
+      "content_queue": 1,
+      "published": 0,
+      "views": 0,
+      "engagement": 0,
+      "followers": 0,
+      "credits_spent": 0
+    },
+    "costs_eur": 0.0,
+    "revenue_eur": 0.0,
+    "net_eur": 0.0,
+    "risks": [
+      "platform AI-label enforcement",
+      "advertising disclosure (AGCOM)",
+      "copyright on trend references",
+      "credit spend without ROI"
+    ],
+    "tasks": {
+      "total": 1,
+      "open": 0
+    },
+    "evidence": [
+      "AI_FASHION_AGENCY_STATE_V1"
+    ],
+    "next_gate": "FIRST_CHARACTER_SHEET_APPROVAL",
+    "decision": {
+      "status": "HUMAN_APPROVAL_REQUIRED",
+      "items": [
+        {
+          "action": "APPROVE_OR_REJECT_GENERATION_PACK",
+          "pack_id": "GEN_88C1317C0D",
+          "credits": 2.25,
+          "requires": "EXPLICIT_USER_APPROVAL"
+        },
+        {
+          "action": "APPROVE_FIRST_CHARACTER_SHEET",
+          "requires": "EXPLICIT_USER_APPROVAL"
+        }
+      ]
+    },
+    "generated_at": "2026-10-07T20:41:18.558298+00:00"
+  },
+  "jarvis_summary": "AI Fashion Agency: 1 campagna pronta, 1 prodotto store-ready, 5 modelle in roster (0 attive); generazione Higgsfield in attesa di approvazione (2.25 crediti). Ricavi €0.00, costi €0.00, crediti spesi 0.",
+  "credits_spent": 0
+}
