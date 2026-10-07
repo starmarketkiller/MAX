@@ -341,3 +341,74 @@ def test_realistic_dry_run_on_real_evidence_reaches_waiting_approval(tmp_path, m
                                     "external_outreach": 0, "store_opened": False}
     assert "AGENCY_APPROVAL_REQUIRED" in result["ledger_event_types"]
     assert "nessuna campagna attiva" in result["jarvis_answers"]["quale campagna è più promettente?"]
+
+
+def test_unreachable_local_worker_is_surfaced_to_jarvis_not_hidden(tmp_path, monkeypatch):
+    import sys
+    from business_units.ai_fashion_agency.projection import jarvis_summary
+    from business_units.ai_fashion_agency.skills import AgencyTaskCoordinator
+    from orchestrator_v1.core.orchestrator import Orchestrator
+
+    def refused(*a, **k):
+        return {"success": False, "response_text": None, "model": "ministral-3:3b",
+                "error": "Connection refused", "wall_seconds": 0.0}
+    monkeypatch.setattr(sys.modules[Orchestrator.__module__].ollama_worker,
+                        "call_local_model", refused)
+    orch = Orchestrator(queue_path=str(tmp_path / "q.json"), ledger_path=str(tmp_path / "l.jsonl"))
+    task_id = AgencyTaskCoordinator(orch).submit(
+        "VIRAL_FORMAT_ANALYSIS", context={"evidence_records": [{"evidence_id": "E1", "text": "x"}]},
+        references={})
+    assert orch.process_task(task_id)["state"] == "ESCALATION_REQUIRED"
+    state = agency_state(AgencyStore(tmp_path / "a.json"), queue=orch.queue)
+    assert state["worker_blockers"][0]["error_code"] == "LOCAL_WORKER_UNREACHABLE"
+    assert "skill Agency bloccate: LOCAL_WORKER_UNREACHABLE" in state["alerts"]
+    assert "Blocker worker: LOCAL_WORKER_UNREACHABLE" in jarvis_summary(state)
+    assert validate(state, schema("ai-fashion-agency-state-v1.schema.json")) == []
+
+
+def test_generic_jarvis_query_does_not_hide_agency_approvals(tmp_path, monkeypatch):
+    from jarvis_v1 import service as jarvis_service
+    from jarvis_v1.local_operations import OperationsProjection
+
+    monkeypatch.setattr(jarvis_service, "is_ollama_reachable", lambda timeout=1: False)
+    svc = jarvis_service.JarvisService(queue_path=tmp_path / "q.json",
+                                       ledger_path=tmp_path / "l.jsonl",
+                                       conversation_path=tmp_path / "c.json")
+    agency = AgencyStore(tmp_path / "a.json")
+    brief = assigned_brief(agency)
+    pipeline.build_generation_pack(agency, brief["brief_id"], today=TODAY)
+    svc.set_operations_projection(OperationsProjection(
+        revenue_store=None, revenue_runner=None, revenue_scheduler=None,
+        queue=svc.queue, agency_store=agency))
+    response = svc.handle({"message_id": "m", "user_id": "u", "channel": "TELEGRAM",
+                           "conversation_id": "c", "timestamp": "2026-10-07T00:00:00+00:00",
+                           "input_type": "TEXT", "text": "cosa devo approvare?",
+                           "attachments": [], "reply_to": None, "request_class": "UNKNOWN",
+                           "priority": "NORMAL", "metadata": {}})
+    assert "AI Fashion Agency: 1 decisioni in attesa" in response["summary"]
+
+
+def test_elena_first_asset_card_matches_pack_params_and_waits_for_approval(store):
+    card = json.loads((ROOT / "server/business_units/ai_fashion_agency/examples/"
+                       "elena_first_asset_card_v1.json").read_text(encoding="utf-8"))
+    brief = assigned_brief(store)
+    pack = pipeline.build_generation_pack(store, brief["brief_id"], today=TODAY)
+    sheet_step = next(s for s in pack["steps"] if s["step_id"] == "S1_CHARACTER_SHEET")
+    assert sheet_step["params"] == card["params_exact"]  # exactly what Higgsfield quoted
+    assert card["params_exact"]["seed"] == 410721 and card["variants"] == 2
+    assert card["expected_credit_cost"]["credits"] == pack["quoted_credits"] == 2.25
+    assert card["state"] == "WAITING_APPROVAL" and card["credits_spent"] == 0
+
+
+def test_executive_slice_has_exactly_the_hook_keys(store):
+    from business_units import EXECUTIVE_SLICE_KEYS
+    from business_units.ai_fashion_agency.projection import executive_slice
+    from jarvis_v1.local_operations import OperationsProjection
+
+    brief = assigned_brief(store)
+    pipeline.build_generation_pack(store, brief["brief_id"], today=TODAY)
+    slices = OperationsProjection(revenue_store=None, revenue_runner=None,
+                                  revenue_scheduler=None, agency_store=store).executive_slices()
+    assert tuple(slices[0]) == EXECUTIVE_SLICE_KEYS
+    assert slices[0] == executive_slice(store)
+    assert slices[0]["awaiting_approval"] == 1 and slices[0]["revenue"] == 0

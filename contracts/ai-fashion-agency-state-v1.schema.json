@@ -42,7 +42,8 @@
     "top_model",
     "top_product",
     "trend_inputs",
-    "views"
+    "views",
+    "worker_blockers"
   ],
   "properties": {
     "schema_version": {
@@ -240,6 +241,19 @@
     },
     "kpis": {
       "type": "object"
+    },
+    "worker_blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "task_id",
+          "skill",
+          "state",
+          "error_code",
+          "detail"
+        ]
+      }
     }
   }
 }

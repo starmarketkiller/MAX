@@ -29,6 +29,19 @@ def planned_social_accounts(model_id):
             for platform in PLANNED_PLATFORMS]
 
 
+# Final brief for Elena's first paid asset, quoted 2026-10-07 (2.25 credits for
+# 2 variants, seed 410721, submitted: false).  AI Influencer has no separate
+# negative-prompt field, so exclusions are stated inside the brief.
+ELENA_FIRST_ASSET_BRIEF = (
+    "Elena, an adult (late 20s) quiet-luxury fashion creator. Blonde hair in a sleek low bun, "
+    "blue eyes, high cheekbones, natural skin texture with visible pores, minimal makeup. "
+    "Signature jewelry: small gold hoops and a thin gold chain. Wardrobe for the sheet: camel "
+    "tailored blazer over an ivory silk slip top, straight cream trousers. Soft diffused window "
+    "light from the left, neutral warm-beige studio background, 35mm phone-camera realism, "
+    "eye-level framing, calm confident expression. Must look like a real person filmed on a "
+    "phone: no beauty filter, no plastic skin, no glamour retouching, no exaggerated "
+    "proportions, no text or logos, fully clothed, not resembling any real celebrity.")
+
 _BASE_SHEET = {"tool": "higgsfield.ai_influencer_prepare", "tier": "normal",
                "randomize": False, "batch_size": 2}
 
@@ -39,7 +52,9 @@ def _model(model_id, stage_name, archetype, style, tone, personality, categories
         "model_id": model_id, "stage_name": stage_name,
         "visual_identity": {"signature_elements": signature,
                             "higgsfield_sheet": {**_BASE_SHEET, "selection": selection,
-                                                 "brief": brief}},
+                                                 "brief": brief,
+                                                 **({"seed": SEED_PACKS[model_id]["prompt_seed"]}
+                                                    if model_id in SEED_PACKS else {})}},
         "age_presentation": "ADULT_21_PLUS", "style": style, "archetype": archetype,
         "tone": tone, "personality": personality, "content_categories": categories,
         "allowed_content": allowed, "restricted_content": list(GLOBAL_RESTRICTED),
@@ -136,8 +151,7 @@ def initial_roster():
                 "eye_color": ["eye_blue"], "freak_face": ["fn_cheekbones"],
                 "accessory": ["acc_jewelry"], "aesthetic": ["suits"], "body_type": ["body_slim"],
                 "height": ["h_tall"]},
-               "Elegant quiet-luxury fashion creator, adult, calm confident presence, editorial "
-               "but believable. Signature: low bun, gold jewelry, neutral tones.",
+               ELENA_FIRST_ASSET_BRIEF,
                quote={"credits": 2.25, "batch_size": 2, "quoted_at": "2026-10-07",
                       "source": "higgsfield.ai_influencer_prepare", "stale_after_days": 7}),
         _model("MDL_ACTIVE_MAYA", "Maya", "SPORT_ACTIVE", "athleisure", "energetic, motivating",

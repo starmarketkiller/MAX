@@ -885,6 +885,10 @@ class JarvisService:
         summary = (f"Oggi: {len(facts['completed'])} task completate, "
                    f"{len(facts['in_progress'])} in corso, {len(facts['escalations'])} escalation, "
                    f"{len(facts['pending_approvals'])} approval pendenti.")
+        agency_text, agency_items = self._agency_approvals()
+        if agency_items:
+            summary += agency_text
+            facts["business_unit_approvals"] = agency_items
         if is_ollama_reachable(timeout=1):
             prompt = ("Riassumi in italiano questi fatti canonici senza aggiungere fatti o giudizi. "
                       "Rispondi in massimo 6 frasi. JSON:\n" + json.dumps(facts, ensure_ascii=False))

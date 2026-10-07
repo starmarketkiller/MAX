@@ -44,3 +44,9 @@ def build_business_unit_state(*, unit_id, name, mission, state, health, inputs, 
         "next_gate": next_gate, "decision": dict(decision),
         "generated_at": generated_at or _now(),
     }
+
+
+# Flat slice NEXUS_EXECUTIVE_STATE_V1 will embed per unit (not built yet).
+EXECUTIVE_SLICE_KEYS = ("business_unit_id", "health", "models_active", "campaigns_active",
+                        "products_found", "store_ready", "content_ready", "awaiting_approval",
+                        "revenue", "costs", "profit", "alerts", "next_actions")

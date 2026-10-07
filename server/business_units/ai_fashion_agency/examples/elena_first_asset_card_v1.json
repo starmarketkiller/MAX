@@ -1,0 +1,93 @@
+{
+  "schema_version": "AGENCY_FIRST_ASSET_CARD_V1",
+  "model_id": "MDL_LUXE_ELENA",
+  "stage_name": "Elena",
+  "why_elena": [
+    "selected by deterministic model assignment in the V2 dry run (quiet-luxury fit)",
+    "elegant/luxury archetype matches fall fashion formats",
+    "clean base to test identity consistency"
+  ],
+  "tool": "higgsfield.ai_influencer_generate",
+  "quote_tool": "higgsfield.ai_influencer_prepare",
+  "params_exact": {
+    "tier": "normal",
+    "randomize": false,
+    "batch_size": 2,
+    "selection": {
+      "gender": [
+        "female"
+      ],
+      "age": [
+        "adult"
+      ],
+      "ethnicity_origin_base": [
+        "european"
+      ],
+      "skin_tone": [
+        "st_fair"
+      ],
+      "hair": [
+        "hair_long"
+      ],
+      "hair_colour": [
+        "hc_blonde"
+      ],
+      "eye_color": [
+        "eye_blue"
+      ],
+      "freak_face": [
+        "fn_cheekbones"
+      ],
+      "accessory": [
+        "acc_jewelry"
+      ],
+      "aesthetic": [
+        "suits"
+      ],
+      "body_type": [
+        "body_slim"
+      ],
+      "height": [
+        "h_tall"
+      ]
+    },
+    "brief": "Elena, an adult (late 20s) quiet-luxury fashion creator. Blonde hair in a sleek low bun, blue eyes, high cheekbones, natural skin texture with visible pores, minimal makeup. Signature jewelry: small gold hoops and a thin gold chain. Wardrobe for the sheet: camel tailored blazer over an ivory silk slip top, straight cream trousers. Soft diffused window light from the left, neutral warm-beige studio background, 35mm phone-camera realism, eye-level framing, calm confident expression. Must look like a real person filmed on a phone: no beauty filter, no plastic skin, no glamour retouching, no exaggerated proportions, no text or logos, fully clothed, not resembling any real celebrity.",
+    "seed": 410721
+  },
+  "final_prompt": "Elena, an adult (late 20s) quiet-luxury fashion creator. Blonde hair in a sleek low bun, blue eyes, high cheekbones, natural skin texture with visible pores, minimal makeup. Signature jewelry: small gold hoops and a thin gold chain. Wardrobe for the sheet: camel tailored blazer over an ivory silk slip top, straight cream trousers. Soft diffused window light from the left, neutral warm-beige studio background, 35mm phone-camera realism, eye-level framing, calm confident expression. Must look like a real person filmed on a phone: no beauty filter, no plastic skin, no glamour retouching, no exaggerated proportions, no text or logos, fully clothed, not resembling any real celebrity.",
+  "negative_prompt": {
+    "supported": false,
+    "note": "AI Influencer has no negative-prompt field; exclusions are inside the brief (no beauty filter, no plastic skin, no retouching, no exaggerated proportions, no text/logos, fully clothed, no celebrity likeness)"
+  },
+  "consistency_settings": {
+    "seed": 410721,
+    "randomize": false,
+    "tier": "normal",
+    "rules": [
+      "low bun visible in frame 1",
+      "gold hoops + thin chain always",
+      "neutral/camel/ivory palette",
+      "same character sheet reference"
+    ],
+    "reuse": "the selected variant becomes the character reference for every later generation"
+  },
+  "outfit_direction": "camel tailored blazer over ivory silk slip top, straight cream trousers, small gold hoops + thin gold chain",
+  "camera": "35mm phone-camera realism, eye-level framing",
+  "lighting": "soft diffused window light from the left",
+  "background": "neutral warm-beige studio",
+  "variants": 2,
+  "expected_credit_cost": {
+    "credits": 2.25,
+    "quoted_at": "2026-10-07",
+    "submitted": false,
+    "source": "higgsfield.ai_influencer_prepare"
+  },
+  "expected_deliverable": "2 AI Influencer character sheets of Elena (same design and seed); the human picks one, which unlocks CHARACTER_SHEET_READY and the video steps",
+  "state": "WAITING_APPROVAL",
+  "approval": {
+    "required": true,
+    "approved_by": null,
+    "how": "explicit chat approval of exactly 2.25 credits; then approve_generation_pack(expected_credits=2.25) and ai_influencer_generate with params_exact unchanged"
+  },
+  "credits_spent": 0
+}
