@@ -83,6 +83,8 @@ class CapabilityResolver:
                   if capability in a.get("capabilities", [])
                   and a.get("availability") == "ONLINE"] if authorized else []
         skills = self.skill_registry.resolve(capability, context) if authorized else []
+        default_verifiers = {"artifact_field_extraction": "grounded_extraction_verifier",
+                             "summaries": "bounded_summary_verifier"}
         return {"required_capability": capability, "candidate_skills": skills,
                 "candidate_agents": agents, "candidate_tools": sorted({tool for item in skills
                                                                           for tool in item["required_tools"]}),
@@ -90,7 +92,8 @@ class CapabilityResolver:
                 "selected_skill": skills[0]["skill_id"] if skills else None,
                 "selected_tool": (skills[0]["required_tools"][0] if skills else None),
                 "selected_agent": agents[0] if agents else None,
-                "verifier": skills[0]["verifier"] if skills else "independent_review"}
+                "verifier": skills[0]["verifier"] if skills else default_verifiers.get(
+                    capability, "independent_review")}
 
 
 def is_complex_mistral_request(text):

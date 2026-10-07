@@ -38,7 +38,7 @@ from . import ministral_chat
 from . import ministral_task_compiler
 from . import task_handoff
 from . import vault_context
-from .local_operations import is_complex_mistral_request, build_execution_plan
+from .local_operations import is_complex_mistral_request
 
 # JARVIS_MINISTRAL_ROUTER_V1 - OFF by default everywhere; flipping ENABLED
 # to true with MODE still SHADOW costs nothing but a background ledger
@@ -349,6 +349,7 @@ class JarvisService:
         self.shared_cognitive_state = None
         self.operations_projection = None
         self.capability_resolver = None
+        self.multi_stage_executor = None
 
     def set_dispatcher_status_provider(self, provider):
         """Attach a read-only runtime status projection without owning dispatcher logic."""
@@ -374,6 +375,9 @@ class JarvisService:
     def set_operations_projection(self, projection, capability_resolver=None):
         self.operations_projection = projection
         self.capability_resolver = capability_resolver
+
+    def set_multi_stage_executor(self, executor):
+        self.multi_stage_executor = executor
 
     def delegate_to_ministral(self, template_id, *, goal, relevant_paths,
                               created_by="jarvis:claude_supervisor", conversation_id=None,
@@ -578,15 +582,17 @@ class JarvisService:
                 relevant_paths = ["server/funding_v1/revenue_automation.py",
                                   "server/funding_v1/revenue_agent.py",
                                   "server/funding_v1/revenue_portfolio.py"]
-            task_id = self.delegate_to_ministral(
-                "repo_inspection_v1", goal=user_text, relevant_paths=relevant_paths,
+            if self.multi_stage_executor is None:
+                return self._response(message, "ERROR",
+                    "Executor multi-stage non configurato: richiesta non avviata.",
+                    status="UNAVAILABLE", confidence="HIGH")
+            task_id = self.multi_stage_executor.submit(
+                objective=user_text, relevant_paths=relevant_paths,
                 created_by=f"jarvis:{message['user_id']}",
-                conversation_id=message["conversation_id"])
+                conversation_id=message["conversation_id"],
+                priority_class="P0_JARVIS_INTERACTIVE", premium_allowed=False)
             record = self.queue.get(task_id)
-            authorized = record["manifest"].get("required_capabilities") or []
-            plan = build_execution_plan(user_text, authorized_capabilities=authorized,
-                                        resolver=self.capability_resolver)
-            self.queue.annotate(task_id, multi_stage_execution=plan)
+            plan = record["multi_stage_execution"]
             task_handoff.write_task_artifacts(self, task_id)
             self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
                                            user_id=str(message["user_id"]))

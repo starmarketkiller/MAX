@@ -99,6 +99,16 @@ services:
         value: "900"
       - key: NEXUS_QUEUE_DISPATCHER_SHUTDOWN_SECONDS
         value: "25"
+      # Local Operations V1: the coordinator only creates/verifies ordinary
+      # Queue child tasks; it has no direct tool or external-action authority.
+      - key: NEXUS_LOCAL_OPERATIONS_ENABLED
+        value: "true"
+      - key: NEXUS_LOCAL_OPERATIONS_POLL_SECONDS
+        value: "2"
+      # Revenue automation schedules bounded analysis and read-only proposals.
+      # Outreach, pricing, contracts, WON and money movement remain disabled.
+      - key: NEXUS_REVENUE_AUTOMATION_ENABLED
+        value: "true"
       - key: NEXUS_PUBLIC_URL
         value: https://nexus-backend-8o4y.onrender.com
       - key: ANTHROPIC_API_KEY    # chiave API Claude per l'AI Coach

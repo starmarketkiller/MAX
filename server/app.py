@@ -79,6 +79,7 @@ from funding_v1.revenue_automation import (
 )
 from funding_v1.revenue_portfolio import RevenueVentureRegistry
 from jarvis_v1.local_operations import SkillRegistry, CapabilityResolver, OperationsProjection
+from jarvis_v1.multi_stage_executor import MultiStageExecutor
 from orchestrator_v1.core.capability import load_registry as load_agent_capability_registry
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
@@ -1418,6 +1419,7 @@ JARVIS_TELEGRAM = TelegramAdapter(JARVIS_SERVICE,
                                   state_path=str(_JARVIS_STATE_DIR / "telegram_updates_v1.json"),
                                   gateway=JARVIS_GATEWAY)
 REVENUE_AUTOMATION_ENABLED = _env_flag("NEXUS_REVENUE_AUTOMATION_ENABLED", False)
+LOCAL_OPERATIONS_ENABLED = _env_flag("NEXUS_LOCAL_OPERATIONS_ENABLED", False)
 REVENUE_AUTOMATION_INTERVAL_SECONDS = float(
     os.environ.get("NEXUS_REVENUE_AUTOMATION_INTERVAL_SECONDS", "60"))
 QUEUE_DISPATCHER_ENABLED = os.environ.get(
@@ -1500,6 +1502,24 @@ JARVIS_OPERATIONS = OperationsProjection(
     revenue_scheduler=REVENUE_SCHEDULER, portfolio_registry=REVENUE_VENTURE_REGISTRY,
     queue=JARVIS_SERVICE.queue, ledger=JARVIS_SERVICE.ledger)
 JARVIS_SERVICE.set_operations_projection(JARVIS_OPERATIONS, JARVIS_CAPABILITY_RESOLVER)
+
+
+def _operations_jarvis_sink(response):
+    event_type = response.get("event_type") or "REVENUE_JARVIS_EVENT"
+    for chat_id in sorted(JARVIS_TELEGRAM.allowed_users):
+        _jarvis_proactive_notify(chat_id, {
+            "response_type": "TASK_STATUS", "summary": response.get("summary") or event_type,
+            "task_id": response.get("task_id"), "status": response.get("status"),
+            "priority": "IMPORTANT" if event_type != "TASK_STARTED" else "INFO",
+            "details": {"event_type": event_type}, "actions": [],
+            "generated_by": "multi_stage_executor_v1"})
+
+
+JARVIS_MULTI_STAGE_EXECUTOR = MultiStageExecutor(
+    JARVIS_SERVICE.orchestrator, capability_resolver=JARVIS_CAPABILITY_RESOLVER,
+    notification_sink=_operations_jarvis_sink,
+    interval_seconds=float(os.environ.get("NEXUS_LOCAL_OPERATIONS_POLL_SECONDS", "2")))
+JARVIS_SERVICE.set_multi_stage_executor(JARVIS_MULTI_STAGE_EXECUTOR)
 
 
 JARVIS_PROVIDER_CONNECTOR = ProviderConnectorV1(JARVIS_SERVICE.orchestrator,
@@ -1802,10 +1822,20 @@ def _startup() -> None:
             print(f"[NEXUS][WARN] revenue automation non avviato: {type(exc).__name__}")
     else:
         print("[NEXUS] revenue automation runner disattivato")
+    if LOCAL_OPERATIONS_ENABLED:
+        try:
+            JARVIS_MULTI_STAGE_EXECUTOR.start()
+            print("[NEXUS] local operations multi-stage executor avviato")
+        except Exception as exc:
+            print(f"[NEXUS][WARN] local operations executor non avviato: {type(exc).__name__}")
+    else:
+        print("[NEXUS] local operations multi-stage executor disattivato")
 
 
 @app.on_event("shutdown")
 def _shutdown() -> None:
+    if JARVIS_MULTI_STAGE_EXECUTOR.running:
+        JARVIS_MULTI_STAGE_EXECUTOR.stop()
     if REVENUE_AUTOMATION_RUNNER.running:
         stopped = REVENUE_AUTOMATION_RUNNER.stop()
         print(f"[NEXUS] revenue automation runner stop={'yes' if stopped else 'no'}")
