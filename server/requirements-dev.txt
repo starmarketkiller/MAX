@@ -1,3 +1,6 @@
 -r requirements.txt
 httpx==0.28.1
 pytest==8.4.1
+# Scientific research tests are collected by the canonical backend suite.
+# Keep this CI/test-only: the production API image does not import pandas.
+pandas==3.0.5
