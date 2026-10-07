@@ -1,4 +1,4 @@
-# NEXUS Business Unit — AI_FASHION_AGENCY (V1 foundation)
+# NEXUS Business Unit — AI_FASHION_AGENCY (V2 operations, dry-run)
 
 Azienda interna di NEXUS che coordina un roster di modelle/creator AI dichiarati, trasforma
 le opportunità trovate dalle automazioni NEXUS (trend, prodotti, offerte) in contenuti
@@ -30,6 +30,16 @@ User ⇄ Jarvis (/agency, "come va l'agenzia?")
 | `projection.py` | proiezioni per Jarvis e per il futuro `NEXUS_EXECUTIVE_STATE_V1` |
 | `simulation.py` | simulazione end-to-end a costo zero → `examples/e2e_simulation_v1.json` |
 | `playbooks/VIRAL_PLAYBOOK.md` | know-how creativo (migrato da `marketing/ai-creator/`) |
+| `scouting.py` | V2: `SCOUT_RESULT_V1` provenance-safe (source, url, observed_at, evidence, confidence, dedup_key) → input bus |
+| `store_integration.py` | V2: viability → adapter `EXTERNAL_STORE_LINK`/`AFFILIATE_LINK` → availability → listing candidate → approvazione → STORE_READY |
+| `social.py` | V2: adapter Postiz (dry-run) / manual export, ciclo post `DRAFT→READY_FOR_REVIEW→APPROVED→SCHEDULED→PUBLISHED/FAILED`; publish disabilitato |
+| `content_engine.py` | V2: brief card (hook, format, model, product, platform, objective, CTA, compliance, store gate, costo, approval) + content package |
+| `policy.py` | V2: `AGENCY_AUTOMATION_POLICY_V1` (autonomo / approvazione / hard-disabled), fail-closed |
+| `events.py` | V2: 13 eventi `AGENCY_*` → EventLedger canonico + push Jarvis solo per eventi di attenzione |
+| `kpis.py` | V2: KPI agency/model/campaign; `UNAVAILABLE` quando il dato non esiste |
+| `capability_scout.py` | V2: `CAPABILITY_SCOUT_V1` (registry → candidato → vet → sandbox → eval → register), nulla installato |
+| `dry_run_v2.py` | V2: dry run su evidenze pubbliche reali → `examples/dry_run_v2_result.json` |
+| `../revenue.py` | V2: `BUSINESS_UNIT_REVENUE_V1`, mostrato da Jarvis `/revenue` accanto alle venture |
 
 Contratti: `contracts/business-unit-state-v1`, `ai-fashion-agency-state-v1`,
 `agency-model-profile-v1`, `agency-input-v1`, `agency-product-v1`,
@@ -131,11 +141,55 @@ audio lecito; nessun claim assoluto/ingannevole (guadagni, salute, "guaranteed")
 modelle solo adulte 21+; nessun contenuto esplicito; nessuna somiglianza con persone reali
 senza consenso; categoria di contenuto ammessa per la modella.
 
+## V2 — Operations (dry-run)
+
+**Revenue**: invece di forzare l'Agency nel registro venture a 4 elementi (zero-budget), le
+business unit con costi propri pubblicano `BUSINESS_UNIT_REVENUE_V1` (`business_units/revenue.py`),
+incluso in `OperationsProjection.revenue()["business_units"]`. Ogni revenue event ha
+`business_unit_id, model_id, campaign_id, product_id, content_id, channel,
+gross_revenue_eur, costs_eur, net_revenue_eur, source, external_reference, timestamp`
+(+ link opzionale a `REVENUE_V1`). Nessun ricavo stimato.
+
+**Scouting**: census → NEXUS non ha web search/crawl propri (Market Scout lavora su evidenze
+fornite). Collector attivi: `SUPPLIED_SESSION_TOOL` (web search/fetch di una sessione
+supervisionata) e `MANUAL`. SearXNG / Crawl4AI / Playwright MCP restano candidati
+`NOT_INSTALLED`. Nessuno scraping da NEXUS.
+
+**Store**: nessuno store live. Adapter link esterno/affiliato; `available=None` →
+`UNVERIFIED_NEEDS_HUMAN_CHECK` (nessun fetcher incluso), link irraggiungibile → non
+approvabile. STORE_READY = approvazione umana di un listing già esistente.
+
+**Social — decisione**: Postiz come adapter target (OSS self-hosted, multi-piattaforma,
+analytics, già skill nel workspace). Activepieces scartato (duplica Orchestrator). API
+native rinviate. In V2 `SCHEDULED` è un piano interno con payload `dry_run: true`:
+consegnarlo a Postiz significherebbe pubblicare → `PUBLISH` hard-disabled.
+
+**Account modelle**: 3 slot per modella (tiktok, instagram, youtube_shorts) `NOT_CREATED`,
+`handle: null` finché un umano non crea l'account (`CREATE_SOCIAL_ACCOUNT` richiede approval).
+
+**Seed pack V2**: Elena e Nova hanno identity sheet, prompt seed, consistency rules,
+wardrobe, lighting/camera, 3 archetipi, 3 adattamenti virali, 2 formati product placement;
+preventivo reale 2.25 crediti / 2 varianti (riverificato 2026-10-07, `submitted: false`).
+
+**Policy**: autonomo = scout, dedupe, classify, brief, assign, generation pack, compliance,
+report, bozze social, proposta listing. Approval = spendere crediti, asset a pagamento,
+prodotto online, programmare post, creare account. Hard-disabled in V2 (anche con
+approval) = publish, sponsor, contatto brand, accordi, pagamenti.
+
+**Jarvis**: `/agency` + domande naturali ("come va l'agenzia?", "quali modelle stanno
+lavorando?", "abbiamo prodotti pronti?", "quale campagna è più promettente?", "quanto sta
+guadagnando l'agenzia?", "quali modelle hanno account?") via `agency_answer` (selettore
+deterministico, nessun secondo motore). "quali devo approvare" aggiunge le decisioni
+dell'Agency (crediti, listing, post). `OperationsProjection.business_units()` = hook per
+`NEXUS_EXECUTIVE_STATE_V1`. Le parole chiave Agency sono classificate *dopo* le richieste
+di task, così "crea una task per la campagna…" crea ancora una task.
+
 ## Runbook
 
 ```bash
 cd server
-python -m business_units.ai_fashion_agency.simulation   # simulazione, 0 crediti
-python -m pytest tests/test_ai_fashion_agency_business_unit_v1.py -q
+python -m business_units.ai_fashion_agency.simulation   # simulazione V1, 0 crediti
+python -m business_units.ai_fashion_agency.dry_run_v2   # dry run V2 su evidenze reali
+python -m pytest tests/test_ai_fashion_agency_business_unit_v1.py tests/test_ai_fashion_agency_operations_v2.py -q
 ```
 Stato persistente in produzione: `$JARVIS_STATE_DIR/ai_fashion_agency_registry_v1.json`.
