@@ -1,0 +1,196 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NEXUS_EXECUTIVE_STATE_V1",
+  "description": "Global read-only executive projection over existing domain projections. Missing data is UNAVAILABLE, never inferred. overall_progress carries its method and basis.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at",
+    "overall_status",
+    "overall_health",
+    "overall_progress",
+    "alerts",
+    "decisions_required",
+    "provider_errors",
+    "system",
+    "tasks",
+    "approvals",
+    "revenue",
+    "trading",
+    "social",
+    "ai_fashion_agency",
+    "finance",
+    "infrastructure"
+  ],
+  "definitions": {
+    "section": {
+      "type": "object",
+      "required": [
+        "status",
+        "health",
+        "last_updated",
+        "source",
+        "confidence",
+        "key_metrics",
+        "active_work",
+        "blockers",
+        "next_actions"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "FOUNDATION",
+            "PARTIAL",
+            "OPERATIONAL",
+            "SHADOW",
+            "LIVE",
+            "BLOCKED",
+            "UNAVAILABLE"
+          ]
+        },
+        "health": {
+          "enum": [
+            "GREEN",
+            "AMBER",
+            "RED",
+            "UNKNOWN"
+          ]
+        },
+        "last_updated": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "confidence": {
+          "enum": [
+            "HIGH",
+            "MEDIUM",
+            "LOW"
+          ]
+        },
+        "key_metrics": {
+          "type": "object"
+        },
+        "active_work": {
+          "type": "array"
+        },
+        "blockers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "code",
+              "detail"
+            ]
+          }
+        },
+        "next_actions": {
+          "type": "array"
+        }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "const": "NEXUS_EXECUTIVE_STATE_V1"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "overall_status": {
+      "enum": [
+        "OK",
+        "ATTENTION",
+        "DEGRADED",
+        "CRITICAL"
+      ]
+    },
+    "overall_health": {
+      "enum": [
+        "GREEN",
+        "AMBER",
+        "RED",
+        "UNKNOWN"
+      ]
+    },
+    "overall_progress": {
+      "type": "object",
+      "required": [
+        "value",
+        "method",
+        "basis",
+        "weights"
+      ]
+    },
+    "alerts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "code",
+          "severity",
+          "domains",
+          "details",
+          "count"
+        ],
+        "properties": {
+          "severity": {
+            "enum": [
+              "INFO",
+              "WARNING",
+              "IMPORTANT",
+              "CRITICAL"
+            ]
+          }
+        }
+      }
+    },
+    "decisions_required": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "approval_id",
+          "domain",
+          "reason",
+          "cost",
+          "risk",
+          "created_at",
+          "action"
+        ]
+      }
+    },
+    "provider_errors": {
+      "type": "object"
+    },
+    "system": {
+      "$ref": "#/definitions/section"
+    },
+    "tasks": {
+      "$ref": "#/definitions/section"
+    },
+    "approvals": {
+      "$ref": "#/definitions/section"
+    },
+    "revenue": {
+      "$ref": "#/definitions/section"
+    },
+    "trading": {
+      "$ref": "#/definitions/section"
+    },
+    "social": {
+      "$ref": "#/definitions/section"
+    },
+    "ai_fashion_agency": {
+      "$ref": "#/definitions/section"
+    },
+    "finance": {
+      "$ref": "#/definitions/section"
+    },
+    "infrastructure": {
+      "$ref": "#/definitions/section"
+    }
+  }
+}

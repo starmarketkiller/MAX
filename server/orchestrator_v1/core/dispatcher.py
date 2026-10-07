@@ -28,7 +28,7 @@ def _sanitized_error(exc):
 class DurableQueueDispatcher:
     def __init__(self, orchestrator, *, poll_seconds=2.0, lease_seconds=900,
                  max_backoff_seconds=60, shutdown_timeout_seconds=25,
-                 provider_connector=None):
+                 provider_connector=None, yield_predicate=None):
         self.orchestrator = orchestrator
         self.queue = orchestrator.queue
         self.ledger = orchestrator.ledger
@@ -37,6 +37,9 @@ class DurableQueueDispatcher:
         self.max_backoff_seconds = max(1, int(max_backoff_seconds))
         self.shutdown_timeout_seconds = max(1, int(shutdown_timeout_seconds))
         self.provider_connector = provider_connector
+        # P0 JARVIS_INTERACTIVE: when this returns True no new background
+        # work is claimed this tick (running work is never interrupted).
+        self.yield_predicate = yield_predicate
         self.owner_id = f"dispatcher:{os.getpid()}:{uuid.uuid4().hex[:12]}"
         self._stop = threading.Event()
         self._thread = None
@@ -90,6 +93,8 @@ class DurableQueueDispatcher:
                 backoff = min(self.max_backoff_seconds, max(1, backoff * 2))
 
     def run_once(self):
+        if self.yield_predicate and self.yield_predicate():
+            return False
         record = self.queue.claim_next(self.owner_id, lease_seconds=self.lease_seconds)
         if record is None:
             return self.provider_connector.run_once() if self.provider_connector else False
