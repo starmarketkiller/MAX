@@ -34,6 +34,7 @@ from .programming import build_plan, extract_repo_paths, is_programming_request
 from .free_coding_worker import FreeCodingWorkerHandler
 from .local_bounded_task_handler import BoundedLocalTaskHandler
 from . import ministral_router
+from . import ministral_chat
 from . import ministral_task_compiler
 from . import task_handoff
 from . import vault_context
@@ -529,6 +530,19 @@ class JarvisService:
         text = (message.get("text") or "").strip()
         conversation_id = message["conversation_id"]
 
+        if text.lower() == "/mistral_status":
+            status = ministral_chat.gateway_status()
+            lines = [f"gateway_configured: {'yes' if status['gateway_configured'] else 'no'}",
+                     f"gateway_host: {status['gateway_host'] or 'UNAVAILABLE'}",
+                     f"token_present: {'yes' if status['token_present'] else 'no'}",
+                     f"token_length: {status['token_length']}",
+                     f"timeout_seconds: {status['timeout_seconds']}",
+                     f"last_status: {status['last_status']}",
+                     f"last_error: {status['last_error'] or 'NONE'}",
+                     f"last_latency_ms: {status['last_latency_ms'] if status['last_latency_ms'] is not None else 'UNAVAILABLE'}"]
+            return self._response(message, "ANSWER", "\n".join(lines),
+                                  details={"view": "MISTRAL_GATEWAY_STATUS", **status})
+
         if text.lower() == "/new":
             self.conversation_store.update(conversation_id, mistral_history=[])
             return self._response(message, "ANSWER",
@@ -549,23 +563,55 @@ class JarvisService:
                 "Usa /mistral seguito dal tuo messaggio, es.: "
                 "/mistral secondo te perché questo backtest è sospetto?")
 
-        if not is_ollama_reachable(timeout=2):
-            return self._response(message, "ANSWER",
-                "Mistral locale non è raggiungibile in questo momento (Ollama non risponde). Riprova più tardi.",
-                status="UNAVAILABLE", confidence="HIGH")
-
         history = self.conversation_store.get(conversation_id).get("mistral_history") or []
         prompt = self._build_mistral_direct_prompt(user_text, history)
+        # Render must use the authenticated outbound gateway. Direct Ollama
+        # remains a development-only fallback when no gateway is configured.
+        use_gateway = (os.environ.get("RENDER", "").lower() == "true" or
+                       bool(os.environ.get("JARVIS_MINISTRAL_GATEWAY_URL")) or
+                       bool(os.environ.get("JARVIS_MINISTRAL_GATEWAY_TOKEN")))
+        if use_gateway:
+            call = ministral_chat.ask_mistral_direct(prompt, history)
+            if call.get("ok"):
+                call = {"success": True, "response_text": call["reply"], "error": None,
+                        "latency_ms": call.get("latency_ms"), "via": "gateway"}
+            else:
+                call = {"success": False, "response_text": None, "error": call.get("error"),
+                        "latency_ms": call.get("latency_ms"), "via": "gateway"}
+        else:
+            if not is_ollama_reachable(timeout=2):
+                call = {"success": False, "response_text": None,
+                        "error": "GATEWAY_NOT_CONFIGURED", "via": "direct_local"}
+            else:
+                call = call_local_model(prompt, timeout=60, ensure_single_resident=False)
         # LOCAL_INFERENCE_CONNECTIVITY_V1: 60s, not the previous 45s - measured
         # ~49s for a genuinely cold ministral-3:3b call on this machine (model
         # not yet resident in Ollama) vs ~6s warm; 45s failed real traffic.
-        call = call_local_model(prompt, timeout=60, ensure_single_resident=False)
         if not call.get("success") or not (call.get("response_text") or "").strip():
+            error_code = call.get("error") or "GATEWAY_EMPTY_REPLY"
+            messages = {"GATEWAY_NOT_CONFIGURED": "Gateway Mistral non configurato.",
+                        "GATEWAY_HTTP_401": "Autenticazione gateway fallita (401).",
+                        "GATEWAY_HTTP_403": "Autenticazione gateway fallita (403).",
+                        "GATEWAY_HTTP_4XX": "Il gateway ha rifiutato la richiesta.",
+                        "GATEWAY_HTTP_5XX": "Gateway locale temporaneamente non disponibile.",
+                        "GATEWAY_DNS_ERROR": "Gateway locale non raggiungibile (DNS).",
+                        "GATEWAY_CONNECT_ERROR": "Gateway locale non raggiungibile.",
+                        "GATEWAY_TIMEOUT": "Gateway locale in timeout.",
+                        "GATEWAY_TLS_ERROR": "Connessione TLS al gateway fallita.",
+                        "MODEL_CALL_FAILED": "Gateway raggiunto, ma modello locale non disponibile.",
+                        "GATEWAY_INVALID_RESPONSE": "Risposta gateway non valida.",
+                        "GATEWAY_REJECTED": "Il gateway ha rifiutato la richiesta.",
+                        "GATEWAY_EMPTY_REPLY": "Il gateway ha restituito una risposta vuota."}
+            safe = ministral_chat.gateway_status() if call.get("via") == "gateway" else {}
             self.ledger.append("MISTRAL_DIRECT_FAILED", None,
-                               {"message_id": message["message_id"], "error": call.get("error")},
+                               {"message_id": message["message_id"], "error": error_code,
+                                "gateway_host": safe.get("gateway_host"),
+                                "token_present": safe.get("token_present"),
+                                "token_length": safe.get("token_length"),
+                                "latency_ms": call.get("latency_ms")},
                                actor="jarvis_service")
             return self._response(message, "ANSWER",
-                f"Mistral locale non ha risposto correttamente ({call.get('error') or 'risposta vuota'}).",
+                messages.get(error_code, f"Errore gateway Mistral ({error_code})."),
                 status="UNAVAILABLE", confidence="MEDIUM")
 
         reply = call["response_text"].strip()

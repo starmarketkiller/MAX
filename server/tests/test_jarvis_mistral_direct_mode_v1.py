@@ -6,6 +6,7 @@ query() already uses - monkeypatched here exactly like every other
 jarvis_v1 service test (see test_jarvis_state_query_v1.py's fixture).
 """
 from datetime import datetime, timezone
+import json
 
 import pytest
 
@@ -36,7 +37,46 @@ def _ok_call(response_text="Ciao! Tutto bene."):
 def test_mistral_without_ollama_returns_clear_diagnostic(service):
     response = service.handle(message("/mistral come va?"))
     assert response["status"] == "UNAVAILABLE"
-    assert "non è raggiungibile" in response["summary"]
+    assert "non configurato" in response["summary"]
+
+
+def test_render_mistral_uses_gateway_not_container_ollama(service, monkeypatch):
+    monkeypatch.setenv("RENDER", "true")
+    monkeypatch.setenv("JARVIS_MINISTRAL_GATEWAY_URL", "https://gateway.example")
+    monkeypatch.setenv("JARVIS_MINISTRAL_GATEWAY_TOKEN", "secret")
+    monkeypatch.setattr("jarvis_v1.service.is_ollama_reachable",
+                        lambda **kwargs: pytest.fail("Render must not probe container Ollama"))
+    monkeypatch.setattr("jarvis_v1.service.ministral_chat.ask_mistral_direct",
+                        lambda *a, **k: {"ok": True, "reply": "Risposta gateway", "latency_ms": 5})
+    response = service.handle(message("/mistral ciao"))
+    assert response["summary"] == "Risposta gateway"
+
+
+def test_mistral_status_is_safe_and_read_only(service, monkeypatch):
+    token = "NEVER_SHOW_THIS_TOKEN"
+    monkeypatch.setenv("JARVIS_MINISTRAL_GATEWAY_URL", "https://gateway.example/path")
+    monkeypatch.setenv("JARVIS_MINISTRAL_GATEWAY_TOKEN", token)
+    before = len(service.queue.list_all())
+    response = service.handle(message("/mistral_status"))
+    rendered = json.dumps(response)
+    assert "gateway.example" in rendered and f"token_length: {len(token)}" in rendered
+    assert token not in rendered and len(service.queue.list_all()) == before
+
+
+@pytest.mark.parametrize("code,text", [
+    ("GATEWAY_HTTP_401", "Autenticazione gateway fallita"),
+    ("GATEWAY_HTTP_403", "Autenticazione gateway fallita"),
+    ("GATEWAY_DNS_ERROR", "DNS"), ("GATEWAY_CONNECT_ERROR", "non raggiungibile"),
+    ("GATEWAY_TIMEOUT", "timeout"), ("MODEL_CALL_FAILED", "modello locale non disponibile"),
+    ("GATEWAY_INVALID_RESPONSE", "non valida"),
+])
+def test_gateway_failures_have_actionable_telegram_messages(service, monkeypatch, code, text):
+    monkeypatch.setenv("RENDER", "true")
+    monkeypatch.setenv("JARVIS_MINISTRAL_GATEWAY_URL", "https://gateway.example")
+    monkeypatch.setenv("JARVIS_MINISTRAL_GATEWAY_TOKEN", "secret")
+    monkeypatch.setattr("jarvis_v1.service.ministral_chat.ask_mistral_direct",
+                        lambda *a, **k: {"ok": False, "error": code, "latency_ms": 7})
+    assert text in service.handle(message("/mistral ciao"))["summary"]
 
 
 def test_mistral_empty_message_prompts_usage(service):
