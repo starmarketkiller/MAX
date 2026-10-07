@@ -82,6 +82,10 @@ from jarvis_v1.local_operations import SkillRegistry, CapabilityResolver, Operat
 from business_units.ai_fashion_agency.store import AgencyStore
 from business_units.ai_fashion_agency.skills import AgencyTaskCoordinator
 from business_units.ai_fashion_agency.events import ledger_sink as agency_ledger_sink
+from executive_v1.state import ExecutiveStateBuilder
+from executive_v1.snapshots import SnapshotStore
+from executive_v1.priority import INTERACTIVE_GATE as EXECUTIVE_INTERACTIVE_GATE
+from jarvis_v1.ministral_chat import gateway_status as ministral_gateway_status
 from jarvis_v1.multi_stage_executor import MultiStageExecutor
 from orchestrator_v1.core.capability import load_registry as load_agent_capability_registry
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
@@ -1557,7 +1561,8 @@ JARVIS_DISPATCHER = DurableQueueDispatcher(
     poll_seconds=float(os.environ.get("NEXUS_QUEUE_DISPATCHER_POLL_SECONDS", "2")),
     lease_seconds=int(os.environ.get("NEXUS_QUEUE_DISPATCHER_LEASE_SECONDS", "900")),
     shutdown_timeout_seconds=int(os.environ.get("NEXUS_QUEUE_DISPATCHER_SHUTDOWN_SECONDS", "25")),
-    provider_connector=JARVIS_PROVIDER_CONNECTOR)
+    provider_connector=JARVIS_PROVIDER_CONNECTOR,
+    yield_predicate=EXECUTIVE_INTERACTIVE_GATE.background_should_yield)
 JARVIS_SERVICE.set_dispatcher_status_provider(lambda: {
     "enabled": QUEUE_DISPATCHER_ENABLED,
     "running": JARVIS_DISPATCHER.running,
@@ -1565,6 +1570,50 @@ JARVIS_SERVICE.set_dispatcher_status_provider(lambda: {
               else ("STOPPED" if QUEUE_DISPATCHER_ENABLED else "DISABLED"),
     "max_concurrency": 1,
 })
+
+# NEXUS_EXECUTIVE_STATE_V1: one read-only projection over the existing
+# domain projections; providers are resolved lazily at build time.
+_EXECUTIVE_OBSERVATIONS_PATH = _JARVIS_STATE_DIR / "executive_observations_v1.json"
+
+
+def _executive_observations():
+    """Facts the backend cannot observe itself (CI result, last deploy,
+    main head), written by the operator/CI tooling.  Absent -> UNAVAILABLE."""
+    data = {}
+    if _EXECUTIVE_OBSERVATIONS_PATH.exists():
+        data = json.loads(_EXECUTIVE_OBSERVATIONS_PATH.read_text(encoding="utf-8"))
+    if os.environ.get("NEXUS_CI_STATUS"):
+        data["ci"] = {**(data.get("ci") or {}), "state": os.environ["NEXUS_CI_STATUS"].upper()}
+    return data
+
+
+def _executive_version():
+    return {"git_sha": os.environ.get("RENDER_GIT_COMMIT") or os.environ.get("NEXUS_GIT_SHA")}
+
+
+EXECUTIVE_STATE_BUILDER = ExecutiveStateBuilder({
+    "version": _executive_version,
+    "ready": lambda: ready(Response()),
+    "dispatcher": lambda: {"enabled": QUEUE_DISPATCHER_ENABLED, "running": JARVIS_DISPATCHER.running},
+    "multi_stage": JARVIS_MULTI_STAGE_EXECUTOR.status,
+    "bridge": JARVIS_LOCAL_AGENT_BRIDGE.status,
+    "gateway": ministral_gateway_status,
+    "observations": _executive_observations,
+    "tasks": JARVIS_SERVICE.queue.list_all,
+    "queue": lambda: JARVIS_SERVICE.queue,
+    "revenue_operations": lambda: JARVIS_OPERATIONS.revenue(
+        automation_enabled=os.environ.get("NEXUS_REVENUE_AUTOMATION_ENABLED", "false").lower() == "true"),
+    "revenue_drafts": lambda: JARVIS_OPERATIONS.drafts()["items"],
+    "revenue_store": REVENUE_STORE.snapshot,
+    "trading_registry": strategy_registry.all_records,
+    "trading_control_plane": company_control_plane.CONTROL_PLANE.build,
+    "trading_account": lambda: _primary_ea()[0],
+    "agency_store": lambda: AGENCY_STORE,
+    "ledger_events": lambda: JARVIS_SERVICE.ledger.read_all()[-5000:],
+})
+JARVIS_SERVICE.set_executive_state(
+    EXECUTIVE_STATE_BUILDER, SnapshotStore(_JARVIS_STATE_DIR / "executive_snapshots_v1.json"))
+
 
 # AUD0-CORS-001: nessun middleware CORS era presente. Con frontend e backend
 # sulla stessa origine non serve, ma se si separano le origini le richieste
@@ -2075,6 +2124,11 @@ def jarvis_groq_quota(user: str = Depends(require_user)):
 def jarvis_telegram_status(user: str = Depends(require_user)):
     return JARVIS_TELEGRAM.configuration_status(
         webhook_secret_configured=bool(os.environ.get("JARVIS_TELEGRAM_WEBHOOK_SECRET")))
+
+
+@app.get("/api/jarvis/executive-state")
+def jarvis_executive_state(user: str = Depends(require_user)):
+    return EXECUTIVE_STATE_BUILDER.build()
 
 
 @app.get("/api/jarvis/dispatcher/status")

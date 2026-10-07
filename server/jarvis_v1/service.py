@@ -470,12 +470,17 @@ class JarvisService:
         request_class = message.get("request_class")
         if request_class in (None, "UNKNOWN"):
             request_class = classify(message.get("text", ""), message.get("metadata"))
+        executive_intent = self._detect_executive(message, request_class)
+        if executive_intent is not None:
+            request_class = "EXECUTIVE_STATE"
         message["request_class"] = request_class
         self.ledger.append("USER_MESSAGE_RECEIVED", None,
                            {"message_id": message["message_id"], "channel": message["channel"],
                             "request_class": request_class}, actor="jarvis_gateway")
         if message.get("metadata", {}).get("ui_action"):
             return self.interactive_action(message)
+        if executive_intent is not None:
+            return self.executive_state_answer(message, executive_intent)
         if request_class == "QUERY":
             return self.query(message)
         if request_class in ("TASK", "TASK_REQUEST"):
@@ -1393,6 +1398,91 @@ class JarvisService:
             return self._agency_status(message)
         return self._response(message, "ANSWER", "Comando non riconosciuto. Scrivi /help per le opzioni disponibili.",
                               status="PARTIAL", confidence="MEDIUM")
+
+    # NEXUS_EXECUTIVE_STATE_AND_JARVIS_CONVERSATION_V1 ------------------------
+    _EXECUTIVE_WEAK_CLASSES = {"QUERY", "UNKNOWN", "FOLLOW_UP", "STATE_QUERY"}
+    _EXECUTIVE_CONTEXT_INTENTS = {"TOPIC_FOLLOWUP", "NEXT_PROBLEMS", "DOMAIN"}
+
+    def set_executive_state(self, builder, snapshot_store=None):
+        self.executive_builder = builder
+        self.executive_snapshots = snapshot_store
+
+    def _detect_executive(self, message, request_class):
+        """Executive questions only take over weak classifications; explicit
+        commands, mutations, approval references and task requests keep
+        priority, except context-dependent follow-ups inside an executive
+        conversation ("e possiamo risolverlo oggi?")."""
+        if not getattr(self, "executive_builder", None) or message.get("metadata", {}).get("ui_action"):
+            return None
+        text = message.get("text") or ""
+        if text.strip().startswith("/"):
+            return None
+        from executive_v1.conversation import detect
+        ctx = self.conversation_store.get(message["conversation_id"]) if message.get(
+            "conversation_id") else {}
+        intent = detect(text, ctx, agency_query=bool(_AGENCY_QUERY_RE.search(text.lower())))
+        if intent is None:
+            return None
+        if request_class in self._EXECUTIVE_WEAK_CLASSES:
+            return intent
+        if (request_class in {"COMMAND", "TASK_REQUEST"} and ctx.get("last_view") == "EXECUTIVE"
+                and intent["intent"] in self._EXECUTIVE_CONTEXT_INTENTS
+                and not _CANCEL_VERB_RE.search(text.lower())):
+            return intent
+        return None
+
+    def executive_state_answer(self, message, intent):
+        from executive_v1 import conversation as conv
+        from executive_v1.snapshots import diff
+        state = self.executive_builder.build()
+        change_set = None
+        if self.executive_snapshots is not None:
+            if intent["intent"] == "CHANGES":
+                change_set = diff(self.executive_snapshots.baseline(), state)
+            self.executive_snapshots.record(state)
+        ctx = self.conversation_store.get(message["conversation_id"]) or {}
+        if intent["policy"] == "CREATE_TASK":
+            # Real analysis work: reuse the canonical goal->draft flow, which
+            # creates nothing until the user confirms.
+            return self.propose_task_from_goal(message)
+        text, new_ctx = conv.answer(intent, state, context=ctx, change_set=change_set)
+        answer_source = intent["policy"]
+        if intent["policy"] == "ASK_MISTRAL":
+            text, answer_source = self._executive_synthesis(message, intent, state, text)
+        self.conversation_store.update(message["conversation_id"], last_view="EXECUTIVE",
+                                       user_id=str(message.get("user_id")), **new_ctx)
+        self.ledger.append("QUERY_EXECUTED", None,
+                           {"message_id": message["message_id"], "executive_intent": intent["intent"],
+                            "answer_source": answer_source}, actor="jarvis_executive_v1")
+        return self._response(message, "ANSWER", text, status=state["overall_status"],
+                              details={"view": "EXECUTIVE_BRIEF", "intent": intent["intent"],
+                                       "policy": intent["policy"], "answer_source": answer_source,
+                                       "domains": intent["domains"],
+                                       "overall_status": state["overall_status"],
+                                       "alerts": [a["code"] for a in state["alerts"]],
+                                       "decisions_required": len(state["decisions_required"]),
+                                       "source_refs": ["NEXUS_EXECUTIVE_STATE_V1"]})
+
+    def _executive_synthesis(self, message, intent, state, facts_text):
+        """'Perché ...?' questions: facts are deterministic; Mistral only adds
+        the explanation, as P0 interactive work (background claiming yields)."""
+        from executive_v1.priority import INTERACTIVE_GATE
+        from .ministral_chat import ask_mistral_direct
+        domain = intent["domains"][0]
+        section = state[domain]
+        prompt = ("Rispondi in italiano in massimo 3 frasi alla domanda usando SOLO questi fatti "
+                  "canonici; non inventare numeri.\nDomanda: " + (message.get("text") or "") +
+                  "\nFatti: " + json.dumps({"key_metrics": section["key_metrics"],
+                                            "blockers": section["blockers"],
+                                            "next_actions": section["next_actions"]},
+                                           ensure_ascii=False, default=str))
+        with INTERACTIVE_GATE.interactive():
+            result = ask_mistral_direct(prompt, [], timeout=25)
+        if result.get("ok") and result.get("reply"):
+            return facts_text + " " + result["reply"].strip(), "ASK_MISTRAL"
+        return (facts_text + f" (Spiegazione di Mistral non disponibile: "
+                f"{result.get('error') or 'LOCAL_WORKER_UNREACHABLE'} — ti ho dato solo i fatti.)",
+                "ANSWER_FROM_DOMAIN_STATE_MISTRAL_UNAVAILABLE")
 
     def _agency_approvals(self):
         """Business-unit approvals (credits, listings, posts) for the executive
