@@ -316,3 +316,28 @@ def test_agency_keywords_do_not_hijack_task_creation():
     assert classify("crea una task per analizzare la campagna marketing") == "TASK_REQUEST"
     assert classify("quale campagna è più promettente?") == "COMMAND"
     assert classify("annulla la task dell'agenzia") == "COMMAND"  # cancel handled first in command()
+
+
+def test_realistic_dry_run_on_real_evidence_reaches_waiting_approval(tmp_path, monkeypatch):
+    import sys
+    from business_units.ai_fashion_agency.dry_run_v2 import run
+    from orchestrator_v1.core.orchestrator import Orchestrator
+
+    def unreachable(*a, **k):  # same outcome as this container: no local Ollama
+        return {"success": False, "response_text": None, "error": "connection refused",
+                "model": "ministral-3:3b", "wall_seconds": 0.0}
+    monkeypatch.setattr(sys.modules[Orchestrator.__module__].ollama_worker,
+                        "call_local_model", unreachable)
+    result = run(tmp_path)
+    steps = {t["step"]: t for t in result["transitions"]}
+    assert steps["STORE_GATE"]["status"] == "EVALUATING"
+    assert steps["COMMERCIAL_BRIEF"]["status"] == "REJECTED"
+    assert steps["VIRAL_ANALYSIS"]["state"] == "ESCALATION_REQUIRED"
+    assert steps["VIRAL_ANALYSIS"]["verifier_passed"] is True
+    assert steps["MODEL_ASSIGNMENT"]["model_id"] in {"MDL_LUXE_ELENA", "MDL_STREET_NOVA"}
+    assert steps["GENERATION_PACK"]["state"] == "WAITING_APPROVAL"
+    assert result["provenance"]["sources"] == ["https://newengen.com/insights/october-tiktok-trends/"]
+    assert result["guarantees"] == {"credits_spent": 0, "published_content": 0,
+                                    "external_outreach": 0, "store_opened": False}
+    assert "AGENCY_APPROVAL_REQUIRED" in result["ledger_event_types"]
+    assert "nessuna campagna attiva" in result["jarvis_answers"]["quale campagna è più promettente?"]

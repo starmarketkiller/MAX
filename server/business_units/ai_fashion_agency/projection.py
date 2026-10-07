@@ -59,7 +59,8 @@ def agency_state(store, *, queue=None):
     store_ready = [p for p in products if p["status"] == "STORE_READY"]
     store_pending = [p for p in products if p["status"] == "STORE_PENDING"]
     blocked = [p for p in products if p["status"] in BLOCKED_PRODUCT_STATES]
-    ready_campaigns = [b for b in briefs if b["status"] in {"WAITING_APPROVAL", "APPROVED"}]
+    ready_campaigns = [b for b in briefs if b.get("commercial") and
+                       b["status"] in {"WAITING_APPROVAL", "APPROVED"}]
     working = sorted({b["model_id"] for b in briefs
                       if b.get("model_id") and b["status"] in QUEUE_BRIEF_STATES})
     names = {m["model_id"]: m["stage_name"] for m in models}
@@ -136,6 +137,8 @@ def jarvis_summary(state):
              f"{state['store_ready']} prodotto store-ready" if state["store_ready"] == 1
              else f"{state['store_ready']} prodotti store-ready",
              f"{state['models_total']} modelle in roster ({state['models_active']} attive)"]
+    if state["content_queue"]:
+        parts.insert(1, f"{state['content_queue']} contenuti in lavorazione")
     text = "AI Fashion Agency: " + ", ".join(parts)
     if state["credits_pending_approval"]:
         text += (f"; generazione Higgsfield in attesa di approvazione "
@@ -190,10 +193,15 @@ def agency_answer(question, store, *, queue=None):
         rows = campaign_kpis(s)
         if not rows:
             return "Agenzia: nessuna campagna commerciale ancora (serve un prodotto store-ready).", st
-        best = max(rows.items(), key=lambda kv: (kv[1]["revenue"], kv[1]["status"] != "REJECTED"))
-        return (f"Agenzia: campagna più promettente '{best[1]['title']}' "
-                f"(stato {best[1]['status']}, store gate {best[1]['store_gate_status']}, "
-                f"ricavi {_eur(best[1]['revenue'])})."), st
+        live = {k: v for k, v in rows.items() if v["status"] != "REJECTED"}
+        if not live:
+            blocked = ", ".join(f"'{v['title']}' (store gate {v['store_gate_status']})"
+                                for v in rows.values())
+            return f"Agenzia: nessuna campagna attiva; bloccate: {blocked}.", st
+        best = max(live.values(), key=lambda v: (v["revenue"], v["status"] == "APPROVED"))
+        return (f"Agenzia: campagna più promettente '{best['title']}' "
+                f"(stato {best['status']}, store gate {best['store_gate_status']}, "
+                f"ricavi {_eur(best['revenue'])})."), st
     if re.search(r"modell|lavorando", q):
         mk = model_kpis(s)
         working = ", ".join(st["models_working"]) or "nessuna"
