@@ -1,0 +1,40 @@
+{
+  "captured_at": "2026-10-07T20:30:00+00:00",
+  "collector": "SUPPLIED_SESSION_TOOL",
+  "collector_detail": "Claude Code session WebSearch + WebFetch (human-supervised); quotes copied verbatim from the fetched page",
+  "scout_results": [
+    {
+      "kind": "VIRAL_FORMAT_SCOUT",
+      "title": "Fan Transition",
+      "platform": "tiktok",
+      "source": "New Engen - October 2026 TikTok Trends (published 2026-09-30, updated 2026-10-05)",
+      "url": "https://newengen.com/insights/october-tiktok-trends/",
+      "observed_at": "2026-10-07T20:30:00+00:00",
+      "collector": "SUPPLIED_SESSION_TOOL",
+      "confidence": 0.7,
+      "evidence": [
+        {"evidence_id": "E1", "quote": "The Fan Transition is trending on TikTok, and it turns a closet into a magic trick."},
+        {"evidence_id": "E2", "quote": "Creators like @milenalife.style shoot from directly overhead, lying flat in a full look."},
+        {"evidence_id": "E3", "quote": "runs four fall looks in 19 seconds: red jacket with jeans, striped cardigan with black trousers, suede jacket with olive cargo pants"}
+      ]
+    },
+    {
+      "kind": "FASHION_ITEM_SCOUT",
+      "title": "Suede jacket (fall look)",
+      "category": "outerwear",
+      "source": "New Engen - October 2026 TikTok Trends (published 2026-09-30, updated 2026-10-05)",
+      "url": "https://newengen.com/insights/october-tiktok-trends/",
+      "observed_at": "2026-10-07T20:30:00+00:00",
+      "collector": "SUPPLIED_SESSION_TOOL",
+      "confidence": 0.35,
+      "confidence_note": "single source; item appears inside a trending format, not as a standalone product trend",
+      "evidence": [
+        {"evidence_id": "E3", "quote": "suede jacket with olive cargo pants"}
+      ]
+    }
+  ],
+  "other_signals_not_ingested": [
+    {"title": "tutu skirts, colorful boots, Juliet sleeves", "url": "https://www.tiktok.com/discover/2026-clothing-brand-trend",
+     "reason": "single creator post surfaced via search summary; page not fetched verbatim"}
+  ]
+}

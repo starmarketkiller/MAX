@@ -1,37 +1,48 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "AI_FASHION_AGENCY_STATE_V1",
-  "description": "Read-only Agency projection consumed by Jarvis (/agency).",
+  "description": "Read-only Agency projection consumed by Jarvis (/agency). V2 fields added additively.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version",
-    "health",
-    "models_total",
-    "models_active",
-    "models_casting",
-    "campaigns_active",
-    "content_queue",
-    "store_ready",
-    "store_blocked",
-    "awaiting_approval",
-    "credits_pending_approval",
-    "credits_spent",
-    "published",
-    "views",
-    "engagement",
-    "followers",
-    "revenue_eur",
-    "costs_eur",
-    "profit_eur",
-    "top_model",
-    "top_campaign",
+    "accounts",
     "agency_tasks",
     "alerts",
-    "next_actions",
+    "approvals",
+    "awaiting_approval",
+    "blocked_products",
+    "campaigns_active",
     "commercial_actions_enabled",
+    "content_queue",
+    "content_ready",
+    "costs_eur",
+    "credits_pending_approval",
+    "credits_spent",
+    "engagement",
+    "followers",
+    "generated_at",
+    "health",
+    "kpis",
+    "models_active",
+    "models_casting",
+    "models_total",
+    "models_working",
+    "next_actions",
+    "products_found",
+    "profit_eur",
+    "published",
     "publishing_enabled",
-    "generated_at"
+    "revenue_eur",
+    "scheduled",
+    "schema_version",
+    "store_blocked",
+    "store_pending",
+    "store_ready",
+    "top_campaign",
+    "top_model",
+    "top_product",
+    "trend_inputs",
+    "views"
   ],
   "properties": {
     "schema_version": {
@@ -82,16 +93,22 @@
       "minimum": 0
     },
     "views": {
-      "type": "integer",
-      "minimum": 0
+      "type": [
+        "number",
+        "string"
+      ]
     },
     "engagement": {
-      "type": "integer",
-      "minimum": 0
+      "type": [
+        "number",
+        "string"
+      ]
     },
     "followers": {
-      "type": "integer",
-      "minimum": 0
+      "type": [
+        "number",
+        "string"
+      ]
     },
     "credits_pending_approval": {
       "type": "number"
@@ -147,6 +164,82 @@
     },
     "generated_at": {
       "type": "string"
+    },
+    "trend_inputs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "products_found": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "store_pending": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "content_ready": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "scheduled": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "models_working": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocked_products": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "product_id",
+          "title",
+          "status",
+          "reasons"
+        ]
+      }
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "kind",
+          "id",
+          "what",
+          "credits"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "GENERATION_PACK",
+              "STORE_LISTING",
+              "SOCIAL_POST"
+            ]
+          }
+        }
+      }
+    },
+    "accounts": {
+      "type": "object",
+      "required": [
+        "total",
+        "active",
+        "not_created"
+      ]
+    },
+    "top_product": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "kpis": {
+      "type": "object"
     }
   }
 }

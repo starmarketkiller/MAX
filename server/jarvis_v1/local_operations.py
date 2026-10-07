@@ -164,7 +164,12 @@ class OperationsProjection:
                 "last_revenue_event": last_event,
                 "last_jarvis_delivery": self.revenue_runner.delivery.path.stat().st_mtime
                 if self.revenue_runner.delivery.path.exists() else None,
-                "commercial_actions_enabled": False}
+                "commercial_actions_enabled": False,
+                "business_units": self._business_units_revenue()}
+
+    def _business_units_revenue(self):
+        from business_units.revenue import business_units_revenue
+        return business_units_revenue(agency_store=self.agency_store)
 
     def leads(self):
         items = []
@@ -227,10 +232,17 @@ class OperationsProjection:
                                           else "HUMAN_REVIEW")})
         return {"count": len(items), "items": items}
 
-    def agency(self):
-        """AI_FASHION_AGENCY_STATE_V1 + Jarvis sentence; None when not configured."""
+    def agency(self, question=None):
+        """AI_FASHION_AGENCY_STATE_V1 + Jarvis answer; None when not configured."""
         if not self.agency_store:
             return None
-        from business_units.ai_fashion_agency.projection import agency_state, jarvis_summary
-        state = agency_state(self.agency_store, queue=self.queue)
-        return {**state, "summary": jarvis_summary(state)}
+        from business_units.ai_fashion_agency.projection import agency_answer, jarvis_summary
+        answer, state = agency_answer(question or "", self.agency_store, queue=self.queue)
+        return {**state, "summary": jarvis_summary(state), "answer": answer}
+
+    def business_units(self):
+        """BUSINESS_UNIT_STATE_V1 list: the executive-state projection hook."""
+        if not self.agency_store:
+            return []
+        from business_units.ai_fashion_agency.projection import business_unit_state
+        return [business_unit_state(self.agency_store, queue=self.queue)]

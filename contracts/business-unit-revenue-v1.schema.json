@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BUSINESS_UNIT_REVENUE_V1",
+  "description": "Revenue projection of a revenue-bearing business unit, shown by Jarvis /revenue next to the ventures.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "business_unit_id",
+    "revenue_events",
+    "gross_revenue_eur",
+    "costs_eur",
+    "net_revenue_eur",
+    "credits_spent",
+    "credits_valued_in_eur",
+    "top_model",
+    "top_campaign",
+    "top_product",
+    "linked_revenue_v1_ids"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "BUSINESS_UNIT_REVENUE_V1"
+    },
+    "business_unit_id": {
+      "type": "string"
+    },
+    "revenue_events": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "gross_revenue_eur": {
+      "type": "number"
+    },
+    "costs_eur": {
+      "type": "number"
+    },
+    "net_revenue_eur": {
+      "type": "number"
+    },
+    "credits_spent": {
+      "type": "number"
+    },
+    "credits_valued_in_eur": {
+      "type": "boolean"
+    },
+    "top_model": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "top_campaign": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "top_product": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "linked_revenue_v1_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

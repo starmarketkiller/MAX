@@ -32,7 +32,7 @@
     ]
   ],
   "product": {
-    "product_id": "PRD_287378DE50",
+    "product_id": "PRD_048B6928FA",
     "title": "Satin slip midi dress",
     "category": "dresses",
     "source_url": "simulation://scout/slip-dress",
@@ -43,46 +43,46 @@
       "E1: 'slip dress' search interest rising (scout record)"
     ],
     "revenue_stream": "own_store",
-    "input_id": "AIN_E2204753F4",
+    "input_id": "AIN_9407140FBB",
     "status": "STORE_READY",
     "viability": {
       "viable": true,
       "gross_margin": 0.6410256410256411,
       "reasons": [],
-      "evaluated_at": "2026-10-07T20:41:18.528149+00:00"
+      "evaluated_at": "2026-10-07T21:01:23.580743+00:00"
     },
     "store_listing": {
       "kind": "OWN_STORE",
       "url": "simulation://store/slip-dress",
       "simulated": true,
       "approved_by": "SIMULATION_USER",
-      "verified_at": "2026-10-07T20:41:18.532215+00:00"
+      "verified_at": "2026-10-07T21:01:23.584864+00:00"
     },
     "history": [
       {
         "from": "DISCOVERED",
         "to": "EVALUATING",
         "actor": "store_gate",
-        "at": "2026-10-07T20:41:18.528845+00:00"
+        "at": "2026-10-07T21:01:23.581589+00:00"
       },
       {
         "from": "EVALUATING",
         "to": "STORE_PENDING",
         "actor": "store_gate",
-        "at": "2026-10-07T20:41:18.530521+00:00"
+        "at": "2026-10-07T21:01:23.583277+00:00"
       },
       {
         "from": "STORE_PENDING",
         "to": "STORE_READY",
         "actor": "store_gate",
-        "at": "2026-10-07T20:41:18.532226+00:00"
+        "at": "2026-10-07T21:01:23.584873+00:00"
       }
     ],
-    "updated_at": "2026-10-07T20:41:18.532370+00:00",
-    "created_at": "2026-10-07T20:41:18.524865+00:00"
+    "updated_at": "2026-10-07T21:01:23.585065+00:00",
+    "created_at": "2026-10-07T21:01:23.575205+00:00"
   },
   "brief_rejected_before_store": {
-    "brief_id": "BRF_B081BE6D93",
+    "brief_id": "BRF_30DAFDD12F",
     "title": "Slip dress try-on",
     "content_category": "fashion",
     "hook": "This dress?",
@@ -90,7 +90,7 @@
     "caption": "Link in bio #ad",
     "cta": null,
     "viral_reference": null,
-    "product_id": "PRD_287378DE50",
+    "product_id": "PRD_048B6928FA",
     "campaign_id": null,
     "commercial": true,
     "audio_source": "PLATFORM_LIBRARY",
@@ -101,18 +101,24 @@
     "ad_disclosure": true,
     "status": "REJECTED",
     "model_id": null,
+    "format": "original",
+    "platform": "tiktok",
+    "objective": "awareness",
+    "store_gate_status": "BLOCKED",
+    "generation_cost_estimate": null,
+    "approval_status": "NOT_REQUESTED",
     "compliance": {
       "passed": false,
       "issues": [
-        "product PRD_287378DE50 is DISCOVERED; promotion requires STORE_READY"
+        "product PRD_048B6928FA is DISCOVERED; promotion requires STORE_READY"
       ],
-      "checked_at": "2026-10-07T20:41:18.526745+00:00"
+      "checked_at": "2026-10-07T21:01:23.577770+00:00"
     },
-    "updated_at": "2026-10-07T20:41:18.527027+00:00",
-    "created_at": "2026-10-07T20:41:18.527027+00:00"
+    "updated_at": "2026-10-07T21:01:23.578288+00:00",
+    "created_at": "2026-10-07T21:01:23.578288+00:00"
   },
   "brief": {
-    "brief_id": "BRF_59527C1750",
+    "brief_id": "BRF_FC64F985FB",
     "title": "Satin slip dress transition",
     "content_category": "fashion",
     "hook": "POV: hoodie to date night",
@@ -120,8 +126,8 @@
     "caption": "Look 1 or look 2? #ad #AIcreator",
     "cta": "Shop the dress in bio",
     "viral_reference": {
-      "reference_id": "VRF_1447790F05",
-      "input_id": "AIN_4F98E2C9D4",
+      "reference_id": "VRF_BA08C013BA",
+      "input_id": "AIN_B8C282CFBD",
       "source_url": "simulation://tiktok/trend-123",
       "platform": "tiktok",
       "structure": {
@@ -140,7 +146,7 @@
       },
       "media_retained": false
     },
-    "product_id": "PRD_287378DE50",
+    "product_id": "PRD_048B6928FA",
     "campaign_id": null,
     "commercial": true,
     "audio_source": "PLATFORM_LIBRARY",
@@ -151,17 +157,28 @@
     "ad_disclosure": true,
     "status": "WAITING_APPROVAL",
     "model_id": "MDL_LUXE_ELENA",
+    "format": "Outfit transition on the beat",
+    "platform": "tiktok",
+    "objective": "awareness",
+    "store_gate_status": "OPEN",
+    "generation_cost_estimate": {
+      "quoted_credits": 2.25,
+      "unquoted_steps": [
+        "S2_VIDEO"
+      ]
+    },
+    "approval_status": "WAITING_APPROVAL",
     "compliance": {
       "passed": true,
       "issues": [],
-      "checked_at": "2026-10-07T20:41:18.549521+00:00"
+      "checked_at": "2026-10-07T21:01:23.602503+00:00"
     },
-    "updated_at": "2026-10-07T20:41:18.555181+00:00",
-    "created_at": "2026-10-07T20:41:18.545284+00:00"
+    "updated_at": "2026-10-07T21:01:23.609212+00:00",
+    "created_at": "2026-10-07T21:01:23.597763+00:00"
   },
   "assignment": {
-    "assignment_id": "ASG_A841B93D97",
-    "brief_id": "BRF_59527C1750",
+    "assignment_id": "ASG_6A41FEBD62",
+    "brief_id": "BRF_FC64F985FB",
     "model_id": "MDL_LUXE_ELENA",
     "ranking": [
       {
@@ -187,12 +204,12 @@
     ],
     "selected_by": "model_assignment",
     "status": "ASSIGNED",
-    "updated_at": "2026-10-07T20:41:18.549704+00:00",
-    "created_at": "2026-10-07T20:41:18.549704+00:00"
+    "updated_at": "2026-10-07T21:01:23.602747+00:00",
+    "created_at": "2026-10-07T21:01:23.602747+00:00"
   },
   "generation_pack": {
-    "pack_id": "GEN_88C1317C0D",
-    "brief_id": "BRF_59527C1750",
+    "pack_id": "GEN_C88BAEF915",
+    "brief_id": "BRF_FC64F985FB",
     "model_id": "MDL_LUXE_ELENA",
     "provider": "HIGGSFIELD",
     "steps": [
@@ -277,8 +294,8 @@
     "credits_spent": 0,
     "approved_by": null,
     "approval_required": true,
-    "updated_at": "2026-10-07T20:41:18.553810+00:00",
-    "created_at": "2026-10-07T20:41:18.553810+00:00"
+    "updated_at": "2026-10-07T21:01:23.608206+00:00",
+    "created_at": "2026-10-07T21:01:23.608206+00:00"
   },
   "agency_state": {
     "schema_version": "AI_FASHION_AGENCY_STATE_V1",
@@ -286,35 +303,74 @@
     "models_total": 5,
     "models_active": 0,
     "models_casting": 5,
+    "models_working": [
+      "Elena"
+    ],
     "campaigns_active": 1,
     "content_queue": 1,
+    "trend_inputs": 1,
+    "products_found": 1,
+    "store_pending": 0,
     "store_ready": 1,
     "store_blocked": 0,
+    "blocked_products": [],
+    "content_ready": 0,
     "awaiting_approval": 1,
+    "approvals": [
+      {
+        "kind": "GENERATION_PACK",
+        "id": "GEN_C88BAEF915",
+        "what": "generazione Higgsfield per Elena",
+        "credits": 2.25
+      }
+    ],
     "credits_pending_approval": 2.25,
     "credits_spent": 0,
+    "scheduled": 0,
     "published": 0,
-    "views": 0,
-    "engagement": 0,
-    "followers": 0,
+    "views": "UNAVAILABLE",
+    "engagement": "UNAVAILABLE",
+    "followers": "UNAVAILABLE",
+    "accounts": {
+      "total": 15,
+      "active": 0,
+      "not_created": 15
+    },
     "revenue_eur": 0,
     "costs_eur": 0,
     "profit_eur": 0,
     "top_model": null,
     "top_campaign": null,
+    "top_product": null,
+    "kpis": {
+      "content_created": 0,
+      "content_published": 0,
+      "views": "UNAVAILABLE",
+      "engagement": "UNAVAILABLE",
+      "followers_growth": "UNAVAILABLE",
+      "CTR": "UNAVAILABLE",
+      "sales": 0,
+      "gross_revenue": 0,
+      "costs": 0,
+      "net_revenue": 0,
+      "ROI": "UNAVAILABLE",
+      "credits_spent": 0
+    },
     "agency_tasks": {
       "total": 1,
       "open": 0
     },
     "alerts": [
-      "GEN_88C1317C0D: 1 step senza preventivo",
+      "GEN_C88BAEF915: 1 step senza preventivo",
       "1 brief bloccati dalla compliance",
-      "nessun account social collegato"
+      "nessun account social attivo (tutti NOT_CREATED)"
     ],
     "next_actions": [
       {
-        "action": "APPROVE_OR_REJECT_GENERATION_PACK",
-        "pack_id": "GEN_88C1317C0D",
+        "action": "APPROVE_OR_REJECT",
+        "kind": "GENERATION_PACK",
+        "id": "GEN_C88BAEF915",
+        "what": "generazione Higgsfield per Elena",
         "credits": 2.25,
         "requires": "EXPLICIT_USER_APPROVAL"
       },
@@ -325,14 +381,14 @@
     ],
     "commercial_actions_enabled": false,
     "publishing_enabled": false,
-    "generated_at": "2026-10-07T20:41:18.556907+00:00"
+    "generated_at": "2026-10-07T21:01:23.614155+00:00"
   },
   "business_unit_state": {
     "schema_version": "BUSINESS_UNIT_STATE_V1",
     "unit_id": "AI_FASHION_AGENCY",
     "name": "AI Fashion Agency",
     "mission": "Coordinate a roster of disclosed AI fashion/lifestyle creators that turn NEXUS trend and product opportunities into original content and revenue.",
-    "state": "OPERATING",
+    "state": "OPERATING_DRY_RUN",
     "health": "AMBER",
     "inputs": [
       "TREND_VIDEO",
@@ -350,25 +406,28 @@
     "workers": [
       "canonical Orchestrator (agency_bounded_task)",
       "local Ministral",
-      "Higgsfield via approved Claude session"
+      "Higgsfield via approved Claude session",
+      "Postiz (dry-run adapter)"
     ],
     "capabilities": [
+      "scouting",
       "viral_format_analysis",
-      "product_opportunity_scout",
       "store_gate",
       "model_casting",
       "content_brief",
       "compliance_check",
       "generation_pack",
-      "revenue_attribution"
+      "social_drafts",
+      "revenue_attribution",
+      "kpis"
     ],
     "kpis": {
-      "models_active": 0,
-      "content_queue": 1,
-      "published": 0,
-      "views": 0,
-      "engagement": 0,
-      "followers": 0,
+      "content_created": 0,
+      "content_published": 0,
+      "views": "UNAVAILABLE",
+      "engagement": "UNAVAILABLE",
+      "sales": 0,
+      "ROI": "UNAVAILABLE",
       "credits_spent": 0
     },
     "costs_eur": 0.0,
@@ -385,15 +444,18 @@
       "open": 0
     },
     "evidence": [
-      "AI_FASHION_AGENCY_STATE_V1"
+      "AI_FASHION_AGENCY_STATE_V1",
+      "BUSINESS_UNIT_REVENUE_V1"
     ],
     "next_gate": "FIRST_CHARACTER_SHEET_APPROVAL",
     "decision": {
       "status": "HUMAN_APPROVAL_REQUIRED",
       "items": [
         {
-          "action": "APPROVE_OR_REJECT_GENERATION_PACK",
-          "pack_id": "GEN_88C1317C0D",
+          "action": "APPROVE_OR_REJECT",
+          "kind": "GENERATION_PACK",
+          "id": "GEN_C88BAEF915",
+          "what": "generazione Higgsfield per Elena",
           "credits": 2.25,
           "requires": "EXPLICIT_USER_APPROVAL"
         },
@@ -403,8 +465,8 @@
         }
       ]
     },
-    "generated_at": "2026-10-07T20:41:18.558298+00:00"
+    "generated_at": "2026-10-07T21:01:23.616865+00:00"
   },
-  "jarvis_summary": "AI Fashion Agency: 1 campagna pronta, 1 prodotto store-ready, 5 modelle in roster (0 attive); generazione Higgsfield in attesa di approvazione (2.25 crediti). Ricavi €0.00, costi €0.00, crediti spesi 0.",
+  "jarvis_summary": "AI Fashion Agency: 1 campagna pronta, 1 contenuti in lavorazione, 1 prodotto store-ready, 5 modelle in roster (0 attive); generazione Higgsfield in attesa di approvazione (2.25 crediti). Ricavi €0.00, costi €0.00, crediti spesi 0.",
   "credits_spent": 0
 }

@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AGENCY_SOCIAL_POST_V1",
+  "description": "Social post lifecycle. V2: no live publish; SCHEDULED is an internal plan.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "post_id",
+    "package_id",
+    "brief_id",
+    "model_id",
+    "platform",
+    "social_account_id",
+    "adapter",
+    "caption",
+    "media_refs",
+    "commercial",
+    "state",
+    "blockers",
+    "history"
+  ],
+  "properties": {
+    "post_id": {
+      "type": "string",
+      "pattern": "^PST_"
+    },
+    "platform": {
+      "enum": [
+        "tiktok",
+        "instagram",
+        "youtube_shorts"
+      ]
+    },
+    "adapter": {
+      "enum": [
+        "POSTIZ",
+        "MANUAL_EXPORT"
+      ]
+    },
+    "state": {
+      "enum": [
+        "DRAFT",
+        "READY_FOR_REVIEW",
+        "APPROVED",
+        "SCHEDULED",
+        "PUBLISHED",
+        "FAILED"
+      ]
+    },
+    "media_refs": {
+      "type": "array"
+    },
+    "commercial": {
+      "type": "boolean"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "history": {
+      "type": "array"
+    }
+  }
+}

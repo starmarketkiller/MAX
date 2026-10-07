@@ -180,6 +180,10 @@ def _has_explicit_mutation_signal(text):
                or _LAST_PENDING_APPROVAL_RE.search(value))
 
 
+_AGENCY_QUERY_RE = re.compile(
+    r"\b(agenzia|fashion agency|modelle|modella|prodotti pronti|campagna|campagne)\b")
+
+
 def classify(text: str, metadata: dict | None = None) -> str:
     value = (text or "").strip().lower()
     metadata = metadata or {}
@@ -247,8 +251,7 @@ def classify(text: str, metadata: dict | None = None) -> str:
     if _EXECUTIVE_INTENT_RE.search(value):
         return "EXECUTIVE_INTENT"
     if value.startswith("/") or re.search(
-            r"\b(help|aiuto|dettagli|details|annulla|cancella|cancel|continua|agents|agenti|approvals|"
-            r"agenzia|modelle)\b", value):
+            r"\b(help|aiuto|dettagli|details|annulla|cancella|cancel|continua|agents|agenti|approvals)\b", value):
         return "COMMAND"
     if action in ("REJECT", "RIFIUTA") or re.search(r"\b(rifiuta|reject)\b", value):
         return "REJECTION"
@@ -258,6 +261,10 @@ def classify(text: str, metadata: dict | None = None) -> str:
         return "TASK_REQUEST"
     if is_programming_request(value):
         return "TASK_REQUEST"
+    # AI Fashion Agency status questions: after task/programming requests so
+    # "crea una task per la campagna ..." still creates a task.
+    if _AGENCY_QUERY_RE.search(value):
+        return "COMMAND"
     if re.search(r"\b(a che punto|stato|status|come procede)\b", value) or re.search(
             r"\bperch[eé]\b.{0,20}\b(bloccat\w*|fallit\w*|non va|non funziona)\b", value):
         return "FOLLOW_UP"
@@ -1378,18 +1385,31 @@ class JarvisService:
             return self.cancel(message)
         # Natural-language agency questions only after every other command
         # keyword (dettagli/continua/annulla/approval...) had its chance.
-        if re.search(r"\b(agenzia|fashion agency|modelle)\b", value):
+        if _AGENCY_QUERY_RE.search(value):
             return self._agency_status(message)
         return self._response(message, "ANSWER", "Comando non riconosciuto. Scrivi /help per le opzioni disponibili.",
                               status="PARTIAL", confidence="MEDIUM")
 
+    def _agency_approvals(self):
+        """Business-unit approvals (credits, listings, posts) for the executive
+        approval listing; they are not queue tasks, so they are only listed."""
+        data = self.operations_projection.agency() if self.operations_projection else None
+        if not data or not data.get("approvals"):
+            return "", []
+        items = data["approvals"]
+        return (f" AI Fashion Agency: {len(items)} decisioni in attesa "
+                f"({'; '.join(i['what'] for i in items)})."), items
+
     def _agency_status(self, message):
         """AI_FASHION_AGENCY_STATE_V1 via the read-only operations projection."""
-        data = self.operations_projection.agency() if self.operations_projection else None
+        text = message.get("text") or ""
+        data = (self.operations_projection.agency(question=None if text.strip() == "/agency"
+                                                  else text)
+                if self.operations_projection else None)
         if data is None:
             return self._response(message, "ANSWER", "AI Fashion Agency non configurata.",
                                   status="UNKNOWN")
-        return self._response(message, "ANSWER", data["summary"],
+        return self._response(message, "ANSWER", data["answer"],
                               details={"view": "AI_FASHION_AGENCY_STATE", **data})
 
     def state_query(self, message):
@@ -1757,17 +1777,23 @@ class JarvisService:
             # when it's still accurate, i.e. there actually was something to
             # show; an empty listing leaves the marker untouched rather than
             # inviting a contextual resolve against nothing.
+            agency_text, agency_items = self._agency_approvals()
             if not candidates:
                 return self._response(message, "ANSWER",
-                    "Non ci sono task in attesa della tua approvazione al momento.")
+                    "Non ci sono task in attesa della tua approvazione al momento." + agency_text,
+                    details=({"view": "BUSINESS_UNIT_APPROVALS", "items": [],
+                              "business_unit_approvals": agency_items} if agency_items else None))
             self.conversation_store.update(message["conversation_id"], last_view="APPROVAL_LIST",
                                            user_id=str(message["user_id"]))
             items = [{"task_id": c["task_id"], "state": c["state"],
                      "title": (c.get("manifest") or {}).get("title"), "updated_at": c.get("updated_at")}
                     for c in candidates]
+            details = {"view": "TASK_LIST", "items": items, "source_refs": ["orchestrator queue"]}
+            if agency_items:
+                details["business_unit_approvals"] = agency_items
             return self._response(message, "ANSWER",
-                f"Ci sono {len(candidates)} task in attesa della tua approvazione.",
-                details={"view": "TASK_LIST", "items": items, "source_refs": ["orchestrator queue"]})
+                f"Ci sono {len(candidates)} task in attesa della tua approvazione." + agency_text,
+                details=details)
         if not candidates:
             return self._response(message, "ERROR",
                 "Non c'è nessuna task in attesa della tua approvazione in questo momento.",

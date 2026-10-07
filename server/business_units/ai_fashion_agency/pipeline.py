@@ -12,7 +12,11 @@ from __future__ import annotations
 import re
 from datetime import date, datetime, timezone
 
+from .policy import require_approval
 from .store import COST_CATEGORIES, INPUT_TYPES, REVENUE_STREAMS, new_id
+
+# AGENCY_COST_ALERT when generation credits exceed this with zero revenue.
+CREDIT_ALERT_THRESHOLD = 20.0
 
 # ---- input bus -------------------------------------------------------------
 
@@ -193,8 +197,10 @@ def viral_reference_from_input(input_record, analysis):
 def build_content_brief(store, *, title, content_category, hook, script, caption,
                         viral_reference=None, product_id=None, campaign_id=None,
                         audio_source="PLATFORM_LIBRARY", production_method="ORIGINAL_RECREATION",
-                        aspect_ratio="9:16", duration_seconds=15, cta=None):
+                        aspect_ratio="9:16", duration_seconds=15, cta=None,
+                        format_name=None, platform="tiktok", objective="awareness"):
     product = store.get("products", product_id) if product_id else None
+    gate = store_gate(product)
     brief = {"brief_id": new_id("BRF"), "title": title, "content_category": content_category,
              "hook": hook, "script": script, "caption": caption, "cta": cta,
              "viral_reference": viral_reference, "product_id": product_id,
@@ -202,11 +208,21 @@ def build_content_brief(store, *, title, content_category, hook, script, caption
              "audio_source": audio_source, "production_method": production_method,
              "aspect_ratio": aspect_ratio, "duration_seconds": duration_seconds,
              "ai_label": True, "ad_disclosure": product is not None,
-             "status": "DRAFT", "model_id": None}
+             "status": "DRAFT", "model_id": None,
+             "format": format_name or ((viral_reference or {}).get("structure") or {}).get(
+                 "format_name") or "original",
+             "platform": platform, "objective": objective,
+             "store_gate_status": ("NOT_COMMERCIAL" if product is None else
+                                   "OPEN" if gate["open"] else "BLOCKED"),
+             "generation_cost_estimate": None, "approval_status": "NOT_REQUESTED"}
     brief["compliance"] = compliance_check(brief, product=product)
     if not brief["compliance"]["passed"]:
         brief["status"] = "REJECTED"
-    return store.upsert("briefs", brief)
+    saved = store.upsert("briefs", brief)
+    if product is not None and not gate["open"]:
+        store.emit("AGENCY_STORE_BLOCKED", product["product_id"],
+                   {"detail": f"brief '{title}' bloccato: prodotto {product['status']}"})
+    return saved
 
 
 # ---- model casting / assignment --------------------------------------------
@@ -306,7 +322,20 @@ def build_generation_pack(store, brief_id, *, video_quote=None, today=None):
         "quoted_credits": round(sum(s["quote"]["credits"] for s in approvable), 4),
         "unquoted_steps": [s["step_id"] for s in steps if s["state"] == "WAITING_QUOTE"],
         "credits_spent": 0, "approved_by": None, "approval_required": True})
-    store.upsert("briefs", {"brief_id": brief_id, "status": "WAITING_APPROVAL"})
+    store.upsert("briefs", {"brief_id": brief_id, "status": "WAITING_APPROVAL",
+                            "generation_cost_estimate": {
+                                "quoted_credits": pack["quoted_credits"],
+                                "unquoted_steps": pack["unquoted_steps"]},
+                            "approval_status": state})
+    if state == "WAITING_APPROVAL":
+        store.emit("AGENCY_APPROVAL_REQUIRED", pack["pack_id"],
+                   {"detail": f"generazione {model['stage_name']} "
+                              f"({pack['quoted_credits']:g} crediti)",
+                    "credits": pack["quoted_credits"]}, requires_human=True)
+    if model["status"] not in {"CHARACTER_SHEET_READY", "ACTIVE"}:
+        store.emit("AGENCY_CASTING_REQUIRED", model["model_id"],
+                   {"detail": f"{model['stage_name']} non ha ancora un character sheet"},
+                   requires_human=True)
     return pack
 
 
@@ -317,10 +346,13 @@ def approve_generation_pack(store, pack_id, *, approved_by, expected_credits):
         raise ValueError("pack is not waiting for approval")
     if not approved_by:
         raise ValueError("explicit human approval required")
+    require_approval("SPEND_CREDITS", approved_by)
     if expected_credits != pack["quoted_credits"]:
         raise ValueError("approved credits differ from the quote; re-quote required")
     steps = [{**s, "state": "APPROVED"} if s["state"] == "WAITING_APPROVAL" else s
              for s in pack["steps"]]
+    store.upsert("briefs", {"brief_id": pack["brief_id"], "status": "APPROVED",
+                            "approval_status": "APPROVED"})
     return store.upsert("generation_packs", {"pack_id": pack_id, "state": "APPROVED",
                                              "steps": steps, "approved_by": approved_by,
                                              "approved_at": _now()})
@@ -344,6 +376,12 @@ def record_generation_result(store, pack_id, step_id, *, credits_spent, job_id, 
                 eur=(credits_spent * eur_per_credit) if eur_per_credit else None,
                 model_id=pack["model_id"], brief_id=pack["brief_id"], reference=job_id,
                 idempotency_key=f"gen:{pack_id}:{step_id}")
+    if step_id.endswith("CHARACTER_SHEET"):
+        store.upsert("models", {"model_id": pack["model_id"], "status": "CHARACTER_SHEET_READY",
+                                "character_sheet_job_id": job_id})
+        store.emit("AGENCY_MODEL_READY", pack["model_id"], {"detail": "character sheet pronto"})
+    if done:
+        store.upsert("briefs", {"brief_id": pack["brief_id"], "status": "GENERATED"})
 
 
 # ---- cost & revenue accounting ---------------------------------------------
@@ -354,16 +392,27 @@ def record_cost(store, category, *, eur=None, credits=None, model_id=None, brief
         raise ValueError("unknown cost category")
     if eur is None and credits is None:
         raise ValueError("cost needs eur or credits")
-    return store.upsert("costs", {"cost_id": new_id("CST"), "category": category, "eur": eur,
+    cost = store.upsert("costs", {"cost_id": new_id("CST"), "category": category, "eur": eur,
                                   "credits": credits, "model_id": model_id, "brief_id": brief_id,
                                   "campaign_id": campaign_id, "reference": reference,
+                                  "business_unit_id": "AI_FASHION_AGENCY",
                                   "recorded_at": _now()},
                         idempotency_key=f"cost:{idempotency_key}")
+    snapshot = store.snapshot()
+    credits_total = sum(float(c.get("credits") or 0) for c in snapshot["costs"])
+    revenue_total = sum(float(r.get("gross_revenue_eur") or r.get("amount_eur") or 0)
+                        for r in snapshot["revenue_events"])
+    if credits_total > CREDIT_ALERT_THRESHOLD and revenue_total == 0:
+        store.emit("AGENCY_COST_ALERT", cost["cost_id"],
+                   {"detail": f"{credits_total:g} crediti spesi senza ricavi"},
+                   requires_human=True)
+    return cost
 
 
 def record_revenue_event(store, *, stream, amount_eur, model_id, campaign_id, product_id,
                          content_id, channel, external_reference, disclosed,
-                         revenue_v1_id=None, idempotency_key):
+                         revenue_v1_id=None, idempotency_key, costs_eur=0.0,
+                         source="manual_observation"):
     """Observed revenue with full attribution.  Never inferred or estimated."""
     if stream not in REVENUE_STREAMS:
         raise ValueError("unknown revenue stream")
@@ -376,10 +425,22 @@ def record_revenue_event(store, *, stream, amount_eur, model_id, campaign_id, pr
         product = store.get("products", product_id)
         if product["status"] not in PROMOTABLE_PRODUCT_STATES:
             raise ValueError("revenue attributed to a product that never passed the store gate")
-    return store.upsert("revenue_events", {
-        "revenue_event_id": new_id("ARV"), "stream": stream, "amount_eur": float(amount_eur),
+    if float(amount_eur) < 0 or float(costs_eur) < 0:
+        raise ValueError("revenue and costs must be non-negative observations")
+    before = len(store.snapshot()["revenue_events"])
+    gross, costs = float(amount_eur), float(costs_eur)
+    timestamp = _now()
+    event = store.upsert("revenue_events", {
+        "revenue_event_id": new_id("ARV"), "business_unit_id": "AI_FASHION_AGENCY",
+        "stream": stream, "amount_eur": gross, "gross_revenue_eur": gross,
+        "costs_eur": costs, "net_revenue_eur": round(gross - costs, 2), "source": source,
         "model_id": model_id, "campaign_id": campaign_id, "product_id": product_id,
         "content_id": content_id, "channel": channel,
         "external_reference": external_reference, "revenue_v1_id": revenue_v1_id,
-        "recorded_at": _now()}, idempotency_key=f"rev:{idempotency_key}")
+        "timestamp": timestamp, "recorded_at": timestamp},
+        idempotency_key=f"rev:{idempotency_key}")
+    if len(store.snapshot()["revenue_events"]) > before:
+        store.emit("AGENCY_REVENUE_EVENT", event["revenue_event_id"],
+                   {"detail": f"€{gross:.2f} lordi da {channel or 'n/d'}"})
+    return event
 

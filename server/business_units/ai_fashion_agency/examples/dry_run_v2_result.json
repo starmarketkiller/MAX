@@ -1,0 +1,454 @@
+{
+  "schema_version": "AGENCY_DRY_RUN_V2_RESULT",
+  "evidence_file": "real_evidence_2026-10-07.json",
+  "provenance": {
+    "collector": "Claude Code session WebSearch + WebFetch (human-supervised); quotes copied verbatim from the fetched page",
+    "sources": [
+      "https://newengen.com/insights/october-tiktok-trends/"
+    ],
+    "captured_at": "2026-10-07T20:30:00+00:00"
+  },
+  "transitions": [
+    {
+      "step": "SCOUT_INGEST",
+      "kind": "VIRAL_FORMAT_SCOUT",
+      "created": true,
+      "dedup_key": "VIRAL_FORMAT_SCOUT:5ffc208b53ba2d29"
+    },
+    {
+      "step": "SCOUT_INGEST",
+      "kind": "FASHION_ITEM_SCOUT",
+      "created": true,
+      "dedup_key": "FASHION_ITEM_SCOUT:69f18511e81d0013"
+    },
+    {
+      "step": "STORE_GATE",
+      "product_id": "PRD_D350AEF525",
+      "status": "EVALUATING",
+      "blocked_reasons": [
+        "unit cost and target price required",
+        "no supplier"
+      ]
+    },
+    {
+      "step": "COMMERCIAL_BRIEF",
+      "status": "REJECTED",
+      "store_gate_status": "BLOCKED"
+    },
+    {
+      "step": "VIRAL_ANALYSIS",
+      "task_id": "TASK_5C0182935F3A",
+      "state": "ESCALATION_REQUIRED",
+      "executor": "LOCAL_STRONG_MINISTRAL3B",
+      "escalation_target": "TIER0_DETERMINISTIC",
+      "analysis_provenance": "SUPERVISING_CLAUDE_SESSION_AFTER_LOCAL_ESCALATION",
+      "verifier_passed": true
+    },
+    {
+      "step": "CONTENT_BRIEF",
+      "brief_id": "BRF_A53FFBEDFC",
+      "status": "DRAFT"
+    },
+    {
+      "step": "MODEL_ASSIGNMENT",
+      "model_id": "MDL_LUXE_ELENA",
+      "ranking": [
+        {
+          "model_id": "MDL_LUXE_ELENA",
+          "score": 6,
+          "keyword_overlap": [
+            "luxury",
+            "quiet"
+          ],
+          "load": 0
+        },
+        {
+          "model_id": "MDL_BOLD_SIENNA",
+          "score": 0,
+          "keyword_overlap": [],
+          "load": 0
+        },
+        {
+          "model_id": "MDL_STREET_NOVA",
+          "score": 0,
+          "keyword_overlap": [],
+          "load": 0
+        }
+      ]
+    },
+    {
+      "step": "GENERATION_PACK",
+      "pack_id": "GEN_2DDDB19762",
+      "state": "WAITING_APPROVAL",
+      "quoted_credits": 2.25,
+      "unquoted_steps": [
+        "S2_VIDEO"
+      ]
+    }
+  ],
+  "brief_card": {
+    "brief_id": "BRF_A53FFBEDFC",
+    "hook": "Four fall looks, one fan",
+    "format": "Fan Transition",
+    "model": "Elena",
+    "product_or_service": null,
+    "platform": "tiktok",
+    "objective": "engagement",
+    "cta": "Comment your number",
+    "risk_compliance": {
+      "passed": true,
+      "issues": [],
+      "checked_at": "2026-10-07T21:01:13.233260+00:00"
+    },
+    "store_gate_status": "NOT_COMMERCIAL",
+    "generation_cost_estimate": {
+      "quoted_credits": 2.25,
+      "unquoted_steps": [
+        "S2_VIDEO"
+      ]
+    },
+    "approval_status": "WAITING_APPROVAL",
+    "status": "WAITING_APPROVAL"
+  },
+  "generation_pack": {
+    "pack_id": "GEN_2DDDB19762",
+    "brief_id": "BRF_A53FFBEDFC",
+    "model_id": "MDL_LUXE_ELENA",
+    "provider": "HIGGSFIELD",
+    "steps": [
+      {
+        "step_id": "S1_CHARACTER_SHEET",
+        "tool": "higgsfield.ai_influencer_generate",
+        "quote_tool": "higgsfield.ai_influencer_prepare",
+        "params": {
+          "tier": "normal",
+          "randomize": false,
+          "batch_size": 2,
+          "selection": {
+            "gender": [
+              "female"
+            ],
+            "age": [
+              "adult"
+            ],
+            "ethnicity_origin_base": [
+              "european"
+            ],
+            "skin_tone": [
+              "st_fair"
+            ],
+            "hair": [
+              "hair_long"
+            ],
+            "hair_colour": [
+              "hc_blonde"
+            ],
+            "eye_color": [
+              "eye_blue"
+            ],
+            "freak_face": [
+              "fn_cheekbones"
+            ],
+            "accessory": [
+              "acc_jewelry"
+            ],
+            "aesthetic": [
+              "suits"
+            ],
+            "body_type": [
+              "body_slim"
+            ],
+            "height": [
+              "h_tall"
+            ]
+          },
+          "brief": "Elegant quiet-luxury fashion creator, adult, calm confident presence, editorial but believable. Signature: low bun, gold jewelry, neutral tones."
+        },
+        "quote": {
+          "credits": 2.25,
+          "batch_size": 2,
+          "quoted_at": "2026-10-07",
+          "source": "higgsfield.ai_influencer_prepare",
+          "stale_after_days": 7
+        },
+        "state": "WAITING_APPROVAL"
+      },
+      {
+        "step_id": "S2_VIDEO",
+        "tool": "higgsfield.generate_video:motion_transfer",
+        "quote_tool": "higgsfield (quote before submit)",
+        "params": {
+          "model_id": "MDL_LUXE_ELENA",
+          "aspect_ratio": "9:16",
+          "duration_seconds": 19,
+          "hook": "Four fall looks, one fan",
+          "script": "overhead camera, lying flat in look 1 / fan blade sweeps across the lens / outfit swapped to look 2 behind the blade / repeat for looks 3-4 / last look holds + caption question",
+          "character_reference": "S1_CHARACTER_SHEET output"
+        },
+        "quote": null,
+        "state": "WAITING_QUOTE"
+      }
+    ],
+    "state": "WAITING_APPROVAL",
+    "quoted_credits": 2.25,
+    "unquoted_steps": [
+      "S2_VIDEO"
+    ],
+    "credits_spent": 0,
+    "approved_by": null,
+    "approval_required": true,
+    "updated_at": "2026-10-07T21:01:13.240363+00:00",
+    "created_at": "2026-10-07T21:01:13.240363+00:00"
+  },
+  "events": [
+    {
+      "event_type": "AGENCY_TREND_FOUND",
+      "entity_id": "AIN_663651F5F8",
+      "summary": "Agenzia: nuovo trend registrato: Fan Transition.",
+      "requires_human_action": false
+    },
+    {
+      "event_type": "AGENCY_PRODUCT_FOUND",
+      "entity_id": "PRD_D350AEF525",
+      "summary": "Agenzia: nuovo prodotto candidato: Suede jacket (fall look).",
+      "requires_human_action": false
+    },
+    {
+      "event_type": "AGENCY_STORE_BLOCKED",
+      "entity_id": "PRD_D350AEF525",
+      "summary": "Agenzia: prodotto bloccato dallo store gate: unit cost and target price required; no supplier.",
+      "requires_human_action": false
+    },
+    {
+      "event_type": "AGENCY_STORE_BLOCKED",
+      "entity_id": "PRD_D350AEF525",
+      "summary": "Agenzia: prodotto bloccato dallo store gate: brief 'Suede jacket fall styling' bloccato: prodotto EVALUATING.",
+      "requires_human_action": false
+    },
+    {
+      "event_type": "AGENCY_APPROVAL_REQUIRED",
+      "entity_id": "GEN_2DDDB19762",
+      "summary": "Agenzia: serve la tua approvazione: generazione Elena (2.25 crediti).",
+      "requires_human_action": true
+    },
+    {
+      "event_type": "AGENCY_CASTING_REQUIRED",
+      "entity_id": "MDL_LUXE_ELENA",
+      "summary": "Agenzia: serve un casting/approvazione character sheet: Elena non ha ancora un character sheet.",
+      "requires_human_action": true
+    }
+  ],
+  "ledger_event_types": [
+    "AGENCY_TREND_FOUND",
+    "AGENCY_PRODUCT_FOUND",
+    "AGENCY_STORE_BLOCKED",
+    "AGENCY_STORE_BLOCKED",
+    "AGENCY_APPROVAL_REQUIRED",
+    "AGENCY_CASTING_REQUIRED"
+  ],
+  "agency_state": {
+    "schema_version": "AI_FASHION_AGENCY_STATE_V1",
+    "health": "AMBER",
+    "models_total": 5,
+    "models_active": 0,
+    "models_casting": 5,
+    "models_working": [
+      "Elena"
+    ],
+    "campaigns_active": 0,
+    "content_queue": 1,
+    "trend_inputs": 1,
+    "products_found": 1,
+    "store_pending": 0,
+    "store_ready": 0,
+    "store_blocked": 1,
+    "blocked_products": [
+      {
+        "product_id": "PRD_D350AEF525",
+        "title": "Suede jacket (fall look)",
+        "status": "EVALUATING",
+        "reasons": [
+          "unit cost and target price required",
+          "no supplier"
+        ]
+      }
+    ],
+    "content_ready": 0,
+    "awaiting_approval": 1,
+    "approvals": [
+      {
+        "kind": "GENERATION_PACK",
+        "what": "generazione Higgsfield per Elena",
+        "credits": 2.25
+      }
+    ],
+    "credits_pending_approval": 2.25,
+    "credits_spent": 0,
+    "scheduled": 0,
+    "published": 0,
+    "views": "UNAVAILABLE",
+    "engagement": "UNAVAILABLE",
+    "followers": "UNAVAILABLE",
+    "accounts": {
+      "total": 15,
+      "active": 0,
+      "not_created": 15
+    },
+    "revenue_eur": 0,
+    "costs_eur": 0,
+    "profit_eur": 0,
+    "top_model": null,
+    "top_campaign": null,
+    "top_product": null,
+    "kpis": {
+      "content_created": 0,
+      "content_published": 0,
+      "views": "UNAVAILABLE",
+      "engagement": "UNAVAILABLE",
+      "followers_growth": "UNAVAILABLE",
+      "CTR": "UNAVAILABLE",
+      "sales": 0,
+      "gross_revenue": 0,
+      "costs": 0,
+      "net_revenue": 0,
+      "ROI": "UNAVAILABLE",
+      "credits_spent": 0
+    },
+    "agency_tasks": {
+      "total": 1,
+      "open": 1
+    },
+    "alerts": [
+      "GEN_2DDDB19762: 1 step senza preventivo",
+      "1 brief bloccati dalla compliance",
+      "nessun account social attivo (tutti NOT_CREATED)"
+    ],
+    "next_actions": [
+      {
+        "action": "APPROVE_OR_REJECT",
+        "kind": "GENERATION_PACK",
+        "id": "GEN_2DDDB19762",
+        "what": "generazione Higgsfield per Elena",
+        "credits": 2.25,
+        "requires": "EXPLICIT_USER_APPROVAL"
+      },
+      {
+        "action": "ADVANCE_STORE_GATE",
+        "product_id": "PRD_D350AEF525",
+        "status": "EVALUATING"
+      },
+      {
+        "action": "APPROVE_FIRST_CHARACTER_SHEET",
+        "requires": "EXPLICIT_USER_APPROVAL"
+      }
+    ],
+    "commercial_actions_enabled": false,
+    "publishing_enabled": false,
+    "generated_at": "2026-10-07T21:01:13.247095+00:00"
+  },
+  "business_unit_state": {
+    "schema_version": "BUSINESS_UNIT_STATE_V1",
+    "unit_id": "AI_FASHION_AGENCY",
+    "name": "AI Fashion Agency",
+    "mission": "Coordinate a roster of disclosed AI fashion/lifestyle creators that turn NEXUS trend and product opportunities into original content and revenue.",
+    "state": "OPERATING_DRY_RUN",
+    "health": "AMBER",
+    "inputs": [
+      "TREND_VIDEO",
+      "TREND_AUDIO",
+      "TREND_FORMAT",
+      "PRODUCT",
+      "FASHION_ITEM",
+      "SERVICE",
+      "CAMPAIGN",
+      "AFFILIATE_OFFER",
+      "BRAND_REQUEST",
+      "CONTENT_IDEA",
+      "SEASON_EVENT"
+    ],
+    "workers": [
+      "canonical Orchestrator (agency_bounded_task)",
+      "local Ministral",
+      "Higgsfield via approved Claude session",
+      "Postiz (dry-run adapter)"
+    ],
+    "capabilities": [
+      "scouting",
+      "viral_format_analysis",
+      "store_gate",
+      "model_casting",
+      "content_brief",
+      "compliance_check",
+      "generation_pack",
+      "social_drafts",
+      "revenue_attribution",
+      "kpis"
+    ],
+    "kpis": {
+      "content_created": 0,
+      "content_published": 0,
+      "views": "UNAVAILABLE",
+      "engagement": "UNAVAILABLE",
+      "sales": 0,
+      "ROI": "UNAVAILABLE",
+      "credits_spent": 0
+    },
+    "costs_eur": 0.0,
+    "revenue_eur": 0.0,
+    "net_eur": 0.0,
+    "risks": [
+      "platform AI-label enforcement",
+      "advertising disclosure (AGCOM)",
+      "copyright on trend references",
+      "credit spend without ROI"
+    ],
+    "tasks": {
+      "total": 1,
+      "open": 1
+    },
+    "evidence": [
+      "AI_FASHION_AGENCY_STATE_V1",
+      "BUSINESS_UNIT_REVENUE_V1"
+    ],
+    "next_gate": "FIRST_CHARACTER_SHEET_APPROVAL",
+    "decision": {
+      "status": "HUMAN_APPROVAL_REQUIRED",
+      "items": [
+        {
+          "action": "APPROVE_OR_REJECT",
+          "kind": "GENERATION_PACK",
+          "id": "GEN_2DDDB19762",
+          "what": "generazione Higgsfield per Elena",
+          "credits": 2.25,
+          "requires": "EXPLICIT_USER_APPROVAL"
+        },
+        {
+          "action": "ADVANCE_STORE_GATE",
+          "product_id": "PRD_D350AEF525",
+          "status": "EVALUATING"
+        },
+        {
+          "action": "APPROVE_FIRST_CHARACTER_SHEET",
+          "requires": "EXPLICIT_USER_APPROVAL"
+        }
+      ]
+    },
+    "generated_at": "2026-10-07T21:01:13.251821+00:00"
+  },
+  "jarvis_summary": "AI Fashion Agency: 0 campagne pronte, 1 contenuti in lavorazione, 0 prodotti store-ready, 5 modelle in roster (0 attive); generazione Higgsfield in attesa di approvazione (2.25 crediti). Ricavi €0.00, costi €0.00, crediti spesi 0.",
+  "jarvis_answers": {
+    "come va l'agenzia?": "AI Fashion Agency: 0 campagne pronte, 1 contenuti in lavorazione, 0 prodotti store-ready, 5 modelle in roster (0 attive); generazione Higgsfield in attesa di approvazione (2.25 crediti). Ricavi €0.00, costi €0.00, crediti spesi 0.",
+    "quali modelle stanno lavorando?": "Agenzia: modelle al lavoro: Elena. Roster: Nova CASTING_DRAFT, Elena CASTING_DRAFT, Maya CASTING_DRAFT, Kai CASTING_DRAFT, Sienna CASTING_DRAFT.",
+    "abbiamo prodotti pronti?": "Agenzia: 1 prodotti trovati, 0 store-ready, 0 in attesa di listing. Bloccati: Suede jacket (fall look) (EVALUATING).",
+    "cosa devo approvare per l'agenzia?": "Agenzia — da approvare: generazione Higgsfield per Elena (2.25 crediti).",
+    "quanto sta guadagnando l'agenzia?": "Agenzia: ricavi €0.00, costi €0.00, profitto €0.00, crediti spesi 0. Nessun ricavo osservato finora.",
+    "quale campagna è più promettente?": "Agenzia: nessuna campagna attiva; bloccate: 'Suede jacket fall styling' (store gate BLOCKED).",
+    "quali modelle hanno account?": "Agenzia: account attivi 0/15. Modelle con account: nessuna. Da creare: 15 slot (handle non ancora assegnati)."
+  },
+  "guarantees": {
+    "credits_spent": 0,
+    "published_content": 0,
+    "external_outreach": 0,
+    "store_opened": false
+  }
+}

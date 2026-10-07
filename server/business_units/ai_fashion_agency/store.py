@@ -47,19 +47,35 @@ def _seed():
     return {"schema_version": SCHEMA, "revision": 0, "models": initial_roster(),
             "inputs": [], "products": [], "briefs": [], "assignments": [],
             "generation_packs": [], "campaigns": [], "costs": [], "revenue_events": [],
-            "idempotency_index": {}}
+            "scout_results": [], "social_posts": [], "content_packages": [],
+            "event_outbox": [], "idempotency_index": {}}
+
+
+def _migrate(value):
+    """Additive, idempotent upgrade of V1 files (new collections, account slots)."""
+    from .roster import planned_social_accounts
+    for name in ("scout_results", "social_posts", "content_packages", "event_outbox"):
+        value.setdefault(name, [])
+    for model in value["models"]:
+        if not model.get("social_accounts"):
+            model["social_accounts"] = planned_social_accounts(model["model_id"])
+    return value
 
 
 class AgencyStore:
     COLLECTIONS = ("models", "inputs", "products", "briefs", "assignments",
-                   "generation_packs", "campaigns", "costs", "revenue_events")
+                   "generation_packs", "campaigns", "costs", "revenue_events",
+                   "scout_results", "social_posts", "content_packages")
     KEYS = {"models": "model_id", "inputs": "input_id", "products": "product_id",
             "briefs": "brief_id", "assignments": "assignment_id",
             "generation_packs": "pack_id", "campaigns": "campaign_id", "costs": "cost_id",
-            "revenue_events": "revenue_event_id"}
+            "revenue_events": "revenue_event_id", "scout_results": "scout_result_id",
+            "social_posts": "post_id", "content_packages": "package_id"}
+    OUTBOX_LIMIT = 500
 
-    def __init__(self, path):
+    def __init__(self, path, *, event_sink=None):
         self.path = Path(path)
+        self.event_sink = event_sink
         self._lock = threading.RLock()
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if not self.path.exists():
@@ -69,7 +85,7 @@ class AgencyStore:
         value = json.loads(self.path.read_text(encoding="utf-8"))
         if value.get("schema_version") != SCHEMA:
             raise RuntimeError("unsupported agency registry")
-        return value
+        return _migrate(value)
 
     def _save(self, value):
         temp = self.path.with_name(self.path.name + f".{os.getpid()}.tmp")
@@ -115,3 +131,19 @@ class AgencyStore:
                 state["idempotency_index"][idempotency_key] = [collection, record[key]]
             self._save(state)
             return copy.deepcopy(record)
+
+    def emit(self, event_type, entity_id, payload=None, *, requires_human=False):
+        """Record an AGENCY_* event in the outbox and hand it to the NEXUS sink.
+
+        The sink (wired in app.py) appends to the canonical EventLedger and
+        notifies Jarvis; the outbox only keeps a bounded local trace.
+        """
+        from .events import build_event
+        event = build_event(event_type, entity_id, payload or {}, requires_human=requires_human)
+        with self._lock:
+            state = self._load()
+            state["event_outbox"] = (state["event_outbox"] + [event])[-self.OUTBOX_LIMIT:]
+            self._save(state)
+        if self.event_sink:
+            self.event_sink(event)
+        return event

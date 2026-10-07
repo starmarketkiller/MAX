@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "AGENCY_REVENUE_EVENT_V1",
-  "description": "Observed revenue attributed to model/campaign/product/content/channel. Optional link to REVENUE_V1.",
+  "description": "Observed revenue attributed to business unit/model/campaign/product/content/channel with gross, costs and net. Optional link to REVENUE_V1.",
   "type": "object",
   "additionalProperties": true,
   "required": [
@@ -15,7 +15,13 @@
     "channel",
     "external_reference",
     "revenue_v1_id",
-    "recorded_at"
+    "recorded_at",
+    "business_unit_id",
+    "gross_revenue_eur",
+    "costs_eur",
+    "net_revenue_eur",
+    "source",
+    "timestamp"
   ],
   "properties": {
     "revenue_event_id": {
@@ -81,6 +87,26 @@
       "pattern": "^REV_"
     },
     "recorded_at": {
+      "type": "string"
+    },
+    "business_unit_id": {
+      "const": "AI_FASHION_AGENCY"
+    },
+    "gross_revenue_eur": {
+      "type": "number",
+      "minimum": 0
+    },
+    "costs_eur": {
+      "type": "number",
+      "minimum": 0
+    },
+    "net_revenue_eur": {
+      "type": "number"
+    },
+    "source": {
+      "type": "string"
+    },
+    "timestamp": {
       "type": "string"
     }
   }

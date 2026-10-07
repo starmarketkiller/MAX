@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AGENCY_EVENT_V1",
+  "description": "Agency executive event; mirrored into NEXUS_EVENT_V1 (same event_type) by the app sink.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_type",
+    "business_unit_id",
+    "entity_id",
+    "payload",
+    "requires_human_action",
+    "attention",
+    "summary",
+    "created_at"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^AEV_"
+    },
+    "event_type": {
+      "enum": [
+        "AGENCY_MODEL_READY",
+        "AGENCY_CASTING_REQUIRED",
+        "AGENCY_TREND_FOUND",
+        "AGENCY_PRODUCT_FOUND",
+        "AGENCY_STORE_BLOCKED",
+        "AGENCY_STORE_READY",
+        "AGENCY_CONTENT_READY",
+        "AGENCY_APPROVAL_REQUIRED",
+        "AGENCY_CAMPAIGN_READY",
+        "AGENCY_SOCIAL_SCHEDULED",
+        "AGENCY_CONTENT_PUBLISHED",
+        "AGENCY_REVENUE_EVENT",
+        "AGENCY_COST_ALERT"
+      ]
+    },
+    "business_unit_id": {
+      "const": "AI_FASHION_AGENCY"
+    },
+    "entity_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "type": "object"
+    },
+    "requires_human_action": {
+      "type": "boolean"
+    },
+    "attention": {
+      "type": "boolean"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    }
+  }
+}
