@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from jarvis_v1.local_operations import (
@@ -338,6 +339,77 @@ def test_online_bridge_resumes_waiting_context_same_child(tmp_path):
     assert service.queue.get(child_id)["state"] == "QUEUED"
     assert any(event["event_type"] == "TASK_RESUMED"
                for event in service.ledger.read_for_task(parent_id))
+
+
+def test_waiting_context_polling_does_not_consume_active_budget(tmp_path):
+    service = JarvisService(queue_path=tmp_path / "queue.json", ledger_path=tmp_path / "ledger.jsonl",
+                            conversation_path=tmp_path / "conversations.json")
+    executor = MultiStageExecutor(service.orchestrator)
+    parent_id = executor.submit(objective="analizza revenue e produci due verifiche indipendenti",
+                                created_by="test", conversation_id="c", premium_allowed=False)
+    _escalate_first_child(service, executor, parent_id)
+    executor.run_once()
+    parent = service.queue.get(parent_id)
+    plan = parent["multi_stage_execution"]
+    used_before = plan["budget_accounting"]["active_seconds_used"]
+    assert plan["budget_accounting"]["active_started_at"] is None
+    for _ in range(100):
+        executor.run_once()
+    after = service.queue.get(parent_id)
+    assert after["state"] == "WAITING_PROVIDER"
+    assert after["multi_stage_execution"]["budget_accounting"]["active_seconds_used"] == used_before
+
+
+def test_active_budget_and_absolute_deadline_have_distinct_failure_codes(tmp_path):
+    service = JarvisService(queue_path=tmp_path / "queue.json", ledger_path=tmp_path / "ledger.jsonl",
+                            conversation_path=tmp_path / "conversations.json")
+    executor = MultiStageExecutor(service.orchestrator)
+    active_id = executor.submit(objective="analizza revenue e produci due verifiche indipendenti",
+                                created_by="test", conversation_id="active")
+    executor.run_once()
+    active = service.queue.get(active_id)
+    active_plan = active["multi_stage_execution"]
+    active_plan["task_active_budget_seconds"] = 1
+    active_plan["budget_accounting"]["active_started_at"] = (
+        datetime.now(timezone.utc) - timedelta(seconds=2)).isoformat()
+    service.queue.annotate(active_id, multi_stage_execution=active_plan)
+    executor.run_once()
+    assert service.queue.get(active_id)["dispatch_last_error"] == \
+        "TASK_ACTIVE_EXECUTION_BUDGET_EXCEEDED"
+
+    deadline_id = executor.submit(objective="analizza revenue e produci due verifiche indipendenti",
+                                  created_by="test", conversation_id="deadline")
+    deadline = service.queue.get(deadline_id)
+    deadline_plan = deadline["multi_stage_execution"]
+    deadline_plan["task_absolute_deadline_at"] = (
+        datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat()
+    service.queue.annotate(deadline_id, multi_stage_execution=deadline_plan)
+    executor.run_once()
+    assert service.queue.get(deadline_id)["dispatch_last_error"] == \
+        "TASK_ABSOLUTE_DEADLINE_EXCEEDED"
+
+
+def test_wait_budget_accounting_survives_restart_and_terminal_is_not_reopened(tmp_path):
+    queue_path, ledger_path = tmp_path / "queue.json", tmp_path / "ledger.jsonl"
+    service = JarvisService(queue_path=queue_path, ledger_path=ledger_path,
+                            conversation_path=tmp_path / "conversations.json")
+    executor = MultiStageExecutor(service.orchestrator)
+    parent_id = executor.submit(objective="analizza revenue e produci due verifiche indipendenti",
+                                created_by="test", conversation_id="c", premium_allowed=False)
+    _escalate_first_child(service, executor, parent_id)
+    executor.run_once()
+    before = service.queue.get(parent_id)["multi_stage_execution"]["budget_accounting"]
+    restarted_service = JarvisService(queue_path=queue_path, ledger_path=ledger_path,
+                                      conversation_path=tmp_path / "conversations-2.json")
+    restarted = MultiStageExecutor(restarted_service.orchestrator)
+    restarted.run_once()
+    after = restarted_service.queue.get(parent_id)["multi_stage_execution"]["budget_accounting"]
+    assert after["active_seconds_used"] == before["active_seconds_used"]
+    assert after["active_started_at"] is None
+
+    restarted_service.queue.transition(parent_id, "BLOCKED", dispatch_last_error="MANUAL_BLOCK")
+    restarted.run_once()
+    assert restarted_service.queue.get(parent_id)["state"] == "BLOCKED"
 
 
 def test_simple_mistral_stays_sync(monkeypatch, tmp_path):

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -120,12 +120,28 @@ def build_execution_plan(objective, *, authorized_capabilities, resolver=None):
                                         "selected_skill": None, "selected_tool": None,
                                         "selected_agent": None, "verifier": "independent_review"})
         steps.append({"step_id": f"STEP_{index}", "state": "PENDING", **resolution})
+    created_at = _now()
+    absolute_deadline_seconds = int(os.environ.get(
+        "NEXUS_TASK_ABSOLUTE_DEADLINE", "86400"))
+    absolute_deadline_at = (datetime.fromisoformat(created_at) + timedelta(
+        seconds=absolute_deadline_seconds)).isoformat()
+    active_budget_seconds = int(os.environ.get("NEXUS_TASK_TOTAL_BUDGET", "900"))
     return {"schema_version": "MULTI_STAGE_EXECUTION_PLAN_V1", "objective": objective,
-            "created_at": _now(), "steps": steps, "current_step": "STEP_1",
+            "created_at": created_at, "steps": steps, "current_step": "STEP_1",
             "sync_chat_budget_seconds": int(os.environ.get("NEXUS_SYNC_CHAT_BUDGET", "75")),
             "local_model_step_timeout_seconds": int(os.environ.get(
                 "NEXUS_LOCAL_MODEL_STEP_TIMEOUT", "120")),
-            "task_total_budget_seconds": int(os.environ.get("NEXUS_TASK_TOTAL_BUDGET", "900"))}
+            # Kept for contract compatibility. From V1 budget accounting onward this is
+            # explicitly active execution time, never wall-clock wait time.
+            "task_total_budget_seconds": active_budget_seconds,
+            "task_active_budget_seconds": active_budget_seconds,
+            "task_absolute_deadline_seconds": absolute_deadline_seconds,
+            "task_absolute_deadline_at": absolute_deadline_at,
+            "budget_accounting": {
+                "active_seconds_used": 0.0,
+                "active_started_at": None,
+                "updated_at": created_at,
+            }}
 
 
 class OperationsProjection:

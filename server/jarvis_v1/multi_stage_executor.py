@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from core.result_packet import build_result_packet
 from core.task_queue import new_task_id
@@ -119,10 +119,9 @@ class MultiStageExecutor:
     def _advance(self, task_id):
         parent = self.queue.get(task_id)
         plan = parent.get("multi_stage_execution") or {}
-        created = datetime.fromisoformat(parent["created_at"])
-        if (datetime.now(timezone.utc) - created).total_seconds() > int(
-                plan.get("task_total_budget_seconds", 900)):
-            return self._block_parent(parent, plan, "TASK_TOTAL_BUDGET_EXCEEDED")
+        budget_failure = self._budget_failure(parent, plan)
+        if budget_failure:
+            return self._block_parent(parent, plan, budget_failure)
         steps = plan.get("steps") or []
         current = next((s for s in steps if s["state"] not in {"VERIFIED", "COMPLETED"}), None)
         if current is None:
@@ -137,6 +136,7 @@ class MultiStageExecutor:
         child = self.queue.get(child_id)
         state = child["state"]
         if state == "COMPLETED":
+            self._pause_active_budget(plan)
             packet = child.get("result_packet") or {}
             if not (packet.get("verifier") or {}).get("passed"):
                 current["state"] = "FAILED"
@@ -151,6 +151,7 @@ class MultiStageExecutor:
                                actor="multi_stage_executor_v1")
             return self._advance(parent["task_id"])
         if state == "WAITING_APPROVAL":
+            self._pause_active_budget(plan)
             current["state"] = "WAITING_APPROVAL"
             self.queue.annotate(parent["task_id"], multi_stage_execution=plan)
             return self._wait_parent(parent, plan, current, "WAITING_APPROVAL",
@@ -170,6 +171,7 @@ class MultiStageExecutor:
                 current["state"] = "RUNNING"
                 current["resumed_at"] = _now()
                 current.pop("wait_reason", None)
+                self._start_active_budget(plan)
                 self.queue.annotate(parent["task_id"], multi_stage_execution=plan)
                 self.queue.transition(child_id, "QUEUED", escalation=None,
                                       dispatch_last_error=None)
@@ -195,10 +197,12 @@ class MultiStageExecutor:
             }
             current["state"] = step_state
             current["wait_reason"] = reason
+            self._pause_active_budget(plan)
             self.queue.annotate(parent["task_id"], multi_stage_execution=plan)
             return self._wait_parent(parent, plan, current, step_state, "TASK_ESCALATED",
                                      reason=reason)
         if state in {"FAILED", "BLOCKED", "CANCELLED"}:
+            self._pause_active_budget(plan)
             current["state"] = "FAILED" if state == "FAILED" else "BLOCKED"
             return self._block_parent(parent, plan, f"CHILD_{state}")
 
@@ -221,6 +225,7 @@ class MultiStageExecutor:
         self.orchestrator.submit(manifest, action=action, action_params=params)
         step.update({"state": "RUNNING", "child_task_id": manifest["task_id"],
                      "started_at": _now()})
+        self._start_active_budget(plan)
         plan["current_step"] = step["step_id"]
         self.queue.annotate(parent["task_id"], multi_stage_execution=plan)
         self.ledger.append("TASK_CREATED", manifest["task_id"],
@@ -281,6 +286,7 @@ class MultiStageExecutor:
                                 "details": transition})
 
     def _block_parent(self, parent, plan, reason):
+        self._pause_active_budget(plan)
         self.queue.transition(parent["task_id"], "BLOCKED", multi_stage_execution=plan,
                               dispatch_last_error=reason,
                               recovery={"classification": reason, "recovered_at": None})
@@ -288,6 +294,56 @@ class MultiStageExecutor:
                            actor="multi_stage_executor_v1")
         self.notification_sink({"event_type": "TASK_FAILED", "task_id": parent["task_id"],
                                 "status": "BLOCKED", "summary": f"{parent['task_id']} bloccata: {reason}."})
+
+    @staticmethod
+    def _accounting(plan):
+        """Return durable accounting, upgrading pre-fix plans without changing their state."""
+        created = plan.get("created_at") or _now()
+        return plan.setdefault("budget_accounting", {
+            "active_seconds_used": 0.0, "active_started_at": None,
+            "updated_at": created,
+        })
+
+    def _start_active_budget(self, plan):
+        accounting = self._accounting(plan)
+        if not accounting.get("active_started_at"):
+            accounting["active_started_at"] = _now()
+            accounting["updated_at"] = accounting["active_started_at"]
+
+    def _pause_active_budget(self, plan):
+        accounting = self._accounting(plan)
+        started_at = accounting.get("active_started_at")
+        if started_at:
+            now = datetime.now(timezone.utc)
+            started = datetime.fromisoformat(started_at)
+            accounting["active_seconds_used"] = round(
+                float(accounting.get("active_seconds_used", 0.0)) +
+                max(0.0, (now - started).total_seconds()), 6)
+            accounting["active_started_at"] = None
+            accounting["updated_at"] = now.isoformat()
+
+    def _budget_failure(self, parent, plan):
+        now = datetime.now(timezone.utc)
+        created = datetime.fromisoformat(plan.get("created_at") or parent["created_at"])
+        absolute_deadline = plan.get("task_absolute_deadline_at")
+        if absolute_deadline:
+            deadline = datetime.fromisoformat(absolute_deadline)
+        else:
+            deadline_seconds = int(plan.get("task_absolute_deadline_seconds", 86400))
+            deadline = created + timedelta(seconds=deadline_seconds)
+        if now > deadline:
+            return "TASK_ABSOLUTE_DEADLINE_EXCEEDED"
+
+        accounting = self._accounting(plan)
+        active_used = float(accounting.get("active_seconds_used", 0.0))
+        if accounting.get("active_started_at"):
+            active_used += max(0.0, (now - datetime.fromisoformat(
+                accounting["active_started_at"])).total_seconds())
+        active_limit = int(plan.get("task_active_budget_seconds",
+                                    plan.get("task_total_budget_seconds", 900)))
+        if active_used > active_limit:
+            return "TASK_ACTIVE_EXECUTION_BUDGET_EXCEEDED"
+        return None
 
     def _loop(self):
         while not self._stop.is_set():
