@@ -86,6 +86,15 @@ class ConversationStore:
             self._save(data)
             return dict(current)
 
+    def reset(self, conversation_id):
+        """Drop only ephemeral conversation context, never task or ledger data."""
+        with self._lock:
+            data = self._load()
+            existed = conversation_id in data
+            data.pop(conversation_id, None)
+            self._save(data)
+            return existed
+
     def purge_stale(self):
         """Explicit, bounded-memory cleanup - removes every conversation
         entry older than ttl_seconds. Returns how many were purged."""

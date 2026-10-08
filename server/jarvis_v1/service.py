@@ -101,6 +101,11 @@ _TASK_RESULT_RE = re.compile(
     r"report|output|step verificat\w*|prodotto)\b|"
     r"\bqual[ei]\s+step\b.{0,25}\bverificat\w*\b|"
     r"\bperch[eé]\b.{0,25}\b(completat\w*|finit\w*)\b", re.I)
+_TASK_RESULT_REFERENCE_RE = re.compile(
+    r"\b(mostrami|fammi vedere|apri)\b.{0,35}\bTASK_[A-Z0-9_]+\b", re.I)
+_COGNITIVE_QUERY_RE = re.compile(
+    r"\b(spiegami|consigli(?:ami|eresti)|parliamo|ragioniamo|cosa ne pensi|"
+    r"analizza (?:quest[oa]|il) risultat\w*|migliorare|approfondisci)\b", re.I)
 
 # JARVIS_EXECUTIVE_CONVERSATION_V4 --------------------------------------------
 # "l'ultima" (singular) / "approvale" (plural clitic) are deliberately NOT in
@@ -243,7 +248,7 @@ def classify(text: str, metadata: dict | None = None) -> str:
         return "COMMAND"
     if _TECHNICAL_VIEW_RE.search(value) and not is_programming_request(value):
         return "COMMAND"
-    if _TASK_RESULT_RE.search(value):
+    if _TASK_RESULT_RE.search(value) or _TASK_RESULT_REFERENCE_RE.search(text or ""):
         return "TASK_RESULT"
     if _NOTIFICATION_PREF_RE.search(value):
         return "NOTIFICATION_PREFERENCE"
@@ -278,6 +283,8 @@ def classify(text: str, metadata: dict | None = None) -> str:
         return "FOLLOW_UP"
     if _match_state_query(value):
         return "STATE_QUERY"
+    if _COGNITIVE_QUERY_RE.search(value):
+        return "COGNITIVE_QUERY"
     if "?" in value or re.search(r"\b(cosa|quali|chi|perché|perche|why|what|today|oggi)\b", value):
         return "QUERY"
     return "UNKNOWN"
@@ -444,6 +451,11 @@ class JarvisService:
         ledger_reply = self._maybe_handle_task_ledger_command(message)
         if ledger_reply is not None:
             return ledger_reply
+        # Slash commands are an explicit user choice and must never be
+        # reinterpreted by the probabilistic router.  In particular /help
+        # must remain stable regardless of router mode or conversation state.
+        if (message.get("text") or "").strip().startswith("/"):
+            return self._dispatch_classifier(message)
         # JARVIS_EXECUTIVE_CONVERSATION_V4 (A): a pending TASK_DRAFT
         # confirmation is resolved BEFORE normal classify()-based routing -
         # a bare "sì"/"no" reply has no intent signal of its own and would
@@ -513,6 +525,8 @@ class JarvisService:
             return self.executive_intent(message)
         if request_class == "STATE_QUERY":
             return self.state_query(message)
+        if request_class == "COGNITIVE_QUERY":
+            return self.cognitive_answer(message)
         # JARVIS_CONTEXTUAL_ACTIONS_V1: the generic "I didn't understand"
         # fallback is the one real users actually hit when a phrase isn't
         # recognized - it should surface what's actually going on instead of
@@ -737,6 +751,8 @@ class JarvisService:
             return None
         mode = _ministral_router_mode()
         classifier_decision = classify(text, message.get("metadata"))
+        if classifier_decision in {"COMMAND", "TASK_RESULT", "COGNITIVE_QUERY"}:
+            return None
         if mode == "SHADOW":
             thread = threading.Thread(target=self._shadow_router_comparison,
                                       args=(dict(message), classifier_decision), daemon=True)
@@ -1336,18 +1352,55 @@ class JarvisService:
                               confidence=(record.get("result_packet") or {}).get(
                                   "confidence", "UNKNOWN"))
 
+    def cognitive_answer(self, message):
+        """Bounded local conversation path; never creates work or grants authority."""
+        conversation_id = message["conversation_id"]
+        history = self.conversation_store.get(conversation_id).get("mistral_history") or []
+        prompt = self._build_mistral_direct_prompt(message.get("text") or "", history)
+        call = ministral_chat.ask_mistral_direct(prompt, history, timeout=25)
+        if not call.get("ok") or not str(call.get("reply") or "").strip():
+            error = call.get("error") or "LOCAL_WORKER_UNREACHABLE"
+            self.ledger.append("MISTRAL_DIRECT_FAILED", None,
+                               {"message_id": message["message_id"], "error": error,
+                                "route": "COGNITIVE_QUERY"}, actor="jarvis_service")
+            return self._response(
+                message, "ANSWER",
+                f"Non posso usare Mistral locale in questo momento ({error}). "
+                "Jarvis resta disponibile per stato, task, risultati e approval.",
+                status="UNAVAILABLE", confidence="HIGH",
+                details={"view": "COGNITIVE_FALLBACK", "failure_class": error,
+                         "premium_calls": 0})
+        reply = str(call["reply"]).strip()
+        new_history = (history + [{"role": "user", "text": message.get("text") or ""},
+                                  {"role": "assistant", "text": reply}])[-MISTRAL_DIRECT_HISTORY_TURNS * 2:]
+        self.conversation_store.update(conversation_id, mistral_history=new_history,
+                                       last_view="COGNITIVE")
+        self.ledger.append("MISTRAL_DIRECT_REPLY", None,
+                           {"message_id": message["message_id"], "channel": message["channel"],
+                            "route": "COGNITIVE_QUERY", "premium_calls": 0},
+                           actor="jarvis_service")
+        return self._response(message, "ANSWER", reply, generated_by="ministral-3:3b-direct",
+                              details={"view": "COGNITIVE_REPLY", "premium_calls": 0})
+
     def command(self, message):
         text = (message.get("text") or "").strip()
         value = text.lower()
+        if value == "/reset":
+            self.conversation_store.reset(message["conversation_id"])
+            return self._response(message, "ANSWER",
+                "Contesto conversazionale azzerato. Task, risultati e Ledger sono invariati.",
+                details={"view": "CONVERSATION_RESET", "canonical_state_preserved": True})
         if value in ("/start", "/help") or re.search(r"\b(help|aiuto)\b", value):
             return self._response(message, "ANSWER",
                 "Sono Jarvis. Posso creare task, mostrarne stato e dettagli, annullare task non in esecuzione, "
                 "gestire approval e mostrare stato NEXUS, agenti e approval. Comandi: /status /tasks /approvals "
-                "/agents /task /handoff. Per parlare direttamente con Mistral locale: /mistral <messaggio> (poi "
-                "/new per azzerare la cronologia, /jarvis per tornare qui esplicitamente).",
+                "/agents /task /handoff. Jarvis usa automaticamente Mistral per richieste cognitive bounded; "
+                "/mistral resta disponibile come override diagnostico. Usa /reset per azzerare soltanto il contesto "
+                "conversazionale.",
                 details={"commands": ["/start", "/help", "/status", "/tasks", "/approvals", "/agents",
                                       "/task", "/handoff", "/revenue", "/leads", "/drafts", "/followups",
-                                      "/ventures", "/agency", "/mistral", "/mistral_status", "/new", "/jarvis"]})
+                                      "/ventures", "/agency", "/mistral", "/mistral_status", "/new", "/jarvis",
+                                      "/reset"]})
         if value == "/revenue":
             if not self.operations_projection:
                 return self._response(message, "ANSWER", "Revenue operations non configurate.", status="UNKNOWN")

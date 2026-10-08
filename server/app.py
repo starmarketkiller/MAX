@@ -2283,8 +2283,16 @@ async def jarvis_telegram_webhook(request: Request,
     if not JARVIS_TELEGRAM.configured:
         raise HTTPException(status_code=503, detail="Telegram adapter not configured")
     body = await read_json_body(request)
+    callback = body.get("callback_query") or {}
+    if callback:
+        # Clear Telegram's spinner independently from the business response.
+        # Failure to ack is observable but must not suppress processing.
+        JARVIS_TELEGRAM.answer_callback(callback.get("id"))
     try:
-        response = JARVIS_TELEGRAM.handle_update(body)
+        update_id = body.get("update_id")
+        response = JARVIS_TELEGRAM.pending_response(update_id)
+        if response is None:
+            response = JARVIS_TELEGRAM.handle_update(body)
     except PermissionError:
         raise HTTPException(status_code=403, detail="unauthorized Telegram user")
     except ValueError as exc:
@@ -2293,6 +2301,12 @@ async def jarvis_telegram_webhook(request: Request,
         raise HTTPException(status_code=429, detail="rate limit exceeded")
     chat_id = ((body.get("callback_query") or {}).get("message") or body.get("message") or {}).get("chat", {}).get("id")
     delivery = JARVIS_TELEGRAM.send(chat_id, response) if chat_id and response.get("status") != "DUPLICATE" else {"sent": False, "reason": "DUPLICATE"}
+    if chat_id and response.get("status") != "DUPLICATE":
+        if not delivery.get("sent"):
+            # Telegram retries the webhook. pending_response(update_id) then
+            # replays only this immutable response, never the mutation.
+            raise HTTPException(status_code=503, detail="telegram delivery unavailable")
+        JARVIS_TELEGRAM.mark_delivered(body.get("update_id"))
     return {"ok": True, "response": response, "delivery": delivery}
 
 

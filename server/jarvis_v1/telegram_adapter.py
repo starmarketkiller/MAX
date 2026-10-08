@@ -6,6 +6,8 @@ import hashlib
 import os
 import time
 import urllib.request
+import urllib.error
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -27,6 +29,8 @@ class TelegramAdapter:
         self.allowed_users = {str(x).strip() for x in (raw_users.split(",") if isinstance(raw_users, str) else raw_users) if str(x).strip()}
         self.state_path = Path(state_path or os.environ.get("JARVIS_TELEGRAM_STATE_PATH", Path(__file__).with_name("runtime_updates.json")))
         self._rate: dict[str, list[float]] = {}
+        self._state_lock = threading.RLock()
+        self._inflight: set[str] = set()
 
     @property
     def configured(self):
@@ -39,13 +43,56 @@ class TelegramAdapter:
                 "webhook_ready": state == "READY",
                 "allowed_user_count": len(self.allowed_users), "token_exposed": False}
 
-    def _seen(self):
-        try: return set(json.loads(self.state_path.read_text(encoding="utf-8")))
-        except (OSError, json.JSONDecodeError, TypeError): return set()
+    def _state(self):
+        try:
+            value = json.loads(self.state_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, TypeError):
+            value = []
+        # Backward compatible with the original list-only state file.
+        if isinstance(value, list):
+            return {"seen": value, "pending_responses": {}, "delivered": []}
+        if not isinstance(value, dict):
+            return {"seen": [], "pending_responses": {}, "delivered": []}
+        return {"seen": list(value.get("seen") or []),
+                "pending_responses": dict(value.get("pending_responses") or {}),
+                "delivered": list(value.get("delivered") or [])}
 
-    def _mark_seen(self, update_id):
-        seen = self._seen(); seen.add(str(update_id)); self.state_path.parent.mkdir(parents=True, exist_ok=True)
-        self.state_path.write_text(json.dumps(sorted(seen)[-2000:]), encoding="utf-8")
+    def _save_state(self, state):
+        self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        temp = self.state_path.with_name(f"{self.state_path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+        temp.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+        os.replace(temp, self.state_path)
+
+    def _seen(self):
+        with self._state_lock:
+            return set(self._state()["seen"])
+
+    def _mark_seen(self, update_id, response=None):
+        with self._state_lock:
+            state = self._state()
+            key = str(update_id)
+            state["seen"] = sorted(set(state["seen"]) | {key})[-2000:]
+            if response is not None:
+                state["pending_responses"][key] = response
+                state["pending_responses"] = dict(list(state["pending_responses"].items())[-100:])
+            self._save_state(state)
+
+    def pending_response(self, update_id):
+        with self._state_lock:
+            state = self._state()
+            key = str(update_id)
+            if key in set(state["delivered"]):
+                return None
+            value = state["pending_responses"].get(key)
+            return dict(value) if isinstance(value, dict) else None
+
+    def mark_delivered(self, update_id):
+        with self._state_lock:
+            state = self._state()
+            key = str(update_id)
+            state["delivered"] = sorted(set(state["delivered"]) | {key})[-2000:]
+            state["pending_responses"].pop(key, None)
+            self._save_state(state)
 
     def _allowed_rate(self, user_id):
         now = time.time(); bucket = [x for x in self._rate.get(user_id, []) if now - x < 60]
@@ -110,22 +157,27 @@ class TelegramAdapter:
         started = time.perf_counter()
         update_id = update.get("update_id")
         if update_id is None: raise ValueError("update_id required")
-        if str(update_id) in self._seen(): return {"status": "DUPLICATE", "update_id": update_id}
-        message = self.parse_update(update); user_id = message["user_id"]
-        user_ref = hashlib.sha256(user_id.encode()).hexdigest()[:12]
-        if user_id not in self.allowed_users:
-            self.service.ledger.append("TELEGRAM_ACCESS_DENIED", None,
-                {"channel": "telegram", "telegram_update_id": update_id, "authorized": False,
-                 "user_ref": user_ref, "failure_class": "UNAUTHORIZED_USER"}, actor="telegram_adapter")
-            raise PermissionError("unauthorized Telegram user")
-        intent = message["request_class"]
-        self.service.ledger.append("TELEGRAM_UPDATE_RECEIVED", None,
-            {"channel": "telegram", "telegram_update_id": update_id, "authorized": True,
-             "intent": intent, "user_ref": user_ref}, actor="telegram_adapter")
+        key = str(update_id)
+        with self._state_lock:
+            if key in self._seen() or key in self._inflight:
+                return {"status": "DUPLICATE", "update_id": update_id}
+            self._inflight.add(key)
+        intent = "UNKNOWN"
         try:
+            message = self.parse_update(update); user_id = message["user_id"]
+            user_ref = hashlib.sha256(user_id.encode()).hexdigest()[:12]
+            if user_id not in self.allowed_users:
+                self.service.ledger.append("TELEGRAM_ACCESS_DENIED", None,
+                    {"channel": "telegram", "telegram_update_id": update_id, "authorized": False,
+                     "user_ref": user_ref, "failure_class": "UNAUTHORIZED_USER"}, actor="telegram_adapter")
+                raise PermissionError("unauthorized Telegram user")
+            intent = message["request_class"]
+            self.service.ledger.append("TELEGRAM_UPDATE_RECEIVED", None,
+                {"channel": "telegram", "telegram_update_id": update_id, "authorized": True,
+                 "intent": intent, "user_ref": user_ref}, actor="telegram_adapter")
             if not self._allowed_rate(user_id): raise RuntimeError("rate limit exceeded")
             response = self.gateway.handle(message) if self.gateway is not None else self.service.handle(message)
-            self._mark_seen(update_id)
+            self._mark_seen(update_id, response)
             details = response.get("details") or {}
             self.service.ledger.append("TELEGRAM_UPDATE_COMPLETED", response.get("task_id"),
                 {"channel": "telegram", "telegram_update_id": update_id, "authorized": True,
@@ -141,6 +193,30 @@ class TelegramAdapter:
                  "intent": intent, "latency_ms": round((time.perf_counter() - started) * 1000, 2),
                  "failure_class": type(exc).__name__}, actor="telegram_adapter")
             raise
+        finally:
+            with self._state_lock:
+                self._inflight.discard(key)
+
+    def _telegram_request(self, method, payload, *, timeout=10):
+        body = json.dumps(payload).encode()
+        req = urllib.request.Request(f"https://api.telegram.org/bot{self.token}/{method}", data=body,
+                                     headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as result:  # noqa: S310 - fixed Telegram host
+                return {"ok": result.status == 200, "failure_class": None, "retryable": False}
+        except urllib.error.HTTPError as exc:
+            return {"ok": False, "failure_class": f"TELEGRAM_HTTP_{exc.code}",
+                    "retryable": exc.code == 429 or 500 <= exc.code < 600}
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            return {"ok": False, "failure_class": f"TELEGRAM_{type(exc).__name__.upper()}",
+                    "retryable": True}
+
+    def answer_callback(self, callback_query_id):
+        if not self.configured or not callback_query_id:
+            return {"sent": False, "reason": "UNAVAILABLE"}
+        result = self._telegram_request("answerCallbackQuery",
+                                        {"callback_query_id": str(callback_query_id)}, timeout=5)
+        return {"sent": result["ok"], "reason": result["failure_class"]}
 
     def send(self, chat_id, response):
         if not self.configured: return {"sent": False, "reason": "UNAVAILABLE"}
@@ -155,19 +231,21 @@ class TelegramAdapter:
                 {"text": "CONFIRM CANCEL", "callback_data": f"CONFIRM_CANCEL:{task_id}"},
                 {"text": "DETAILS", "callback_data": f"DETAILS:{task_id}"},
             ]]}
-        body = json.dumps(payload).encode()
-        req = urllib.request.Request(f"https://api.telegram.org/bot{self.token}/sendMessage", data=body,
-                                     headers={"Content-Type": "application/json"})
-        try:
-            with urllib.request.urlopen(req, timeout=10) as result:  # noqa: S310 - fixed Telegram host
-                ok = result.status == 200
-        except Exception:  # no secret/error body leakage
-            return {"sent": False, "reason": "PROVIDER_UNAVAILABLE"}
+        result = self._telegram_request("sendMessage", payload)
+        if not result["ok"] and result["retryable"]:
+            # One bounded retry only.  No message mutation is replayed: the
+            # canonical response has already been persisted by update_id.
+            result = self._telegram_request("sendMessage", payload)
+        ok = result["ok"]
         if ok:
             self.service.ledger.append("NOTIFICATION_SENT", response.get("task_id"),
                                        {"channel": "TELEGRAM", "priority": response.get("priority")},
                                        actor="telegram_adapter")
-        return {"sent": ok, "reason": None if ok else "PROVIDER_UNAVAILABLE"}
+        else:
+            self.service.ledger.append("TELEGRAM_UPDATE_FAILED", response.get("task_id"),
+                                       {"channel": "telegram", "failure_class": result["failure_class"],
+                                        "stage": "DELIVERY"}, actor="telegram_adapter")
+        return {"sent": ok, "reason": None if ok else result["failure_class"]}
 
     @classmethod
     def build_keyboard(cls, response):
