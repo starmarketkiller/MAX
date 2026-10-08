@@ -2,8 +2,8 @@
 """Outbound-only NEXUS Local Agent Bridge V1 client.
 
 This process exposes no listening socket and has no generic shell endpoint. It
-polls for Router-authorized ``complex_code_change`` jobs, calls local Ollama,
-then runs the existing bounded FreeCodingWorker verifier in a task workspace.
+polls only for explicitly allowlisted coding or read-only analysis jobs, calls
+local Ollama, then runs the matching bounded verifier in a task workspace.
 """
 from __future__ import annotations
 
@@ -30,6 +30,7 @@ for entry in (SERVER, ORCH):
         sys.path.insert(0, str(entry))
 
 from jarvis_v1.free_coding_worker import FreeCodingWorkerHandler  # noqa: E402
+from jarvis_v1.local_bounded_task_handler import BoundedLocalTaskHandler  # noqa: E402
 from orchestrator_v1.core import ollama_worker  # noqa: E402
 
 
@@ -60,11 +61,18 @@ class BridgeClient:
         self.heartbeat_interval_seconds = float(
             heartbeat_interval_seconds if heartbeat_interval_seconds is not None
             else self.DEFAULT_HEARTBEAT_INTERVAL_SECONDS)
+        workspace_root = Path(os.environ.get(
+            "NEXUS_LOCAL_AGENT_WORKSPACE",
+            str(Path(project_root) / ".nexus" / "bridge_workspaces")))
+        # `handler` remains the canonical coding handler attribute for
+        # backwards-compatible tests/diagnostics; `handlers` adds only an
+        # allowlisted action resolver, never a generic execution surface.
         self.handler = FreeCodingWorkerHandler(
-            project_root=project_root,
-            workspace_root=Path(os.environ.get("NEXUS_LOCAL_AGENT_WORKSPACE",
-                                               str(Path(project_root) / ".nexus" /
-                                                   "bridge_workspaces"))))
+            project_root=project_root, workspace_root=workspace_root)
+        self.handlers = {
+            "conversational_programming": self.handler,
+            "repo_inspection_v1": BoundedLocalTaskHandler(project_root=project_root),
+        }
         self.running = True
 
     def _request(self, path, payload):
@@ -83,11 +91,12 @@ class BridgeClient:
 
     def heartbeat(self, status="ONLINE"):
         return self._request("/api/jarvis/local-bridge/heartbeat", {
-            "status": status, "capabilities": ["complex_code_change"]})
+            "status": status,
+            "capabilities": ["complex_code_change", "bounded_read_only_analysis"]})
 
     def claim(self):
         return self._request("/api/jarvis/local-bridge/claim", {
-            "capabilities": ["complex_code_change"]}).get("job")
+            "capabilities": ["complex_code_change", "bounded_read_only_analysis"]}).get("job")
 
     def renew(self, task_id, lease_token):
         return self._request("/api/jarvis/local-bridge/renew", {
@@ -131,7 +140,15 @@ class BridgeClient:
                 return self._request("/api/jarvis/local-bridge/failure", {
                     "task_id": task_id, "lease_token": lease["token"],
                     "failure_class": "LOCAL_MODEL_UNAVAILABLE"})
-            verified = self.handler.verify(job["task_record"], call["response_text"])
+            action = job["task_record"].get("action")
+            if not action and job.get("capability") == "complex_code_change":
+                action = "conversational_programming"
+            handler = self.handlers.get(action)
+            if handler is None:
+                return self._request("/api/jarvis/local-bridge/failure", {
+                    "task_id": task_id, "lease_token": lease["token"],
+                    "failure_class": "UNAUTHORIZED_BRIDGE_ACTION"})
+            verified = handler.verify(job["task_record"], call["response_text"])
             if not verified.passed:
                 return self._request("/api/jarvis/local-bridge/failure", {
                     "task_id": task_id, "lease_token": lease["token"],
@@ -140,7 +157,8 @@ class BridgeClient:
             # Only bounded evidence is returned. Workspace absolute paths and model
             # prompts are never logged or included in the public RESULT_PACKET.
             verification = {"passed": True, "model": call["model"],
-                            "test_results": parsed.get("test_results") or []}
+                            "test_results": parsed.get("test_results") or [],
+                            "handler": action}
             return self._request("/api/jarvis/local-bridge/result", {
                 "task_id": task_id, "lease_token": lease["token"],
                 "result_id": f"result:{task_id}:{lease['token'][:12]}",

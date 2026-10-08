@@ -163,6 +163,22 @@ class MultiStageExecutor:
         if state in {"ESCALATION_REQUIRED", "WAITING_PROVIDER", "WAITING_REVIEW_PROVIDER"}:
             escalation = dict(child.get("escalation") or {})
             classification = escalation.get("classification") or "PROVIDER_ESCALATION_REQUIRED"
+            bridge = getattr(self.orchestrator, "local_bridge", None)
+            if (current.get("state") == "WAITING_CONTEXT" and
+                    classification == "LOCAL_BRIDGE_OFFLINE" and bridge is not None and
+                    bridge.can_execute(child)):
+                current["state"] = "RUNNING"
+                current["resumed_at"] = _now()
+                current.pop("wait_reason", None)
+                self.queue.annotate(parent["task_id"], multi_stage_execution=plan)
+                self.queue.transition(child_id, "QUEUED", escalation=None,
+                                      dispatch_last_error=None)
+                self.ledger.append("TASK_RESUMED", parent["task_id"],
+                                   {"step_id": current["step_id"],
+                                    "child_task_id": child_id,
+                                    "reason": "LOCAL_BRIDGE_ONLINE"},
+                                   actor="multi_stage_executor_v1")
+                return None
             target = escalation.get("target")
             premium_allowed = bool(parent.get("manifest", {}).get("premium_allowed"))
             premium_targets = {"CLAUDE", "CODEX", "OPENAI", "TIER3_CLAUDE", "TIER4_CODEX"}

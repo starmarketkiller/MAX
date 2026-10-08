@@ -264,7 +264,7 @@ class Orchestrator:
 
                 self.ledger.append("TASK_COMPLETED", task_id, {"handler": record["action"]})
                 confidence, signals = compute_confidence(
-                    verifier_ran=True, verifier_passed=True, tests_ran=True, tests_passed=1,
+                    verifier_ran=True, verifier_passed=True, tests_ran=False, tests_passed=0,
                     tests_failed=0, expected_artifacts=record["manifest"]["expected_artifacts"],
                     artifacts_created=apply_result.artifacts_created, schema_valid=True,
                     provenance_ok=True, contradicts_canonical=False)
@@ -272,8 +272,8 @@ class Orchestrator:
                     task_id=task_id, executor=decision.executor, start_time=start,
                     end_time=now_iso(), files_read=[], files_changed=apply_result.files_changed,
                     tools_or_commands=["ollama:" + call["model"]],
-                    artifacts_created=apply_result.artifacts_created, tests_ran=True,
-                    tests_passed=1, tests_failed=0, verifier_ran=True, verifier_passed=True,
+                    artifacts_created=apply_result.artifacts_created, tests_ran=False,
+                    tests_passed=0, tests_failed=0, verifier_ran=True, verifier_passed=True,
                     verifier_errors=[], commit=None, push_status="NOT_APPLICABLE",
                     decision="COMPLETED", confidence=confidence, limitations=[],
                     unresolved_issues=[], suggested_next_tasks=[], escalation_needed=False)
@@ -319,13 +319,39 @@ class Orchestrator:
         if record["state"] != "WAITING_PROVIDER":
             raise AssertionError("local bridge result requires WAITING_PROVIDER")
         handler = self.local_handlers.get(record.get("action"))
-        if handler is None or not hasattr(handler, "verify_bridge_submission"):
+        if handler is None:
             raise AssertionError("local bridge handler unavailable")
-        verified = handler.verify_bridge_submission(record, response_text, verification)
+        if hasattr(handler, "verify_bridge_submission"):
+            verified = handler.verify_bridge_submission(record, response_text, verification)
+        else:
+            if not isinstance(verification, dict) or verification.get("passed") is not True:
+                raise AssertionError("local bridge verifier receipt rejected")
+            verified = handler.verify(record, response_text)
         if not verified.passed:
             raise AssertionError("local bridge verifier receipt rejected: " +
                                  "; ".join(verified.errors))
         parsed = verified.parsed_output
+        if not hasattr(handler, "verify_bridge_submission"):
+            apply_result = handler.apply(record, verified)
+            if apply_result.touches_real_repo_files:
+                raise AssertionError("generic bridge result cannot mutate repository files")
+            packet = build_result_packet(
+                task_id=task_id, executor=executor,
+                start_time=record.get("started_at") or now_iso(), end_time=now_iso(),
+                files_read=[], files_changed=[],
+                tools_or_commands=["local_agent_bridge_v1", "ollama:" +
+                                   str(verification.get("model") or "local")],
+                artifacts_created=apply_result.artifacts_created, tests_ran=True,
+                tests_passed=1, tests_failed=0, verifier_ran=True, verifier_passed=True,
+                verifier_errors=[], commit=None, push_status="NOT_APPLICABLE",
+                decision="COMPLETED", confidence="MEDIUM", limitations=[],
+                unresolved_issues=[], suggested_next_tasks=[], escalation_needed=False)
+            self.ledger.append("TASK_COMPLETED", task_id,
+                               {"handler": record["action"], "bridge_id": bridge_id})
+            self.queue.transition(task_id, "COMPLETED", result_packet=packet,
+                                  local_bridge={"status": "COMPLETED", "bridge_id": bridge_id,
+                                                "verification": "PASSED"})
+            return self.queue.get(task_id)
         tests = parsed.get("test_results") or []
         artifacts = [f"local-bridge://{bridge_id}/{task_id}"] + [
             item["path"] for item in parsed["changes"]]

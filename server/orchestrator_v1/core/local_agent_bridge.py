@@ -25,6 +25,12 @@ def _iso(now=None):
 
 class LocalAgentBridgeV1:
     CAPABILITY = "complex_code_change"
+    READ_ONLY_CAPABILITY = "bounded_read_only_analysis"
+    CAPABILITIES = {CAPABILITY, READ_ONLY_CAPABILITY}
+    ACTION_CAPABILITIES = {
+        "conversational_programming": CAPABILITY,
+        "repo_inspection_v1": READ_ONLY_CAPABILITY,
+    }
     MAX_ATTEMPTS = 2  # initial execution plus one bounded retry
 
     # LOCAL_BRIDGE_REWORK_REDISPATCH_FIX_V1: the complete set of values ever
@@ -118,7 +124,7 @@ class LocalAgentBridgeV1:
             self._requests[bridge_id] = window
 
     def heartbeat(self, bridge_id, capabilities, status="ONLINE"):
-        allowed = sorted(set(capabilities or []) & {self.CAPABILITY})
+        allowed = sorted(set(capabilities or []) & self.CAPABILITIES)
         with self._lock:
             data = self._load()
             data["bridges"][bridge_id] = {
@@ -148,16 +154,21 @@ class LocalAgentBridgeV1:
                         {"bridge_id": bridge_id, "status": "OFFLINE", "capabilities": []})
         return {"configured": self.configured, "count": len(items), "items": items}
 
-    def _eligible_bridge_exists(self):
+    def _eligible_bridge_exists(self, capability=None):
+        capability = capability or self.CAPABILITY
         return any(item["status"] in ("ONLINE", "DEGRADED") and
-                   self.CAPABILITY in item["capabilities"]
+                   capability in item["capabilities"]
                    for item in self.status()["items"])
+
+    def can_execute(self, task_record):
+        """Read-only capability probe used by recovery; routing remains in Core."""
+        capability = self.ACTION_CAPABILITIES.get(task_record.get("action"))
+        return bool(self.configured and capability and self._eligible_bridge_exists(capability))
 
     def dispatch(self, task_record, decision, handler):
         """Queue an already-routed local job; return False when no bridge can execute it."""
-        if not self.configured or not self._eligible_bridge_exists():
-            return False
-        if task_record.get("action") != "conversational_programming":
+        capability = self.ACTION_CAPABILITIES.get(task_record.get("action"))
+        if not capability or not self.configured or not self._eligible_bridge_exists(capability):
             return False
         prompt = handler.build_prompt(task_record)
         client_record = {key: task_record.get(key) for key in
@@ -169,7 +180,7 @@ class LocalAgentBridgeV1:
                 return True
             data["jobs"][task_record["task_id"]] = {
                 "job_id": f"lab_{uuid.uuid4().hex[:16]}", "task_id": task_record["task_id"],
-                "status": "QUEUED", "capability": self.CAPABILITY,
+                "status": "QUEUED", "capability": capability,
                 "executor": decision.executor, "model": decision.agent["model_or_runtime"].split(" ")[0],
                 "prompt": prompt, "task_record": client_record, "attempts": 0,
                 "lease": None, "created_at": _iso(), "updated_at": _iso(),
@@ -177,16 +188,16 @@ class LocalAgentBridgeV1:
             }
             self._save(data)
         self.queue.transition(task_record["task_id"], "WAITING_PROVIDER",
-                              local_bridge={"status": "QUEUED", "capability": self.CAPABILITY})
+                              local_bridge={"status": "QUEUED", "capability": capability})
         self.ledger.append("TASK_QUEUED", task_record["task_id"],
-                           {"queue": "local_agent_bridge_v1", "capability": self.CAPABILITY,
+                           {"queue": "local_agent_bridge_v1", "capability": capability,
                             "executor": decision.executor},
                            actor="local_agent_bridge_v1")
         return True
 
     def claim(self, bridge_id, capabilities):
-        offered = set(capabilities or []) & {self.CAPABILITY}
-        if self.CAPABILITY not in offered:
+        offered = set(capabilities or []) & self.CAPABILITIES
+        if not offered:
             return None
         if self.status(bridge_id)["status"] == "OFFLINE":
             return None

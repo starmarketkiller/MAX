@@ -7,6 +7,7 @@ from jarvis_v1.local_operations import (
 )
 from jarvis_v1.service import JarvisService
 from jarvis_v1.multi_stage_executor import MultiStageExecutor
+from orchestrator_v1.core.local_agent_bridge import LocalAgentBridgeV1
 from nxs_schema_validator import validate
 
 
@@ -310,6 +311,33 @@ def test_authorized_resume_continues_same_child_and_final_delivery_is_once(monke
     completed = [item for item in notifications if item["event_type"] == "TASK_COMPLETED"]
     assert len(completed) == 1
     assert "2 step verificati" in completed[0]["summary"]
+
+
+def test_online_bridge_resumes_waiting_context_same_child(tmp_path):
+    service = JarvisService(queue_path=tmp_path / "queue.json", ledger_path=tmp_path / "ledger.jsonl",
+                            conversation_path=tmp_path / "conversations.json")
+    bridge = LocalAgentBridgeV1(service.orchestrator, state_path=tmp_path / "bridge.json",
+                                secret="s" * 48)
+    service.orchestrator.set_local_bridge(bridge)
+    executor = MultiStageExecutor(service.orchestrator)
+    parent_id = executor.submit(objective="analizza revenue e produci due verifiche indipendenti",
+                                created_by="test", conversation_id="c", premium_allowed=False)
+    executor.run_once()
+    parent = service.queue.get(parent_id)
+    child_id = parent["multi_stage_execution"]["steps"][0]["child_task_id"]
+    service.orchestrator.process_task(child_id)
+    executor.run_once()
+    assert service.queue.get(parent_id)["multi_stage_execution"]["steps"][0]["state"] == \
+        "WAITING_CONTEXT"
+
+    bridge.heartbeat("pc-1", ["bounded_read_only_analysis"])
+    executor.run_once()
+    resumed = service.queue.get(parent_id)
+    assert resumed["multi_stage_execution"]["steps"][0]["child_task_id"] == child_id
+    assert resumed["multi_stage_execution"]["steps"][0]["state"] == "RUNNING"
+    assert service.queue.get(child_id)["state"] == "QUEUED"
+    assert any(event["event_type"] == "TASK_RESUMED"
+               for event in service.ledger.read_for_task(parent_id))
 
 
 def test_simple_mistral_stays_sync(monkeypatch, tmp_path):

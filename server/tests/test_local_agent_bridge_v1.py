@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 import app as backend
 from jarvis_v1.free_coding_worker import FreeCodingWorkerHandler
+from jarvis_v1.local_bounded_task_handler import BoundedLocalTaskHandler
 from orchestrator_v1.core.local_agent_bridge import LocalAgentBridgeV1
 from orchestrator_v1.core.orchestrator import Orchestrator
 from orchestrator_v1.core.provider_connector import MockProviderAdapter, ProviderConnectorV1
@@ -167,6 +168,37 @@ def test_success_is_idempotent_result_packet_and_waits_for_approval(tmp_path):
     with pytest.raises(PermissionError, match="different payload"):
         bridge.submit_result(task_id, "pc-1", "ignored", "result-1",
                              response + " ", verification)
+
+
+def test_read_only_analysis_uses_distinct_capability_and_completes_without_approval(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    orch = Orchestrator(tmp_path / "queue.json", tmp_path / "ledger.jsonl")
+    orch.register_local_handler("repo_inspection_v1",
+                                BoundedLocalTaskHandler(project_root=project))
+    bridge = LocalAgentBridgeV1(orch, state_path=tmp_path / "bridge.json", secret=SECRET)
+    orch.set_local_bridge(bridge)
+    bridge.heartbeat("pc-1", ["complex_code_change", "bounded_read_only_analysis"])
+    task_manifest = manifest(
+        task_id="TASK_READ_ONLY", title="Read-only inspection", objective="Summarize state",
+        task_type="MAINTENANCE", work_type="routine_summary", code_risk="NONE",
+        required_capabilities=["summaries"], files_allowed=[],
+        success_criteria=["bounded summary verified"], verifier="bounded_local_task_handler_v1")
+    orch.submit(task_manifest, action="repo_inspection_v1",
+                action_params={"template_id": "repo_inspection_v1", "goal": "Summarize state",
+                               "relevant_paths": []})
+    queued = orch.process_task(task_manifest["task_id"])
+    assert queued["state"] == "WAITING_PROVIDER"
+    claim = bridge.claim("pc-1", ["bounded_read_only_analysis"])
+    assert claim["capability"] == "bounded_read_only_analysis"
+    response = json.dumps({"summary": "State checked.", "findings": [], "risks": []})
+    completed = bridge.submit_result(
+        task_manifest["task_id"], "pc-1", claim["lease"]["token"], "read-only-result",
+        response, {"passed": True, "model": "ministral-3:3b", "test_results": [],
+                   "handler": "repo_inspection_v1"})
+    assert completed["state"] == "COMPLETED"
+    assert completed["result_packet"]["decision"] == "COMPLETED"
+    assert completed.get("proposed_patch") is None
 
 
 def test_retry_is_bounded_to_one_and_completed_task_cannot_be_reclaimed(tmp_path):
