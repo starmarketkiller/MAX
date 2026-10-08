@@ -4,7 +4,7 @@ domain: system
 status: active
 tags: [jarvis, nexus, stato]
 created: 2026-10-05
-updated: 2026-10-05
+updated: 2026-10-08
 ---
 
 # CURRENT_STATE — dove siamo (2026-10-05)
@@ -31,6 +31,13 @@ updated: 2026-10-05
   business, vedi **[[MOC - Opportunity and Funding]]**.
 - **[[NEXUS TASK 0010 - First Revenue Execution V1 (Codex)]]** (`01e6180`) —
   bookkeeping Offer/Lead/Payment/Revenue, nessuna automazione autonoma.
+- **[[NEXUS - Masterplan V4]]** (2026-10-08, branch `docs/nexus-masterplan-v4`,
+  **non ancora mergiato su main** — in attesa di review) — canonicalizzazione
+  documentation-only dei 7 reparti (Trading/Revenue/AI Fashion Agency/
+  Social-Content/System&Dev/Finance&Cost/Jarvis&Automation) contro il codice
+  reale: 13 documenti in `docs/`, nessuna modifica a executor/dispatcher/
+  bridge/CI. Gap principale trovato: self-improvement locale PLANNED in
+  tutti i 7 reparti, nessun Global Improvement Council esiste.
 - Audit di conoscenza: `NEXUS_KNOWLEDGE_CONSOLIDATION_AUDIT_V1` +
   `HEAVY_SESSION_SPOT_CHECK_V1` — 9/9 milestone campionate su 3 sessioni
   pesanti risultano `FULLY_CAPTURED` nel vault, nessun buco sistemico

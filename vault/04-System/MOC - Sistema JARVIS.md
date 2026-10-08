@@ -19,6 +19,11 @@ updated: 2026-10-05
 > **[[CURRENT_STATE]]**. La sezione storica sotto resta per memoria del
 > ragionamento originale, non riscritta.
 
+> **Aggiornamento 2026-10-08:** i 7 reparti (Trading/Revenue/AI Fashion
+> Agency/Social-Content/System&Dev/Finance&Cost/Jarvis&Automation) hanno
+> ora un Masterplan canonico con stato reale verificato per ciascuno —
+> vedi **[[NEXUS - Masterplan V4]]**.
+
 ## I tre bracci (piano originale, luglio 2026 — storico)
 
 ### 🧠 Obsidian (memoria)
