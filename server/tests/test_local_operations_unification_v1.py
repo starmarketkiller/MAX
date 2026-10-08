@@ -206,6 +206,112 @@ def test_child_waiting_approval_is_visible_on_parent(tmp_path):
     assert parent["state"] == "WAITING_PROVIDER"
 
 
+def _escalate_first_child(service, executor, parent_id, *, classification="LOCAL_BRIDGE_OFFLINE",
+                          target="TIER3_CLAUDE"):
+    executor.run_once()
+    parent = service.queue.get(parent_id)
+    child_id = next(s["child_task_id"] for s in parent["multi_stage_execution"]["steps"]
+                    if s["state"] == "RUNNING")
+    service.queue.transition(child_id, "RUNNING")
+    service.queue.transition(child_id, "ESCALATION_REQUIRED",
+                             escalation={"classification": classification, "target": target})
+    return child_id
+
+
+def test_wait_state_notification_is_persistent_and_poll_idempotent(tmp_path):
+    service = JarvisService(queue_path=tmp_path / "queue.json", ledger_path=tmp_path / "ledger.jsonl",
+                            conversation_path=tmp_path / "conversations.json")
+    notifications = []
+    executor = MultiStageExecutor(service.orchestrator, notification_sink=notifications.append)
+    parent_id = executor.submit(objective="analizza revenue e produci due verifiche indipendenti",
+                                created_by="test", conversation_id="c", premium_allowed=True)
+    _escalate_first_child(service, executor, parent_id)
+    for _ in range(100):
+        executor.run_once()
+    escalations = [item for item in notifications if item["event_type"] == "TASK_ESCALATED"]
+    assert len(escalations) == 1
+    assert escalations[0]["status"] == "WAITING_FOR_PREMIUM"
+    ledger_events = [event for event in service.ledger.read_all()
+                     if event["event_type"] == "TASK_ESCALATED" and event["task_id"] == parent_id]
+    assert len(ledger_events) == 1
+
+    restarted_notifications = []
+    restarted = MultiStageExecutor(service.orchestrator,
+                                   notification_sink=restarted_notifications.append)
+    for _ in range(10):
+        restarted.run_once()
+    assert restarted_notifications == []
+
+
+def test_local_resource_failure_is_waiting_context_without_false_premium(tmp_path):
+    service = JarvisService(queue_path=tmp_path / "queue.json", ledger_path=tmp_path / "ledger.jsonl",
+                            conversation_path=tmp_path / "conversations.json")
+    notifications = []
+    executor = MultiStageExecutor(service.orchestrator, notification_sink=notifications.append)
+    parent_id = executor.submit(objective="analizza revenue e produci due verifiche indipendenti",
+                                created_by="test", conversation_id="c", premium_allowed=False)
+    _escalate_first_child(service, executor, parent_id)
+    executor.run_once()
+    parent = service.queue.get(parent_id)
+    step = parent["multi_stage_execution"]["steps"][0]
+    assert step["state"] == "WAITING_CONTEXT"
+    assert step["wait_reason"]["classification"] == "LOCAL_BRIDGE_OFFLINE"
+    assert step["wait_reason"]["premium_allowed"] is False
+    assert notifications[-1]["status"] == "WAITING_CONTEXT"
+    assert "Nessuna chiamata premium" in notifications[-1]["summary"]
+
+
+def test_distinct_wait_transitions_each_notify_once(tmp_path):
+    service = JarvisService(queue_path=tmp_path / "queue.json", ledger_path=tmp_path / "ledger.jsonl",
+                            conversation_path=tmp_path / "conversations.json")
+    notifications = []
+    executor = MultiStageExecutor(service.orchestrator, notification_sink=notifications.append)
+    parent_id = executor.submit(objective="analizza revenue e produci due verifiche indipendenti",
+                                created_by="test", conversation_id="c", premium_allowed=True)
+    child_id = _escalate_first_child(service, executor, parent_id)
+    executor.run_once()
+    service.queue.transition(child_id, "ESCALATION_REQUIRED",
+                             escalation={"classification": "RATE_LIMITED", "target": "CODEX"})
+    executor.run_once()
+    escalations = [item for item in notifications if item["event_type"] == "TASK_ESCALATED"]
+    assert len(escalations) == 2
+    assert {item["details"]["reason"]["classification"] for item in escalations} == {
+        "LOCAL_BRIDGE_OFFLINE", "RATE_LIMITED"}
+
+
+def test_authorized_resume_continues_same_child_and_final_delivery_is_once(monkeypatch, tmp_path):
+    service = JarvisService(queue_path=tmp_path / "queue.json", ledger_path=tmp_path / "ledger.jsonl",
+                            conversation_path=tmp_path / "conversations.json")
+    notifications = []
+    executor = MultiStageExecutor(service.orchestrator, notification_sink=notifications.append)
+    parent_id = executor.submit(objective="analizza revenue e produci due verifiche indipendenti",
+                                created_by="test", conversation_id="c", premium_allowed=False)
+    child_id = _escalate_first_child(service, executor, parent_id)
+    executor.run_once()
+    assert service.queue.get(parent_id)["multi_stage_execution"]["steps"][0]["state"] == \
+        "WAITING_CONTEXT"
+
+    monkeypatch.setattr("core.ollama_worker.call_local_model", lambda *a, **k: {
+        "success": True, "response_text": json.dumps({
+            "summary": "Stato verificato.", "findings": ["Nessuna azione esterna."], "risks": []}),
+        "error": None, "model": "ministral-3:3b", "wall_seconds": .1})
+    service.queue.transition(child_id, "QUEUED")
+    service.orchestrator.process_task(child_id)
+    executor.run_once()
+    parent = service.queue.get(parent_id)
+    assert parent["multi_stage_execution"]["steps"][0]["state"] == "VERIFIED"
+    second_child = parent["multi_stage_execution"]["steps"][1]["child_task_id"]
+    assert second_child != child_id
+    service.orchestrator.process_task(second_child)
+    executor.run_once()
+    for _ in range(20):
+        executor.run_once()
+    assert service.queue.get(parent_id)["state"] == "COMPLETED"
+    completed = [item for item in notifications if item["event_type"] == "TASK_COMPLETED"]
+    assert len(completed) == 1
+    assert "2 step verificati" in completed[0]["summary"]
+
+
 def test_simple_mistral_stays_sync(monkeypatch, tmp_path):
     service = JarvisService(queue_path=tmp_path / "queue.json", ledger_path=tmp_path / "ledger.jsonl",
                             conversation_path=tmp_path / "conversations.json")

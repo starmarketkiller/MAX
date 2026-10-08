@@ -191,6 +191,30 @@ class TaskQueue:
             self._save(data)
             return record
 
+    def record_delivery_once(self, task_id, delivery_key, *, metadata=None):
+        """Persist an outbound-delivery key exactly once.
+
+        The check and write deliberately share the queue lock so polling loops,
+        concurrent callbacks, and process restarts cannot turn one durable state
+        transition into repeated user notifications.  This records delivery
+        intent, not a secret or provider payload.
+        """
+        with self._lock:
+            data = self._load()
+            record = data[task_id]
+            deliveries = dict(record.get("notification_deliveries") or {})
+            if delivery_key in deliveries:
+                return False
+            deliveries[delivery_key] = {
+                "recorded_at": _now_iso(),
+                "metadata": dict(metadata or {}),
+            }
+            record["notification_deliveries"] = deliveries
+            record["updated_at"] = _now_iso()
+            data[task_id] = record
+            self._save(data)
+            return True
+
     def try_promote(self, task_id):
         """Se un task e' WAITING_DEPENDENCY e tutte le sue dependencies sono
         ora COMPLETED, lo promuove a QUEUED. Necessario perche' un task puo'

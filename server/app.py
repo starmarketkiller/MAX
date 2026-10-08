@@ -1529,12 +1529,13 @@ JARVIS_SERVICE.set_operations_projection(JARVIS_OPERATIONS, JARVIS_CAPABILITY_RE
 
 def _operations_jarvis_sink(response):
     event_type = response.get("event_type") or "REVENUE_JARVIS_EVENT"
+    source_details = dict(response.get("details") or {})
     for chat_id in sorted(JARVIS_TELEGRAM.allowed_users):
         _jarvis_proactive_notify(chat_id, {
             "response_type": "TASK_STATUS", "summary": response.get("summary") or event_type,
             "task_id": response.get("task_id"), "status": response.get("status"),
             "priority": "IMPORTANT" if event_type != "TASK_STARTED" else "INFO",
-            "details": {"event_type": event_type}, "actions": [],
+            "details": {**source_details, "event_type": event_type}, "actions": [],
             "generated_by": "multi_stage_executor_v1"})
 
 

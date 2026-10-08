@@ -7,6 +7,8 @@ TaskQueue annotations, so a process restart can resume by polling child state.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import threading
 from datetime import datetime, timezone
 
@@ -151,14 +153,35 @@ class MultiStageExecutor:
         if state == "WAITING_APPROVAL":
             current["state"] = "WAITING_APPROVAL"
             self.queue.annotate(parent["task_id"], multi_stage_execution=plan)
-            return self._wait_parent(parent, "WAITING_APPROVAL", "TASK_WAITING_APPROVAL")
+            return self._wait_parent(parent, plan, current, "WAITING_APPROVAL",
+                                     "TASK_WAITING_APPROVAL",
+                                     reason={"classification": "APPROVAL_REQUIRED",
+                                             "required_intervention": "USER_APPROVAL"})
         if state == "WAITING_PROVIDER" and not child.get("escalation"):
             # Normal Local Agent Bridge lease/execution, not a premium wait.
             return None
         if state in {"ESCALATION_REQUIRED", "WAITING_PROVIDER", "WAITING_REVIEW_PROVIDER"}:
-            current["state"] = "WAITING_FOR_PREMIUM"
+            escalation = dict(child.get("escalation") or {})
+            classification = escalation.get("classification") or "PROVIDER_ESCALATION_REQUIRED"
+            target = escalation.get("target")
+            premium_allowed = bool(parent.get("manifest", {}).get("premium_allowed"))
+            premium_targets = {"CLAUDE", "CODEX", "OPENAI", "TIER3_CLAUDE", "TIER4_CODEX"}
+            is_premium_wait = premium_allowed and target in premium_targets
+            step_state = "WAITING_FOR_PREMIUM" if is_premium_wait else "WAITING_CONTEXT"
+            intervention = ("AUTHORIZE_PREMIUM" if is_premium_wait
+                            else "RESTORE_OR_PROVIDE_AUTHORIZED_LOCAL_CAPABILITY")
+            reason = {
+                "classification": classification,
+                "target": target,
+                "premium_allowed": premium_allowed,
+                "required_intervention": intervention,
+                "child_state": state,
+            }
+            current["state"] = step_state
+            current["wait_reason"] = reason
             self.queue.annotate(parent["task_id"], multi_stage_execution=plan)
-            return self._wait_parent(parent, "WAITING_FOR_PREMIUM", "TASK_ESCALATED")
+            return self._wait_parent(parent, plan, current, step_state, "TASK_ESCALATED",
+                                     reason=reason)
         if state in {"FAILED", "BLOCKED", "CANCELLED"}:
             current["state"] = "FAILED" if state == "FAILED" else "BLOCKED"
             return self._block_parent(parent, plan, f"CHILD_{state}")
@@ -210,11 +233,36 @@ class MultiStageExecutor:
                                 "status": "COMPLETED",
                                 "summary": f"{parent['task_id']} completata: {len(plan['steps'])} step verificati."})
 
-    def _wait_parent(self, parent, step_state, event_type):
-        self.ledger.append(event_type, parent["task_id"], {"step_state": step_state},
+    def _wait_parent(self, parent, plan, step, step_state, event_type, *, reason):
+        transition = {
+            "event_type": event_type,
+            "step_id": step.get("step_id"),
+            "step_state": step_state,
+            "child_task_id": step.get("child_task_id"),
+            "reason": reason,
+        }
+        canonical = json.dumps(transition, sort_keys=True, separators=(",", ":"),
+                               ensure_ascii=True)
+        delivery_key = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        if not self.queue.record_delivery_once(parent["task_id"], delivery_key,
+                                               metadata=transition):
+            return None
+        self.ledger.append(event_type, parent["task_id"], transition,
                            actor="multi_stage_executor_v1")
+        classification = reason.get("classification") or "UNKNOWN"
+        intervention = reason.get("required_intervention") or "REVIEW_TASK"
+        if step_state == "WAITING_CONTEXT":
+            summary = (f"{parent['task_id']} in attesa di una risorsa locale autorizzata. "
+                       f"Motivo: {classification}. Intervento: {intervention}. "
+                       "Nessuna chiamata premium eseguita.")
+        elif step_state == "WAITING_FOR_PREMIUM":
+            summary = (f"{parent['task_id']} richiede autorizzazione premium. "
+                       f"Motivo: {classification}. Target: {reason.get('target') or 'UNKNOWN'}.")
+        else:
+            summary = f"{parent['task_id']}: {step_state}. Motivo: {classification}."
         self.notification_sink({"event_type": event_type, "task_id": parent["task_id"],
-                                "status": step_state, "summary": f"{parent['task_id']}: {step_state}."})
+                                "status": step_state, "summary": summary,
+                                "details": transition})
 
     def _block_parent(self, parent, plan, reason):
         self.queue.transition(parent["task_id"], "BLOCKED", multi_stage_execution=plan,
