@@ -46,7 +46,7 @@ import platform
 import subprocess
 import time
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Dict, Optional
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -115,7 +115,27 @@ def _resolve_data_dir(cfg: Dict[str, Any]) -> str:
         raise IdentityMismatch(
             "mql5_experts non configurato: impossibile risolvere la data directory del terminale"
         )
+    # A bridge configuration may be validated in a Linux CI process while
+    # describing the Windows host on which MT5 runs.  Path.resolve() on POSIX
+    # treats ``C:\\...`` as a relative POSIX path and destroys the declared
+    # identity.  Preserve Windows path semantics without touching the host FS.
+    if _looks_like_windows_path(experts):
+        return str(PureWindowsPath(experts).parent.parent)
     return str(Path(experts).resolve().parent.parent)
+
+
+def _looks_like_windows_path(value: str) -> bool:
+    """Return whether *value* is an absolute drive/UNC Windows path."""
+    path = PureWindowsPath(value)
+    return bool(path.drive and path.root)
+
+
+def _resolve_declared_terminal_path(value: str) -> str:
+    """Resolve native paths but preserve a declared remote Windows identity."""
+    if _looks_like_windows_path(value):
+        return str(PureWindowsPath(value))
+    path = Path(value)
+    return str(path.resolve()) if path.exists() else value
 
 
 def resolve_and_verify(cfg: Dict[str, Any], action: str) -> VerifiedIdentity:
@@ -138,8 +158,7 @@ def resolve_and_verify(cfg: Dict[str, Any], action: str) -> VerifiedIdentity:
     terminal_path_raw = str(cfg.get("mt5_path") or "")
     if not terminal_path_raw:
         raise IdentityMismatch("mt5_path non configurato")
-    terminal_path = (str(Path(terminal_path_raw).resolve())
-                     if Path(terminal_path_raw).exists() else terminal_path_raw)
+    terminal_path = _resolve_declared_terminal_path(terminal_path_raw)
 
     expected_path_sub = profile.get("expected_terminal_path_substring")
     if expected_path_sub and expected_path_sub.lower() not in terminal_path.lower():

@@ -1,0 +1,5 @@
+# Scientific artifacts whose frozen SHA-256 covers their exact CRLF bytes.
+# They are data, not source text: checkout must never rewrite line endings.
+server/research_datasets/market_state_v1/market_state_dataset_v1.csv binary
+server/research_datasets/market_state_v1/xauusd_h4_bars.csv binary
+server/research_scripts/contextual_edge_phase1/macd_selection_manifest_v1.json binary

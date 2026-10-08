@@ -75,6 +75,13 @@ def test_tester_profile_correct():
     assert "MT5-Tester" in identity.terminal_path
 
 
+def test_windows_identity_paths_keep_windows_semantics_on_any_host():
+    identity = guard.resolve_and_verify(LIVE_CFG, "ping")
+    assert identity.terminal_path == r"C:\Program Files\MetaTrader 5\terminal64.exe"
+    assert identity.data_dir == r"C:\Users\x\AppData\Roaming\MetaQuotes\Terminal\D0E8209F"
+    assert not identity.data_dir.startswith(str(Path.cwd()))
+
+
 def test_terminal_path_mismatch():
     bad_cfg = dict(LIVE_CFG, mt5_path=r"C:\MT5-Tester\terminal64.exe")
     with pytest.raises(guard.IdentityMismatch, match="mismatch di identita'"):
