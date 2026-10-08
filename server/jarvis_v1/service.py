@@ -39,6 +39,7 @@ from . import ministral_task_compiler
 from . import task_handoff
 from . import vault_context
 from .local_operations import is_complex_mistral_request
+from .task_result_view import build_task_result
 
 # JARVIS_MINISTRAL_ROUTER_V1 - OFF by default everywhere; flipping ENABLED
 # to true with MODE still SHADOW costs nothing but a background ledger
@@ -95,6 +96,11 @@ _NOTIFICATION_PREF_RE = re.compile(
 _PROVIDER_PREF_RE = re.compile(
     r"\b(falla controllare da|fammi fare (?:la )?review da|usa (?:groq|codex|claude|locale)|"
     r"non usare premium|niente premium|solo locale|premium solo se serve)\b", re.I)
+_TASK_RESULT_RE = re.compile(
+    r"\b(mostrami|fammi vedere|apri|qual[ei]|cosa)\b.{0,35}\b(risultat\w*|artifact\w*|"
+    r"report|output|step verificat\w*|prodotto)\b|"
+    r"\bqual[ei]\s+step\b.{0,25}\bverificat\w*\b|"
+    r"\bperch[eé]\b.{0,25}\b(completat\w*|finit\w*)\b", re.I)
 
 # JARVIS_EXECUTIVE_CONVERSATION_V4 --------------------------------------------
 # "l'ultima" (singular) / "approvale" (plural clitic) are deliberately NOT in
@@ -237,6 +243,8 @@ def classify(text: str, metadata: dict | None = None) -> str:
         return "COMMAND"
     if _TECHNICAL_VIEW_RE.search(value) and not is_programming_request(value):
         return "COMMAND"
+    if _TASK_RESULT_RE.search(value):
+        return "TASK_RESULT"
     if _NOTIFICATION_PREF_RE.search(value):
         return "NOTIFICATION_PREFERENCE"
     if _PROVIDER_PREF_RE.search(value):
@@ -487,6 +495,8 @@ class JarvisService:
             return self.create_task(message)
         if request_class == "FOLLOW_UP":
             return self.follow_up(message)
+        if request_class == "TASK_RESULT":
+            return self.task_result(message)
         if request_class in ("APPROVAL", "REJECTION"):
             return self.approval(message)
         if request_class == "COMMAND":
@@ -1151,6 +1161,8 @@ class JarvisService:
             if action != "TASK_STATUS":
                 meta["technical_details"] = True
             return self.follow_up(message)
+        if action == "TASK_RESULT":
+            return self.task_result(message)
         if action == "LIFECYCLE":
             return self.task_lifecycle(message)
         if action in ("APPROVE", "REJECT"):
@@ -1292,6 +1304,37 @@ class JarvisService:
         return self._response(message, "TASK_STATUS", summary, task_id=task_id,
                               status=record["state"], details=self._task_details(record, technical=technical),
                               actions=actions)
+
+    def task_result(self, message):
+        """Return persisted canonical output; never executes or regenerates work."""
+        task_id = self._resolve_task_id(message)
+        if not task_id:
+            return self._response(message, "ERROR", "Task context unavailable.",
+                                  status="RESULT_UNAVAILABLE", confidence="HIGH")
+        try:
+            record = self.queue.get(task_id)
+        except KeyError:
+            return self._response(message, "ERROR", f"Task {task_id} non trovata.",
+                                  task_id=task_id, status="RESULT_UNAVAILABLE", confidence="HIGH")
+        result = build_task_result(self.queue, record)
+        # Result retrieval is a read-only specialization of task status.  Reuse
+        # the canonical event instead of widening the event contract solely for
+        # a presentation view.
+        self.ledger.append("TASK_STATUS_REQUESTED", task_id,
+                           {"message_id": message["message_id"],
+                            "view": "TASK_RESULT",
+                            "result_status": result["result_status"]}, actor="jarvis_service")
+        self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
+                                       last_view="RESULT", user_id=str(message["user_id"]))
+        if result["result_status"] == "RESULT_UNAVAILABLE":
+            summary = (f"RESULT_UNAVAILABLE per {task_id}: "
+                       f"{result['unavailable_reason'] or 'motivo non disponibile'}.")
+            return self._response(message, "TASK_STATUS", summary, task_id=task_id,
+                                  status="RESULT_UNAVAILABLE", details=result, confidence="HIGH")
+        return self._response(message, "TASK_STATUS", result["summary"], task_id=task_id,
+                              status=record["state"], details=result,
+                              confidence=(record.get("result_packet") or {}).get(
+                                  "confidence", "UNKNOWN"))
 
     def command(self, message):
         text = (message.get("text") or "").strip()

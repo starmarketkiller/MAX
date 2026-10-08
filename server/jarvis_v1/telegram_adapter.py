@@ -67,7 +67,8 @@ class TelegramAdapter:
             code = parts[1]
             task_actions = {"TS": "TASK_STATUS", "TD": "TECHNICAL_DETAILS",
                             "DG": "DIAGNOSTICS", "LC": "LIFECYCLE",
-                            "AP": "APPROVE", "RJ": "REJECT", "RS": "RESUME"}
+                            "TR": "TASK_RESULT", "AP": "APPROVE", "RJ": "REJECT",
+                            "RS": "RESUME"}
             agent_actions = {"AD": "AGENT_DETAILS", "AC": "AGENT_CAPABILITIES",
                              "PS": "PROVIDER_STATUS"}
             if code in task_actions:
@@ -184,6 +185,9 @@ class TelegramAdapter:
                 {"text": "Lifecycle", "callback_data": f"J1|LC|{task_id}|0"},
                 {"text": "Diagnostica", "callback_data": f"J1|DG|{task_id}{suffix}"},
             ]]
+            if status == "COMPLETED":
+                rows.insert(0, [{"text": "Mostra risultato",
+                                 "callback_data": f"J1|TR|{task_id}|C"}])
             recovery = (details.get("recovery") or {}).get("classification")
             if status == "BLOCKED" and recovery == "ORPHANED_RUNNING_AFTER_RESTART":
                 rows.append([{"text": "Riprendi", "callback_data": f"J1|RS|{task_id}|B"}])
@@ -294,6 +298,31 @@ class TelegramAdapter:
                           f"Integrazione: {agent.get('integration_status') or 'UNKNOWN'}"])
             if details.get("view") != "PROVIDER_STATUS":
                 lines.extend(["", "Capabilities:", *[f"• {cap}" for cap in (agent.get("capabilities") or [])]])
+
+        elif details.get("view") == "TASK_RESULT":
+            lines = [summary, "", f"Stato: {details.get('state') or 'UNKNOWN'}"]
+            if details.get("objective"):
+                lines.append(f"Obiettivo: {details['objective']}")
+            lines.append(f"Verifier parent: {(details.get('verifier') or {}).get('passed')}")
+            for child in details.get("children") or []:
+                lines.extend(["", f"{child.get('task_id') or 'CHILD_NON_CREATA'} · "
+                              f"{child.get('state') or 'UNKNOWN'}",
+                              f"Capability logica: {child.get('required_capability') or 'UNKNOWN'}",
+                              f"Capability bridge: {child.get('transport_capability') or 'UNKNOWN'}",
+                              f"Worker: {child.get('worker') or 'UNKNOWN'}",
+                              f"Verifier: {(child.get('verifier') or {}).get('passed')}"])
+                output = child.get("output") or {}
+                if output.get("summary"):
+                    lines.append(f"Risultato: {output['summary']}")
+            evidence = details.get("evidence") or []
+            if evidence:
+                lines.extend(["", "Evidenze:", *[f"• {item.get('text')}" for item in evidence[:8]]])
+            if details.get("errors"):
+                lines.extend(["", "Errori:", *[f"• {item}" for item in details["errors"][:5]]])
+            if details.get("artifacts"):
+                lines.extend(["", "Artifact:", *[f"• {item}" for item in details["artifacts"][:8]]])
+            if details.get("next_steps"):
+                lines.extend(["", "Prossimi passi:", *[f"• {item}" for item in details["next_steps"][:5]]])
 
         elif response.get("task_id") and details.get("state"):
             lines.extend(["", f"Stato: {details.get('state')}"])

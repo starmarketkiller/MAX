@@ -16,6 +16,7 @@ from core.result_packet import build_result_packet
 from core.task_queue import new_task_id
 from . import ministral_task_compiler
 from .local_operations import build_execution_plan
+from .task_result_view import build_task_result
 
 
 def _now():
@@ -248,11 +249,18 @@ class MultiStageExecutor:
         plan["current_step"] = None
         self.queue.transition(parent["task_id"], "COMPLETED", result_packet=packet,
                               multi_stage_execution=plan)
+        completed_record = self.queue.get(parent["task_id"])
+        result_view = build_task_result(self.queue, completed_record)
         self.ledger.append("TASK_COMPLETED", parent["task_id"],
                            {"verified_steps": len(plan["steps"])}, actor="multi_stage_executor_v1")
+        concise = result_view.get("summary") or "Risultato non disponibile."
+        if len(concise) > 600:
+            concise = concise[:597].rstrip() + "..."
         self.notification_sink({"event_type": "TASK_COMPLETED", "task_id": parent["task_id"],
                                 "status": "COMPLETED",
-                                "summary": f"{parent['task_id']} completata: {len(plan['steps'])} step verificati."})
+                                "summary": (f"{parent['task_id']} completata: {len(plan['steps'])} "
+                                            f"step verificati. {concise}"),
+                                "details": result_view})
 
     def _wait_parent(self, parent, plan, step, step_state, event_type, *, reason):
         transition = {
