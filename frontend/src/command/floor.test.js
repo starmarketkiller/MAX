@@ -5,6 +5,8 @@ const { classifyResponse, isCurrent, LIVE_READS, MAX_CONCURRENCY, readLive } = r
 const { MARKER_REACHED, REVIEW_MARKER } = require("./marker");
 const { DEPARTMENTS, STATIONS, WORKFLOWS, stationById } = require("./stations");
 const { SKILLS, WORKERS } = require("./skills");
+const { layout, allowMotion } = require("./map");
+const { scriptAt, workerLoad, PHASES } = require("./script");
 const { eventsAt, frameAt, stationState, worldById } = require("./engine");
 
 const readyPayload = { ok: true, checks: { database: { ok: true }, queue_dispatcher: { running: true } } };
@@ -107,5 +109,35 @@ describe("floor nel frontend MAX", () => {
     expect(app.includes('path="/floor"')).toBe(true);
     expect(app.includes('path="/research/control-plane"')).toBe(true);
     expect(page.includes("SIMULATION")).toBe(true);
+    expect(page.includes("data-testid=\"floor-map\"") || page.includes("FloorMap")).toBe(true);
+    expect(page.includes("Reset")).toBe(true);
+    expect(page.includes(">0.5×<") || page.includes("0.5×")).toBe(true);
+  });
+
+  test("la mappa riusa i registri e il copione è riproducibile", () => {
+    const map = layout();
+    expect(map.departments).toHaveLength(8);
+    expect(map.agents).toHaveLength(7);
+    expect(new Set(map.agents.map((item) => item.id)).size).toBe(7);
+    expect(map.units.every((item) => item.presence === "planned")).toBe(true);
+    expect(map.departments.every((item) => item.presence === "repository")).toBe(true);
+    const first = scriptAt(worldById("trading"), 0);
+    expect(scriptAt(worldById("trading"), 0)).toEqual(first);
+    expect(first.task).toBe("Market Data");
+    expect(first.agent).toBe("data");
+    expect(first.companyPresence).toBe("repository");
+    expect(PHASES).toHaveLength(10);
+    const gate = scriptAt(worldById("trading"), 999);
+    expect(gate.execution).toBe("waiting");
+    expect(gate.approval).toBe("approval");
+    expect(gate.result).toMatch(/attesa/i);
+    const fault = scriptAt(worldById("fault"), 999);
+    expect(fault.execution).toBe("failed");
+    const frame = frameAt(worldById("ecosystem"), 1);
+    const load = workerLoad(frame);
+    const busy = Object.values(load).reduce((sum, count) => sum + count, 0);
+    expect(busy).toBe(frame.active.length);
+    expect(allowMotion(true)).toBe(false);
+    expect(allowMotion(false)).toBe(true);
   });
 });

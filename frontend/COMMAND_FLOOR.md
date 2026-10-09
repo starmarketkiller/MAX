@@ -16,6 +16,10 @@ Il polling riusa `useVisiblePolling`: si ferma se la scheda non è visibile e no
 
 Il Council non è dentro l'elenco dei sette reparti: la pagina lo aggiunge. I nomi delle business unit sono etichette previste, non un registro del backend. I gate fermano la catena simulata; non sono permessi del backend.
 
+## Mappa
+
+I reparti e i sette worker condivisi sono quelli già registrati. Le business unit tratteggiate sono previste, non operative. Play, pausa, passi, reset e velocità muovono solo la simulazione.
+
 ## CI e deploy
 
-La CI parte su push di `main`, `claude/**` e `feature/**`, e sulle pull request verso `main`. Un push di `command-floor` non è tra i push che avviano la CI. Safe Deploy parte solo dopo una CI riuscita il cui evento è un push su `main`. Questa pull request non soddisfa quella condizione.
+La CI parte sui push di `main`, `claude/**` e `feature/**`, e sulle pull request verso `main`. `feature/visual-floor-v2` quindi avvia la CI. Safe Deploy è disabilitato manualmente e questa modifica non lo riattiva.
