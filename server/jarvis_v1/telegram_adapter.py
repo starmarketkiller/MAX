@@ -14,6 +14,10 @@ from pathlib import Path
 from .service import JarvisService, classify
 
 
+class TelegramUpdateError(ValueError):
+    """A structurally unsupported Telegram update, safe to acknowledge and ignore."""
+
+
 class TelegramAdapter:
     _STATE_CODES = {"Q": "QUEUED", "R": "RUNNING", "B": "BLOCKED",
                     "E": "ESCALATION_REQUIRED", "A": "WAITING_APPROVAL",
@@ -94,6 +98,22 @@ class TelegramAdapter:
             state["pending_responses"].pop(key, None)
             self._save_state(state)
 
+    def mark_ignored(self, update_id, reason="UNSUPPORTED_UPDATE"):
+        """Persistently consume an update that cannot produce a Jarvis message.
+
+        Telegram retries every non-2xx webhook response.  Service updates such
+        as edited/channel messages therefore must be acknowledged rather than
+        becoming a poison item that prevents later user messages from flowing.
+        """
+        if update_id is not None:
+            self._mark_seen(update_id)
+            self.mark_delivered(update_id)
+        self.service.ledger.append(
+            "TELEGRAM_UPDATE_FAILED", None,
+            {"channel": "telegram", "telegram_update_id": update_id,
+             "reason": str(reason)[:80], "failure_class": "UNSUPPORTED_UPDATE",
+             "stage": "INPUT_IGNORED"}, actor="telegram_adapter")
+
     def _allowed_rate(self, user_id):
         now = time.time(); bucket = [x for x in self._rate.get(user_id, []) if now - x < 60]
         if len(bucket) >= 20: return False
@@ -105,12 +125,13 @@ class TelegramAdapter:
         user = callback.get("from") or msg.get("from") or {}
         user_id = str(user.get("id", "")); chat_id = str((msg.get("chat") or {}).get("id", ""))
         text = callback.get("data") or msg.get("text")
-        if not user_id or not chat_id or not isinstance(text, str): raise ValueError("malformed Telegram update")
+        if not user_id or not chat_id or not isinstance(text, str):
+            raise TelegramUpdateError("malformed Telegram update")
         metadata = {"telegram_update_id": update.get("update_id"), "telegram_chat_id": chat_id}
         if callback and text.startswith("J1|"):
             parts = text.split("|")
             if len(parts) < 3 or any(len(part) > 48 for part in parts):
-                raise ValueError("invalid Telegram callback")
+                raise TelegramUpdateError("invalid Telegram callback")
             code = parts[1]
             task_actions = {"TS": "TASK_STATUS", "TD": "TECHNICAL_DETAILS",
                             "DG": "DIAGNOSTICS", "LC": "LIFECYCLE",
@@ -121,7 +142,10 @@ class TelegramAdapter:
             if code in task_actions:
                 metadata.update({"ui_action": task_actions[code], "task_id": parts[2]})
                 if code == "LC":
-                    metadata["lifecycle_page"] = int(parts[3]) if len(parts) > 3 else 0
+                    try:
+                        metadata["lifecycle_page"] = int(parts[3]) if len(parts) > 3 else 0
+                    except (TypeError, ValueError) as exc:
+                        raise TelegramUpdateError("invalid Telegram callback page") from exc
                 elif len(parts) > 3 and parts[3] in self._STATE_CODES:
                     metadata["expected_state"] = self._STATE_CODES[parts[3]]
                 text = f"Telegram action {task_actions[code]} for {parts[2]}"
@@ -133,7 +157,7 @@ class TelegramAdapter:
                 metadata.update({"ui_action": "QUICK_ACTION", "quick_action": parts[2]})
                 text = f"Telegram quick action {parts[2]}"
             else:
-                raise ValueError("unsupported Telegram callback")
+                raise TelegramUpdateError("unsupported Telegram callback")
         elif callback and ":" in text:
             action, task_id = text.split(":", 1)
             metadata["task_id"] = task_id
@@ -156,7 +180,8 @@ class TelegramAdapter:
     def handle_update(self, update):
         started = time.perf_counter()
         update_id = update.get("update_id")
-        if update_id is None: raise ValueError("update_id required")
+        if update_id is None:
+            raise TelegramUpdateError("update_id required")
         key = str(update_id)
         with self._state_lock:
             if key in self._seen() or key in self._inflight:
