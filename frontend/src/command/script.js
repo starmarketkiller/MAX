@@ -1,5 +1,5 @@
-import { frameAt, stopIndex } from "./engine";
-import { stationById } from "./stations";
+import { eventsAt, frameAt, stopIndex } from "./engine";
+import { stationById, stationsByDepartment } from "./stations";
 import { workerById } from "./skills";
 import { BUSINESS_UNITS } from "./graph";
 
@@ -16,15 +16,21 @@ export const PHASES = [
   { id: "result", label: "Risultato" },
 ];
 
-export function phaseOf(station, index) {
-  if (!station) return "event";
-  if (station.gate === "nogo") return "result";
-  if (station.gate === "approval") return "approval";
-  if (station.skills.includes("verify") || station.skills.includes("quality")) return "check";
-  if (index === 0) return "event";
-  if (index === 1) return "company";
-  if (index === 2) return "task";
-  return "run";
+export function phaseOf(station, state, eventType) {
+  if (!station || state === "queued" || state === "idle") return null;
+  if (state === "failed" || state === "blocked") return "result";
+  if (state === "waiting" && station.gate === "approval") return "approval";
+  if (state === "waiting") return null;
+  if (eventType === "start" && state === "running") return "event";
+  if (state === "running" && (station.skills.includes("verify") || station.skills.includes("quality"))) return "check";
+  if (state === "running") return "run";
+  if (state === "completed") return "output";
+  return null;
+}
+
+export function recordedOutput(state, output) {
+  if (state === "running" || state === "completed") return { text: output, kind: "registry" };
+  return { text: "Non prodotto in questo passo", kind: "absent" };
 }
 
 export function scriptAt(world, beat) {
@@ -37,16 +43,21 @@ export function scriptAt(world, beat) {
   const worker = station ? workerById(station.worker) : null;
   const units = station ? BUSINESS_UNITS.filter((item) => item.departments.includes(station.departmentId)) : [];
   const state = focus ? focus.state : "idle";
+  const eventType = eventsAt(world, Math.max(0, beat)).find((item) => item.to === station?.id)?.type || null;
+  const output = station ? recordedOutput(state, station.output) : { text: "Assente", kind: "absent" };
   const result = state === "failed" ? "Fallito. Non diventa un pass."
     : state === "blocked" ? "Bloccato. Nessuna azione reale."
-      : state === "waiting" ? "In attesa di un permesso."
+      : state === "waiting" ? "In attesa di un permesso. Non è un'approvazione concessa."
         : state === "completed" ? "Passo chiuso dentro la simulazione."
-          : "Simulazione in corso. Nessun effetto esterno.";
+          : state === "running" ? "Simulazione in corso. Nessun effetto esterno."
+            : "Non dedotto.";
   return {
-    phase: phaseOf(station, index),
+    phase: phaseOf(station, state, eventType),
     beat: Math.max(0, beat),
+    index,
     stop,
     event: station ? station.input : world.lede,
+    eventType,
     company: station ? station.departmentId : world.runs[0].label,
     companyPresence: "repository",
     plannedUnits: units.map((item) => ({ id: item.id, name: item.name, status: item.status })),
@@ -55,7 +66,8 @@ export function scriptAt(world, beat) {
     agentName: worker ? worker.name : "Nessun agente",
     dependencies: station ? station.dependencies : [],
     execution: state,
-    output: station ? station.output : "Assente",
+    output: output.text,
+    outputKind: output.kind,
     validation: station ? station.verifier : "registry",
     approval: station ? station.gate : "none",
     result,
@@ -69,6 +81,7 @@ export function assignments(frame) {
   for (const item of frame.active) {
     const station = stationById(item.stationId);
     if (!station) continue;
+    const output = recordedOutput(item.state, station.output);
     rows.push({
       runId: item.runId,
       stationId: station.id,
@@ -76,11 +89,20 @@ export function assignments(frame) {
       departmentId: station.departmentId,
       worker: station.worker,
       state: item.state,
-      output: station.output,
+      output: output.text,
+      outputKind: output.kind,
       dependencies: station.dependencies,
     });
   }
   return rows;
+}
+
+export function departmentSnapshot(departmentId, frame) {
+  return stationsByDepartment(departmentId).map((station) => {
+    const state = frame.states.get(station.id) || "idle";
+    const output = recordedOutput(state, station.output);
+    return { id: station.id, name: station.name, state, dependencies: station.dependencies, output: output.text, outputKind: output.kind, presence: "repository" };
+  }).filter((item) => item.state !== "idle");
 }
 
 export function workerLoad(frame) {

@@ -18,7 +18,10 @@ Il Council non è dentro l'elenco dei sette reparti: la pagina lo aggiunge. I no
 
 ## Mappa
 
-I reparti e i sette worker condivisi sono quelli già registrati. Le business unit tratteggiate sono previste, non operative. Play, pausa, passi, reset e velocità muovono solo la simulazione.
+I collegamenti disegnati sono solo l'assegnazione del passo corrente, dal reparto al worker. L'animazione parte solo se quel passo è in esecuzione. Su schermi sotto i 700 px la mappa usa un disegno più stretto e un testo più grande. Lo sfondo della mappa non fa scorrere la pagina.
+
+Da collaudare su un iPhone vero, perché qui non c'è un browser: trascinare lo sfondo, premere i nodi, usare zoom e controlli, e scorrere la pagina fuori dalla mappa.
+
 
 ## CI e deploy
 

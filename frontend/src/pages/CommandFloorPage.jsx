@@ -8,7 +8,7 @@ import { SKILLS, WORKERS, skillById, workerById } from "@/command/skills";
 import { readLive } from "@/command/live";
 import { MARKER, MARKER_REACHED, REVIEW_MARKER, REVIEW_READY } from "@/command/marker";
 import FloorMap from "@/command/FloorMap";
-import { PHASES, assignments, scriptAt, workerLoad } from "@/command/script";
+import { PHASES, assignments, departmentSnapshot, scriptAt, workerLoad } from "@/command/script";
 
 const ROOMS = [...DEPARTMENTS, { id: "council", code: "C", name: "Council", lede: "Osserva e propone. Non adotta da solo." }];
 const STATE = { idle: "IDLE", queued: "CODA", running: "CORRE", waiting: "ATTESA", blocked: "BLOCCO", completed: "FATTO", failed: "FAIL" };
@@ -146,7 +146,7 @@ function SimPane({ world, cursor, length, playing, speed, setSpeed, setPlaying, 
           </button>;
         })}
       </div>
-      <Detail selectedId={selectedId} selected={selected} selectedState={selectedState} story={story} workflow={workflow} load={load} active={active} />
+      <Detail selectedId={selectedId} selected={selected} selectedState={selectedState} story={story} workflow={workflow} load={load} active={active} frame={frame} />
       <section>
         <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Eventi di questo passo</h2>
         <ul className="mt-2 space-y-1 text-xs">{events.length ? events.map((event) => <li key={event.provenance}>SIMULATION · {event.type} · {event.to} · {event.provenance}</li>) : <li className="text-muted-foreground">Nessun evento.</li>}</ul>
@@ -156,7 +156,7 @@ function SimPane({ world, cursor, length, playing, speed, setSpeed, setPlaying, 
   );
 }
 
-function Detail({ selectedId, selected, selectedState, story, workflow, load, active }) {
+function Detail({ selectedId, selected, selectedState, story, workflow, load, active, frame }) {
   if (selectedId.startsWith("worker:")) {
     const id = selectedId.slice(7);
     const worker = workerById(id);
@@ -171,7 +171,8 @@ function Detail({ selectedId, selected, selectedState, story, workflow, load, ac
           <Fact k="Aziende" v={jobs.map((item) => item.departmentId).join(", ") || "Nessuna"} />
           <Fact k="Stato" v={jobs.map((item) => STATE[item.state]).join(", ") || "IDLE"} />
           <Fact k="Dipendenze" v={jobs.flatMap((item) => item.dependencies).join(", ") || "Nessuna"} />
-          <Fact k="Output" v={jobs.map((item) => item.output).join(" · ") || "Assente"} />
+          <Fact k="Output di registro" v={jobs.map((item) => item.output).join(" · ") || "Assente"} />
+          <Fact k="Tipo output" v={jobs.every((item) => item.outputKind === "absent") ? "non prodotto" : "registro, non osservato fuori dalla simulazione"} />
         </dl>
       </article>
     );
@@ -181,7 +182,7 @@ function Detail({ selectedId, selected, selectedState, story, workflow, load, ac
     return (
       <article data-testid="floor-detail" className="border border-border p-4">
         <h2 className="text-lg font-semibold">{unit?.name || selectedId}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Prevista nel masterplan. Non è un'azienda operativa del repository.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Prevista nel masterplan. Non è un'entità del repository e non è un dato LIVE.</p>
         <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
           <Fact k="Presenza" v="planned" />
           <Fact k="Reparti collegati" v={(unit?.departments || []).join(", ")} />
@@ -191,15 +192,14 @@ function Detail({ selectedId, selected, selectedState, story, workflow, load, ac
   }
   if (selectedId.startsWith("dept:")) {
     const room = ROOMS.find((item) => item.id === selectedId.slice(5));
-    const jobs = active.filter((item) => item.departmentId === room?.id);
+    const rows = departmentSnapshot(room?.id, frame);
     return (
       <article data-testid="floor-detail" className="border border-border p-4" aria-label={room?.name || "Reparto"}>
         <h2 className="text-lg font-semibold">{room?.name}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{room?.lede} Presenza: repository.</p>
-        <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
-          <Fact k="Task attive" v={jobs.map((item) => `${item.name} ${STATE[item.state]}`).join(", ") || "Nessuna in questo passo"} />
-          <Fact k="Fase del passo" v={story.phase} />
-        </dl>
+        <p className="mt-1 text-sm text-muted-foreground">{room?.lede} Presenza: repository. Non è una business unit pianificata.</p>
+        <ul className="mt-3 space-y-2 text-xs">
+          {rows.length ? rows.map((row) => <li key={row.id} className="border border-border p-2">{row.name} · {STATE[row.state] || row.state} · dipende da {row.dependencies.join(", ") || "niente"} · {row.output}</li>) : <li>Nessuna task in questo passo.</li>}
+        </ul>
       </article>
     );
   }
@@ -216,9 +216,9 @@ function Detail({ selectedId, selected, selectedState, story, workflow, load, ac
           <Fact k="Agente" v={story.agentName} />
           <Fact k="Dipendenze" v={story.dependencies.join(", ") || "Nessuna"} />
           <Fact k="Esecuzione" v={STATE[story.execution] || story.execution} />
-          <Fact k="Output" v={story.output} />
+          <Fact k="Output" v={story.outputKind === "registry" ? `${story.output} · di registro, non un esito LIVE` : story.output} />
           <Fact k="Validazione" v={story.validation} />
-          <Fact k="Approvazione" v={story.approval} />
+          <Fact k="Approvazione" v={story.approval === "none" ? "Non richiesta in questo passo" : story.execution === "waiting" ? "In attesa, non concessa" : story.approval} />
           <Fact k="Risultato" v={story.result} />
           {station ? <Fact k="Simulazione" v={STATE[selectedState]} /> : null}
           {station ? <Fact k="Skill" v={station.skills.map((id) => skillById(id)?.name || id).join(", ")} /> : null}
