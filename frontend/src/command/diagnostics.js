@@ -69,7 +69,7 @@ export function diagnose(row) {
     return { ...card, access: "UNKNOWN", state: "UNKNOWN", reason: timeout ? "Timeout." : "Endpoint non disponibile." };
   }
   if (http !== 200) return { ...card, access: "UNKNOWN", state: "UNKNOWN", reason: "Risposta non utilizzabile." };
-  if (row.schema === "empty") return { ...card, access: "AVAILABLE", state: "IDLE", facts: null, reportedAt: null, reason: "Risposta vuota. Nessuna attività dedotta." };
+  if (row.schema === "empty") return { ...card, access: "EMPTY_RESPONSE", state: "UNKNOWN", facts: null, reportedAt: null, reason: "Risposta vuota. Il contratto non dice che il servizio sia fermo." };
   if (row.schema !== "valid" || !facts) return { ...card, access: "AVAILABLE", state: "UNKNOWN", facts: null, reportedAt: null, reason: row.schema === "partial" || row.schema === "unexpected" ? "Dati incompleti. Payload non mostrato." : "Schema non verificato. Payload non mostrato." };
   if (row.path === "/ready") return { ...card, access: "AVAILABLE", state: "PROCESS_OBSERVED", reason: "Il processo risponde. Le 119 postazioni non diventano operative." };
   return { ...card, access: "AVAILABLE", state: "FEED_OBSERVED", reason: "Stato del feed. Nessuna postazione in esecuzione." };

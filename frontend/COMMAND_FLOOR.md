@@ -22,7 +22,7 @@ La vista principale è la board della preview: stanze, postazioni e ritratti in 
 
 ## Diagnostica LIVE
 
-La sezione Diagnostica LIVE legge solo i GET già usati dal Floor. `/ready` e `/dukascopy_status` mostrano i campi dello schema verificato, senza path né segreti. Un 401 è `UNKNOWN` / `AUTH_REQUIRED`, mai `BLOCKED`. Un 200 del ready non rende operative le 119 postazioni. Gli altri endpoint, anche con 200, restano schema non verificato e il payload non viene mostrato. La simulazione non entra in questa sezione.
+La sezione Diagnostica LIVE legge solo i GET già usati dal Floor. `/ready` e `/dukascopy_status` mostrano i campi dello schema verificato, senza path né segreti. Un 401 è `UNKNOWN` / `AUTH_REQUIRED`, mai `BLOCKED`. Un 200 con corpo vuoto è `UNKNOWN` / `EMPTY_RESPONSE`: né `/ready` né `/dukascopy_status` definiscono il vuoto come servizio fermo. Un 200 del ready non rende operative le 119 postazioni. Gli altri endpoint, anche con 200, restano schema non verificato e il payload non viene mostrato. La simulazione non entra in questa sezione.
 
 ## CI e deploy
 

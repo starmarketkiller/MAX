@@ -159,6 +159,15 @@ describe("floor nel frontend MAX", () => {
     expect(diagnose({ path: "/jarvis/executive-state", http: 200, at: "T4", origin: "/jarvis/executive-state", schema: "unverified", facts: { secret: "no" } }).facts).toBe(null);
   });
 
+  test("una risposta vuota non è IDLE", () => {
+    for (const requestPath of ["/ready", "/dukascopy_status", "/company/overview"]) {
+      const card = diagnose({ path: requestPath, http: 200, at: "T", origin: requestPath, schema: "empty", api: "available", facts: null });
+      expect(card.state).toBe("UNKNOWN");
+      expect(card.access).toBe("EMPTY_RESPONSE");
+      expect(card.state).not.toBe("IDLE");
+    }
+  });
+
   test("la mappa riusa i registri e il copione è riproducibile", () => {
     const map = layout();
     const phone = layout("phone");
