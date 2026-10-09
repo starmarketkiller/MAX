@@ -1,0 +1,72 @@
+.nx-floor {
+  --nx-bg: #071018;
+  --nx-panel: #101a28;
+  --nx-line: #243246;
+  --nx-fg: #e7f2ea;
+  --nx-muted: #8ea0ad;
+  --nx-phosphor: #3dff8a;
+  --nx-amber: #ffb020;
+  --nx-danger: #ff5d73;
+  --nx-signal: #7eb0ff;
+  background-color: var(--nx-bg);
+  background-image:
+    linear-gradient(to right, rgb(36 50 70 / 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(36 50 70 / 0.45) 1px, transparent 1px),
+    radial-gradient(90% 60% at 50% -10%, rgb(61 255 138 / 0.08), transparent 55%);
+  background-size: 28px 28px, 28px 28px, auto;
+  color: var(--nx-fg);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.nx-display { font-family: "Chakra Petch", "Segoe UI", sans-serif; }
+.nx-muted { color: var(--nx-muted); }
+.nx-fg { color: var(--nx-fg); }
+.nx-phosphor { color: var(--nx-phosphor); }
+.nx-line { border-color: var(--nx-line); }
+.nx-panel { background: var(--nx-panel); }
+
+.nx-room {
+  background:
+    radial-gradient(55% 40% at 50% 0%, rgb(61 255 138 / 0.1), transparent 62%),
+    radial-gradient(30% 30% at 90% 80%, rgb(126 176 255 / 0.08), transparent 60%),
+    var(--nx-bg);
+  border-color: var(--nx-line);
+  color: var(--nx-fg);
+}
+.nx-room.is-run { border-color: var(--nx-phosphor); }
+.nx-room.is-wait { border-color: var(--nx-amber); }
+.nx-room.is-bad { border-color: var(--nx-danger); }
+
+.nx-chip {
+  border-color: var(--nx-line);
+  color: var(--nx-muted);
+  background: transparent;
+}
+.nx-chip.is-on { border-color: var(--nx-phosphor); color: var(--nx-phosphor); background: var(--nx-bg); }
+.nx-chip.is-run { border-color: var(--nx-phosphor); color: var(--nx-phosphor); }
+.nx-chip.is-bad { border-color: var(--nx-danger); color: var(--nx-danger); }
+.nx-chip.is-wait { border-color: var(--nx-amber); color: var(--nx-amber); }
+.nx-chip.is-done { border-color: var(--nx-signal); color: var(--nx-fg); }
+
+.nx-flow {
+  fill: none;
+  stroke: var(--nx-phosphor);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 5;
+  animation: nx-dash 0.7s linear infinite;
+}
+@keyframes nx-dash { to { stroke-dashoffset: -24; } }
+.nx-orb { transition: left 900ms linear, top 900ms linear; }
+.nx-btn {
+  min-height: 2.75rem;
+  border: 1px solid var(--nx-line);
+  background: var(--nx-panel);
+  color: var(--nx-fg);
+  padding: 0 0.75rem;
+}
+.nx-btn.is-on { border-color: var(--nx-phosphor); color: var(--nx-phosphor); }
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-flow { animation: none; }
+  .nx-orb { transition: none; }
+}

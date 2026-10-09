@@ -109,6 +109,9 @@ describe("floor nel frontend MAX", () => {
     expect(app.includes('path="/floor"')).toBe(true);
     expect(app.includes('path="/research/control-plane"')).toBe(true);
     expect(page.includes("SIMULATION")).toBe(true);
+    expect(page.includes('useState("board")')).toBe(true);
+    expect(page.includes("NEXUS")).toBe(true);
+    expect(page.includes("FLOOR")).toBe(true);
     expect(source("./FloorMap.jsx").includes("touch-none")).toBe(true);
     expect(source("./live.js").includes("frameAt")).toBe(false);
     expect(source("./live.js").includes("scriptAt")).toBe(false);
@@ -180,6 +183,43 @@ describe("floor nel frontend MAX", () => {
     });
     expect(selected).toEqual(["dept:trading"]);
     expect(container.querySelector("[data-testid='floor-surface']").getAttribute("class")).toContain("touch-none");
+    React.act(() => root.unmount());
+    container.remove();
+  });
+
+  test("la board della preview rende ogni postazione e solo i salti reali", () => {
+    global.IS_REACT_ACT_ENVIRONMENT = true;
+    const React = require("react");
+    const { createRoot } = require("react-dom/client");
+    const Board = require("./Board").default;
+    const { SPRITES } = require("./Board");
+    const world = worldById("trading");
+    const frame = frameAt(world, 1);
+    const hops = eventsAt(world, 1).flatMap((event) => (event.from ? [{ from: event.from, to: event.to }] : []));
+    expect(SPRITES).toHaveLength(6);
+    expect(hops.length).toBeGreaterThan(0);
+    const selected = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    React.act(() => {
+      root.render(React.createElement(Board, {
+        states: frame.states,
+        pulses: frame.active.map((item) => ({ id: item.stationId, state: item.state })),
+        hops,
+        selectedId: "trading.data",
+        reduceMotion: true,
+        onSelect: (id) => selected.push(id),
+      }));
+    });
+    const shown = container.querySelectorAll("[data-testid^='station-']");
+    expect(shown.length).toBe(STATIONS.filter((item) => item.departmentId !== "council").length);
+    React.act(() => {
+      container.querySelector("[data-testid='station-trading.news']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(selected).toEqual(["trading.news"]);
+    expect(container.querySelectorAll("[data-testid='nx-hop']").length).toBe(hops.length);
+    expect(container.querySelector("img").getAttribute("src")).toContain("/bots/scout.jpg");
     React.act(() => root.unmount());
     container.remove();
   });

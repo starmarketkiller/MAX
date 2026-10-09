@@ -8,7 +8,9 @@ import { SKILLS, WORKERS, skillById, workerById } from "@/command/skills";
 import { readLive } from "@/command/live";
 import { MARKER, MARKER_REACHED, REVIEW_MARKER, REVIEW_READY } from "@/command/marker";
 import FloorMap from "@/command/FloorMap";
-import { PHASES, assignments, departmentSnapshot, scriptAt, workerLoad } from "@/command/script";
+import Board from "@/command/Board";
+import { assignments, departmentSnapshot, scriptAt, workerLoad } from "@/command/script";
+import "@/command/floor.css";
 
 const ROOMS = [...DEPARTMENTS, { id: "council", code: "C", name: "Council", lede: "Osserva e propone. Non adotta da solo." }];
 const STATE = { idle: "IDLE", queued: "CODA", running: "CORRE", waiting: "ATTESA", blocked: "BLOCCO", completed: "FATTO", failed: "FAIL" };
@@ -19,7 +21,8 @@ export default function CommandFloorPage() {
   const [beat, setBeat] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1000);
-  const [roomId, setRoomId] = useState("trading");
+  const [surface, setSurface] = useState("board");
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [selectedId, setSelectedId] = useState("trading.data");
   const [live, setLive] = useState(null);
   const [liveError, setLiveError] = useState("");
@@ -30,6 +33,14 @@ export default function CommandFloorPage() {
   const frame = frameAt(world, cursor);
   const selected = stationById(selectedId);
   const selectedState = selected ? stationState(frame.states, selected) : "idle";
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setReduceMotion(media.matches);
+    apply();
+    media.addEventListener?.("change", apply);
+    return () => media.removeEventListener?.("change", apply);
+  }, []);
 
   useEffect(() => {
     if (mode !== "sim" || !playing) return undefined;
@@ -73,11 +84,12 @@ export default function CommandFloorPage() {
           playing={playing}
           speed={speed}
           setSpeed={setSpeed}
+          surface={surface}
+          setSurface={setSurface}
+          reduceMotion={reduceMotion}
           setPlaying={setPlaying}
           setWorldId={setWorldId}
           setBeat={setBeat}
-          roomId={roomId}
-          setRoomId={setRoomId}
           frame={frame}
           selected={selected}
           selectedState={selectedState}
@@ -107,52 +119,61 @@ function LivePane({ live, error }) {
   );
 }
 
-function SimPane({ world, cursor, length, playing, speed, setSpeed, setPlaying, setWorldId, setBeat, roomId, setRoomId, frame, selected, selectedState, selectedId, setSelectedId }) {
+function SimPane({ world, cursor, length, playing, speed, setSpeed, surface, setSurface, reduceMotion, setPlaying, setWorldId, setBeat, frame, selected, selectedState, selectedId, setSelectedId }) {
   const events = eventsAt(world, cursor);
   const story = scriptAt(world, cursor);
   const load = workerLoad(frame);
   const active = assignments(frame);
   const workflow = selected ? workflowById(selected.workflowId) : null;
   const speeds = [{ ms: 2000, label: "0.5×" }, { ms: 1000, label: "1×" }, { ms: 500, label: "2×" }];
+  const hops = events.flatMap((event) => (event.from ? [{ from: event.from, to: event.to }] : []));
   return (
-    <>
+    <div className="nx-floor space-y-3 p-3" data-testid="sim-floor">
+      <div className="flex flex-wrap items-baseline gap-3">
+        <p className="nx-display text-xl font-semibold">NEXUS</p>
+        <p className="nx-display text-xl font-semibold nx-phosphor">FLOOR</p>
+      </div>
       <div data-testid="sim-controls" className="flex flex-wrap gap-2">
-        {WORLDS.map((item) => <button key={item.id} type="button" className={"min-h-11 rounded border px-3 py-2 text-xs " + (item.id === world.id ? "border-primary" : "border-border text-muted-foreground")} onClick={() => { setWorldId(item.id); setBeat(0); setPlaying(false); }}>{item.name}</button>)}
-        <button type="button" className="min-h-11 rounded border border-border px-3 py-2 text-xs" onClick={() => setPlaying((value) => !value)}>{playing ? "Pausa" : "Play"}</button>
-        <button type="button" className="min-h-11 rounded border border-border px-3 py-2 text-xs" onClick={() => { setPlaying(false); setBeat((value) => Math.max(0, value - 1)); }}>Indietro</button>
-        <span className="self-center font-mono text-xs text-muted-foreground">{cursor + 1}/{length}</span>
-        <button type="button" className="min-h-11 rounded border border-border px-3 py-2 text-xs" onClick={() => { setPlaying(false); setBeat((value) => Math.min(length - 1, value + 1)); }}>Avanti</button>
-        <button type="button" className="min-h-11 rounded border border-border px-3 py-2 text-xs" onClick={() => { setPlaying(false); setBeat(0); }}>Reset</button>
-        {speeds.map((item) => <button key={item.ms} type="button" className={"min-h-11 rounded border px-3 py-2 text-xs " + (speed === item.ms ? "border-primary" : "border-border text-muted-foreground")} onClick={() => setSpeed(item.ms)}>{item.label}</button>)}
+        {WORLDS.map((item) => <button key={item.id} type="button" className={"nx-btn text-xs " + (item.id === world.id ? "is-on" : "")} onClick={() => { setWorldId(item.id); setBeat(0); setPlaying(false); }}>{item.name}</button>)}
+        <button type="button" className="nx-btn text-xs" onClick={() => setPlaying((value) => !value)}>{playing ? "Pausa" : "Play"}</button>
+        <button type="button" className="nx-btn text-xs" onClick={() => { setPlaying(false); setBeat((value) => Math.max(0, value - 1)); }}>Indietro</button>
+        <span className="self-center font-mono text-xs nx-muted">{cursor + 1}/{length}</span>
+        <button type="button" className="nx-btn text-xs" onClick={() => { setPlaying(false); setBeat((value) => Math.min(length - 1, value + 1)); }}>Avanti</button>
+        <button type="button" className="nx-btn text-xs" onClick={() => { setPlaying(false); setBeat(0); }}>Reset</button>
+        {speeds.map((item) => <button key={item.ms} type="button" className={"nx-btn text-xs " + (speed === item.ms ? "is-on" : "")} onClick={() => setSpeed(item.ms)}>{item.label}</button>)}
+        <button type="button" className={"nx-btn text-xs " + (surface === "board" ? "is-on" : "")} onClick={() => setSurface("board")}>Stanze</button>
+        <button type="button" className={"nx-btn text-xs " + (surface === "map" ? "is-on" : "")} onClick={() => setSurface("map")}>Mappa</button>
       </div>
-      <p className="text-sm text-muted-foreground">{world.lede} Simulazione deterministica: stesso passo, stesso stato. Nessun ordine, deploy o pubblicazione.</p>
-      <div className="flex gap-1 overflow-x-auto pb-1" aria-label="Fasi">
-        {PHASES.map((phase) => <span key={phase.id} className={"shrink-0 rounded border px-2 py-1 text-[11px] " + (story.phase === phase.id ? "border-primary text-foreground" : "border-border text-muted-foreground")}>{phase.label}</span>)}
-      </div>
-      <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground" aria-label="Legenda">
-        <span>Oro = in corso</span><span>Ambra = attesa</span><span>Rosso = blocco o fail</span><span>Verde = passo chiuso</span><span>Tratteggio = previsto, non operativo</span>
-      </div>
-      <FloorMap frame={frame} selectedId={selectedId} onSelect={setSelectedId} />
-      <div className="flex gap-2 overflow-x-auto">
-        {ROOMS.map((room) => <button key={room.id} type="button" className={"min-h-11 shrink-0 rounded border px-3 py-2 text-xs " + (room.id === roomId ? "border-primary" : "border-border text-muted-foreground")} onClick={() => setRoomId(room.id)}>{room.name}</button>)}
-      </div>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {stationsByDepartment(roomId).map((station) => {
-          const state = stationState(frame.states, station);
-          return <button key={station.id} type="button" onClick={() => setSelectedId(station.id)} className={"min-h-11 border p-3 text-left " + (station.id === selected?.id ? "border-primary" : "border-border")}>
-            <div className="font-mono text-[10px] text-muted-foreground">{station.code} · SIMULATION</div>
-            <div className="mt-1 text-sm">{station.name}</div>
-            <div className="mt-1 text-xs text-muted-foreground">{STATE[state]}</div>
-          </button>;
-        })}
-      </div>
+      <p className="text-sm nx-muted">{world.lede} Simulazione. Nessun ordine, deploy o pubblicazione.</p>
+      {surface === "board" ? (
+        <Board
+          states={frame.states}
+          pulses={frame.active.map((item) => ({ id: item.stationId, state: item.state }))}
+          hops={hops}
+          selectedId={selectedId}
+          reduceMotion={reduceMotion}
+          onSelect={setSelectedId}
+        />
+      ) : <FloorMap frame={frame} selectedId={selectedId} onSelect={setSelectedId} />}
+      <section aria-label="Council">
+        <h2 className="nx-display text-sm nx-phosphor">Council · self-improve</h2>
+        <ol className="mt-2 flex gap-2 overflow-x-auto">
+          {stationsByDepartment("council").map((station) => {
+            const state = stationState(frame.states, station);
+            return <li key={station.id}><button type="button" data-testid={`station-${station.id}`} onClick={() => setSelectedId(station.id)} className={"nx-btn text-xs " + (station.id === selectedId || state === "running" ? "is-on" : "")}>{station.code} · {STATE[state]}</button></li>;
+          })}
+        </ol>
+      </section>
+      <ul className="flex gap-2 overflow-x-auto" aria-label="Business unit">
+        {BUSINESS_UNITS.map((unit) => <li key={unit.id} className="nx-btn shrink-0 text-xs nx-muted">{unit.name} · PREVISTA</li>)}
+      </ul>
       <Detail selectedId={selectedId} selected={selected} selectedState={selectedState} story={story} workflow={workflow} load={load} active={active} frame={frame} />
       <section>
         <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Eventi di questo passo</h2>
         <ul className="mt-2 space-y-1 text-xs">{events.length ? events.map((event) => <li key={event.provenance}>SIMULATION · {event.type} · {event.to} · {event.provenance}</li>) : <li className="text-muted-foreground">Nessun evento.</li>}</ul>
       </section>
       <p className="font-mono text-[11px] text-muted-foreground">{STATIONS.length} postazioni · {WORKFLOWS.length} workflow · {SKILLS.length} skill · {WORKERS.length} worker condivisi · {AUTOMATIONS.length} automazioni · {FLOWS.length} flussi · {BUSINESS_UNITS.length} business unit previste, non operative</p>
-    </>
+    </div>
   );
 }
 
