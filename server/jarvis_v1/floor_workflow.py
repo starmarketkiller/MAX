@@ -21,11 +21,11 @@ from datetime import datetime, timezone
 
 from business_units.ai_fashion_agency.skills import verify_agency_output
 from jarvis_v1.ministral_task_compiler import encode_bounded_output
+from jarvis_v1.authenticated_scope import canonical_tenant_id
 
 WORKFLOW_ID = "jarvis.fashion.handoff.v1"
 ACTION = "nexus_fashion_handoff_workflow"
 INTENT = "FASHION_INTERNAL_HANDOFF"
-TENANT_ID = "tenant-1"
 
 SKILL_STATIONS = (
     ("fashion.trend", "trend", "VIRAL_FORMAT_ANALYSIS"),
@@ -139,7 +139,9 @@ class FloorWorkflowCoordinator:
         self.handler = FloorWorkflowHandler(orchestrator.ledger)
         orchestrator.register_local_handler(ACTION, self.handler)
 
-    def submit(self, *, objective, context, created_by, tenant_id=TENANT_ID):
+    def submit(self, *, objective, context, created_by, tenant_id=None,
+               idempotency_key=None):
+        tenant_id = tenant_id or canonical_tenant_id()
         manifest = {
             "task_id": f"TASK_{uuid.uuid4().hex[:12].upper()}",
             "title": "Fashion handoff, internal only",
@@ -161,18 +163,27 @@ class FloorWorkflowCoordinator:
         }
         params = {"objective": objective, "context": context, "workflow_id": WORKFLOW_ID,
                   "priority_class": "P2_TRADING_REVENUE_BACKGROUND"}
+        if idempotency_key:
+            return self.orchestrator.submit_idempotent(
+                manifest, action=ACTION, action_params=params,
+                idempotency_scope=f"{tenant_id}:{created_by}:{WORKFLOW_ID}",
+                idempotency_key=idempotency_key)
         return self.orchestrator.submit(manifest, action=ACTION, action_params=params)
 
 
-def _owned(record, owner):
+def _owned(record, owner, tenant_id=None):
     if not owner or record.get("action") != ACTION:
         return False
     manifest = record.get("manifest") or {}
     return (manifest.get("created_by") == f"jarvis:{owner}"
-            and manifest.get("tenant_id") == TENANT_ID)
+            and manifest.get("tenant_id") == (tenant_id or canonical_tenant_id()))
 
 
-def project_trace(queue, ledger, task_id=None, *, owner):
+def owns_floor_task(record, *, owner, tenant_id):
+    return _owned(record, owner, tenant_id)
+
+
+def project_trace(queue, ledger, task_id=None, *, owner, tenant_id=None):
     """Sanitized read for one owner and the canonical tenant.
 
     A missing owner, another user, or another tenant returns an empty trace.
@@ -184,14 +195,14 @@ def project_trace(queue, ledger, task_id=None, *, owner):
             candidate = queue.get(task_id)
         except KeyError:
             candidate = None
-        if candidate is not None and _owned(candidate, owner):
+        if candidate is not None and _owned(candidate, owner, tenant_id):
             record = candidate
     else:
-        rows = [row for row in queue.list_all() if _owned(row, owner)]
+        rows = [row for row in queue.list_all() if _owned(row, owner, tenant_id)]
         record = max(rows, key=lambda row: row.get("updated_at") or "") if rows else None
     if record is None:
         return {"source": "ledger", "task_id": None, "state": None, "approval_effect": None,
-                "decision": None, "artifact_count": 0, "delivery": "not_sent",
+                "decision": None, "artifact_count": 0, "artifacts": [], "delivery": "not_sent",
                 "steps": [], "not_run": []}
     steps = []
     for event in ledger.read_for_task(record["task_id"]):
@@ -207,6 +218,10 @@ def project_trace(queue, ledger, task_id=None, *, owner):
         steps.append({key: payload.get(key) for key in _STEP_KEYS} | {
             "recorded_at": event.get("timestamp")})
     packet = record.get("result_packet") or {}
+    artifacts = []
+    for value in packet.get("artifacts_created") or []:
+        kind = str(value).split(":", 1)[0][:48]
+        artifacts.append({"kind": kind, "available": True})
     return {
         "source": "ledger",
         "task_id": record["task_id"],
@@ -214,6 +229,7 @@ def project_trace(queue, ledger, task_id=None, *, owner):
         "approval_effect": record.get("approval_effect"),
         "decision": packet.get("decision"),
         "artifact_count": len(packet.get("artifacts_created") or []),
+        "artifacts": artifacts,
         "delivery": "not_sent",
         "steps": steps,
         "not_run": list(NOT_RUN),

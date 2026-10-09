@@ -22,6 +22,7 @@ ORCH_DIR = os.path.dirname(CORE_DIR)
 SERVER_DIR = str(Path(__file__).resolve().parents[2])
 sys.path.insert(0, SERVER_DIR)
 from path_resolver import resolve_contracts_dir, resolve_project_root  # noqa: E402
+from nexus_tenant import canonical_tenant_id  # noqa: E402
 
 ROOT = str(resolve_project_root(__file__))
 RUNTIME_STATE_DIR = os.path.join(ORCH_DIR, "runtime_state")
@@ -33,7 +34,6 @@ from nxs_schema_validator import validate  # noqa: E402
 with open(os.path.join(CONTRACTS_DIR, "nexus-event.schema.json"), encoding="utf-8") as f:
     NEXUS_EVENT_SCHEMA = json.load(f)
 
-TENANT_ID = "tenant-1"
 
 
 def _now_iso():
@@ -54,7 +54,7 @@ class EventLedger:
             "event_type": event_type,
             "task_id": task_id,
             "timestamp": _now_iso(),
-            "tenant_id": TENANT_ID,
+            "tenant_id": canonical_tenant_id(),
             "payload": {**payload, "actor": actor},
         }
         errors = validate(event, NEXUS_EVENT_SCHEMA)

@@ -86,7 +86,8 @@ from executive_v1.state import ExecutiveStateBuilder
 from executive_v1.snapshots import SnapshotStore
 from executive_v1.priority import INTERACTIVE_GATE as EXECUTIVE_INTERACTIVE_GATE
 from jarvis_v1.ministral_chat import gateway_status as ministral_gateway_status
-from jarvis_v1.floor_workflow import project_trace
+from jarvis_v1.floor_workflow import ACTION as FLOOR_WORKFLOW_ACTION, project_trace, owns_floor_task
+from jarvis_v1.authenticated_scope import EndpointRateLimiter, resolve_authenticated_scope
 from jarvis_v1.multi_stage_executor import MultiStageExecutor
 from orchestrator_v1.core.capability import load_registry as load_agent_capability_registry
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
@@ -1423,6 +1424,7 @@ NEXUS_SHARED_STATE = SharedCognitiveState(
     ledger=JARVIS_SERVICE.ledger)
 JARVIS_SERVICE.set_shared_cognitive_state(NEXUS_SHARED_STATE)
 JARVIS_GATEWAY = JarvisGateway(JARVIS_SERVICE)
+FLOOR_WORKFLOW_LIMITER = EndpointRateLimiter(limit=10, window_seconds=60)
 JARVIS_TELEGRAM = TelegramAdapter(JARVIS_SERVICE,
                                   state_path=str(_JARVIS_STATE_DIR / "telegram_updates_v1.json"),
                                   gateway=JARVIS_GATEWAY)
@@ -1959,7 +1961,55 @@ def jarvis_task(task_id: str, user: str = Depends(require_user)):
 @app.get("/api/jarvis/floor-workflow")
 def jarvis_floor_workflow(task_id: str | None = None, user: str = Depends(require_user)):
     """Latest internal handoff trace. Steps only; no manifest or ledger dump."""
-    return project_trace(JARVIS_SERVICE.queue, JARVIS_SERVICE.ledger, task_id, owner=user)
+    scope = resolve_authenticated_scope(user)
+    return project_trace(JARVIS_SERVICE.queue, JARVIS_SERVICE.ledger, task_id,
+                         owner=scope.user_id, tenant_id=scope.tenant_id)
+
+
+@app.post("/api/jarvis/floor-workflow", status_code=202)
+async def jarvis_floor_workflow_launch(
+        request: Request, user: str = Depends(require_mutation),
+        idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")):
+    """Queue the one implemented Floor workflow; never execute in-request."""
+    scope = resolve_authenticated_scope(user)
+    if not FLOOR_WORKFLOW_LIMITER.allow(f"{scope.tenant_id}:{scope.user_id}"):
+        raise HTTPException(status_code=429, detail={"code": "RATE_LIMITED"})
+    if not idempotency_key or not re.fullmatch(r"[A-Za-z0-9_.:-]{8,128}", idempotency_key):
+        raise HTTPException(status_code=422, detail={"code": "INVALID_IDEMPOTENCY_KEY"})
+    body = await read_json_body(request, max_bytes=32 * 1024)
+    if set(body) - {"objective", "context"}:
+        raise HTTPException(status_code=422, detail={"code": "UNEXPECTED_FIELDS"})
+    objective = body.get("objective")
+    context = body.get("context")
+    if not isinstance(objective, str) or not (3 <= len(objective.strip()) <= 500):
+        raise HTTPException(status_code=422, detail={"code": "INVALID_OBJECTIVE"})
+    if not isinstance(context, dict) or len(context) > 25:
+        raise HTTPException(status_code=422, detail={"code": "INVALID_CONTEXT"})
+    if set(context) - {"evidence_records"} or not isinstance(context.get("evidence_records"), list):
+        raise HTTPException(status_code=422, detail={"code": "INVALID_CONTEXT_SCHEMA"})
+    evidence = context["evidence_records"]
+    if not (1 <= len(evidence) <= 50) or any(
+            not isinstance(item, dict)
+            or set(item) - {"evidence_id", "note", "text", "source", "source_url"}
+            or not isinstance(item.get("evidence_id"), str)
+            or not re.fullmatch(r"[A-Za-z0-9_.:-]{1,80}", item["evidence_id"])
+            or any(not isinstance(value, str) or len(value) > 4000
+                   for key, value in item.items() if key != "evidence_id")
+            for item in evidence):
+        raise HTTPException(status_code=422, detail={"code": "INVALID_EVIDENCE_RECORDS"})
+    if len({item["evidence_id"] for item in evidence}) != len(evidence):
+        raise HTTPException(status_code=422, detail={"code": "DUPLICATE_EVIDENCE_ID"})
+    if len(json.dumps(context, ensure_ascii=False).encode("utf-8")) > 24 * 1024:
+        raise HTTPException(status_code=413, detail={"code": "CONTEXT_TOO_LARGE"})
+    try:
+        task_id, created = JARVIS_SERVICE.floor_workflow.submit(
+            objective=objective.strip(), context=context, created_by=scope.owner,
+            tenant_id=scope.tenant_id, idempotency_key=idempotency_key)
+    except AssertionError as exc:
+        raise HTTPException(status_code=409, detail={"code": "IDEMPOTENCY_CONFLICT",
+                                                      "message": str(exc)[:200]})
+    record = JARVIS_SERVICE.queue.get(task_id)
+    return {"task_id": task_id, "state": record["state"], "created": created}
 
 
 @app.get("/api/jarvis/tasks/{task_id}/diagnostics")
@@ -2270,6 +2320,14 @@ def jarvis_approvals(user: str = Depends(require_user)):
 @app.post("/api/jarvis/approvals/{task_id}")
 async def jarvis_approval(task_id: str, request: Request,
                           user: str = Depends(require_mutation)):
+    try:
+        target = JARVIS_SERVICE.queue.get(task_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="task not found")
+    if target.get("action") == FLOOR_WORKFLOW_ACTION:
+        scope = resolve_authenticated_scope(user)
+        if not owns_floor_task(target, owner=scope.user_id, tenant_id=scope.tenant_id):
+            raise HTTPException(status_code=404, detail="task not found")
     body = await read_json_body(request)
     message = {"message_id": f"web:{secrets.token_hex(8)}", "user_id": user,
                "channel": "WEB", "conversation_id": f"approval:{task_id}",
