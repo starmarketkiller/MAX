@@ -7,6 +7,7 @@ import { WORLDS, eventsAt, frameAt, stationState, worldById, worldLength } from 
 import { SKILLS, WORKERS, skillById, workerById } from "@/command/skills";
 import { readLive } from "@/command/live";
 import LiveDiagnostics from "@/command/LiveDiagnostics";
+import CapabilityMap from "@/command/CapabilityMap";
 import { MARKER, MARKER_REACHED, REVIEW_MARKER, REVIEW_READY } from "@/command/marker";
 import FloorMap from "@/command/FloorMap";
 import Board from "@/command/Board";
@@ -107,6 +108,7 @@ function LivePane({ live, error }) {
     <section aria-label="Letture canoniche">
       <p className="text-sm text-muted-foreground">{error ? "Backend non raggiungibile. Nessun dato simulato al suo posto." : live ? `Origine Axios condiviso. Sonda ${live.at}. Una risposta 200 non significa che una task stia girando.` : "Lettura in corso."}</p>
       <LiveDiagnostics live={live} />
+      <CapabilityMap live={live} />
     </section>
   );
 }

@@ -24,6 +24,10 @@ La vista principale è la board della preview: stanze, postazioni e ritratti in 
 
 La sezione Diagnostica LIVE legge solo i GET già usati dal Floor. `/ready` e `/dukascopy_status` mostrano i campi dello schema verificato, senza path né segreti. Un 401 è `UNKNOWN` / `AUTH_REQUIRED`, mai `BLOCKED`. Un 200 con corpo vuoto è `UNKNOWN` / `EMPTY_RESPONSE`: né `/ready` né `/dukascopy_status` definiscono il vuoto come servizio fermo. Un 200 del ready non rende operative le 119 postazioni. Gli altri endpoint, anche con 200, restano schema non verificato e il payload non viene mostrato. La simulazione non entra in questa sezione.
 
+## Capacità reali
+
+Nove postazioni hanno un endpoint già letto dal Floor: `systems.watch`, `trading.data`, `jarvis.state`, `systems.req`, `jarvis.monitor`, `jarvis.orch`, `revenue.find`, `trading.research`, `jarvis.approval`. Le altre 110 restano solo nella simulazione. Un processo o un feed osservato non promuove una postazione. La mappa non dichiara che non ci siano task: senza un contratto verificato di coda o ledger lo stato resta `UNKNOWN`. Un 401 resta sconosciuto finché manca la sessione. La board non usa questa mappa.
+
 ## CI e deploy
 
-La CI parte sui push di `main`, `claude/**` e `feature/**`, e sulle pull request verso `main`. Questo branch è `feature/floor-live-diagnostics`, quindi un push avvia la CI. Safe Deploy è disabilitato manualmente e questa modifica non lo riattiva.
+La CI parte sui push di `main`, `claude/**` e `feature/**`, e sulle pull request verso `main`. Questo branch è `feature/floor-capability-map`, quindi un push avvia la CI. Safe Deploy è disabilitato manualmente e questa modifica non lo riattiva.
