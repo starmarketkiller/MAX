@@ -211,3 +211,32 @@ def test_concurrent_duplicate_update_is_processed_once(tmp_path):
         results = list(pool.map(lambda _n: adapter.handle_update(update), range(2)))
     assert calls == 1
     assert sorted(result.get("status") == "DUPLICATE" for result in results) == [False, True]
+
+
+def test_unsupported_update_is_consumed_and_next_help_still_works(monkeypatch, tmp_path):
+    service = _service(tmp_path)
+    adapter = _adapter(tmp_path, service)
+    monkeypatch.setattr(backend, "JARVIS_TELEGRAM", adapter)
+    monkeypatch.setenv("JARVIS_TELEGRAM_WEBHOOK_SECRET", "hook-secret")
+    monkeypatch.setattr(adapter, "send", lambda *_a, **_k: {"sent": True, "reason": None})
+    headers = {"X-Telegram-Bot-Api-Secret-Token": "hook-secret"}
+    unsupported = {"update_id": 100, "edited_channel_post": {"text": "service update"}}
+
+    with TestClient(backend.app) as client:
+        ignored = client.post("/api/jarvis/telegram/webhook", json=unsupported, headers=headers)
+        assert ignored.status_code == 200
+        assert ignored.json() == {"ok": True, "ignored": True,
+                                  "reason": "UNSUPPORTED_UPDATE"}
+        # A Telegram retry is idempotently consumed too.
+        retried = client.post("/api/jarvis/telegram/webhook", json=unsupported, headers=headers)
+        assert retried.status_code == 200
+
+        valid = client.post("/api/jarvis/telegram/webhook", json=_message("/help", 101),
+                            headers=headers)
+        assert valid.status_code == 200
+        assert "Sono Jarvis" in valid.json()["response"]["summary"]
+
+    ignored_events = [event for event in service.ledger.read_all()
+                      if event["event_type"] == "TELEGRAM_UPDATE_FAILED" and
+                      event["payload"].get("failure_class") == "UNSUPPORTED_UPDATE"]
+    assert ignored_events

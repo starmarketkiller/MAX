@@ -70,7 +70,7 @@ from orchestrator_v1.core.provider_benchmark import FreeProviderBenchmarkEngineV
 from orchestrator_v1.core.groq_evaluation import GroqEvaluationAdapterV1
 from orchestrator_v1.core.local_agent_bridge import LocalAgentBridgeV1
 from orchestrator_v1.core.shared_cognitive_state import SharedCognitiveState
-from jarvis_v1.telegram_adapter import TelegramAdapter
+from jarvis_v1.telegram_adapter import TelegramAdapter, TelegramUpdateError
 from funding_v1.first_revenue import FirstRevenueStore
 from funding_v1.revenue_agent import RevenueAgentCoordinator
 from funding_v1.revenue_automation import (
@@ -2300,6 +2300,12 @@ async def jarvis_telegram_webhook(request: Request,
         response = JARVIS_TELEGRAM.pending_response(update_id)
         if response is None:
             response = JARVIS_TELEGRAM.handle_update(body)
+    except TelegramUpdateError as exc:
+        # Telegram retries non-2xx responses indefinitely.  Unsupported update
+        # shapes (for example edited/channel/service messages) are input-level
+        # no-ops, not transient server failures, and must not poison the queue.
+        JARVIS_TELEGRAM.mark_ignored(body.get("update_id"), type(exc).__name__)
+        return {"ok": True, "ignored": True, "reason": "UNSUPPORTED_UPDATE"}
     except PermissionError:
         raise HTTPException(status_code=403, detail="unauthorized Telegram user")
     except ValueError as exc:
