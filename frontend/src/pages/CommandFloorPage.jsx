@@ -6,7 +6,7 @@ import { DEPARTMENTS, STATIONS, WORKFLOWS, stationById, stationsByDepartment, wo
 import { WORLDS, eventsAt, frameAt, stationState, worldById, worldLength } from "@/command/engine";
 import { SKILLS, WORKERS, skillById, workerById } from "@/command/skills";
 import { readLive } from "@/command/live";
-import { MARKER, MARKER_REACHED } from "@/command/marker";
+import { MARKER, MARKER_REACHED, REVIEW_MARKER, REVIEW_READY } from "@/command/marker";
 
 const ROOMS = [...DEPARTMENTS, { id: "council", code: "C", name: "Council", lede: "Osserva e propone. Non adotta da solo." }];
 const STATE = { idle: "IDLE", queued: "CODA", running: "CORRE", waiting: "ATTESA", blocked: "BLOCCO", completed: "FATTO", failed: "FAIL" };
@@ -36,7 +36,7 @@ export default function CommandFloorPage() {
   useVisiblePolling(async () => {
     const mine = ++liveSeq.current;
     try {
-      const next = await readLive(api);
+      const next = await readLive(api, { generation: mine });
       if (mine !== liveSeq.current) return;
       setLive(next);
       setLiveError("");
@@ -53,7 +53,7 @@ export default function CommandFloorPage() {
         <div>
           <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Visual Floor</div>
           <h1 className="text-2xl font-semibold tracking-tight">Command floor</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{MARKER_REACHED ? MARKER : `${MARKER} non ancora chiuso. La simulazione non è il backend.`}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{MARKER} {MARKER_REACHED ? "acceso" : "spento"}. {REVIEW_READY ? `${REVIEW_MARKER}: pronta alla revisione, non operativa.` : `${REVIEW_MARKER} non ancora chiuso.`}</p>
         </div>
         <div className="flex gap-2">
           <button type="button" className={"rounded border px-3 py-2 text-xs " + (mode === "live" ? "border-primary text-primary" : "border-border text-muted-foreground")} onClick={() => setMode("live")}>Dati veri</button>
@@ -92,7 +92,7 @@ function LivePane({ live, error }) {
             <div className={row.live ? "text-emerald-400" : "text-amber-400"}>{row.status}</div>
             <div className="mt-1">{row.name}</div>
             <div className="mt-1 font-mono text-[11px] text-muted-foreground">{row.stationId} → {row.capabilityId} → GET {row.path}</div>
-            <div className="mt-1 text-xs text-muted-foreground">HTTP {row.http || "nessuno"} · {row.at} · task {row.task}{row.error ? ` · ${row.error}` : ""}</div>
+            <div className="mt-1 text-xs text-muted-foreground">HTTP {row.http || "nessuno"} · {row.api} · schema {row.schema} · {row.at} · task {row.task}{row.error ? ` · ${row.error}` : ""}</div>
           </li>
         ))}
       </ul>
@@ -142,7 +142,7 @@ function SimPane({ world, cursor, length, playing, setPlaying, setWorldId, setBe
       </article> : null}
       <section>
         <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Eventi di questo passo</h2>
-        <ul className="mt-2 space-y-1 text-xs">{events.length ? events.map((event) => <li key={event.provenance}>{event.type} · {event.to} · {event.provenance}</li>) : <li className="text-muted-foreground">Nessun evento.</li>}</ul>
+        <ul className="mt-2 space-y-1 text-xs">{events.length ? events.map((event) => <li key={event.provenance}>SIMULATION · {event.type} · {event.to} · {event.provenance}</li>) : <li className="text-muted-foreground">Nessun evento.</li>}</ul>
       </section>
       <p className="font-mono text-[11px] text-muted-foreground">{STATIONS.length} postazioni · {WORKFLOWS.length} workflow · {SKILLS.length} skill · {WORKERS.length} worker · {AUTOMATIONS.length} automazioni · {FLOWS.length} flussi · {BUSINESS_UNITS.length} business unit previste, non operative</p>
     </>
