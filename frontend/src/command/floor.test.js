@@ -10,6 +10,7 @@ const { scriptAt, workerLoad, PHASES, departmentSnapshot, phaseOf } = require(".
 const { diagnose, safeFacts } = require("./diagnostics");
 const { projectCapabilities } = require("./capabilities");
 const { eventsAt, frameAt, stationState, worldById } = require("./engine");
+const { observedStations } = require("./workflowTrace");
 
 const readyPayload = { ok: true, checks: { database: { ok: true }, queue_dispatcher: { running: true } } };
 const feedPayload = { ok: true, started: true, progress: { days_done: 12 } };
@@ -97,6 +98,31 @@ describe("floor nel frontend MAX", () => {
     expect(calls).toBe(MAX_CONCURRENCY);
     expect(result.rows.filter((row) => row.http === 429).length).toBeGreaterThanOrEqual(1);
     expect(result.rows.some((row) => row.task !== "not_inferred")).toBe(false);
+  });
+
+  test("il percorso osservato accende solo i passi del ledger", () => {
+    const trace = {
+      source: "ledger",
+      steps: [
+        { station_id: "jarvis.intake", step_id: "intake", state: "RECORDED", provenance: "DETERMINISTIC", output_ref: "task:1" },
+        { station_id: "fashion.trend", step_id: "trend", state: "RECORDED", provenance: "AGENCY_SKILL", output_ref: "skill:VIRAL_FORMAT_ANALYSIS" },
+        { station_id: "jarvis.approval", step_id: "approval", state: "WAITING_APPROVAL", provenance: "DETERMINISTIC", output_ref: "packet:1" },
+        { station_id: "fashion.asset", step_id: "asset", state: "RECORDED", provenance: "STUB", output_ref: "generated" },
+        { station_id: "social.pub", step_id: "pub", state: "RECORDED", provenance: "SIMULATION", output_ref: "post" },
+      ],
+      not_run: ["fashion.asset", "jarvis.response"],
+    };
+    expect(observedStations(trace).map((item) => item.stationId)).toEqual([
+      "jarvis.intake", "fashion.trend", "jarvis.approval",
+    ]);
+    expect(observedStations({ source: "simulation", steps: trace.steps })).toEqual([]);
+    expect(observedStations({ status: "AUTH_REQUIRED", steps: [] })).toEqual([]);
+    expect(LIVE_READS).toHaveLength(9);
+    const page = source("../pages/CommandFloorPage.jsx");
+    expect(page.includes('api.get("/jarvis/floor-workflow"')).toBe(true);
+    expect(page.includes("api.post")).toBe(false);
+    const sim = page.slice(page.indexOf("function SimPane"), page.indexOf("function Detail"));
+    expect(sim.includes("ObservedPath")).toBe(false);
   });
 
   test("separa simulazione e live e non chiama POST", () => {

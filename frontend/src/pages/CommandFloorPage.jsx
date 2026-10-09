@@ -8,6 +8,7 @@ import { SKILLS, WORKERS, skillById, workerById } from "@/command/skills";
 import { readLive } from "@/command/live";
 import LiveDiagnostics from "@/command/LiveDiagnostics";
 import CapabilityMap from "@/command/CapabilityMap";
+import ObservedPath from "@/command/ObservedPath";
 import { MARKER, MARKER_REACHED, REVIEW_MARKER, REVIEW_READY } from "@/command/marker";
 import FloorMap from "@/command/FloorMap";
 import Board from "@/command/Board";
@@ -27,7 +28,7 @@ export default function CommandFloorPage() {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [selectedId, setSelectedId] = useState("trading.data");
   const [live, setLive] = useState(null);
-  const [liveError, setLiveError] = useState("");
+  const [trace, setTrace] = useState(null);
   const liveSeq = useRef(0);
   const world = worldById(worldId);
   const length = worldLength(world);
@@ -57,10 +58,21 @@ export default function CommandFloorPage() {
       if (mine !== liveSeq.current) return;
       setLive(next);
       setLiveError("");
+      try {
+        const response = await api.get("/jarvis/floor-workflow", { timeout: 8000 });
+        if (mine !== liveSeq.current) return;
+        const body = response.data;
+        setTrace(body && body.source === "ledger" ? { ...body, status: "LEDGER" } : { status: "UNAVAILABLE", source: null, steps: [] });
+      } catch (error) {
+        if (mine !== liveSeq.current) return;
+        const http = error?.response?.status;
+        setTrace({ status: http === 401 || http === 403 ? "AUTH_REQUIRED" : "UNAVAILABLE", source: null, steps: [] });
+      }
     } catch {
       if (mine !== liveSeq.current) return;
       setLive(null);
       setLiveError("offline");
+      setTrace({ status: "UNAVAILABLE", source: null, steps: [] });
     }
   }, 30000, mode === "live");
 
@@ -78,7 +90,7 @@ export default function CommandFloorPage() {
         </div>
       </div>
 
-      {mode === "live" ? <LivePane live={live} error={liveError} /> : (
+      {mode === "live" ? <LivePane live={live} error={liveError} trace={trace} /> : (
         <SimPane
           world={world}
           cursor={cursor}
@@ -103,12 +115,13 @@ export default function CommandFloorPage() {
   );
 }
 
-function LivePane({ live, error }) {
+function LivePane({ live, error, trace }) {
   return (
     <section aria-label="Letture canoniche">
       <p className="text-sm text-muted-foreground">{error ? "Backend non raggiungibile. Nessun dato simulato al suo posto." : live ? `Origine Axios condiviso. Sonda ${live.at}. Una risposta 200 non significa che una task stia girando.` : "Lettura in corso."}</p>
       <LiveDiagnostics live={live} />
       <CapabilityMap live={live} />
+      <ObservedPath trace={trace} />
     </section>
   );
 }
