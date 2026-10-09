@@ -7,6 +7,7 @@ const { DEPARTMENTS, STATIONS, WORKFLOWS, stationById } = require("./stations");
 const { SKILLS, WORKERS } = require("./skills");
 const { layout, allowMotion, assignmentLinks, chooseLayout, panBy, zoomBy } = require("./map");
 const { scriptAt, workerLoad, PHASES, departmentSnapshot, phaseOf } = require("./script");
+const { diagnose, safeFacts } = require("./diagnostics");
 const { eventsAt, frameAt, stationState, worldById } = require("./engine");
 
 const readyPayload = { ok: true, checks: { database: { ok: true }, queue_dispatcher: { running: true } } };
@@ -115,6 +116,47 @@ describe("floor nel frontend MAX", () => {
     expect(source("./FloorMap.jsx").includes("touch-none")).toBe(true);
     expect(source("./live.js").includes("frameAt")).toBe(false);
     expect(source("./live.js").includes("scriptAt")).toBe(false);
+    const sim = page.slice(page.indexOf("function SimPane"), page.indexOf("function Detail"));
+    expect(sim.includes("LiveDiagnostics")).toBe(false);
+    expect(sim.includes("live-diagnostics")).toBe(false);
+    expect(page.includes("data-testid=\"live-diagnostics\"") || source("./LiveDiagnostics.jsx").includes("live-diagnostics")).toBe(true);
+    expect(source("./diagnostics.js").includes(".post(")).toBe(false);
+    expect(source("./engine.js").includes("diagnose")).toBe(false);
+  });
+
+  test("la diagnostica non promuove il ready e non tratta il 401 come blocco", () => {
+    const ready = diagnose({
+      path: "/ready",
+      name: "Monitoring",
+      http: 200,
+      at: "2026-10-09T15:15:54.007332+00:00",
+      origin: "/ready",
+      schema: "valid",
+      api: "available",
+      facts: safeFacts("/ready", { ...readyPayload, version: "5.4.0", ts: "2026-10-09T15:15:54.007332+00:00", checks: { ...readyPayload.checks, database: { ok: true, path: "/data/nexus.db", token: "secret" }, queue_dispatcher: { running: true } } }),
+    });
+    expect(ready.state).toBe("PROCESS_OBSERVED");
+    expect(ready.stationsReady).toBe(false);
+    expect(ready.stationsRunning).toBe(false);
+    expect(ready.stationEffect).toBe("none");
+    expect(ready.observedAt).toBe("2026-10-09T15:15:54.007332+00:00");
+    expect(ready.reportedAt).toBe("2026-10-09T15:15:54.007332+00:00");
+    expect(ready.source).toBe("/ready");
+    expect(JSON.stringify(ready.facts)).not.toMatch(/nexus\.db|token|secret/);
+    const denied = diagnose({ path: "/company/overview", name: "Company", http: 401, at: "T1", origin: "/company/overview", api: "unauthorized", facts: { revenue: 10 } });
+    expect(denied.access).toBe("AUTH_REQUIRED");
+    expect(denied.state).toBe("UNKNOWN");
+    expect(denied.facts).toBe(null);
+    expect(`${denied.state} ${denied.access}`).not.toContain("BLOCKED");
+    expect(diagnose({ path: "/jarvis/activity", http: 0, at: "T2", origin: "/jarvis/activity", api: "offline", error: "offline" }).state).toBe("UNKNOWN");
+    expect(diagnose({ path: "/jarvis/dispatcher/status", http: 503, at: "T3", origin: "/jarvis/dispatcher/status", api: "offline" }).reason).toBe("Endpoint non disponibile.");
+    const feed = diagnose({ path: "/dukascopy_status", http: 200, at: "OBS", origin: "/dukascopy_status", schema: "valid", facts: safeFacts("/dukascopy_status", { ...feedPayload, progress: { days_done: 12, newest_day_covered: "2026-10-09" } }) });
+    expect(feed.state).toBe("FEED_OBSERVED");
+    expect(feed.source).toBe("/dukascopy_status");
+    expect(feed.observedAt).toBe("OBS");
+    expect(feed.reportedAt).toBe("2026-10-09");
+    expect(feed.stationsRunning).toBe(false);
+    expect(diagnose({ path: "/jarvis/executive-state", http: 200, at: "T4", origin: "/jarvis/executive-state", schema: "unverified", facts: { secret: "no" } }).facts).toBe(null);
   });
 
   test("la mappa riusa i registri e il copione è riproducibile", () => {

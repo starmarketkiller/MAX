@@ -6,6 +6,7 @@ import { DEPARTMENTS, STATIONS, WORKFLOWS, stationById, stationsByDepartment, wo
 import { WORLDS, eventsAt, frameAt, stationState, worldById, worldLength } from "@/command/engine";
 import { SKILLS, WORKERS, skillById, workerById } from "@/command/skills";
 import { readLive } from "@/command/live";
+import LiveDiagnostics from "@/command/LiveDiagnostics";
 import { MARKER, MARKER_REACHED, REVIEW_MARKER, REVIEW_READY } from "@/command/marker";
 import FloorMap from "@/command/FloorMap";
 import Board from "@/command/Board";
@@ -105,16 +106,7 @@ function LivePane({ live, error }) {
   return (
     <section aria-label="Letture canoniche">
       <p className="text-sm text-muted-foreground">{error ? "Backend non raggiungibile. Nessun dato simulato al suo posto." : live ? `Origine Axios condiviso. Sonda ${live.at}. Una risposta 200 non significa che una task stia girando.` : "Lettura in corso."}</p>
-      <ul className="mt-3 space-y-2">
-        {(live?.rows ?? []).map((row) => (
-          <li key={row.path} className="border border-border p-3 text-sm">
-            <div className={row.live ? "text-emerald-400" : "text-amber-400"}>{row.status}</div>
-            <div className="mt-1">{row.name}</div>
-            <div className="mt-1 font-mono text-[11px] text-muted-foreground">{row.stationId} → {row.capabilityId} → GET {row.path}</div>
-            <div className="mt-1 text-xs text-muted-foreground">HTTP {row.http || "nessuno"} · {row.api} · schema {row.schema} · {row.at} · task {row.task}{row.error ? ` · ${row.error}` : ""}</div>
-          </li>
-        ))}
-      </ul>
+      <LiveDiagnostics live={live} />
     </section>
   );
 }
