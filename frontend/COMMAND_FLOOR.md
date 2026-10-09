@@ -20,6 +20,10 @@ Il Council non è dentro l'elenco dei sette reparti: la pagina lo aggiunge. I no
 
 La vista principale è la board della preview: stanze, postazioni e ritratti in `public/bots`. La mappa a cerchi resta solo sul pulsante Mappa. LIVE non disegna la board. Il Council resta nella striscia sotto le stanze, come nella preview. Non c'è un browser in questo ambiente, quindi il confronto con lo screenshot resta da fare a occhio dopo il deploy.
 
+## Diagnostica LIVE
+
+La sezione Diagnostica LIVE legge solo i GET già usati dal Floor. `/ready` e `/dukascopy_status` mostrano i campi dello schema verificato, senza path né segreti. Un 401 è `UNKNOWN` / `AUTH_REQUIRED`, mai `BLOCKED`. Un 200 con corpo vuoto è `UNKNOWN` / `EMPTY_RESPONSE`: né `/ready` né `/dukascopy_status` definiscono il vuoto come servizio fermo. Un 200 del ready non rende operative le 119 postazioni. Gli altri endpoint, anche con 200, restano schema non verificato e il payload non viene mostrato. La simulazione non entra in questa sezione.
+
 ## CI e deploy
 
-La CI parte sui push di `main`, `claude/**` e `feature/**`, e sulle pull request verso `main`. Questo branch è `feature/nexus-floor-board`, quindi un push avvia la CI. Safe Deploy è disabilitato manualmente e questa modifica non lo riattiva.
+La CI parte sui push di `main`, `claude/**` e `feature/**`, e sulle pull request verso `main`. Questo branch è `feature/floor-live-diagnostics`, quindi un push avvia la CI. Safe Deploy è disabilitato manualmente e questa modifica non lo riattiva.

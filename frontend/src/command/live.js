@@ -1,3 +1,5 @@
+import { safeFacts } from "./diagnostics";
+
 export const MAX_CONCURRENCY = 3;
 export const ENDPOINT_TIMEOUT_MS = 8000;
 
@@ -88,17 +90,17 @@ export async function readLive(client, options = {}) {
   const rows = await mapLimit(LIVE_READS, MAX_CONCURRENCY, async (spec) => {
     if (stopForLimit) {
       const judged = classifyResponse({ path: spec.path, http: 429, data: null, source: "network", error: "rate limit, non ripetuto" });
-      return { ...spec, ...judged, http: 429, at, origin: spec.path, entityId: null, error: "rate limit, non ripetuto", generation };
+      return { ...spec, ...judged, facts: null, http: 429, at, origin: spec.path, entityId: null, error: "rate limit, non ripetuto", generation };
     }
     try {
       const response = await client.get(spec.path, { timeout: ENDPOINT_TIMEOUT_MS });
       const judged = classifyResponse({ path: spec.path, http: response.status, data: response.data, source: "network" });
-      return { ...spec, ...judged, http: response.status, at, origin: spec.path, entityId: null, error: null, generation };
+      return { ...spec, ...judged, facts: safeFacts(spec.path, response.data), http: response.status, at, origin: spec.path, entityId: null, error: null, generation };
     } catch (error) {
       const failed = failureKind(error);
       if (failed.http === 429) stopForLimit = true;
       const judged = classifyResponse({ path: spec.path, http: failed.http, data: null, source: "network", error: failed.error });
-      return { ...spec, ...judged, http: failed.http, at, origin: spec.path, entityId: null, error: failed.error, generation };
+      return { ...spec, ...judged, facts: null, http: failed.http, at, origin: spec.path, entityId: null, error: failed.error, generation };
     }
   });
   return { at, generation, rows };
