@@ -20,7 +20,7 @@ function linkFrom(spec, row, queueLiveness) {
     endpoint: "MAPPED",
     capability: "UNKNOWN",
     process: "NOT_OBSERVED",
-    task: "NONE",
+    task: "UNKNOWN",
     access: card?.access || "UNKNOWN",
     state: card?.state || "UNKNOWN",
     observedAt: card?.observedAt || null,
@@ -54,6 +54,5 @@ export function projectCapabilities(rows) {
     links,
     stationCount: STATIONS.length,
     simOnlyCount: STATIONS.filter((station) => !mapped.has(station.id)).length,
-    executingCount: 0,
   };
 }

@@ -26,7 +26,7 @@ La sezione Diagnostica LIVE legge solo i GET già usati dal Floor. `/ready` e `/
 
 ## Capacità reali
 
-Nove postazioni hanno un endpoint già letto dal Floor: `systems.watch`, `trading.data`, `jarvis.state`, `systems.req`, `jarvis.monitor`, `jarvis.orch`, `revenue.find`, `trading.research`, `jarvis.approval`. Le altre 110 restano solo nella simulazione. Un processo o un feed osservato non mette una task in esecuzione. Un 401 resta sconosciuto finché manca la sessione. La board non usa questa mappa.
+Nove postazioni hanno un endpoint già letto dal Floor: `systems.watch`, `trading.data`, `jarvis.state`, `systems.req`, `jarvis.monitor`, `jarvis.orch`, `revenue.find`, `trading.research`, `jarvis.approval`. Le altre 110 restano solo nella simulazione. Un processo o un feed osservato non promuove una postazione. La mappa non dichiara che non ci siano task: senza un contratto verificato di coda o ledger lo stato resta `UNKNOWN`. Un 401 resta sconosciuto finché manca la sessione. La board non usa questa mappa.
 
 ## CI e deploy
 

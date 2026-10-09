@@ -182,27 +182,28 @@ describe("floor nel frontend MAX", () => {
     });
     const view = projectCapabilities([readyRow, feedRow, { path: "/jarvis/dispatcher/status", http: 401, at: "T", origin: "/jarvis/dispatcher/status", api: "unauthorized" }, ...denied]);
     expect(view.simOnlyCount).toBe(110);
-    expect(view.executingCount).toBe(0);
+    expect(view.links.every((item) => item.task === "UNKNOWN")).toBe(true);
+    expect(view.executingCount).toBeUndefined();
     expect(view.links).toHaveLength(9);
     expect(JSON.stringify(view)).not.toMatch(/CONNECTED|EXECUTING|"RUNNING"/);
     const watch = view.links.find((item) => item.stationId === "systems.watch");
     expect(watch.capability).toBe("PROCESS_OBSERVED");
     expect(watch.process).toBe("OBSERVED");
-    expect(watch.task).toBe("NONE");
+    expect(watch.task).toBe("UNKNOWN");
     const feed = view.links.find((item) => item.stationId === "trading.data");
     expect(feed.capability).toBe("FEED_OBSERVED");
-    expect(feed.task).toBe("NONE");
+    expect(feed.task).toBe("UNKNOWN");
     const orch = view.links.find((item) => item.stationId === "jarvis.orch");
     expect(orch.capability).toBe("IMPLEMENTED_UNVERIFIED");
     expect(orch.access).toBe("AUTH_REQUIRED");
     expect(orch.state).toBe("UNKNOWN");
     expect(orch.queueLiveness).toBe("observed-on");
-    expect(orch.task).toBe("NONE");
+    expect(orch.task).toBe("UNKNOWN");
     for (const id of ["jarvis.state", "systems.req", "jarvis.monitor", "revenue.find", "trading.research", "jarvis.approval"]) {
       const link = view.links.find((item) => item.stationId === id);
       expect(link.capability).toBe("IMPLEMENTED_UNVERIFIED");
       expect(link.access).toBe("AUTH_REQUIRED");
-      expect(link.task).toBe("NONE");
+      expect(link.task).toBe("UNKNOWN");
       expect(`${link.state} ${link.access}`).not.toContain("BLOCKED");
     }
     const stalled = projectCapabilities([
@@ -219,9 +220,9 @@ describe("floor nel frontend MAX", () => {
     expect(stalled.links.find((item) => item.stationId === "systems.watch").capability).toBe("UNKNOWN");
     const unverified = projectCapabilities([{ path: "/jarvis/dispatcher/status", http: 200, at: "T", origin: "/jarvis/dispatcher/status", schema: "unverified", api: "available" }]);
     expect(unverified.links.find((item) => item.stationId === "jarvis.orch").capability).toBe("IMPLEMENTED_UNVERIFIED");
-    expect(unverified.links.find((item) => item.stationId === "jarvis.orch").task).toBe("NONE");
-    expect(unverified.executingCount).toBe(0);
-    expect(stalled.executingCount).toBe(0);
+    expect(unverified.links.find((item) => item.stationId === "jarvis.orch").task).toBe("UNKNOWN");
+    expect(unverified.executingCount).toBeUndefined();
+    expect(stalled.links.every((item) => item.task === "UNKNOWN")).toBe(true);
     expect(source("./capabilities.js").includes(".post(")).toBe(false);
     expect(source("./CapabilityMap.jsx").includes("token")).toBe(false);
     expect(source("./live.js").includes("ENDPOINT_TIMEOUT_MS = 8000")).toBe(true);
