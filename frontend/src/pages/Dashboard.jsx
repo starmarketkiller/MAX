@@ -23,6 +23,7 @@ import ResearchPage from "@/pages/ResearchPage";
 import ResearchControlPlanePage from "@/pages/ResearchControlPlanePage";
 import SequenceExplorerPage from "@/pages/SequenceExplorerPage";
 import CompanyPage from "@/pages/CompanyPage";
+import CommandFloorPage from "@/pages/CommandFloorPage";
 import SystemStatusPage from "@/pages/SystemStatusPage";
 import MarketPage from "@/pages/MarketPage";
 import ExecutionPage from "@/pages/ExecutionPage";
@@ -62,7 +63,7 @@ function PageHeader({ section, status, onMenu, onExportPdf, onShowHelp, onOpenCm
   const location = useLocation();
   const workspace = workspaceForSection(section);
   const online = !!status?.online;
-  const utilityTitles = { settings: "Settings", licenses: "Licenses / Admin", "risk-calc": "Calculator", system: "System status", coach: "AI Coach" };
+  const utilityTitles = { settings: "Settings", licenses: "Licenses / Admin", "risk-calc": "Calculator", system: "System status", coach: "AI Coach", floor: "Visual Floor" };
   const title = workspace?.label || utilityTitles[section] || "NEXUS";
   const summary = workspace?.summary || "NEXUS terminal utility.";
 
@@ -755,6 +756,7 @@ export default function Dashboard({ section = "home" }) {
           {section === "research-control-plane" && <ResearchControlPlanePage />}
           {section === "research-sequences" && <SequenceExplorerPage />}
           {section === "company" && <CompanyPage />}
+          {section === "floor" && <CommandFloorPage />}
           {section === "market" && <MarketPage />}
           {section === "execution" && <ExecutionPage onCmd={onCmd} onSelectTrade={setSelectedTrade} />}
           {section === "library" && <LibraryPage />}

@@ -40,6 +40,7 @@ export default function CommandPalette({ open, onClose, onEaCmd }) {
     // Navigation
     { id: "nav-home", group: "Navigate", label: "Overview", hint: "Home dashboard", icon: LayoutDashboard, action: () => nav("/") },
     { id: "nav-company", group: "Workspaces", label: "Company", hint: "Departments, work, artifacts and gates", icon: Building2, action: () => nav("/company") },
+    { id: "nav-floor", group: "Workspaces", label: "Visual Floor", hint: "Simulazione dei reparti, separata dai dati veri", icon: LayoutDashboard, action: () => nav("/floor") },
     { id: "nav-market", group: "Workspaces", label: "Market", hint: "Chart, operational context and calendar", icon: LineChart, action: () => nav("/market") },
     { id: "nav-research", group: "Workspaces", label: "Research", hint: "Hypotheses, evidence and experiments", icon: FlaskConical, action: () => nav("/research") },
     { id: "nav-execution", group: "Workspaces", label: "Execution", hint: "EA, risk, bridge and analytics", icon: ShieldAlert, action: () => nav("/execution") },

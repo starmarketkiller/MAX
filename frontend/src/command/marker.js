@@ -1,0 +1,2 @@
+export const MARKER = "NEXUS_COMMAND_CENTER_FRONTEND_INTEGRATED_V1";
+export const MARKER_REACHED = false;
