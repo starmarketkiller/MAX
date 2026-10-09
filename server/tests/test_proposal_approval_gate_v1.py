@@ -62,12 +62,14 @@ def _service(tmp_path, monkeypatch):
     return service, calls
 
 
-def _message(text, cls="APPROVAL", task_id=None, action=None):
+def _message(text, cls="APPROVAL", task_id=None, action=None, expected_state=None):
+    metadata = {"task_id": task_id, "approval_action": action or text}
+    if expected_state:
+        metadata["expected_state"] = expected_state
     return {"message_id": f"m-{text}-{task_id}", "user_id": "42", "channel": "TEST",
             "conversation_id": "c-approval", "timestamp": datetime.now(timezone.utc).isoformat(),
             "input_type": "TEXT", "text": text, "attachments": [], "reply_to": None,
-            "request_class": cls, "priority": "HIGH",
-            "metadata": {"task_id": task_id, "approval_action": action or text}}
+            "request_class": cls, "priority": "HIGH", "metadata": metadata}
 
 
 def _run(service, task_id, *, proposal_only, touches):
@@ -161,6 +163,48 @@ def test_repeated_and_concurrent_approve_is_idempotent(tmp_path, monkeypatch):
     assert service_b.queue.get("TASK_RACE")["state"] == "PROPOSAL_ACCEPTED"
     assert len(_granted(service_b, "TASK_RACE")) == 1
     assert service_b.queue.claim_next("worker-race") is None
+
+
+def _of_type(service, task_id, event_type):
+    return [event for event in service.ledger.read_for_task(task_id)
+            if event["event_type"] == event_type]
+
+
+def test_telegram_card_repeat_returns_the_stored_decision(tmp_path, monkeypatch):
+    service, calls = _service(tmp_path, monkeypatch)
+    _run(service, "TASK_CARD", proposal_only=True, touches=False)
+    gateway = JarvisGateway(service)
+    card = {"expected_state": "WAITING_APPROVAL"}
+    first = gateway.handle(_message("APPROVE", task_id="TASK_CARD", action="APPROVE", **card))
+    assert first["response_type"] == "APPROVAL"
+    assert first["status"] == "PROPOSAL_ACCEPTED"
+    assert len(_granted(service, "TASK_CARD")) == 1
+    model_calls = calls["n"]
+
+    second = gateway.handle(_message("APPROVE-2", task_id="TASK_CARD", action="APPROVE", **card))
+    assert second["response_type"] == "APPROVAL"
+    assert second["status"] == "PROPOSAL_ACCEPTED"
+    assert len(_granted(service, "TASK_CARD")) == 1
+
+    opposite = gateway.handle(_message("REJECT", task_id="TASK_CARD", action="REJECT", **card))
+    assert opposite["response_type"] == "ERROR"
+    assert service.queue.get("TASK_CARD")["state"] == "PROPOSAL_ACCEPTED"
+    assert _of_type(service, "TASK_CARD", "APPROVAL_REJECTED") == []
+    assert calls["n"] == model_calls
+    assert service.queue.claim_next("card-worker") is None
+
+    _run(service, "TASK_CARD_NO", proposal_only=True, touches=False)
+    rejected = gateway.handle(_message("REJECT", task_id="TASK_CARD_NO", action="REJECT", **card))
+    assert rejected["status"] == "PROPOSAL_REJECTED"
+    assert len(_of_type(service, "TASK_CARD_NO", "APPROVAL_REJECTED")) == 1
+    again = gateway.handle(_message("REJECT-2", task_id="TASK_CARD_NO", action="REJECT", **card))
+    assert again["response_type"] == "APPROVAL"
+    assert again["status"] == "PROPOSAL_REJECTED"
+    assert len(_of_type(service, "TASK_CARD_NO", "APPROVAL_REJECTED")) == 1
+    flipped = gateway.handle(_message("APPROVE", task_id="TASK_CARD_NO", action="APPROVE", **card))
+    assert flipped["response_type"] == "ERROR"
+    assert service.queue.get("TASK_CARD_NO")["state"] == "PROPOSAL_REJECTED"
+    assert _granted(service, "TASK_CARD_NO") == []
 
 
 def test_legacy_waiting_task_without_effect_still_requeues(tmp_path, monkeypatch):

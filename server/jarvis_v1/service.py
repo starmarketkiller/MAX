@@ -1936,6 +1936,15 @@ class JarvisService:
             return self._response(message, "ERROR", "Approval requires task_id.", status="UNKNOWN")
         try: record = self.queue.get(task_id)
         except KeyError: return self._response(message, "ERROR", "Task not found.", task_id=task_id, status="UNKNOWN")
+        # A repeated click of the original WAITING_APPROVAL card still carries
+        # that expected_state. A matching decision already stored must be
+        # returned before _state_matches, or the card looks stale. Opposite
+        # decisions are not included and cannot replace the stored one.
+        if record.get("approval_effect") == "ACCEPT_ONLY" and (
+                (action == "APPROVE" and record["state"] == "PROPOSAL_ACCEPTED")
+                or (action == "REJECT" and record["state"] == "PROPOSAL_REJECTED")):
+            return self._response(message, "APPROVAL", f"{task_id}: {record['state']}",
+                                  task_id=task_id, status=record["state"])
         if not self._state_matches(record, message):
             return self._response(message, "ERROR", "La card non è più valida: aggiorna lo stato.",
                                   task_id=task_id, status=record["state"])

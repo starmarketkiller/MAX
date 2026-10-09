@@ -470,6 +470,11 @@ class Orchestrator:
         # The Ledger already holds TASK_ORPHANED/TASK_BLOCKED forever
         # (append-only) - clearing `recovery` here loses nothing, it only
         # stops a resolved cause from looking like a live one.
+        # A crash before approval_effect and the result packet are persisted
+        # is not exactly-once. The record still looks like an ordinary RUNNING
+        # task, so this explicit resume returns it to QUEUED. Once both fields
+        # are stored, resume restores WAITING_APPROVAL and the dispatcher
+        # cannot claim the task.
         if record.get("approval_effect") == "ACCEPT_ONLY" and record.get("result_packet"):
             self.queue.transition(task_id, "WAITING_APPROVAL", dispatch_last_error=None, recovery=None)
             self.ledger.append("TASK_RESUMED", task_id,
