@@ -191,6 +191,7 @@ def test_orchestrator_approval_boundary_blocks_real_file_writes(monkeypatch):
     orch.submit(m, action="fake_real_file_action", action_params={})
     rec = orch.process_task("TASK_REVIEW_TEST")
     assert rec["state"] == "WAITING_APPROVAL"
+    assert rec["approval_effect"] == "REQUEUE"
     assert rec["result_packet"]["decision"] == "PATCH_READY_AWAITING_APPROVAL"
 
 

@@ -99,6 +99,9 @@ class Orchestrator:
         """Esegue UN ciclo completo (route -> execute -> verify -> retry/
         escalation -> result packet) per un singolo task. Ritorna il record
         aggiornato."""
+        record = self.queue.get(task_id)
+        if record.get("approval_effect") == "ACCEPT_ONLY":
+            raise AssertionError(f"ACCEPT_ONLY non e' eseguibile: {task_id}")
         record = self.queue.try_promote(task_id)  # WAITING_DEPENDENCY -> QUEUED se ora pronto
         self.queue.assert_claim(task_id, claim_token)
         if record["state"] not in ("QUEUED",):
@@ -158,7 +161,8 @@ class Orchestrator:
                                "approvazione"], unresolved_issues=[],
                     suggested_next_tasks=["approvare la modifica proposta"],
                     escalation_needed=False)
-                self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet)
+                self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet,
+                                     approval_effect="REQUEUE")
                 return self.queue.get(task_id)
 
             self.ledger.append("TASK_COMPLETED", task_id, {"action": action})
@@ -233,11 +237,36 @@ class Orchestrator:
                                       {"files": apply_result.files_changed})
 
                 approval = record["manifest"]["approval_required"]
-                if apply_result.touches_real_repo_files and approval != "AUTO":
+                accept_only = bool(apply_result.proposal_only) and not bool(apply_result.touches_real_repo_files)
+                requeue_gate = bool(apply_result.touches_real_repo_files) and approval != "AUTO"
+                if accept_only:
+                    self.ledger.append("APPROVAL_REQUIRED", task_id,
+                                      {"reason": "proposta interna senza modifica di file; "
+                                                "approval_effect=ACCEPT_ONLY",
+                                       "approval_effect": "ACCEPT_ONLY"})
+                    packet = build_result_packet(
+                        task_id=task_id, executor=decision.executor, start_time=start,
+                        end_time=now_iso(), files_read=[], files_changed=[],
+                        tools_or_commands=["ollama:" + call["model"]],
+                        artifacts_created=apply_result.artifacts_created,
+                        tests_ran=True, tests_passed=1, tests_failed=0, verifier_ran=True,
+                        verifier_passed=True, verifier_errors=[], commit=None,
+                        push_status="NOT_APPLICABLE", decision="PROPOSAL_AWAITING_APPROVAL",
+                        confidence="MEDIUM",
+                        limitations=["proposta interna persistita; nessuna patch e nessuna "
+                                     "azione esterna"],
+                        unresolved_issues=[],
+                        suggested_next_tasks=["approvare o rifiutare la proposta senza eseguirla"],
+                        escalation_needed=False)
+                    self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet,
+                                         approval_effect="ACCEPT_ONLY")
+                    return self.queue.get(task_id)
+                if requeue_gate:
                     self.ledger.append("APPROVAL_REQUIRED", task_id,
                                       {"reason": "il worker locale ha prodotto/verificato una "
                                                 "patch per un file reale del repository - "
-                                                f"approval_required={approval}, non AUTO"})
+                                                f"approval_required={approval}, non AUTO",
+                                       "approval_effect": "REQUEUE"})
                     packet = build_result_packet(
                         task_id=task_id, executor=decision.executor, start_time=start,
                         end_time=now_iso(), files_read=[], files_changed=[],
@@ -259,7 +288,8 @@ class Orchestrator:
                     proposed_patch = {"changes": vr.parsed_output.get("changes", []),
                                      "test_results": vr.parsed_output.get("test_results", [])}
                     self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet,
-                                         proposed_patch=proposed_patch)
+                                         proposed_patch=proposed_patch,
+                                         approval_effect="REQUEUE")
                     return self.queue.get(task_id)
 
                 self.ledger.append("TASK_COMPLETED", task_id, {"handler": record["action"]})
@@ -379,7 +409,8 @@ class Orchestrator:
         self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet,
                               local_bridge={"status": "COMPLETED", "bridge_id": bridge_id,
                                             "verification": "PASSED"},
-                              proposed_patch=proposed_patch)
+                              proposed_patch=proposed_patch,
+                              approval_effect="REQUEUE")
         return self.queue.get(task_id)
 
     def fail_local_bridge_task(self, task_id, failure_class):
@@ -439,6 +470,14 @@ class Orchestrator:
         # The Ledger already holds TASK_ORPHANED/TASK_BLOCKED forever
         # (append-only) - clearing `recovery` here loses nothing, it only
         # stops a resolved cause from looking like a live one.
+        if record.get("approval_effect") == "ACCEPT_ONLY" and record.get("result_packet"):
+            self.queue.transition(task_id, "WAITING_APPROVAL", dispatch_last_error=None, recovery=None)
+            self.ledger.append("TASK_RESUMED", task_id,
+                {"previous_cause": self.ORPHANED_RUNNING_AFTER_RESTART,
+                 "requested_by": requested_by or "unknown",
+                 "restored_state": "WAITING_APPROVAL",
+                 "approval_effect": "ACCEPT_ONLY"}, actor="orphan_recovery_v1")
+            return self.queue.get(task_id)
         self.queue.transition(task_id, "QUEUED", dispatch_last_error=None, recovery=None)
         self.ledger.append("TASK_RESUMED", task_id,
             {"previous_cause": self.ORPHANED_RUNNING_AFTER_RESTART,

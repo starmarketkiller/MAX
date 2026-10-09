@@ -36,7 +36,7 @@ with open(os.path.join(CONTRACTS_DIR, "task-manifest.schema.json"), encoding="ut
 
 STATES = ["CREATED", "QUEUED", "RUNNING", "WAITING_DEPENDENCY", "WAITING_APPROVAL",
          "WAITING_PROVIDER", "COMPLETED", "FAILED", "BLOCKED", "ESCALATION_REQUIRED",
-         "WAITING_REVIEW_PROVIDER", "CANCELLED"]
+         "WAITING_REVIEW_PROVIDER", "CANCELLED", "PROPOSAL_ACCEPTED", "PROPOSAL_REJECTED"]
 
 # Transizioni di stato permesse - fail-closed: una transizione non elencata qui
 # viene rifiutata con un'eccezione, non applicata silenziosamente.
@@ -48,10 +48,13 @@ ALLOWED_TRANSITIONS = {
                "ESCALATION_REQUIRED", "QUEUED", "RUNNING", "BLOCKED"},  # QUEUED = retry delimitato;
                # RUNNING->RUNNING = self-transition per bookkeeping (es. retry_count) senza
                # cambiare stato - un vero cambio di stato resta sempre esplicito altrove
-    "WAITING_APPROVAL": {"COMPLETED", "FAILED", "QUEUED", "CANCELLED", "ESCALATION_REQUIRED"},
+    "WAITING_APPROVAL": {"COMPLETED", "FAILED", "QUEUED", "CANCELLED", "ESCALATION_REQUIRED",
+                         "PROPOSAL_ACCEPTED", "PROPOSAL_REJECTED"},
                           # ESCALATION_REQUIRED = un umano ha rifiutato la patch proposta e la
                           # NEXUS Dynamic Specialist Review la instrada a un reviewer disponibile
                           # (mai direttamente FAILED - §NEXUS gap DYNAMIC_SPECIALIST_REVIEW)
+                          # PROPOSAL_* = solo approval_effect ACCEPT_ONLY. Non sono COMPLETED
+                          # e non tornano in coda.
     "WAITING_PROVIDER": {"RUNNING", "COMPLETED", "FAILED", "CANCELLED", "ESCALATION_REQUIRED",
                          "WAITING_APPROVAL", "BLOCKED", "QUEUED"},
                          # QUEUED = a specialist review returned REWORK_INSTRUCTIONS - the task
@@ -76,10 +79,12 @@ ALLOWED_TRANSITIONS = {
                                # rifare nulla). Self-transition = poll che non trova ancora
                                # nessun candidato disponibile, solo bookkeeping (ultimo tentativo,
                                # stati osservati), mai una perdita di patch/verifier result.
-    "BLOCKED": {"QUEUED", "CANCELLED"},
+    "BLOCKED": {"QUEUED", "CANCELLED", "WAITING_APPROVAL"},
     "COMPLETED": set(),
     "FAILED": {"QUEUED"},  # solo se un umano decide di ritentare esplicitamente
     "CANCELLED": set(),
+    "PROPOSAL_ACCEPTED": set(),
+    "PROPOSAL_REJECTED": set(),
 }
 
 
@@ -167,6 +172,16 @@ class TaskQueue:
             if new_state not in ALLOWED_TRANSITIONS.get(current, set()):
                 raise AssertionError(f"Transizione non permessa: {current} -> {new_state} "
                                     f"(task {task_id})")
+            if record.get("approval_effect") == "ACCEPT_ONLY" and current == "WAITING_APPROVAL":
+                if new_state not in {"PROPOSAL_ACCEPTED", "PROPOSAL_REJECTED", "CANCELLED"}:
+                    raise AssertionError(
+                        f"ACCEPT_ONLY non puo' uscire da WAITING_APPROVAL verso {new_state}")
+            if new_state in {"PROPOSAL_ACCEPTED", "PROPOSAL_REJECTED"} and record.get("approval_effect") != "ACCEPT_ONLY":
+                raise AssertionError("gli stati proposta richiedono approval_effect=ACCEPT_ONLY")
+            if current == "BLOCKED" and new_state == "WAITING_APPROVAL":
+                if record.get("approval_effect") != "ACCEPT_ONLY" or not record.get("result_packet"):
+                    raise AssertionError(
+                        "BLOCKED -> WAITING_APPROVAL solo per una proposta ACCEPT_ONLY gia' persistita")
             record["state"] = new_state
             record["updated_at"] = _now_iso()
             if new_state == "RUNNING" and record["started_at"] is None:
@@ -190,6 +205,30 @@ class TaskQueue:
             data[task_id] = record
             self._save(data)
             return record
+
+    def decide_accept_only(self, task_id, action):
+        """Atomically accept or reject an ACCEPT_ONLY proposal.
+
+        Returns (record, changed). A repeated decision on the matching
+        terminal state is a no-op. It never queues the task and never
+        overwrites the stored result packet.
+        """
+        if action not in {"APPROVE", "REJECT"}:
+            raise AssertionError(f"decisione proposta sconosciuta: {action}")
+        target = "PROPOSAL_ACCEPTED" if action == "APPROVE" else "PROPOSAL_REJECTED"
+        with self._lock:
+            current = self.get(task_id)
+            if current.get("approval_effect") != "ACCEPT_ONLY":
+                raise AssertionError("decide_accept_only richiede approval_effect=ACCEPT_ONLY")
+            if current["state"] == target:
+                return current, False
+            if current["state"] != "WAITING_APPROVAL":
+                raise AssertionError(
+                    f"Transizione non permessa: {current['state']} -> {target} (task {task_id})")
+            updated = self.transition(
+                task_id, target,
+                proposal_decision={"action": action, "decided_at": _now_iso()})
+            return updated, True
 
     def record_delivery_once(self, task_id, delivery_key, *, metadata=None):
         """Persist an outbound-delivery key exactly once.
@@ -266,6 +305,8 @@ class TaskQueue:
                     record["updated_at"] = _now_iso()
                     changed = True
                 if record["state"] != "QUEUED":
+                    continue
+                if record.get("approval_effect") == "ACCEPT_ONLY":
                     continue
                 next_at = record.get("dispatch_next_attempt_at")
                 if next_at and datetime.fromisoformat(next_at) > now:
