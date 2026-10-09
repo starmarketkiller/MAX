@@ -339,6 +339,8 @@ _STATE_MESSAGES = {
     "COMPLETED": "è completata",
     "CANCELLED": "è stata annullata",
     "FAILED": "è terminata con errore",
+    "PROPOSAL_ACCEPTED": "la proposta è accettata; nessuna esecuzione è stata autorizzata",
+    "PROPOSAL_REJECTED": "la proposta è rifiutata; nessuna esecuzione è partita",
 }
 
 
@@ -1241,6 +1243,8 @@ class JarvisService:
             "BLOCKED": "Consulta la causa e il lifecycle prima di decidere un recupero manuale.",
             "ESCALATION_REQUIRED": "Serve il provider o revisore indicato dall’escalation.",
             "WAITING_APPROVAL": "Approva o rifiuta dopo aver controllato i dettagli.",
+            "PROPOSAL_ACCEPTED": "La proposta è registrata. Non è in coda e non verrà eseguita.",
+            "PROPOSAL_REJECTED": "La proposta è chiusa. Non è in coda e non verrà eseguita.",
             "COMPLETED": "Il risultato è disponibile per la revisione finale.",
             "CANCELLED": "Nessuna azione successiva automatica.",
             "FAILED": "Controlla l’errore prima di un eventuale retry manuale.",
@@ -1281,6 +1285,12 @@ class JarvisService:
         if state == "WAITING_APPROVAL":
             return ("Aspetta la tua approvazione.", [{"type": "APPROVE", "task_id": task_id},
                                                      {"type": "REJECT", "task_id": task_id}])
+        if state == "PROPOSAL_ACCEPTED":
+            return ("La proposta è accettata. L'esecuzione non è autorizzata e la task non è in coda.",
+                    [{"type": "DETAILS", "task_id": task_id}])
+        if state == "PROPOSAL_REJECTED":
+            return ("La proposta è rifiutata. Non parte nessuna esecuzione.",
+                    [{"type": "DETAILS", "task_id": task_id}])
         if state == "QUEUED":
             return ("Il dispatcher la prenderà al prossimo turno disponibile.", [])
         if state == "RUNNING":
@@ -1868,6 +1878,32 @@ class JarvisService:
                               task_id=task_id, status="BLOCKED",
                               details={"blocked_reason": wp["blocked_reason"]}, confidence="LOW")
 
+    def _decide_accept_only(self, message, task_id, record, action):
+        """Record acceptance or rejection of a non-executable proposal.
+
+        The queue transition is atomic. A repeated matching decision does not
+        append another ledger event and never returns the task to QUEUED.
+        """
+        if action not in {"APPROVE", "REJECT"}:
+            return self._response(message, "ERROR", "Unknown approval action.",
+                                  task_id=task_id, status=record["state"])
+        try:
+            updated, changed = self.queue.decide_accept_only(task_id, action)
+        except AssertionError as exc:
+            return self._response(message, "ERROR", str(exc), task_id=task_id,
+                                  status=record["state"])
+        if changed:
+            event = "APPROVAL_GRANTED" if action == "APPROVE" else "APPROVAL_REJECTED"
+            self.ledger.append(event, task_id, {
+                "message_id": message["message_id"],
+                "approval_effect": "ACCEPT_ONLY",
+                "resulting_state": updated["state"],
+            }, actor="jarvis_gateway")
+        self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
+                                       last_action=action or None, user_id=str(message["user_id"]))
+        return self._response(message, "APPROVAL", f"{task_id}: {updated['state']}",
+                              task_id=task_id, status=updated["state"])
+
     def approval(self, message):
         meta = message.get("metadata", {})
         text = message.get("text") or ""
@@ -1900,9 +1936,20 @@ class JarvisService:
             return self._response(message, "ERROR", "Approval requires task_id.", status="UNKNOWN")
         try: record = self.queue.get(task_id)
         except KeyError: return self._response(message, "ERROR", "Task not found.", task_id=task_id, status="UNKNOWN")
+        # A repeated click of the original WAITING_APPROVAL card still carries
+        # that expected_state. A matching decision already stored must be
+        # returned before _state_matches, or the card looks stale. Opposite
+        # decisions are not included and cannot replace the stored one.
+        if record.get("approval_effect") == "ACCEPT_ONLY" and (
+                (action == "APPROVE" and record["state"] == "PROPOSAL_ACCEPTED")
+                or (action == "REJECT" and record["state"] == "PROPOSAL_REJECTED")):
+            return self._response(message, "APPROVAL", f"{task_id}: {record['state']}",
+                                  task_id=task_id, status=record["state"])
         if not self._state_matches(record, message):
             return self._response(message, "ERROR", "La card non è più valida: aggiorna lo stato.",
                                   task_id=task_id, status=record["state"])
+        if record.get("approval_effect") == "ACCEPT_ONLY":
+            return self._decide_accept_only(message, task_id, record, action)
         if record["state"] != "WAITING_APPROVAL":
             # JARVIS_EXECUTIVE_CONVERSATION_V4 (response style): natural
             # phrasing instead of a raw state string, plus what to do next -
