@@ -5,6 +5,8 @@ const { classifyResponse, isCurrent, LIVE_READS, MAX_CONCURRENCY, readLive } = r
 const { MARKER_REACHED, REVIEW_MARKER } = require("./marker");
 const { DEPARTMENTS, STATIONS, WORKFLOWS, stationById } = require("./stations");
 const { SKILLS, WORKERS } = require("./skills");
+const { layout, allowMotion, assignmentLinks, chooseLayout, panBy, zoomBy } = require("./map");
+const { scriptAt, workerLoad, PHASES, departmentSnapshot, phaseOf } = require("./script");
 const { eventsAt, frameAt, stationState, worldById } = require("./engine");
 
 const readyPayload = { ok: true, checks: { database: { ok: true }, queue_dispatcher: { running: true } } };
@@ -107,5 +109,78 @@ describe("floor nel frontend MAX", () => {
     expect(app.includes('path="/floor"')).toBe(true);
     expect(app.includes('path="/research/control-plane"')).toBe(true);
     expect(page.includes("SIMULATION")).toBe(true);
+    expect(source("./FloorMap.jsx").includes("touch-none")).toBe(true);
+    expect(source("./live.js").includes("frameAt")).toBe(false);
+    expect(source("./live.js").includes("scriptAt")).toBe(false);
+  });
+
+  test("la mappa riusa i registri e il copione è riproducibile", () => {
+    const map = layout();
+    const phone = layout("phone");
+    expect(chooseLayout(390)).toBe("phone");
+    expect(phone.width).toBe(400);
+    expect(phone.departments.every((item) => item.labelSize >= 18)).toBe(true);
+    expect(map.departments).toHaveLength(8);
+    expect(map.agents).toHaveLength(7);
+    expect(new Set(map.agents.map((item) => item.id)).size).toBe(7);
+    expect(map.units.every((item) => item.presence === "planned")).toBe(true);
+    expect(map.departments.every((item) => item.presence === "repository")).toBe(true);
+    const first = scriptAt(worldById("trading"), 0);
+    expect(scriptAt(worldById("trading"), 0)).toEqual(first);
+    expect(first.task).toBe("Market Data");
+    expect(first.agent).toBe("data");
+    expect(first.phase).toBe("event");
+    expect(first.phase).not.toBe("company");
+    expect(first.outputKind).toBe("registry");
+    expect(PHASES).toHaveLength(10);
+    const gate = scriptAt(worldById("trading"), 999);
+    expect(gate.execution).toBe("waiting");
+    expect(gate.approval).toBe("approval");
+    expect(gate.phase).toBe("approval");
+    expect(gate.outputKind).toBe("absent");
+    expect(gate.result).toMatch(/attesa/i);
+    expect(phaseOf({ gate: "none", skills: [] }, "queued", null)).toBeNull();
+    const fault = scriptAt(worldById("fault"), 999);
+    expect(fault.execution).toBe("failed");
+    expect(fault.phase).toBe("result");
+    const frame = frameAt(worldById("ecosystem"), 1);
+    const load = workerLoad(frame);
+    const busy = Object.values(load).reduce((sum, count) => sum + count, 0);
+    expect(busy).toBe(frame.active.length);
+    const links = assignmentLinks(frameAt(worldById("trading"), 0), phone);
+    expect(links.map((item) => item.stationId)).toEqual(["trading.data"]);
+    expect(links[0].animate).toBe(true);
+    expect(assignmentLinks(frameAt(worldById("trading"), 999), phone).every((item) => item.animate === false)).toBe(true);
+    const rows = departmentSnapshot("trading", frameAt(worldById("trading"), 0));
+    expect(rows.some((item) => item.dependencies.includes("trading.data"))).toBe(true);
+    expect(rows.every((item) => item.presence === "repository")).toBe(true);
+    expect(panBy({ x: 1, y: 2, k: 1 }, 4, 5)).toEqual({ x: 5, y: 7, k: 1 });
+    expect(zoomBy({ x: 0, y: 0, k: 1 }, 2).k).toBe(1.8);
+    expect(allowMotion(true)).toBe(false);
+    expect(allowMotion(false)).toBe(true);
+  });
+
+  test("un tocco sul nodo seleziona il reparto", () => {
+    global.IS_REACT_ACT_ENVIRONMENT = true;
+    window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+    const React = require("react");
+    const { createRoot } = require("react-dom/client");
+    const FloorMap = require("./FloorMap").default;
+    const selected = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    React.act(() => {
+      root.render(React.createElement(FloorMap, { frame: frameAt(worldById("trading"), 0), selectedId: "", onSelect: (id) => selected.push(id) }));
+    });
+    const node = container.querySelector("[data-testid='node-trading']");
+    expect(node).not.toBeNull();
+    React.act(() => {
+      node.dispatchEvent(new MouseEvent("pointerup", { bubbles: true }));
+    });
+    expect(selected).toEqual(["dept:trading"]);
+    expect(container.querySelector("[data-testid='floor-surface']").getAttribute("class")).toContain("touch-none");
+    React.act(() => root.unmount());
+    container.remove();
   });
 });

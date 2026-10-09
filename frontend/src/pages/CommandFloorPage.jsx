@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useVisiblePolling } from "@/lib/useVisiblePolling";
 import api from "@/lib/api";
 import { AUTOMATIONS, BUSINESS_UNITS, FLOWS } from "@/command/graph";
@@ -7,6 +7,8 @@ import { WORLDS, eventsAt, frameAt, stationState, worldById, worldLength } from 
 import { SKILLS, WORKERS, skillById, workerById } from "@/command/skills";
 import { readLive } from "@/command/live";
 import { MARKER, MARKER_REACHED, REVIEW_MARKER, REVIEW_READY } from "@/command/marker";
+import FloorMap from "@/command/FloorMap";
+import { PHASES, assignments, departmentSnapshot, scriptAt, workerLoad } from "@/command/script";
 
 const ROOMS = [...DEPARTMENTS, { id: "council", code: "C", name: "Council", lede: "Osserva e propone. Non adotta da solo." }];
 const STATE = { idle: "IDLE", queued: "CODA", running: "CORRE", waiting: "ATTESA", blocked: "BLOCCO", completed: "FATTO", failed: "FAIL" };
@@ -16,6 +18,7 @@ export default function CommandFloorPage() {
   const [worldId, setWorldId] = useState(WORLDS[0].id);
   const [beat, setBeat] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1000);
   const [roomId, setRoomId] = useState("trading");
   const [selectedId, setSelectedId] = useState("trading.data");
   const [live, setLive] = useState(null);
@@ -28,10 +31,11 @@ export default function CommandFloorPage() {
   const selected = stationById(selectedId);
   const selectedState = selected ? stationState(frame.states, selected) : "idle";
 
-  useVisiblePolling(async () => {
-    if (!playing) return;
-    setBeat((current) => (current + 1) % length);
-  }, 1000, mode === "sim" && playing);
+  useEffect(() => {
+    if (mode !== "sim" || !playing) return undefined;
+    const timer = window.setInterval(() => setBeat((current) => (current + 1) % length), speed);
+    return () => window.clearInterval(timer);
+  }, [mode, playing, speed, length]);
 
   useVisiblePolling(async () => {
     const mine = ++liveSeq.current;
@@ -67,6 +71,8 @@ export default function CommandFloorPage() {
           cursor={cursor}
           length={length}
           playing={playing}
+          speed={speed}
+          setSpeed={setSpeed}
           setPlaying={setPlaying}
           setWorldId={setWorldId}
           setBeat={setBeat}
@@ -75,6 +81,7 @@ export default function CommandFloorPage() {
           frame={frame}
           selected={selected}
           selectedState={selectedState}
+          selectedId={selectedId}
           setSelectedId={setSelectedId}
         />
       )}
@@ -100,53 +107,128 @@ function LivePane({ live, error }) {
   );
 }
 
-function SimPane({ world, cursor, length, playing, setPlaying, setWorldId, setBeat, roomId, setRoomId, frame, selected, selectedState, setSelectedId }) {
+function SimPane({ world, cursor, length, playing, speed, setSpeed, setPlaying, setWorldId, setBeat, roomId, setRoomId, frame, selected, selectedState, selectedId, setSelectedId }) {
   const events = eventsAt(world, cursor);
+  const story = scriptAt(world, cursor);
+  const load = workerLoad(frame);
+  const active = assignments(frame);
   const workflow = selected ? workflowById(selected.workflowId) : null;
+  const speeds = [{ ms: 2000, label: "0.5×" }, { ms: 1000, label: "1×" }, { ms: 500, label: "2×" }];
   return (
     <>
-      <div className="flex flex-wrap gap-2">
-        {WORLDS.map((item) => <button key={item.id} type="button" className={"rounded border px-3 py-2 text-xs " + (item.id === world.id ? "border-primary" : "border-border text-muted-foreground")} onClick={() => { setWorldId(item.id); setBeat(0); }}>{item.name}</button>)}
-        <button type="button" className="rounded border border-border px-3 py-2 text-xs" onClick={() => setPlaying((value) => !value)}>{playing ? "Pausa" : "Play"}</button>
-        <button type="button" className="rounded border border-border px-3 py-2 text-xs" onClick={() => { setPlaying(false); setBeat((value) => Math.max(0, value - 1)); }}>Indietro</button>
+      <div data-testid="sim-controls" className="flex flex-wrap gap-2">
+        {WORLDS.map((item) => <button key={item.id} type="button" className={"min-h-11 rounded border px-3 py-2 text-xs " + (item.id === world.id ? "border-primary" : "border-border text-muted-foreground")} onClick={() => { setWorldId(item.id); setBeat(0); setPlaying(false); }}>{item.name}</button>)}
+        <button type="button" className="min-h-11 rounded border border-border px-3 py-2 text-xs" onClick={() => setPlaying((value) => !value)}>{playing ? "Pausa" : "Play"}</button>
+        <button type="button" className="min-h-11 rounded border border-border px-3 py-2 text-xs" onClick={() => { setPlaying(false); setBeat((value) => Math.max(0, value - 1)); }}>Indietro</button>
         <span className="self-center font-mono text-xs text-muted-foreground">{cursor + 1}/{length}</span>
-        <button type="button" className="rounded border border-border px-3 py-2 text-xs" onClick={() => { setPlaying(false); setBeat((value) => Math.min(length - 1, value + 1)); }}>Avanti</button>
+        <button type="button" className="min-h-11 rounded border border-border px-3 py-2 text-xs" onClick={() => { setPlaying(false); setBeat((value) => Math.min(length - 1, value + 1)); }}>Avanti</button>
+        <button type="button" className="min-h-11 rounded border border-border px-3 py-2 text-xs" onClick={() => { setPlaying(false); setBeat(0); }}>Reset</button>
+        {speeds.map((item) => <button key={item.ms} type="button" className={"min-h-11 rounded border px-3 py-2 text-xs " + (speed === item.ms ? "border-primary" : "border-border text-muted-foreground")} onClick={() => setSpeed(item.ms)}>{item.label}</button>)}
       </div>
-      <p className="text-sm text-muted-foreground">{world.lede}</p>
+      <p className="text-sm text-muted-foreground">{world.lede} Simulazione deterministica: stesso passo, stesso stato. Nessun ordine, deploy o pubblicazione.</p>
+      <div className="flex gap-1 overflow-x-auto pb-1" aria-label="Fasi">
+        {PHASES.map((phase) => <span key={phase.id} className={"shrink-0 rounded border px-2 py-1 text-[11px] " + (story.phase === phase.id ? "border-primary text-foreground" : "border-border text-muted-foreground")}>{phase.label}</span>)}
+      </div>
+      <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground" aria-label="Legenda">
+        <span>Oro = in corso</span><span>Ambra = attesa</span><span>Rosso = blocco o fail</span><span>Verde = passo chiuso</span><span>Tratteggio = previsto, non operativo</span>
+      </div>
+      <FloorMap frame={frame} selectedId={selectedId} onSelect={setSelectedId} />
       <div className="flex gap-2 overflow-x-auto">
-        {ROOMS.map((room) => <button key={room.id} type="button" className={"shrink-0 rounded border px-3 py-2 text-xs " + (room.id === roomId ? "border-primary" : "border-border text-muted-foreground")} onClick={() => setRoomId(room.id)}>{room.name}</button>)}
+        {ROOMS.map((room) => <button key={room.id} type="button" className={"min-h-11 shrink-0 rounded border px-3 py-2 text-xs " + (room.id === roomId ? "border-primary" : "border-border text-muted-foreground")} onClick={() => setRoomId(room.id)}>{room.name}</button>)}
       </div>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {stationsByDepartment(roomId).map((station) => {
           const state = stationState(frame.states, station);
-          return <button key={station.id} type="button" onClick={() => setSelectedId(station.id)} className={"border p-3 text-left " + (station.id === selected?.id ? "border-primary" : "border-border")}>
+          return <button key={station.id} type="button" onClick={() => setSelectedId(station.id)} className={"min-h-11 border p-3 text-left " + (station.id === selected?.id ? "border-primary" : "border-border")}>
             <div className="font-mono text-[10px] text-muted-foreground">{station.code} · SIMULATION</div>
             <div className="mt-1 text-sm">{station.name}</div>
             <div className="mt-1 text-xs text-muted-foreground">{STATE[state]}</div>
           </button>;
         })}
       </div>
-      {selected ? <article className="border border-border p-4" aria-label={selected.name}>
-        <h2 className="text-lg font-semibold">{selected.name}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{selected.role}</p>
-        <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
-          <Fact k="Simulazione" v={STATE[selectedState]} />
-          <Fact k="Canonico" v="SIMULATION" />
-          <Fact k="Gate" v={selected.gate} />
-          <Fact k="Worker" v={workerById(selected.worker)?.name || selected.worker} />
-          <Fact k="Skill" v={selected.skills.map((id) => skillById(id)?.name || id).join(", ")} />
-          <Fact k="Entra" v={selected.input} />
-          <Fact k="Esce" v={selected.output} />
-          <Fact k="Catena" v={workflow ? `${workflow.stationIds.indexOf(selected.id) + 1}/${workflow.stationIds.length}` : "—"} />
-        </dl>
-      </article> : null}
+      <Detail selectedId={selectedId} selected={selected} selectedState={selectedState} story={story} workflow={workflow} load={load} active={active} frame={frame} />
       <section>
         <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Eventi di questo passo</h2>
         <ul className="mt-2 space-y-1 text-xs">{events.length ? events.map((event) => <li key={event.provenance}>SIMULATION · {event.type} · {event.to} · {event.provenance}</li>) : <li className="text-muted-foreground">Nessun evento.</li>}</ul>
       </section>
-      <p className="font-mono text-[11px] text-muted-foreground">{STATIONS.length} postazioni · {WORKFLOWS.length} workflow · {SKILLS.length} skill · {WORKERS.length} worker · {AUTOMATIONS.length} automazioni · {FLOWS.length} flussi · {BUSINESS_UNITS.length} business unit previste, non operative</p>
+      <p className="font-mono text-[11px] text-muted-foreground">{STATIONS.length} postazioni · {WORKFLOWS.length} workflow · {SKILLS.length} skill · {WORKERS.length} worker condivisi · {AUTOMATIONS.length} automazioni · {FLOWS.length} flussi · {BUSINESS_UNITS.length} business unit previste, non operative</p>
     </>
   );
+}
+
+function Detail({ selectedId, selected, selectedState, story, workflow, load, active, frame }) {
+  if (selectedId.startsWith("worker:")) {
+    const id = selectedId.slice(7);
+    const worker = workerById(id);
+    const jobs = active.filter((item) => item.worker === id);
+    return (
+      <article data-testid="floor-detail" className="border border-border p-4" aria-label={worker?.name || id}>
+        <h2 className="text-lg font-semibold">{worker?.name || id}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{worker?.note} Agente condiviso, non copiato per azienda. Presenza: repository.</p>
+        <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+          <Fact k="Carico simulato" v={String(load[id] || 0)} />
+          <Fact k="Task" v={jobs.map((item) => item.name).join(", ") || "Nessuna"} />
+          <Fact k="Aziende" v={jobs.map((item) => item.departmentId).join(", ") || "Nessuna"} />
+          <Fact k="Stato" v={jobs.map((item) => STATE[item.state]).join(", ") || "IDLE"} />
+          <Fact k="Dipendenze" v={jobs.flatMap((item) => item.dependencies).join(", ") || "Nessuna"} />
+          <Fact k="Output di registro" v={jobs.map((item) => item.output).join(" · ") || "Assente"} />
+          <Fact k="Tipo output" v={jobs.every((item) => item.outputKind === "absent") ? "non prodotto" : "registro, non osservato fuori dalla simulazione"} />
+        </dl>
+      </article>
+    );
+  }
+  if (selectedId.startsWith("unit:")) {
+    const unit = BUSINESS_UNITS.find((item) => item.id === selectedId.slice(5));
+    return (
+      <article data-testid="floor-detail" className="border border-border p-4">
+        <h2 className="text-lg font-semibold">{unit?.name || selectedId}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Prevista nel masterplan. Non è un'entità del repository e non è un dato LIVE.</p>
+        <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+          <Fact k="Presenza" v="planned" />
+          <Fact k="Reparti collegati" v={(unit?.departments || []).join(", ")} />
+        </dl>
+      </article>
+    );
+  }
+  if (selectedId.startsWith("dept:")) {
+    const room = ROOMS.find((item) => item.id === selectedId.slice(5));
+    const rows = departmentSnapshot(room?.id, frame);
+    return (
+      <article data-testid="floor-detail" className="border border-border p-4" aria-label={room?.name || "Reparto"}>
+        <h2 className="text-lg font-semibold">{room?.name}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{room?.lede} Presenza: repository. Non è una business unit pianificata.</p>
+        <ul className="mt-3 space-y-2 text-xs">
+          {rows.length ? rows.map((row) => <li key={row.id} className="border border-border p-2">{row.name} · {STATE[row.state] || row.state} · dipende da {row.dependencies.join(", ") || "niente"} · {row.output}</li>) : <li>Nessuna task in questo passo.</li>}
+        </ul>
+      </article>
+    );
+  }
+  if (selected) {
+    const station = selected;
+    return (
+      <article data-testid="floor-detail" className="border border-border p-4" aria-label={station?.name || story.company}>
+        <h2 className="text-lg font-semibold">{station ? station.name : story.company}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{station ? station.role : "Reparto del repository. Le business unit che lo citano restano previste."}</p>
+        <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+          <Fact k="Evento" v={story.event} />
+          <Fact k="Azienda" v={`${story.company} · ${story.companyPresence}`} />
+          <Fact k="Task" v={story.task} />
+          <Fact k="Agente" v={story.agentName} />
+          <Fact k="Dipendenze" v={story.dependencies.join(", ") || "Nessuna"} />
+          <Fact k="Esecuzione" v={STATE[story.execution] || story.execution} />
+          <Fact k="Output" v={story.outputKind === "registry" ? `${story.output} · di registro, non un esito LIVE` : story.output} />
+          <Fact k="Validazione" v={story.validation} />
+          <Fact k="Approvazione" v={story.approval === "none" ? "Non richiesta in questo passo" : story.execution === "waiting" ? "In attesa, non concessa" : story.approval} />
+          <Fact k="Risultato" v={story.result} />
+          {station ? <Fact k="Simulazione" v={STATE[selectedState]} /> : null}
+          {station ? <Fact k="Skill" v={station.skills.map((id) => skillById(id)?.name || id).join(", ")} /> : null}
+          {station ? <Fact k="Catena" v={workflow ? `${workflow.stationIds.indexOf(station.id) + 1}/${workflow.stationIds.length}` : "—"} /> : null}
+          <Fact k="Unità previste" v={story.plannedUnits.map((item) => item.name).join(", ") || "Nessuna"} />
+        </dl>
+      </article>
+    );
+  }
+  return null;
 }
 
 function Fact({ k, v }) {
