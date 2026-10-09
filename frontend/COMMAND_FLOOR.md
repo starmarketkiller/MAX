@@ -16,13 +16,10 @@ Il polling riusa `useVisiblePolling`: si ferma se la scheda non è visibile e no
 
 Il Council non è dentro l'elenco dei sette reparti: la pagina lo aggiunge. I nomi delle business unit sono etichette previste, non un registro del backend. I gate fermano la catena simulata; non sono permessi del backend.
 
-## Mappa
+## Board
 
-I collegamenti disegnati sono solo l'assegnazione del passo corrente, dal reparto al worker. L'animazione parte solo se quel passo è in esecuzione. Su schermi sotto i 700 px la mappa usa un disegno più stretto e un testo più grande. Lo sfondo della mappa non fa scorrere la pagina.
-
-Da collaudare su un iPhone vero, perché qui non c'è un browser: trascinare lo sfondo, premere i nodi, usare zoom e controlli, e scorrere la pagina fuori dalla mappa.
-
+La vista principale è la board della preview: stanze, postazioni e ritratti in `public/bots`. La mappa a cerchi resta solo sul pulsante Mappa. LIVE non disegna la board. Il Council resta nella striscia sotto le stanze, come nella preview. Non c'è un browser in questo ambiente, quindi il confronto con lo screenshot resta da fare a occhio dopo il deploy.
 
 ## CI e deploy
 
-La CI parte sui push di `main`, `claude/**` e `feature/**`, e sulle pull request verso `main`. `feature/visual-floor-v2` quindi avvia la CI. Safe Deploy è disabilitato manualmente e questa modifica non lo riattiva.
+La CI parte sui push di `main`, `claude/**` e `feature/**`, e sulle pull request verso `main`. Questo branch è `feature/nexus-floor-board`, quindi un push avvia la CI. Safe Deploy è disabilitato manualmente e questa modifica non lo riattiva.
