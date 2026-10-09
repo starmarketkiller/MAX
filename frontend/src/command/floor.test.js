@@ -8,6 +8,7 @@ const { SKILLS, WORKERS } = require("./skills");
 const { layout, allowMotion, assignmentLinks, chooseLayout, panBy, zoomBy } = require("./map");
 const { scriptAt, workerLoad, PHASES, departmentSnapshot, phaseOf } = require("./script");
 const { diagnose, safeFacts } = require("./diagnostics");
+const { projectCapabilities } = require("./capabilities");
 const { eventsAt, frameAt, stationState, worldById } = require("./engine");
 
 const readyPayload = { ok: true, checks: { database: { ok: true }, queue_dispatcher: { running: true } } };
@@ -118,6 +119,7 @@ describe("floor nel frontend MAX", () => {
     expect(source("./live.js").includes("scriptAt")).toBe(false);
     const sim = page.slice(page.indexOf("function SimPane"), page.indexOf("function Detail"));
     expect(sim.includes("LiveDiagnostics")).toBe(false);
+    expect(sim.includes("CapabilityMap")).toBe(false);
     expect(sim.includes("live-diagnostics")).toBe(false);
     expect(page.includes("data-testid=\"live-diagnostics\"") || source("./LiveDiagnostics.jsx").includes("live-diagnostics")).toBe(true);
     expect(source("./diagnostics.js").includes(".post(")).toBe(false);
@@ -166,6 +168,65 @@ describe("floor nel frontend MAX", () => {
       expect(card.access).toBe("EMPTY_RESPONSE");
       expect(card.state).not.toBe("IDLE");
     }
+  });
+
+  test("le nove capacità non promuovono una postazione", () => {
+    const ids = ["systems.watch", "trading.data", "jarvis.state", "systems.req", "jarvis.monitor", "jarvis.orch", "revenue.find", "trading.research", "jarvis.approval"];
+    expect(LIVE_READS.map((item) => item.stationId)).toEqual(ids);
+    expect(STATIONS).toHaveLength(119);
+    const readyRow = { path: "/ready", name: "Monitoring", http: 200, at: "T", origin: "/ready", schema: "valid", api: "available", facts: safeFacts("/ready", readyPayload) };
+    const feedRow = { path: "/dukascopy_status", name: "Feed", http: 200, at: "T", origin: "/dukascopy_status", schema: "valid", api: "available", facts: safeFacts("/dukascopy_status", feedPayload) };
+    const denied = ids.filter((id) => !["systems.watch", "trading.data", "jarvis.orch"].includes(id)).map((id) => {
+      const spec = LIVE_READS.find((item) => item.stationId === id);
+      return { path: spec.path, http: 401, at: "T", origin: spec.path, api: "unauthorized" };
+    });
+    const view = projectCapabilities([readyRow, feedRow, { path: "/jarvis/dispatcher/status", http: 401, at: "T", origin: "/jarvis/dispatcher/status", api: "unauthorized" }, ...denied]);
+    expect(view.simOnlyCount).toBe(110);
+    expect(view.executingCount).toBe(0);
+    expect(view.links).toHaveLength(9);
+    expect(JSON.stringify(view)).not.toMatch(/CONNECTED|EXECUTING|"RUNNING"/);
+    const watch = view.links.find((item) => item.stationId === "systems.watch");
+    expect(watch.capability).toBe("PROCESS_OBSERVED");
+    expect(watch.process).toBe("OBSERVED");
+    expect(watch.task).toBe("NONE");
+    const feed = view.links.find((item) => item.stationId === "trading.data");
+    expect(feed.capability).toBe("FEED_OBSERVED");
+    expect(feed.task).toBe("NONE");
+    const orch = view.links.find((item) => item.stationId === "jarvis.orch");
+    expect(orch.capability).toBe("IMPLEMENTED_UNVERIFIED");
+    expect(orch.access).toBe("AUTH_REQUIRED");
+    expect(orch.state).toBe("UNKNOWN");
+    expect(orch.queueLiveness).toBe("observed-on");
+    expect(orch.task).toBe("NONE");
+    for (const id of ["jarvis.state", "systems.req", "jarvis.monitor", "revenue.find", "trading.research", "jarvis.approval"]) {
+      const link = view.links.find((item) => item.stationId === id);
+      expect(link.capability).toBe("IMPLEMENTED_UNVERIFIED");
+      expect(link.access).toBe("AUTH_REQUIRED");
+      expect(link.task).toBe("NONE");
+      expect(`${link.state} ${link.access}`).not.toContain("BLOCKED");
+    }
+    const stalled = projectCapabilities([
+      { path: "/jarvis/activity", http: 0, at: "T", origin: "/jarvis/activity", api: "timeout", error: "timeout" },
+      { path: "/company/overview", http: 429, at: "T", origin: "/company/overview", api: "limited" },
+      { path: "/jarvis/executive-state", http: 503, at: "T", origin: "/jarvis/executive-state", api: "offline" },
+      { path: "/jarvis/approvals", http: 403, at: "T", origin: "/jarvis/approvals", api: "unauthorized" },
+      { path: "/ready", http: 200, at: "T", origin: "/ready", schema: "empty", api: "available" },
+    ]);
+    expect(stalled.links.find((item) => item.stationId === "jarvis.monitor").capability).toBe("UNKNOWN");
+    expect(stalled.links.find((item) => item.stationId === "systems.req").capability).toBe("UNKNOWN");
+    expect(stalled.links.find((item) => item.stationId === "jarvis.state").capability).toBe("UNKNOWN");
+    expect(stalled.links.find((item) => item.stationId === "jarvis.approval").access).toBe("AUTH_REQUIRED");
+    expect(stalled.links.find((item) => item.stationId === "systems.watch").capability).toBe("UNKNOWN");
+    const unverified = projectCapabilities([{ path: "/jarvis/dispatcher/status", http: 200, at: "T", origin: "/jarvis/dispatcher/status", schema: "unverified", api: "available" }]);
+    expect(unverified.links.find((item) => item.stationId === "jarvis.orch").capability).toBe("IMPLEMENTED_UNVERIFIED");
+    expect(unverified.links.find((item) => item.stationId === "jarvis.orch").task).toBe("NONE");
+    expect(unverified.executingCount).toBe(0);
+    expect(stalled.executingCount).toBe(0);
+    expect(source("./capabilities.js").includes(".post(")).toBe(false);
+    expect(source("./CapabilityMap.jsx").includes("token")).toBe(false);
+    expect(source("./live.js").includes("ENDPOINT_TIMEOUT_MS = 8000")).toBe(true);
+    const sim = source("../pages/CommandFloorPage.jsx").slice(source("../pages/CommandFloorPage.jsx").indexOf("function SimPane"), source("../pages/CommandFloorPage.jsx").indexOf("function Detail"));
+    expect(sim.includes("CapabilityMap")).toBe(false);
   });
 
   test("la mappa riusa i registri e il copione è riproducibile", () => {
