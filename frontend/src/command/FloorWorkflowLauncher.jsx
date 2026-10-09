@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import api, { formatApiError } from "@/lib/api";
 
 function newKey() {
-  return globalThis.crypto?.randomUUID?.() || `floor-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return window.crypto?.randomUUID?.() || `floor-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 export default function FloorWorkflowLauncher({ trace, onLaunched, onRefresh }) {
