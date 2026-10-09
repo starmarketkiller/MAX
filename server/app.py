@@ -86,6 +86,7 @@ from executive_v1.state import ExecutiveStateBuilder
 from executive_v1.snapshots import SnapshotStore
 from executive_v1.priority import INTERACTIVE_GATE as EXECUTIVE_INTERACTIVE_GATE
 from jarvis_v1.ministral_chat import gateway_status as ministral_gateway_status
+from jarvis_v1.floor_workflow import project_trace
 from jarvis_v1.multi_stage_executor import MultiStageExecutor
 from orchestrator_v1.core.capability import load_registry as load_agent_capability_registry
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
@@ -1953,6 +1954,12 @@ def jarvis_task(task_id: str, user: str = Depends(require_user)):
         return JARVIS_SERVICE.queue.get(task_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="task not found")
+
+
+@app.get("/api/jarvis/floor-workflow")
+def jarvis_floor_workflow(task_id: str | None = None, user: str = Depends(require_user)):
+    """Latest internal handoff trace. Steps only; no manifest or ledger dump."""
+    return project_trace(JARVIS_SERVICE.queue, JARVIS_SERVICE.ledger, task_id, owner=user)
 
 
 @app.get("/api/jarvis/tasks/{task_id}/diagnostics")
