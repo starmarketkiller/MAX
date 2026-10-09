@@ -58,7 +58,8 @@ def _message(task_id, action):
 
 def test_dispatcher_runs_the_handoff_and_approval_does_not_rerun(tmp_path, monkeypatch):
     service, calls = _service(tmp_path, monkeypatch)
-    task_id = service.floor_workflow.submit(objective="internal handoff", context=_context())
+    task_id = service.floor_workflow.submit(
+        objective="internal handoff", context=_context(), created_by="jarvis:42")
     dispatcher = DurableQueueDispatcher(service.orchestrator, poll_seconds=0.05, lease_seconds=30)
     assert dispatcher.run_once() is True
     record = service.queue.get(task_id)
@@ -83,7 +84,7 @@ def test_dispatcher_runs_the_handoff_and_approval_does_not_rerun(tmp_path, monke
     assert dispatcher.run_once() is False
     assert calls["n"] == 1
     assert service.queue.claim_next("later") is None
-    trace = project_trace(service.queue, service.ledger)
+    trace = project_trace(service.queue, service.ledger, owner="42")
     assert trace["task_id"] == task_id
     assert trace["artifact_count"] >= 1
     assert trace["delivery"] == "not_sent"
@@ -92,11 +93,16 @@ def test_dispatcher_runs_the_handoff_and_approval_does_not_rerun(tmp_path, monke
     blob = json.dumps(trace)
     assert "caller supplied" not in blob
     assert "linen jacket" not in blob
+    hidden = project_trace(service.queue, service.ledger, task_id, owner="7")
+    assert hidden["task_id"] is None
+    assert hidden["steps"] == []
+    assert task_id not in json.dumps(hidden)
 
 
 def test_trace_drops_fields_outside_the_step_contract(tmp_path, monkeypatch):
     service, _calls = _service(tmp_path, monkeypatch)
-    task_id = service.floor_workflow.submit(objective="internal handoff", context=_context())
+    task_id = service.floor_workflow.submit(
+        objective="internal handoff", context=_context(), created_by="jarvis:42")
     DurableQueueDispatcher(service.orchestrator, poll_seconds=0.05, lease_seconds=30).run_once()
     service.ledger.append("STEP_COMPLETED", task_id, {
         "step_id": "trend", "station_id": "fashion.trend", "state": "RECORDED",
@@ -104,11 +110,52 @@ def test_trace_drops_fields_outside_the_step_contract(tmp_path, monkeypatch):
         "workflow_id": WORKFLOW_ID, "side_effects": "none",
         "manifest": {"token": "secret-token"}, "context": "caller supplied",
     }, actor="floor_workflow_v1")
-    trace = project_trace(service.queue, service.ledger, task_id)
+    trace = project_trace(service.queue, service.ledger, task_id, owner="42")
     blob = json.dumps(trace)
     assert "secret-token" not in blob
     assert "caller supplied" not in blob
     assert all("manifest" not in step for step in trace["steps"])
+
+
+def test_another_user_or_tenant_cannot_read_the_trace(tmp_path, monkeypatch):
+    service, _calls = _service(tmp_path, monkeypatch)
+    own = service.floor_workflow.submit(
+        objective="mine", context=_context(), created_by="jarvis:42")
+    other = service.floor_workflow.submit(
+        objective="theirs", context=_context(), created_by="jarvis:7")
+    foreign_tenant = service.floor_workflow.submit(
+        objective="other tenant", context=_context(), created_by="jarvis:42", tenant_id="tenant-9")
+    visible = project_trace(service.queue, service.ledger, owner="42")
+    assert visible["task_id"] == own
+    assert project_trace(service.queue, service.ledger, other, owner="42")["task_id"] is None
+    assert project_trace(service.queue, service.ledger, foreign_tenant, owner="42")["task_id"] is None
+    assert project_trace(service.queue, service.ledger, owner="7")["task_id"] == other
+    assert project_trace(service.queue, service.ledger, owner=None)["task_id"] is None
+
+
+def test_a_failed_skill_does_not_complete_the_handoff(tmp_path, monkeypatch):
+    service, calls = _service(tmp_path, monkeypatch)
+
+    def _bad(prompt, model, json_mode=False):
+        calls["n"] += 1
+        payload = _model_payload()
+        payload["CONTENT_BRIEF_DRAFT"]["evidence"] = ["E999"]
+        return {"success": True, "model": model, "response_text": json.dumps(payload),
+                "wall_seconds": 0.0, "error": None}
+
+    monkeypatch.setattr("core.orchestrator.ollama_worker.call_local_model", _bad)
+    task_id = service.floor_workflow.submit(
+        objective="internal handoff", context=_context(), created_by="jarvis:42")
+    DurableQueueDispatcher(service.orchestrator, poll_seconds=0.05, lease_seconds=30).run_once()
+    record = service.queue.get(task_id)
+    assert record["state"] != "WAITING_APPROVAL"
+    assert record.get("approval_effect") != "ACCEPT_ONLY"
+    events = service.ledger.read_for_task(task_id)
+    assert not any((event.get("payload") or {}).get("station_id") == "fashion.handoff" for event in events)
+    assert not any(event["event_type"] == "TASK_COMPLETED" for event in events)
+    trace = project_trace(service.queue, service.ledger, task_id, owner="42")
+    assert "fashion.handoff" not in {step["station_id"] for step in trace["steps"]}
+    assert service.queue.claim_next("later") is None
 
 
 def test_floor_workflow_read_requires_a_session():

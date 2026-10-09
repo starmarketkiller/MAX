@@ -28,6 +28,7 @@ export default function CommandFloorPage() {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [selectedId, setSelectedId] = useState("trading.data");
   const [live, setLive] = useState(null);
+  const [liveError, setLiveError] = useState("");
   const [trace, setTrace] = useState(null);
   const liveSeq = useRef(0);
   const world = worldById(worldId);

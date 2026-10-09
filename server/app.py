@@ -1959,7 +1959,7 @@ def jarvis_task(task_id: str, user: str = Depends(require_user)):
 @app.get("/api/jarvis/floor-workflow")
 def jarvis_floor_workflow(task_id: str | None = None, user: str = Depends(require_user)):
     """Latest internal handoff trace. Steps only; no manifest or ledger dump."""
-    return project_trace(JARVIS_SERVICE.queue, JARVIS_SERVICE.ledger, task_id)
+    return project_trace(JARVIS_SERVICE.queue, JARVIS_SERVICE.ledger, task_id, owner=user)
 
 
 @app.get("/api/jarvis/tasks/{task_id}/diagnostics")

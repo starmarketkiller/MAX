@@ -25,6 +25,7 @@ from jarvis_v1.ministral_task_compiler import encode_bounded_output
 WORKFLOW_ID = "jarvis.fashion.handoff.v1"
 ACTION = "nexus_fashion_handoff_workflow"
 INTENT = "FASHION_INTERNAL_HANDOFF"
+TENANT_ID = "tenant-1"
 
 SKILL_STATIONS = (
     ("fashion.trend", "trend", "VIRAL_FORMAT_ANALYSIS"),
@@ -138,7 +139,7 @@ class FloorWorkflowCoordinator:
         self.handler = FloorWorkflowHandler(orchestrator.ledger)
         orchestrator.register_local_handler(ACTION, self.handler)
 
-    def submit(self, *, objective, context, created_by="floor_workflow_v1"):
+    def submit(self, *, objective, context, created_by, tenant_id=TENANT_ID):
         manifest = {
             "task_id": f"TASK_{uuid.uuid4().hex[:12].upper()}",
             "title": "Fashion handoff, internal only",
@@ -156,25 +157,39 @@ class FloorWorkflowCoordinator:
             "premium_allowed": False, "preferred_executor": "TIER1_LOCAL_CHEAP",
             "fallback_executors": ["TIER2_LOCAL_STRONG"],
             "approval_required": "REVIEW_REQUIRED", "created_by": created_by,
-            "created_at": _now(), "tenant_id": "tenant-1", "account_scope_id": None,
+            "created_at": _now(), "tenant_id": tenant_id, "account_scope_id": None,
         }
         params = {"objective": objective, "context": context, "workflow_id": WORKFLOW_ID,
                   "priority_class": "P2_TRADING_REVENUE_BACKGROUND"}
         return self.orchestrator.submit(manifest, action=ACTION, action_params=params)
 
 
-def project_trace(queue, ledger, task_id=None):
-    """Sanitized read. No manifest, context, secrets, or full ledger."""
+def _owned(record, owner):
+    if not owner or record.get("action") != ACTION:
+        return False
+    manifest = record.get("manifest") or {}
+    return (manifest.get("created_by") == f"jarvis:{owner}"
+            and manifest.get("tenant_id") == TENANT_ID)
+
+
+def project_trace(queue, ledger, task_id=None, *, owner):
+    """Sanitized read for one owner and the canonical tenant.
+
+    A missing owner, another user, or another tenant returns an empty trace.
+    The response never includes that task id.
+    """
     record = None
     if task_id:
         try:
-            record = queue.get(task_id)
+            candidate = queue.get(task_id)
         except KeyError:
-            record = None
+            candidate = None
+        if candidate is not None and _owned(candidate, owner):
+            record = candidate
     else:
-        rows = [row for row in queue.list_all() if row.get("action") == ACTION]
+        rows = [row for row in queue.list_all() if _owned(row, owner)]
         record = max(rows, key=lambda row: row.get("updated_at") or "") if rows else None
-    if record is None or record.get("action") != ACTION:
+    if record is None:
         return {"source": "ledger", "task_id": None, "state": None, "approval_effect": None,
                 "decision": None, "artifact_count": 0, "delivery": "not_sent",
                 "steps": [], "not_run": []}

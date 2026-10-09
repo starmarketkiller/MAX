@@ -120,6 +120,7 @@ describe("floor nel frontend MAX", () => {
     expect(LIVE_READS).toHaveLength(9);
     const page = source("../pages/CommandFloorPage.jsx");
     expect(page.includes('api.get("/jarvis/floor-workflow"')).toBe(true);
+    expect(page.includes("const [liveError, setLiveError] = useState(\"\")")).toBe(true);
     expect(page.includes("api.post")).toBe(false);
     const sim = page.slice(page.indexOf("function SimPane"), page.indexOf("function Detail"));
     expect(sim.includes("ObservedPath")).toBe(false);
