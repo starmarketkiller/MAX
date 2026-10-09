@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
 import { PRIMARY_WORKSPACES, UTILITY_ROUTES, workspaceForPath } from "@/lib/workspaces";
 
-const utilityIcons = { "/company": Building2, "/risk-calc": Calculator, "/settings": Settings, "/licenses": KeyRound, "/system": Server };
+const utilityIcons = { "/company": Building2, "/floor": Activity, "/risk-calc": Calculator, "/settings": Settings, "/licenses": KeyRound, "/system": Server };
 const cls = (...values) => values.filter(Boolean).join(" ");
 
 function WorkspaceNav({ pathname, onNavigate }) {

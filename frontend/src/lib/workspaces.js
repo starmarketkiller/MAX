@@ -37,6 +37,7 @@ export const PRIMARY_WORKSPACES = Object.freeze([
 
 export const UTILITY_ROUTES = Object.freeze([
   { label: "Company", to: "/company" },
+  { label: "Visual Floor", to: "/floor" },
   { label: "Calculator", to: "/risk-calc" },
   { label: "Settings", to: "/settings" },
   { label: "Licenses / Admin", to: "/licenses" },
