@@ -1,4 +1,28 @@
-# NEXUS Business Unit — AI_FASHION_AGENCY (V2 operations, dry-run)
+# NEXUS Business Unit — AI_FASHION_AGENCY: **Unreal Faces** (V2 operations, dry-run)
+
+## Unreal Faces: agenzia prima, modelle una alla volta
+
+- `identity.py` — `AGENCY_IDENTITY_V1`: nome, posizionamento (fashion + lifestyle misto),
+  tagline, palette, tono, regole di brand, policy roster (una modella alla volta), e il
+  kit del profilo Instagram vetrina dell'agenzia (bio ≤150, griglia di lancio 9 post,
+  highlights, contatto brand). Handle = proposte `UNVERIFIED_CHECK_IN_APP`.
+- `launch.py` — `MODEL_LAUNCH_V1`, la catena ripetibile per ogni modella:
+  `CASTING → IDENTITY → PROFILE_KIT → CONTENT_PLAN → PRODUCTION → PUBLISHING →
+  MONETIZATION → REVIEW → CLOSED`, poi la modella successiva.
+
+| Stadio | Gate di uscita |
+|---|---|
+| CASTING | proposta deterministica (fit virale, ampiezza prodotti, seed pack, preventivo, no doppione di nicchia) + tua approvazione |
+| IDENTITY | character sheet generato (passo pagato: preventivo → approvazione) |
+| PROFILE_KIT | kit IG della modella generato; tu crei l'account e confermi l'handle reale |
+| CONTENT_PLAN | piano 30 giorni automatico (nessuna sponsorizzazione) |
+| PRODUCTION | ≥3 content package revisionati |
+| PUBLISHING | ≥9 post pubblicati da te (registrati, mai pubblicati da NEXUS) e ≥1000 follower osservati |
+| MONETIZATION | prodotto STORE_READY + primo ricavo attribuito alla modella |
+| REVIEW | tua decisione SCALE / ITERATE / RETIRE |
+
+Un nuovo casting si apre solo quando ogni lancio aperto ha raggiunto MONETIZATION.
+
 
 Azienda interna di NEXUS che coordina un roster di modelle/creator AI dichiarati, trasforma
 le opportunità trovate dalle automazioni NEXUS (trend, prodotti, offerte) in contenuti

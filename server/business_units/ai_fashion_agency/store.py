@@ -48,13 +48,13 @@ def _seed():
             "inputs": [], "products": [], "briefs": [], "assignments": [],
             "generation_packs": [], "campaigns": [], "costs": [], "revenue_events": [],
             "scout_results": [], "social_posts": [], "content_packages": [],
-            "event_outbox": [], "idempotency_index": {}}
+            "launches": [], "event_outbox": [], "idempotency_index": {}}
 
 
 def _migrate(value):
     """Additive, idempotent upgrade of V1 files (new collections, account slots)."""
     from .roster import planned_social_accounts
-    for name in ("scout_results", "social_posts", "content_packages", "event_outbox"):
+    for name in ("scout_results", "social_posts", "content_packages", "launches", "event_outbox"):
         value.setdefault(name, [])
     for model in value["models"]:
         if not model.get("social_accounts"):
@@ -65,12 +65,13 @@ def _migrate(value):
 class AgencyStore:
     COLLECTIONS = ("models", "inputs", "products", "briefs", "assignments",
                    "generation_packs", "campaigns", "costs", "revenue_events",
-                   "scout_results", "social_posts", "content_packages")
+                   "scout_results", "social_posts", "content_packages", "launches")
     KEYS = {"models": "model_id", "inputs": "input_id", "products": "product_id",
             "briefs": "brief_id", "assignments": "assignment_id",
             "generation_packs": "pack_id", "campaigns": "campaign_id", "costs": "cost_id",
             "revenue_events": "revenue_event_id", "scout_results": "scout_result_id",
-            "social_posts": "post_id", "content_packages": "package_id"}
+            "social_posts": "post_id", "content_packages": "package_id",
+            "launches": "launch_id"}
     OUTBOX_LIMIT = 500
 
     def __init__(self, path, *, event_sink=None):

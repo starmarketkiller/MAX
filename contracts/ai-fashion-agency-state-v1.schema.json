@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": [
     "accounts",
+    "agency_name",
     "agency_tasks",
     "alerts",
     "approvals",
@@ -23,6 +24,7 @@
     "generated_at",
     "health",
     "kpis",
+    "launch",
     "models_active",
     "models_casting",
     "models_total",
@@ -254,6 +256,18 @@
           "detail"
         ]
       }
+    },
+    "agency_name": {
+      "type": "string"
+    },
+    "launch": {
+      "type": "object",
+      "required": [
+        "agency",
+        "open",
+        "launched",
+        "next_step"
+      ]
     }
   }
 }
