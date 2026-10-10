@@ -1,172 +1,125 @@
-"""Sandbox execution cycle. The broker double is not a demo account and sends nothing to MT5."""
+"""The EA remains the only order sender. These tests never open a trade."""
+import json
+import threading
+from pathlib import Path
+from urllib.request import Request, urlopen
+
 import pytest
 
-from trading_v1.broker import DONE, INVALID_STOPS, REJECTED, RETRYABLE, ScriptedBroker, UnconnectedMt5Port
-from trading_v1.engine import ExecutionEngine, Intent, jarvis_proposal
+from nexus_policy import EA_ACTIONS
 from trading_v1.floor import project
-from trading_v1.risk import AccountView, RiskLimits
-from trading_v1.signals import macd_intent
+from trading_v1.supervisor import TradingSupervisor
+import importlib.util
 
 
-def account():
-    return AccountView("DEMO", True, 1000, 1000, 0, 800, 0, 0)
+def _bridge():
+    path = Path(__file__).resolve().parents[2] / "LocalBridge" / "nexus_mt5_readonly_bridge.py"
+    spec = importlib.util.spec_from_file_location("nexus_mt5_readonly_bridge", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
-def intent(**kw):
-    base = dict(client_id="ord-1", strategy_id="MACD", side="BUY", symbol="XAUUSD",
-                volume=0.1, price=100, stop=99, quote_age_seconds=0, spread_points=10)
-    base.update(kw)
-    return Intent(**base)
+def test_python_package_has_no_order_sender():
+    root = Path(__file__).resolve().parents[1] / "trading_v1"
+    text = "\n".join(path.read_text(encoding="utf-8") for path in root.glob("*.py"))
+    for banned in ("order_send", "def send", "sig_macd", "ExecutionEngine", "OrderSend("):
+        assert banned not in text
+    assert "close_position" in EA_ACTIONS
+    assert "open_order" not in EA_ACTIONS
 
 
-def engine(tmp_path, broker, **kw):
-    book = ExecutionEngine(tmp_path / "exec.json", broker, account=account(), **kw)
-    book.enable_strategy("MACD", approved_by="owner")
-    return book
+def test_signal_is_stored_and_does_not_create_an_order(tmp_path):
+    book = TradingSupervisor(tmp_path / "state.json")
+    record = book.ingest({"kind": "SIGNAL", "client_id": "ea-1", "strategy_id": "MACD"})
+    assert record["state"] == "SIGNAL_ONLY" and record["retry_allowed"] is False
+    assert book.projection()["accepts_orders"] is False
 
 
-def test_demo_cycle_confirms_once_and_does_not_duplicate(tmp_path):
-    broker = ScriptedBroker([{"retcode": DONE, "ticket": 501, "position_id": 501,
-                              "unrealized_pnl": 3.5}])
-    book = engine(tmp_path, broker)
-    first = book.submit(intent())
-    assert first["state"] == "FILLED" and first["ticket"] == 501
-    assert broker.sends == 1 and len(broker.positions) == 1
-    second = book.submit(intent())
-    assert second["ticket"] == 501 and broker.sends == 1
-    report = book.reconcile()
-    assert report["authoritative"] == "broker" and report["diverged"] is False
-    view = project(book.projection(), stages={"MACD": "DEMO"}, reconcile=report)
-    assert view["orders_confirmed"] == [{"client_id": "ord-1", "ticket": 501}]
-    assert view["unrealized_pnl"] == 3.5
-    assert view["stations"]["trading.exec"] == "confirmed"
-    assert view["realized_pnl"] is None
+def test_timeout_with_a_deal_is_confirmed_and_not_retried(tmp_path):
+    book = TradingSupervisor(tmp_path / "state.json")
+    record = book.resolve_timeout("ea-1", {"orders": [], "deals": [
+        {"client_id": "ea-1", "ticket": 501, "position_id": 501}], "positions": []})
+    assert record["state"] == "CONFIRMED" and record["ticket"] == 501
+    assert record["retry_allowed"] is False and record["confirmed_by"] == "deals"
 
 
-def test_retryable_reject_does_not_open_two_positions(tmp_path):
-    broker = ScriptedBroker([{"retcode": 10004}, {"retcode": DONE, "ticket": 7, "position_id": 7}])
-    book = engine(tmp_path, broker)
-    result = book.submit(intent())
-    assert result["state"] == "FILLED" and result["ticket"] == 7
-    assert broker.sends == 2 and len(broker.positions) == 1
-    assert 10004 in RETRYABLE
+def test_timeout_without_a_broker_trace_stays_ambiguous(tmp_path):
+    book = TradingSupervisor(tmp_path / "state.json")
+    record = book.resolve_timeout("ea-1", {"orders": [], "deals": [], "positions": []})
+    assert record["state"] == "AMBIGUOUS" and record["retry_allowed"] is False
+    again = book.resolve_timeout("ea-1", {"orders": [{"client_id": "ea-1", "ticket": 9}],
+                                          "deals": [], "positions": []})
+    assert again["state"] == "IN_FLIGHT" and again["retry_allowed"] is False
 
 
-def test_crash_after_broker_accept_recovers_without_a_second_order(tmp_path):
-    broker = ScriptedBroker([{"retcode": DONE, "ticket": 9, "position_id": 9}])
-    book = engine(tmp_path, broker)
-    book.submit(intent())
-    state = book._load()
-    state["orders"]["ord-1"]["state"] = "SENDING"
-    book._save(state)
-    restarted = ExecutionEngine(tmp_path / "exec.json", broker, account=account())
-    again = restarted.submit(intent())
-    assert again["state"] == "FILLED" and again["ticket"] == 9
-    assert broker.sends == 1
+def test_pending_order_after_timeout_is_not_a_second_send(tmp_path):
+    book = TradingSupervisor(tmp_path / "state.json")
+    record = book.resolve_timeout("ea-1", {"orders": [{"client_id": "ea-1", "ticket": 4}],
+                                           "deals": [], "positions": []})
+    assert record["state"] == "IN_FLIGHT" and record["retry_allowed"] is False
+    assert project(book.projection())["stations"]["trading.exec"] == "in_flight"
 
 
-def test_crash_before_send_retries_once(tmp_path):
-    broker = ScriptedBroker([{"retcode": DONE, "ticket": 11, "position_id": 11}])
-    book = engine(tmp_path, broker)
-    state = book._load()
-    state["orders"]["ord-1"] = {"client_id": "ord-1", "strategy_id": "MACD", "state": "SENDING",
-                                "ticket": None}
-    book._save(state)
-    result = book.submit(intent())
-    assert result["ticket"] == 11 and broker.sends == 1
+def test_demo_stays_off_until_the_account_is_connected_and_verified(tmp_path):
+    book = TradingSupervisor(tmp_path / "state.json")
+    missing = book.review_demo({"connected": False}, {"account_login": "1", "verified_by": "owner"})
+    assert missing["demo_account_verified"] is False
+    assert "TERMINAL_NOT_CONNECTED" in missing["reasons"]
+    live_account = book.review_demo(
+        {"connected": True, "trade_mode": "LIVE", "login": 1},
+        {"account_login": "1", "verified_by": "owner"})
+    assert "NOT_A_DEMO_ACCOUNT" in live_account["reasons"]
+    jarvis = book.review_demo(
+        {"connected": True, "trade_mode": "DEMO", "login": 77},
+        {"account_login": "77", "verified_by": "jarvis:42"})
+    assert jarvis["demo_account_verified"] is False
+    ready = book.review_demo(
+        {"connected": True, "trade_mode": "DEMO", "login": 77, "server": "Broker-Demo"},
+        {"account_login": "77", "verified_by": "owner"})
+    assert ready["demo_account_verified"] is True
+    assert ready["trading_started"] is False and ready["orders_sent"] == 0
+    assert ready["live_enabled"] is False
 
 
-def test_disconnect_rejection_invalid_stop_and_kill_switch(tmp_path):
-    broker = ScriptedBroker([{"retcode": REJECTED}])
-    broker.connected = False
-    book = engine(tmp_path, broker)
-    blocked = book.submit(intent(client_id="down"))
-    assert blocked["retcode"] == "DISCONNECTED" and broker.positions == {}
-
-    broker.connected = True
-    rejected = book.submit(intent(client_id="no"))
-    assert rejected["state"] == "REJECTED" and broker.positions == {}
-
-    broker.script.append({"retcode": INVALID_STOPS})
-    invalid = book.submit(intent(client_id="stop"))
-    assert invalid["state"] == "REJECTED" and invalid["retcode"] == INVALID_STOPS
-    assert broker.positions == {}
-
-    book.set_kill_switch(True)
-    killed = book.submit(intent(client_id="kill"))
-    assert killed["reasons"] == ["KILL_SWITCH"]
-    assert broker.sends == 2
+def test_enable_live_phrase_is_not_enough_and_live_stays_off(tmp_path):
+    book = TradingSupervisor(tmp_path / "state.json")
+    phrase = book.review_live(
+        {"connected": True, "trade_mode": "LIVE", "login": 9},
+        {"phrase": "ENABLE_LIVE", "actor": "owner", "account_login": "9"},
+        {"risk_percent": 1}, {"fingerprint": "abc"})
+    assert "PHRASE_IS_NOT_AUTHORIZATION" in phrase["reasons"]
+    assert phrase["live_enabled"] is False
+    complete = book.review_live(
+        {"connected": True, "trade_mode": "LIVE", "login": 9},
+        {"phrase": "ENABLE_LIVE", "approval_id": "APR-1", "actor": "owner",
+         "account_login": "9"},
+        {"risk_percent": 1, "max_lot": 0.1}, {"fingerprint": "abc"})
+    assert complete["live_eligible"] is True
+    assert complete["live_enabled"] is False and complete["trading_started"] is False
 
 
-def test_stale_quote_and_risk_limit_block_before_send(tmp_path):
-    broker = ScriptedBroker([{"retcode": DONE}])
-    book = engine(tmp_path, broker, limits=RiskLimits(max_risk_per_trade=0.05))
-    stale = book.submit(intent(client_id="old", quote_age_seconds=30))
-    assert "STALE_QUOTE" in stale["reasons"]
-    risk = book.submit(intent(client_id="big"))
-    assert "MAX_RISK_PER_TRADE" in risk["reasons"]
-    assert broker.sends == 0
-
-
-def test_restart_sees_broker_position_the_ledger_does_not_know(tmp_path):
-    broker = ScriptedBroker([])
-    broker.positions[4] = {"position_id": 4, "client_id": "ord-x", "ticket": 4,
-                           "unrealized_pnl": -1}
-    book = engine(tmp_path, broker)
-    report = book.reconcile()
-    assert report["broker_unknown_to_ledger"] == [4]
-    assert report["diverged"] is True
-    assert report["positions"][0]["position_id"] == 4
-
-
-def test_ledger_fill_missing_on_broker_is_a_divergence(tmp_path):
-    broker = ScriptedBroker([{"retcode": DONE, "ticket": 3, "position_id": 3}])
-    book = engine(tmp_path, broker)
-    book.submit(intent())
-    broker.positions.clear()
-    report = book.reconcile()
-    assert report["ledger_missing_on_broker"] == ["ord-1"]
-    assert report["diverged"] is True
-
-
-def test_live_stays_off_and_jarvis_cannot_arm_it(tmp_path):
-    broker = ScriptedBroker([{"retcode": DONE}], environment="DEMO")
-    book = engine(tmp_path, broker)
-    with pytest.raises(PermissionError):
-        book.arm_live(phrase="ENABLE_LIVE", account_environment="DEMO", account_verified=True)
-    with pytest.raises(PermissionError):
-        book.arm_live(phrase="yes", account_environment="LIVE", account_verified=True)
-    assert book.projection()["live_armed"] is False
-    assert jarvis_proposal("ENABLE_LIVE")["applied"] is False
-    assert jarvis_proposal("RAISE_RISK_LIMIT")["effect"] == "PROPOSAL_ONLY"
-    with pytest.raises(PermissionError):
-        book.enable_strategy("SAR", approved_by="jarvis:42")
-
-
-def test_unconnected_terminal_sends_nothing(tmp_path):
-    book = engine(tmp_path, UnconnectedMt5Port())
-    result = book.submit(intent())
-    assert result["state"] == "BLOCKED" and result["retcode"] == "DISCONNECTED"
-
-
-def test_existing_macd_signal_is_the_backtest_function(tmp_path):
-    candles = [{"close": 110}]
-    indicators = {"macd_line": [1.0], "macd_signal": [0.2], "ema200": [100.0], "close": [110]}
-    assert macd_intent(client_id="s", candles=candles, indicators=indicators, index=0,
-                       volume=0.1, stop=100, quote_age_seconds=0, spread_points=1,
-                       enabled=set()) is None
-    signal = macd_intent(client_id="s", candles=candles, indicators=indicators, index=0,
-                         volume=0.1, stop=100, quote_age_seconds=0, spread_points=1,
-                         enabled={"MACD"})
-    assert signal.side == "BUY" and signal.strategy_id == "MACD"
-    broker = ScriptedBroker([{"retcode": DONE, "ticket": 15, "position_id": 15}])
-    book = engine(tmp_path, broker)
-    assert book.submit(signal)["ticket"] == 15
-
-
-def test_demo_engine_refuses_a_live_account(tmp_path):
-    broker = ScriptedBroker([{"retcode": DONE}], environment="LIVE")
-    book = engine(tmp_path, broker)
-    blocked = book.submit(intent())
-    assert blocked["reasons"] == ["ACCOUNT_MODE_MISMATCH"]
-    assert broker.sends == 0
+def test_readonly_bridge_rejects_orders_and_a_public_bind():
+    bridge = _bridge()
+    token = "local-test-token-24chars"
+    server = bridge.ThreadingHTTPServer(
+        ("127.0.0.1", 0), bridge.make_handler(token, lambda: {"connected": True, "login": 77,
+                                                              "trade_mode": "DEMO"}))
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    port = server.server_address[1]
+    try:
+        request = Request(f"http://127.0.0.1:{port}/v1/mt5/account",
+                          headers={"X-Nexus-Token": token})
+        with urlopen(request, timeout=2) as response:
+            body = json.loads(response.read().decode())
+        assert body["login"] == 77 and body["accepts_orders"] is False
+        posted = Request(f"http://127.0.0.1:{port}/v1/mt5/account", data=b"{}", method="POST",
+                         headers={"X-Nexus-Token": token})
+        with pytest.raises(Exception) as error:
+            urlopen(posted, timeout=2)
+        assert error.value.code == 405
+    finally:
+        server.shutdown()
+    with pytest.raises(RuntimeError):
+        bridge.serve("0.0.0.0", 9, token, reader=lambda: {})

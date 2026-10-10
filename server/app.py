@@ -52,7 +52,7 @@ import knowledge_browser
 import research_read_model
 import market_read_model
 import execution_read_model
-from trading_v1.engine import read_state as read_trading_state
+from trading_v1.supervisor import read_state as read_trading_state
 import library_read_model
 import sequence_research_read_model
 import company_control_plane
@@ -4190,7 +4190,7 @@ def trading_execution_state(user: str = Depends(require_user)):
     path = os.environ.get("NEXUS_TRADING_STATE", "")
     view = read_trading_state(path)
     view["sends_orders"] = False
-    view["note"] = "positions are empty until an MT5 terminal is attached; nothing is sent from this route"
+    view["note"] = "read-only supervision; the EA owns OrderSend and this route does not"
     return view
 
 
