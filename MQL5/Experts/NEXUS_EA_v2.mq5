@@ -765,6 +765,7 @@ int OnInit(){
    g_point  = SymbolInfoDouble(g_sym, SYMBOL_POINT);
    g_digits = (int)SymbolInfoInteger(g_sym, SYMBOL_DIGITS);
    NXS_ResetTradesLogIfRequested();   // 17/07 sera - vedi NXS_Logging.mqh, opt-in, mai automatico
+   NXS_AccountGuard_LogInit();        // NEXUS-ACCT-001: dichiara subito se il conto puo' aprire
 
    // AUD0-LEDGER-007: il ledger assume "una position = un trade logico", vero
    // solo sui conti HEDGING. Su netting la position sopravvive ai flip di

@@ -5,6 +5,9 @@
 #ifndef __NXS_GLOBALS_MQH__
 #define __NXS_GLOBALS_MQH__
 
+// NEXUS-ACCT-001: ultimo controllo sul tipo di conto in NXS_DoBuy/NXS_DoSell.
+#include <NEXUS_v1\NXS_AccountGuard.mqh>
+
 // v2.0.36: single-strategy screening selector (see InpStrategySelector in
 // NXS_Inputs.mqh for the index mapping). 0 = no override, everyone respects
 // their own InpStrat_*/InpUseStrat_* toggle as before.
@@ -346,6 +349,16 @@ ulong NXS_DeviationForSymbol(string sym){
 }
 
 bool NXS_DoBuy(double volume, string sym, double sl, double tp, string comment){
+   // NEXUS-ACCT-001: backstop. Ogni nuova esposizione arriva qui, anche dai
+   // percorsi che non passano da NXS_CommonExposurePreflight. Retcode 0 non
+   // e' ritentabile, quindi NXS_SafeBuy non riprova.
+   string acctWhy;
+   if(!NXS_AccountGuard_EntryAllowed(acctWhy)){
+      g_tradeRetcode     = 0;
+      g_tradeOrderTicket = 0;
+      PrintFormat("[NEXUS ACCOUNT] apertura %s rifiutata prima di OrderSend: %s", sym, acctWhy);
+      return false;
+   }
    MqlTradeRequest req;  ZeroMemory(req);
    MqlTradeResult  res;  ZeroMemory(res);
    req.action      = TRADE_ACTION_DEAL;
@@ -365,6 +378,16 @@ bool NXS_DoBuy(double volume, string sym, double sl, double tp, string comment){
 }
 
 bool NXS_DoSell(double volume, string sym, double sl, double tp, string comment){
+   // NEXUS-ACCT-001: backstop. Ogni nuova esposizione arriva qui, anche dai
+   // percorsi che non passano da NXS_CommonExposurePreflight. Retcode 0 non
+   // e' ritentabile, quindi NXS_SafeSell non riprova.
+   string acctWhy;
+   if(!NXS_AccountGuard_EntryAllowed(acctWhy)){
+      g_tradeRetcode     = 0;
+      g_tradeOrderTicket = 0;
+      PrintFormat("[NEXUS ACCOUNT] apertura %s rifiutata prima di OrderSend: %s", sym, acctWhy);
+      return false;
+   }
    MqlTradeRequest req;  ZeroMemory(req);
    MqlTradeResult  res;  ZeroMemory(res);
    req.action      = TRADE_ACTION_DEAL;
