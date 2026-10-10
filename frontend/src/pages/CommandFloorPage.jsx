@@ -9,6 +9,7 @@ import { readLive } from "@/command/live";
 import LiveDiagnostics from "@/command/LiveDiagnostics";
 import CapabilityMap from "@/command/CapabilityMap";
 import ObservedPath from "@/command/ObservedPath";
+import FloorWorkflowLauncher from "@/command/FloorWorkflowLauncher";
 import { MARKER, MARKER_REACHED, REVIEW_MARKER, REVIEW_READY } from "@/command/marker";
 import FloorMap from "@/command/FloorMap";
 import Board from "@/command/Board";
@@ -30,6 +31,7 @@ export default function CommandFloorPage() {
   const [live, setLive] = useState(null);
   const [liveError, setLiveError] = useState("");
   const [trace, setTrace] = useState(null);
+  const [traceTaskId, setTraceTaskId] = useState(null);
   const liveSeq = useRef(0);
   const world = worldById(worldId);
   const length = worldLength(world);
@@ -52,7 +54,7 @@ export default function CommandFloorPage() {
     return () => window.clearInterval(timer);
   }, [mode, playing, speed, length]);
 
-  useVisiblePolling(async () => {
+  const refreshLive = async () => {
     const mine = ++liveSeq.current;
     try {
       const next = await readLive(api, { generation: mine });
@@ -60,7 +62,9 @@ export default function CommandFloorPage() {
       setLive(next);
       setLiveError("");
       try {
-        const response = await api.get("/jarvis/floor-workflow", { timeout: 8000 });
+        const response = await api.get("/jarvis/floor-workflow", {
+          timeout: 8000, params: traceTaskId ? { task_id: traceTaskId } : {},
+        });
         if (mine !== liveSeq.current) return;
         const body = response.data;
         setTrace(body && body.source === "ledger" ? { ...body, status: "LEDGER" } : { status: "UNAVAILABLE", source: null, steps: [] });
@@ -75,7 +79,8 @@ export default function CommandFloorPage() {
       setLiveError("offline");
       setTrace({ status: "UNAVAILABLE", source: null, steps: [] });
     }
-  }, 30000, mode === "live");
+  };
+  useVisiblePolling(refreshLive, 30000, mode === "live");
 
   return (
     <div className="space-y-4" data-testid="command-floor">
@@ -91,7 +96,9 @@ export default function CommandFloorPage() {
         </div>
       </div>
 
-      {mode === "live" ? <LivePane live={live} error={liveError} trace={trace} /> : (
+      {mode === "live" ? <LivePane live={live} error={liveError} trace={trace}
+        onLaunched={(taskId) => { setTraceTaskId(taskId); setTrace((current) => ({ ...(current || {}), task_id: taskId, state: "QUEUED", status: "LEDGER" })); }}
+        onRefresh={refreshLive} /> : (
         <SimPane
           world={world}
           cursor={cursor}
@@ -116,12 +123,13 @@ export default function CommandFloorPage() {
   );
 }
 
-function LivePane({ live, error, trace }) {
+function LivePane({ live, error, trace, onLaunched, onRefresh }) {
   return (
     <section aria-label="Letture canoniche">
       <p className="text-sm text-muted-foreground">{error ? "Backend non raggiungibile. Nessun dato simulato al suo posto." : live ? `Origine Axios condiviso. Sonda ${live.at}. Una risposta 200 non significa che una task stia girando.` : "Lettura in corso."}</p>
       <LiveDiagnostics live={live} />
       <CapabilityMap live={live} />
+      <FloorWorkflowLauncher trace={trace} onLaunched={onLaunched} onRefresh={onRefresh} />
       <ObservedPath trace={trace} />
     </section>
   );

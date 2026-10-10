@@ -121,16 +121,22 @@ describe("floor nel frontend MAX", () => {
     const page = source("../pages/CommandFloorPage.jsx");
     expect(page.includes('api.get("/jarvis/floor-workflow"')).toBe(true);
     expect(page.includes("const [liveError, setLiveError] = useState(\"\")")).toBe(true);
-    expect(page.includes("api.post")).toBe(false);
+    expect(page.includes("FloorWorkflowLauncher")).toBe(true);
+    const launcher = source("./FloorWorkflowLauncher.jsx");
+    expect(launcher.includes('api.post("/jarvis/floor-workflow"')).toBe(true);
+    expect(launcher.includes('"Idempotency-Key"')).toBe(true);
+    expect(launcher.includes("WAITING_APPROVAL")).toBe(true);
+    expect(launcher.includes("ACCEPT_ONLY")).toBe(true);
     const sim = page.slice(page.indexOf("function SimPane"), page.indexOf("function Detail"));
     expect(sim.includes("ObservedPath")).toBe(false);
   });
 
-  test("separa simulazione e live e non chiama POST", () => {
+  test("separa simulazione e live; il POST resta nel launcher reale", () => {
     const page = source("../pages/CommandFloorPage.jsx");
     const live = source("./live.js");
     const app = source("../App.js");
     expect(page.includes("api.post")).toBe(false);
+    expect(source("./FloorWorkflowLauncher.jsx").includes('api.post("/jarvis/floor-workflow"')).toBe(true);
     expect(page.includes("localStorage")).toBe(false);
     expect(page.includes("useVisiblePolling")).toBe(true);
     expect(live.includes(".post(")).toBe(false);
@@ -145,6 +151,7 @@ describe("floor nel frontend MAX", () => {
     expect(source("./live.js").includes("frameAt")).toBe(false);
     expect(source("./live.js").includes("scriptAt")).toBe(false);
     const sim = page.slice(page.indexOf("function SimPane"), page.indexOf("function Detail"));
+    expect(sim.includes("FloorWorkflowLauncher")).toBe(false);
     expect(sim.includes("LiveDiagnostics")).toBe(false);
     expect(sim.includes("CapabilityMap")).toBe(false);
     expect(sim.includes("live-diagnostics")).toBe(false);

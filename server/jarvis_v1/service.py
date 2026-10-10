@@ -41,6 +41,8 @@ from . import task_handoff
 from . import vault_context
 from .local_operations import is_complex_mistral_request
 from .task_result_view import build_task_result
+from .authenticated_scope import resolve_authenticated_scope
+from .task_authorization import authorize_task_decision, authorized_decision_records
 
 # JARVIS_MINISTRAL_ROUTER_V1 - OFF by default everywhere; flipping ENABLED
 # to true with MODE still SHADOW costs nothing but a background ledger
@@ -1453,7 +1455,12 @@ class JarvisService:
                                   details={"view": "AGENT_LIST", "items": items,
                                            "source_refs": ["agent registry"]})
         if value == "/approvals" or "approval" in value:
-            items = self.queue.list_by_state("WAITING_APPROVAL")
+            try:
+                scope = resolve_authenticated_scope(str(message.get("user_id") or ""))
+                items = authorized_decision_records(
+                    self.queue, self.queue.list_by_state("WAITING_APPROVAL"), scope)
+            except PermissionError:
+                items = []
             return self._response(message, "ANSWER", f"Approval pendenti: {len(items)}.",
                                   details={"items": [x["task_id"] for x in items],
                                            "source_refs": ["orchestrator queue"]})
@@ -1938,6 +1945,18 @@ class JarvisService:
             return self._response(message, "ERROR", "Approval requires task_id.", status="UNKNOWN")
         try: record = self.queue.get(task_id)
         except KeyError: return self._response(message, "ERROR", "Task not found.", task_id=task_id, status="UNKNOWN")
+        try:
+            scope = resolve_authenticated_scope(str(message.get("user_id") or ""))
+            authorization = authorize_task_decision(self.queue, record, scope)
+        except PermissionError:
+            authorization = None
+        if authorization is None or not authorization.allowed:
+            code = authorization.code if authorization is not None else "ACTOR_IDENTITY_INVALID"
+            self.ledger.append("APPROVAL_DENIED", task_id,
+                {"message_id": message.get("message_id"), "reason": code}, actor="jarvis_service")
+            return self._response(message, "ERROR", "Non sei autorizzato a decidere questa task.",
+                                  task_id=task_id, status="FORBIDDEN",
+                                  details={"code": "TASK_DECISION_FORBIDDEN"})
         # A repeated click of the original WAITING_APPROVAL card still carries
         # that expected_state. A matching decision already stored must be
         # returned before _state_matches, or the card looks stale. Opposite

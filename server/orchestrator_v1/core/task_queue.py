@@ -11,6 +11,7 @@ validato) + stato di esecuzione (non parte dello schema del manifest, che
 descrive SOLO l'intento del task, non il suo stato runtime - separazione
 deliberata)."""
 import json
+import hashlib
 import os
 import sys
 import threading
@@ -149,6 +150,55 @@ class TaskQueue:
             data[task_id] = record
             self._save(data)
             return record
+
+    def submit_idempotent(self, manifest, *, idempotency_scope, idempotency_key,
+                          dependencies=None, action=None, action_params=None):
+        """Atomically return an existing scoped request or create one task.
+
+        Scope includes trusted tenant and owner.  The caller-provided key is
+        never global, so two authenticated users cannot discover or reuse one
+        another's task.  A reused key with a different request fingerprint is
+        rejected instead of silently returning the wrong operation.
+        """
+        errors = validate(manifest, TASK_MANIFEST_SCHEMA)
+        if errors:
+            raise AssertionError(f"TASK_MANIFEST_V1 non valido: {errors}")
+        request_fingerprint = hashlib.sha256(json.dumps({
+            "action": action,
+            "action_params": action_params or {},
+            "objective": manifest.get("objective"),
+        }, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+        with self._lock:
+            data = self._load()
+            for record in data.values():
+                marker = record.get("idempotency") or {}
+                if marker.get("scope") == idempotency_scope and marker.get("key") == idempotency_key:
+                    if marker.get("request_fingerprint") != request_fingerprint:
+                        raise AssertionError("idempotency key reused with a different request")
+                    return record, False
+            task_id = manifest["task_id"]
+            if task_id in data:
+                raise AssertionError(f"task_id gia' esistente: {task_id}")
+            now = _now_iso()
+            deps = dependencies or []
+            initial_state = ("QUEUED" if all(data.get(dep, {}).get("state") == "COMPLETED"
+                                             for dep in deps) else "WAITING_DEPENDENCY")
+            record = {
+                "task_id": task_id, "manifest": manifest, "state": initial_state,
+                "priority": manifest["priority"], "dependencies": deps,
+                "action": action, "action_params": action_params or {},
+                "executor": None, "retry_count": 0, "created_at": now,
+                "updated_at": now, "started_at": None, "completed_at": None,
+                "result_packet": None,
+                "provenance": {"source": "orchestrator_v1_core", "created_by": manifest.get("created_by")},
+                "escalation": None, "dispatch_claim": None, "dispatch_attempts": 0,
+                "dispatch_next_attempt_at": None, "dispatch_last_error": None,
+                "idempotency": {"scope": idempotency_scope, "key": idempotency_key,
+                                "request_fingerprint": request_fingerprint},
+            }
+            data[task_id] = record
+            self._save(data)
+            return record, True
 
     def get(self, task_id):
         with self._lock:

@@ -95,6 +95,20 @@ class Orchestrator:
                           record["task_id"], {"reason": "dependencies pending" if not deps_ok else ""})
         return record["task_id"]
 
+    def submit_idempotent(self, manifest, *, idempotency_scope, idempotency_key,
+                          dependencies=None, action=None, action_params=None):
+        record, created = self.queue.submit_idempotent(
+            manifest, idempotency_scope=idempotency_scope,
+            idempotency_key=idempotency_key, dependencies=dependencies,
+            action=action, action_params=action_params)
+        if created:
+            self.ledger.append("TASK_CREATED", record["task_id"],
+                               {"title": manifest["title"], "task_type": manifest["task_type"]})
+            event_type = "TASK_QUEUED" if record["state"] == "QUEUED" else "TASK_BLOCKED"
+            self.ledger.append(event_type, record["task_id"], {
+                "reason": "" if record["state"] == "QUEUED" else "dependencies pending"})
+        return record["task_id"], created
+
     def process_task(self, task_id, claim_token=None):
         """Esegue UN ciclo completo (route -> execute -> verify -> retry/
         escalation -> result packet) per un singolo task. Ritorna il record
