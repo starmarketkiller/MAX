@@ -249,10 +249,15 @@ class TradingResearchHandler(_ProposalHandler):
         return [f"dataset:{source}", f"hypothesis:{record['task_id']}"]
 
     def record_committed_steps(self, task_id):
-        source = "dataset:unknown"
         getter = getattr(self, "queue_get", None)
+        source = ""
         if getter is not None:
-            source = (getter(task_id).get("action_params") or {}).get("dataset") or source
+            try:
+                source = str((getter(task_id).get("action_params") or {}).get("dataset") or "")
+            except KeyError:
+                return
+        if not _DATASET.fullmatch(source):
+            return
         self._write(task_id, source)
 
     def _write(self, task_id, source):
@@ -507,10 +512,14 @@ def finance_empty():
                                      for station in FINANCE_STATIONS]}
 
 
-def _cost_events(ledger):
+_COST_EVENTS = {"AGENCY_COST_ALERT"}
+
+
+def _cost_events(ledger, evidence_ids):
+    allowed = set(evidence_ids)
     return [event for event in ledger.read_all()
-            if event.get("event_type") == "COST_RECORDED"
-            and str((event.get("payload") or {}).get("evidence_id") or "")
+            if event.get("event_type") in _COST_EVENTS
+            and str((event.get("payload") or {}).get("evidence_id") or "") in allowed
             and str((event.get("payload") or {}).get("source") or "").strip()]
 
 
@@ -542,11 +551,13 @@ class FinanceFloorHandler(_ProposalHandler):
         except (TypeError, ValueError):
             parsed = None
         claim = str(parsed.get("claim") or "") if isinstance(parsed, dict) else ""
-        corpus = _corpus((params.get("context") or {}).get("evidence_records"))
+        evidence = (params.get("context") or {}).get("evidence_records")
+        corpus = _corpus(evidence)
         orphans = [number for number in _NUMBER.findall(claim) if number not in corpus]
         if orphans:
             return VerifyResult(passed=False, errors=["figure without evidence"], is_logic_error=True)
-        if not _cost_events(self.ledger):
+        ids = {item["evidence_id"] for item in sourced_records(evidence)}
+        if not _cost_events(self.ledger, ids):
             return VerifyResult(passed=False, errors=["no cost document"], is_logic_error=True)
         return VerifyResult(passed=True, parsed_output={"claim": claim})
 
@@ -579,7 +590,8 @@ class FinanceFloorCoordinator:
             raise LaunchRejected("INVALID_CLAIM")
         corpus = _corpus(evidence)
         orphans = [number for number in _NUMBER.findall(claim) if number not in corpus]
-        if not orphans and not _cost_events(self.orchestrator.ledger):
+        ids = {item["evidence_id"] for item in sourced_records(evidence)}
+        if not orphans and not _cost_events(self.orchestrator.ledger, ids):
             return None
         tenant_id = tenant_id or canonical_tenant_id()
         manifest = _manifest("Finance report refuses unsourced figures", claim.strip(),
@@ -612,10 +624,17 @@ def council_empty():
             "steps": [], "not_run": list(stations)}
 
 
-def failure_event_ids(ledger):
+def failure_event_ids(ledger, queue, owner, tenant_id):
+    owned = {
+        record.get("task_id")
+        for record in queue.list_all()
+        if (record.get("manifest") or {}).get("created_by") == owner
+        and (record.get("manifest") or {}).get("tenant_id") == tenant_id
+    }
     found = []
     for event in ledger.read_all():
-        if event.get("event_type") in _FAILURES and event.get("event_id"):
+        if (event.get("event_type") in _FAILURES and event.get("event_id")
+                and event.get("task_id") in owned):
             found.append(event["event_id"])
     return found[:20]
 
@@ -668,7 +687,8 @@ class CouncilFloorCoordinator:
         orchestrator.register_local_handler(COUNCIL_ACTION, self.handler)
 
     def submit(self, *, created_by, tenant_id=None, idempotency_key):
-        ids = failure_event_ids(self.orchestrator.ledger)
+        ids = failure_event_ids(self.orchestrator.ledger, self.orchestrator.queue,
+                                created_by, tenant_id or canonical_tenant_id())
         if not ids:
             return None
         tenant_id = tenant_id or canonical_tenant_id()

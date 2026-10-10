@@ -198,7 +198,7 @@ def test_finance_empty_report_creates_no_task_and_an_orphan_figure_blocks(tmp_pa
         backend.app.dependency_overrides.clear()
 
 
-def test_council_without_failures_does_not_invent_a_hypothesis(tmp_path, monkeypatch):
+def test_council_ignores_failures_from_other_owners(tmp_path, monkeypatch):
     service, _call = _service(tmp_path, monkeypatch)
     client = _client(monkeypatch, service)
     backend.app.dependency_overrides[backend.require_mutation] = lambda: "42"
@@ -207,20 +207,83 @@ def test_council_without_failures_does_not_invent_a_hypothesis(tmp_path, monkeyp
                             json={})
         assert empty.status_code == 200
         assert empty.json()["state"] is None
-        assert service.queue.list_all() == []
-        service.ledger.append("TASK_FAILED", "TASK_OLD", {"reason": "verify failed"})
+        foreign = service.trading_research.submit(
+            objective="not mine", context={"evidence_records": [
+                {"evidence_id": "E9", "note": "bars", "source": "dataset:other-book"}]},
+            created_by="jarvis:7", tenant_id="tenant-1", idempotency_key="foreign-trading-1")
+        service.ledger.append("TASK_FAILED", foreign[0], {"reason": "other owner"})
+        still_empty = client.post("/api/jarvis/council-hypothesis",
+                                  headers={"Idempotency-Key": "council-foreign-1"}, json={})
+        assert still_empty.status_code == 200
+        assert service.queue.get(foreign[0])["state"] == "QUEUED"
+        owned = client.post("/api/jarvis/trading-research", headers={"Idempotency-Key": "council-owned-src"},
+                            json={"objective": "inspect the series", "context": {"evidence_records": [
+                                {"evidence_id": "E1", "note": "bars", "source": "dataset:dukascopy-2024"}]}})
+        assert owned.status_code == 202
+        service.ledger.append("TASK_FAILED", owned.json()["task_id"], {"reason": "verify failed"})
         created = client.post("/api/jarvis/council-hypothesis", headers={"Idempotency-Key": "council-once-01"},
                               json={})
         assert created.status_code == 202
         task_id = created.json()["task_id"]
-        DurableQueueDispatcher(service.orchestrator, poll_seconds=0.05, lease_seconds=30).run_once()
+        cited = service.queue.get(task_id)["action_params"]["event_ids"]
+        assert cited
+        assert all(event["task_id"] != foreign[0]
+                   for event in service.ledger.read_all()
+                   if event.get("event_id") in cited)
+        service.orchestrator.process_task(task_id)
         assert service.queue.get(task_id)["state"] == "WAITING_APPROVAL"
         assert "council.hypo" in _steps(service, task_id)
-        assert "council.adopt" not in _steps(service, task_id)
-        assert COUNCIL_ACTION in service.orchestrator.local_handlers
         assert "council_adopt" not in service.orchestrator.local_handlers
     finally:
         backend.app.dependency_overrides.clear()
+
+
+def test_finance_cost_must_cite_this_evidence(tmp_path, monkeypatch):
+    service, _call = _service(tmp_path, monkeypatch)
+    client = _client(monkeypatch, service)
+    backend.app.dependency_overrides[backend.require_mutation] = lambda: "42"
+    try:
+        service.ledger.append("AGENCY_COST_ALERT", "TASK_OTHER",
+                              {"evidence_id": "OTHER", "source": "invoice:other"})
+        quiet = client.post("/api/jarvis/finance-report", headers={"Idempotency-Key": "finance-other-cost"},
+                            json={"claim": "no figure", "context": {"evidence_records": [
+                                {"evidence_id": "C1", "note": "none", "source": "ledger:empty"}]}})
+        assert quiet.status_code == 200
+        assert quiet.json()["task_id"] is None
+        assert len(service.queue.list_all()) == 0
+    finally:
+        backend.app.dependency_overrides.clear()
+
+
+def test_trading_does_not_record_an_unknown_dataset(tmp_path, monkeypatch):
+    service, _call = _service(tmp_path, monkeypatch)
+    service.trading_research.handler.record_committed_steps("TASK_MISSING")
+    assert service.ledger.read_all() == []
+
+
+def test_floor_handlers_are_not_sent_to_the_workstation_bridge(tmp_path, monkeypatch):
+    service, _call = _service(tmp_path, monkeypatch)
+
+    class Bridge:
+        ACTIVE_JOB_STATES = {"QUEUED", "LEASED"}
+        def __init__(self):
+            self.seen = []
+        def dispatch(self, record, decision, handler):
+            self.seen.append(record["action"])
+            return True
+        def job_status(self, task_id):
+            return None
+
+    bridge = Bridge()
+    service.orchestrator.set_local_bridge(bridge)
+    task_id, _created = service.trading_research.submit(
+        objective="inspect the series",
+        context={"evidence_records": [
+            {"evidence_id": "E1", "note": "bars", "source": "dataset:dukascopy-2024"}]},
+        created_by="jarvis:42", tenant_id="tenant-1", idempotency_key="bridge-trading-1")
+    assert DurableQueueDispatcher(service.orchestrator, poll_seconds=0.05, lease_seconds=30).run_once() is True
+    assert bridge.seen == []
+    assert service.queue.get(task_id)["state"] == "WAITING_APPROVAL"
 
 
 def test_systems_floor_has_no_deploy_path():

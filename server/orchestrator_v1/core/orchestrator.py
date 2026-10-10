@@ -212,10 +212,11 @@ class Orchestrator:
             return self._escalate(task_id, record, "MANUAL_REVIEW", "TOOLING",
                                  [f"handler mancante per {record['action']}"])
 
-        # In hosted production localhost is not the operator's workstation.  A
-        # configured bridge may transport this *already routed* local job to an
-        # outbound polling client.  It does not re-route or select a provider.
-        if self.local_bridge is not None:
+        # Floor and sector handlers stay on this process. The bridge stores
+        # action_params and is only for the two mapped workstation actions.
+        stays_here = bool(getattr(handler, "skip_model", False)
+                          or getattr(handler, "require_inference_gateway", False))
+        if self.local_bridge is not None and not stays_here:
             if self.local_bridge.dispatch(record, decision, handler):
                 return self.queue.get(task_id)
             self.ledger.append("TASK_FAILED", task_id,

@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 
 from jarvis_v1.ministral_task_compiler import encode_bounded_output
 from funding_v1.revenue_skill_pack import get_revenue_skill
+from nexus_tenant import canonical_tenant_id
 
 
 def _now():
@@ -237,7 +238,7 @@ class RevenueAgentCoordinator:
             "premium_allowed": False, "preferred_executor": "TIER1_LOCAL_CHEAP",
             "fallback_executors": ["TIER2_LOCAL_STRONG"],
             "approval_required": "REVIEW_REQUIRED", "created_by": created_by,
-            "created_at": _now(), "tenant_id": "tenant-1", "account_scope_id": None,
+            "created_at": _now(), "tenant_id": canonical_tenant_id(), "account_scope_id": None,
         }, {"revenue_task_type": task_type, "context": context, "references": references}
 
     def submit(self, task_type, *, context, references, created_by="revenue_agent"):
