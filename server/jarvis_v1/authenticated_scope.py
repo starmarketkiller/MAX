@@ -11,7 +11,12 @@ import threading
 import time
 from dataclasses import dataclass
 
-_SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
+# The authenticated subject is the exact, signed ``sub`` emitted from
+# NEXUS_ADMIN_USER.  Login explicitly accepts an email or username, so the
+# scope contract must accept the common email characters too.  Keep this
+# deliberately narrower than arbitrary text: no whitespace, path separators,
+# controls or unbounded identifiers enter the durable ``jarvis:<sub>`` owner.
+_SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:@%+\-]{0,254}$")
 from nexus_tenant import canonical_tenant_id
 
 
@@ -23,7 +28,10 @@ class AuthenticatedScope:
 
 
 def resolve_authenticated_scope(user_id: str) -> AuthenticatedScope:
-    user = str(user_id or "").strip()
+    raw = str(user_id or "")
+    user = raw.strip()
+    if user != raw:
+        raise PermissionError("authenticated user identity is invalid")
     if not _SAFE_ID.fullmatch(user):
         raise PermissionError("authenticated user identity is invalid")
     return AuthenticatedScope(user_id=user, owner=f"jarvis:{user}",
