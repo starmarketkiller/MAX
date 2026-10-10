@@ -412,3 +412,26 @@ def test_executive_slice_has_exactly_the_hook_keys(store):
     assert tuple(slices[0]) == EXECUTIVE_SLICE_KEYS
     assert slices[0] == executive_slice(store)
     assert slices[0]["awaiting_approval"] == 1 and slices[0]["revenue"] == 0
+
+
+def test_shopify_product_listing_adapter(store):
+    record, _ = ingest_scout_result(store, scout_item(supplier="S", unit_cost_eur=30.0,
+                                                      target_price_eur=89.0))
+    pid = record["product_id"]
+    store_integration.evaluate_product(store, pid)
+    with pytest.raises(ValueError, match="/products/"):
+        store_integration.propose_listing(store, pid, {"kind": "SHOPIFY_PRODUCT",
+                                                       "url": "https://shop.example/collections/x"})
+    url = "https://shop.example/products/suede-jacket"
+    seen = []
+    out = store_integration.propose_listing(
+        store, pid, {"kind": "SHOPIFY_PRODUCT", "url": url},
+        fetcher=lambda u: seen.append(u) or {"status": 200, "json": {"available": False}})
+    assert seen == [url + ".js"] and out["availability"]["status"] == "OUT_OF_STOCK"
+    with pytest.raises(ValueError, match="unreachable"):
+        store_integration.approve_listing(store, pid, approved_by="user")
+    store_integration.propose_listing(
+        store, pid, {"kind": "SHOPIFY_PRODUCT", "url": url},
+        fetcher=lambda u: {"status": 200, "json": {"available": True, "price": 8900}})
+    ready = store_integration.approve_listing(store, pid, approved_by="user")
+    assert ready["status"] == "STORE_READY" and ready["store_listing"]["adapter"] == "SHOPIFY_PRODUCT"

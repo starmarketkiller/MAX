@@ -46,9 +46,40 @@ class AffiliateLinkAdapter(StoreAdapter):
         return errors
 
 
-ADAPTERS = {a.kind: a() for a in (ExternalStoreLinkAdapter, AffiliateLinkAdapter)}
+class ShopifyProductAdapter(StoreAdapter):
+    """Own Shopify store product page: https://<shop>/products/<handle>.
+
+    Availability uses Shopify's public product JSON (<url>.js), which needs no
+    credentials; listing or editing products still goes through the Shopify
+    connector and human approval, never from here.
+    """
+    kind = "SHOPIFY_PRODUCT"
+
+    def validate(self, listing):
+        errors = super().validate(listing)
+        path = urlparse(str(listing.get("url") or "")).path.rstrip("/").split("/")
+        if len(path) < 3 or path[-2] != "products" or not path[-1]:
+            errors.append("Shopify listing must be a /products/<handle> URL")
+        return errors
+
+    def check_availability(self, listing, fetcher=None):
+        if fetcher is None:
+            return {"available": None, "status": "UNVERIFIED_NEEDS_HUMAN_CHECK"}
+        response = fetcher(listing["url"].rstrip("/") + ".js")
+        if not 200 <= int(response.get("status", 0)) < 300:
+            return {"available": False, "status": "UNREACHABLE"}
+        product = response.get("json") or {}
+        available = bool(product.get("available"))
+        return {"available": available,
+                "status": "IN_STOCK" if available else "OUT_OF_STOCK",
+                "price_cents": product.get("price")}
+
+
+ADAPTERS = {a.kind: a() for a in (ExternalStoreLinkAdapter, AffiliateLinkAdapter,
+                                   ShopifyProductAdapter)}
 # pipeline.LISTING_KINDS is the V1 vocabulary; map the V2 adapter kinds onto it.
-_PIPELINE_KIND = {"EXTERNAL_STORE_LINK": "OWN_STORE", "AFFILIATE_LINK": "AFFILIATE_LINK"}
+_PIPELINE_KIND = {"EXTERNAL_STORE_LINK": "OWN_STORE", "AFFILIATE_LINK": "AFFILIATE_LINK",
+                  "SHOPIFY_PRODUCT": "OWN_STORE"}
 
 
 def _now():
