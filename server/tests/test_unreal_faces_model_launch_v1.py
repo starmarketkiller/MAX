@@ -26,6 +26,11 @@ def test_agency_identity_and_instagram_kit():
     assert kit["bio_length"] <= 150 and "AI-generated" in kit["bio"]
     assert kit["handle_status"] == "UNVERIFIED_CHECK_IN_APP"
     assert len(kit["launch_grid"]) == 9 and "For brands" in kit["highlights"]
+    assert "pink" in kit["profile_picture_brief"] and AGENCY_IDENTITY["logo"]["mark"] == "UF"
+    for post in kit["launch_grid"]:
+        assert "UNREAL FACES CASTING" in post["prompt"] and "#AIgenerated" in post["caption"]
+        assert pipeline.compliance_check({"caption": post["caption"], "commercial": False,
+                                         "ai_label": True})["passed"]
 
 
 def test_casting_proposes_one_model_and_needs_approval(store):
