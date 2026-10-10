@@ -52,6 +52,7 @@ import knowledge_browser
 import research_read_model
 import market_read_model
 import execution_read_model
+import ea_account_mode
 import library_read_model
 import sequence_research_read_model
 import company_control_plane
@@ -2607,7 +2608,7 @@ async def ea_push(request: Request, x_nexus_token: Optional[str] = Header(None))
             "INSERT INTO ea_status_history(account_id,magic,symbol,balance,equity,"
             "floating_pl,daily_pl,drawdown_pct,margin_level,open_positions,paused,"
             "payload,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (_pick(data, "account_id", "accountId", "account") or 0, magic, symbol,
+            (_pick(data, "account_id", "accountId", "account", "accountLogin") or 0, magic, symbol,
              _pick(data, "balance"), _pick(data, "equity"),
              _pick(data, "floatPnL", "floating_pl"), _pick(data, "dailyPnL", "daily_pl"),
              _pick(data, "ddPct", "drawdown_pct"), _pick(data, "marginLevel", "margin_level"),
@@ -4860,7 +4861,9 @@ def ea_status_dash(user: str = Depends(require_user)):
     primary, rows = _primary_ea()
     if not primary:
         return {"online": False, "connected": False, "eas": [], "demo": False}
-    return {"online": bool(primary.get("_online")), "connected": True, "eas": rows, **primary}
+    # NEXUS-ACCT-001: conto dichiarato dall'EA (DEMO/LIVE), mai dedotto.
+    return {"online": bool(primary.get("_online")), "connected": True, "eas": rows, **primary,
+            "account": ea_account_mode.classify(primary)}
 
 
 def _profit_factor(limit=200):
@@ -4944,6 +4947,12 @@ def _compute_ea_health(primary):
         (f"PF {pf} su {pf_n} trade" if pf is not None else "dati insufficienti"))
     if pf is not None and pf < 0.8 and pf_n >= 10:
         anomaly.append({"code": "low_pf", "msg": f"Profit factor basso: {pf} su {pf_n} trade."})
+
+    # NEXUS-ACCT-001: un EA che dichiara LIVE armato va visto subito.
+    account = ea_account_mode.classify(primary)
+    if account["verdict"] == "LIVE_ARMED":
+        anomaly.append({"code": "live_armed",
+                        "msg": f"EA autorizzato a tradare sul conto LIVE {account['account_login']}."})
 
     scored = [c for c in checks if c["ok"] is not None]
     wsum = sum(c["weight"] for c in scored) or 1
