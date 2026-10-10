@@ -404,6 +404,9 @@ class JarvisService:
     def set_operations_projection(self, projection, capability_resolver=None):
         self.operations_projection = projection
         self.capability_resolver = capability_resolver
+        agency_store = getattr(projection, "agency_store", None)
+        if agency_store is not None:
+            self.floor_workflow.attach_agency_store(agency_store)
 
     def set_multi_stage_executor(self, executor):
         self.multi_stage_executor = executor

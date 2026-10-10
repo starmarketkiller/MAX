@@ -32,11 +32,20 @@ SKILL_STATIONS = (
     ("fashion.discover", "discover", "PRODUCT_OPPORTUNITY_SCOUT"),
     ("fashion.plan", "brief", "CONTENT_BRIEF_DRAFT"),
 )
+# Stations this workflow never runs, with the real reason (shown on the floor).
 NOT_RUN = (
-    "fashion.model", "fashion.style", "fashion.campaign", "fashion.asset",
-    "fashion.quality", "fashion.comply", "fashion.pack",
+    "fashion.campaign", "fashion.asset", "fashion.quality",
     "jarvis.result", "jarvis.response",
 )
+NOT_RUN_REASONS = {
+    "fashion.campaign": "commercial campaigns need a STORE_READY product (store gate)",
+    "fashion.asset": "paid Higgsfield generation needs explicit human approval of the quote",
+    "fashion.quality": "nothing generated yet to review",
+    "jarvis.result": "not part of this internal handoff",
+    "jarvis.response": "not part of this internal handoff",
+}
+# Deterministic Agency stations, run only when an AgencyStore is attached.
+AGENCY_STATIONS = ("fashion.comply", "fashion.model", "fashion.style", "fashion.pack")
 _STEP_KEYS = ("step_id", "station_id", "state", "output_ref", "provenance", "workflow_id")
 
 
@@ -49,6 +58,7 @@ class FloorWorkflowHandler:
 
     def __init__(self, ledger):
         self.ledger = ledger
+        self.agency_store = None
 
     def build_prompt(self, record):
         params = record["action_params"]
@@ -107,6 +117,7 @@ class FloorWorkflowHandler:
             ("fashion.discover", "discover", "skill:PRODUCT_OPPORTUNITY_SCOUT", "AGENCY_SKILL", "STEP_COMPLETED", "RECORDED"),
             ("fashion.verify", "verify", "check:scout-title", "DETERMINISTIC", "STEP_COMPLETED", "RECORDED"),
             ("fashion.plan", "brief", "skill:CONTENT_BRIEF_DRAFT", "AGENCY_SKILL", "STEP_COMPLETED", "RECORDED"),
+            *self._agency_steps(task_id, outputs, artifacts),
             ("fashion.handoff", "handoff", f"handoff:{task_id}", "DETERMINISTIC", "STEP_COMPLETED", "RECORDED"),
             ("jarvis.approval", "approval", f"packet:{task_id}", "DETERMINISTIC", "TASK_WAITING_APPROVAL", "WAITING_APPROVAL"),
         ]
@@ -115,6 +126,79 @@ class FloorWorkflowHandler:
                        event_type=event_type, state=state)
         return ApplyResult(artifacts_created=artifacts, touches_real_repo_files=False,
                            proposal_only=True)
+
+    def _agency_steps(self, task_id, outputs, artifacts):
+        """Run the deterministic Agency stations on the verified skill outputs.
+
+        Idempotent per task (store records carry source_task_id). Stops at the
+        first station that cannot honestly complete; nothing here spends,
+        publishes or opens a store: the pack ends at WAITING_APPROVAL.
+        """
+        store = self.agency_store
+        if store is None:
+            return []
+        from datetime import date
+        from business_units.ai_fashion_agency import pipeline, store_integration
+        steps = []
+        trend = outputs["VIRAL_FORMAT_ANALYSIS"]
+        scout = outputs["PRODUCT_OPPORTUNITY_SCOUT"]
+        draft = outputs["CONTENT_BRIEF_DRAFT"]
+
+        # Product from the scout enters the store gate (it cannot be promoted yet).
+        product_input = pipeline.receive_input(
+            store, "FASHION_ITEM", {"title": scout["title"], "category": scout.get("category"),
+                                    "trend_evidence": list(scout.get("trend_evidence") or [])},
+            source=f"floor:{task_id}", idempotency_key=f"floor:{task_id}:product")
+        product = next((p for p in store.snapshot()["products"]
+                        if p.get("input_id") == product_input["input_id"]), None)
+        if product is None:
+            product = pipeline.product_from_input(store, product_input)
+            store_integration.evaluate_product(store, product["product_id"])
+
+        brief = next((b for b in store.snapshot()["briefs"]
+                      if b.get("source_task_id") == task_id), None)
+        if brief is None:
+            trend_input = pipeline.receive_input(
+                store, "TREND_FORMAT", {"title": trend["format_name"]},
+                source=f"floor:{task_id}", idempotency_key=f"floor:{task_id}:trend")
+            reference = pipeline.viral_reference_from_input(trend_input, trend)
+            brief = pipeline.build_content_brief(
+                store, title=draft["title"], content_category=draft["content_category"],
+                hook=draft["hook"], script=draft["script"], caption=draft["caption"],
+                cta=draft["cta"], viral_reference=reference,
+                duration_seconds=trend["duration_seconds"])
+            brief = store.upsert("briefs", {"brief_id": brief["brief_id"],
+                                            "source_task_id": task_id})
+        artifacts.append(f"agency:brief:{brief['brief_id']}")
+        if not brief["compliance"]["passed"]:
+            return steps
+        steps.append(("fashion.comply", "comply", f"brief:{brief['brief_id']}",
+                      "DETERMINISTIC", "STEP_COMPLETED", "RECORDED"))
+
+        if brief["status"] == "DRAFT":
+            try:
+                pipeline.assign_model(store, brief["brief_id"], actor=f"floor:{task_id}")
+            except ValueError:
+                return steps
+        brief = store.get("briefs", brief["brief_id"])
+        if not brief.get("model_id"):
+            return steps
+        model = store.get("models", brief["model_id"])
+        steps.append(("fashion.model", "model", f"model:{model['model_id']}",
+                      "DETERMINISTIC", "STEP_COMPLETED", "RECORDED"))
+        steps.append(("fashion.style", "style", f"style:{model['model_id']}",
+                      "DETERMINISTIC", "STEP_COMPLETED", "RECORDED"))
+
+        pack = next((p for p in store.snapshot()["generation_packs"]
+                     if p["brief_id"] == brief["brief_id"]), None)
+        if pack is None and brief["status"] == "ASSIGNED":
+            pack = pipeline.build_generation_pack(store, brief["brief_id"], today=date.today())
+        if pack is None:
+            return steps
+        artifacts.append(f"agency:pack:{pack['pack_id']}")
+        steps.append(("fashion.pack", "pack", f"pack:{pack['pack_id']}:{pack['state']}",
+                      "DETERMINISTIC", "STEP_COMPLETED", "RECORDED"))
+        return steps
 
     def _step(self, task_id, step_id, station_id, output_ref, provenance,
               event_type="STEP_COMPLETED", state="RECORDED"):
@@ -138,6 +222,10 @@ class FloorWorkflowCoordinator:
         self.orchestrator = orchestrator
         self.handler = FloorWorkflowHandler(orchestrator.ledger)
         orchestrator.register_local_handler(ACTION, self.handler)
+
+    def attach_agency_store(self, store):
+        """Enable the deterministic Agency stations (model, style, comply, pack)."""
+        self.handler.agency_store = store
 
     def submit(self, *, objective, context, created_by, tenant_id=None,
                idempotency_key=None):
@@ -203,7 +291,7 @@ def project_trace(queue, ledger, task_id=None, *, owner, tenant_id=None):
     if record is None:
         return {"source": "ledger", "task_id": None, "state": None, "approval_effect": None,
                 "decision": None, "artifact_count": 0, "artifacts": [], "delivery": "not_sent",
-                "steps": [], "not_run": []}
+                "steps": [], "not_run": [], "not_run_reasons": {}}
     steps = []
     for event in ledger.read_for_task(record["task_id"]):
         if event.get("event_type") not in {"STEP_COMPLETED", "TASK_WAITING_APPROVAL"}:
@@ -232,5 +320,17 @@ def project_trace(queue, ledger, task_id=None, *, owner, tenant_id=None):
         "artifacts": artifacts,
         "delivery": "not_sent",
         "steps": steps,
-        "not_run": list(NOT_RUN),
+        "not_run": _not_run(steps),
+        "not_run_reasons": {station: _not_run_reason(station) for station in _not_run(steps)},
     }
+
+
+def _not_run(steps):
+    done = {step["station_id"] for step in steps}
+    return list(NOT_RUN) + [station for station in AGENCY_STATIONS if station not in done]
+
+
+def _not_run_reason(station):
+    if station in NOT_RUN_REASONS:
+        return NOT_RUN_REASONS[station]
+    return "not reached: no Agency store attached or an earlier gate stopped the handoff"

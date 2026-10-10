@@ -241,12 +241,18 @@ def score_models(brief, models, product=None):
             continue
         if brief["content_category"] not in model["content_categories"]:
             continue
-        fit_words = set(re.findall(r"[a-z]+", " ".join(model["brand_fit"] + [model["style"]]).lower()))
+        wardrobe = (model.get("seed_pack") or {}).get("wardrobe_direction") or []
+        fit_words = set(re.findall(r"[a-z]+", " ".join(
+            model["brand_fit"] + wardrobe + [model["style"]]).lower()))
         overlap = len(keywords & fit_words)
         load = len(model.get("assigned_tasks", []))
         status_bonus = {"ACTIVE": 2, "CHARACTER_SHEET_READY": 1}.get(model["status"], 0)
-        ranked.append({"model_id": model["model_id"], "score": overlap * 3 + status_bonus - load,
-                       "keyword_overlap": sorted(keywords & fit_words), "load": load})
+        # Tie-break toward a model that can actually be generated next (fresh quote).
+        ready_bonus = 1 if _quote_is_fresh(model.get("last_quote")) else 0
+        ranked.append({"model_id": model["model_id"],
+                       "score": overlap * 3 + status_bonus + ready_bonus - load,
+                       "keyword_overlap": sorted(keywords & fit_words), "load": load,
+                       "generation_ready": bool(ready_bonus)})
     return sorted(ranked, key=lambda x: (-x["score"], x["model_id"]))
 
 
