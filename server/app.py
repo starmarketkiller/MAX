@@ -53,6 +53,7 @@ import research_read_model
 import market_read_model
 import execution_read_model
 import ea_account_mode
+import trading_open_telemetry
 import library_read_model
 import sequence_research_read_model
 import company_control_plane
@@ -472,6 +473,8 @@ def init_db() -> None:
         _record_migration(c, "015_license_lifecycle")
         _migrate_research_certificates(c)
         _record_migration(c, "016_research_certificates")
+        c.executescript(trading_open_telemetry.DDL)
+        _record_migration(c, "017_execution_events")
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
@@ -3087,6 +3090,36 @@ async def ea_trade_reason(request: Request, x_nexus_token: Optional[str] = Heade
             except Exception as e:
                 print(f"[NEXUS] trade_reason->trades upsert failed: {e}")
     return {"ok": True}
+
+
+@app.post("/api/ea/execution_event")
+async def ea_execution_event(request: Request, x_nexus_token: Optional[str] = Header(None)):
+    """NEXUS-OTEL-001: esito di un'apertura riportato dall'EA. Registra, non ordina.
+
+    Idempotente per (account_login, event_key): un replay dell'outbox dell'EA
+    risponde 200 con duplicate=true e non crea una seconda riga.
+    """
+    check_token(x_nexus_token)
+    data = await read_json_body(request, max_bytes=16 * 1024)
+    try:
+        event = trading_open_telemetry.validate(data)
+    except trading_open_telemetry.InvalidEvent as exc:
+        raise HTTPException(status_code=422, detail={"code": "INVALID_EXECUTION_EVENT",
+                                                     "message": str(exc)})
+    with _conn() as c:
+        stored = trading_open_telemetry.store(c, event, now())
+    return {"ok": True, "stored": stored, "duplicate": not stored,
+            "event_key": event["event_key"]}
+
+
+@app.get("/api/trading/open-telemetry")
+def trading_open_telemetry_view(account_login: Optional[int] = None, limit: int = 2000,
+                                user: str = Depends(require_user)):
+    """Ciclo di vita delle aperture: richiesta, accettazione, deal, posizione."""
+    with _conn() as c:
+        events = trading_open_telemetry.load(c, account_login, clamp_limit(limit, 2000, 5000))
+        closed = trading_open_telemetry.closed_positions(c)
+    return trading_open_telemetry.project(events, now(), closed)
 
 
 @app.post("/api/ea/shadow_trades")

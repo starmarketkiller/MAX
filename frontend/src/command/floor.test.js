@@ -58,7 +58,7 @@ describe("floor nel frontend MAX", () => {
     expect(classifyResponse({ path: "/ready", http: 0, data: null, source: "network", error: "timeout" }).api).toBe("timeout");
     expect(MARKER_REACHED).toBe(false);
     expect(REVIEW_MARKER).toBe("NEXUS_COMMAND_FLOOR_PR25_REVIEW_READY");
-    expect(LIVE_READS).toHaveLength(9);
+    expect(LIVE_READS).toHaveLength(10);
   });
 
   test("tiene i gate e scarta una lettura fuori ordine", () => {
@@ -117,7 +117,7 @@ describe("floor nel frontend MAX", () => {
     ]);
     expect(observedStations({ source: "simulation", steps: trace.steps })).toEqual([]);
     expect(observedStations({ status: "AUTH_REQUIRED", steps: [] })).toEqual([]);
-    expect(LIVE_READS).toHaveLength(9);
+    expect(LIVE_READS).toHaveLength(10);
     const page = source("../pages/CommandFloorPage.jsx");
     expect(page.includes('api.get("/jarvis/floor-workflow"')).toBe(true);
     expect(page.includes("const [liveError, setLiveError] = useState(\"\")")).toBe(true);
@@ -204,8 +204,8 @@ describe("floor nel frontend MAX", () => {
     }
   });
 
-  test("le nove capacità non promuovono una postazione", () => {
-    const ids = ["systems.watch", "trading.data", "jarvis.state", "systems.req", "jarvis.monitor", "jarvis.orch", "revenue.find", "trading.research", "jarvis.approval"];
+  test("le dieci capacità non promuovono una postazione", () => {
+    const ids = ["systems.watch", "trading.data", "jarvis.state", "systems.req", "jarvis.monitor", "jarvis.orch", "revenue.find", "trading.research", "jarvis.approval", "trading.exec"];
     expect(LIVE_READS.map((item) => item.stationId)).toEqual(ids);
     expect(STATIONS).toHaveLength(119);
     const readyRow = { path: "/ready", name: "Monitoring", http: 200, at: "T", origin: "/ready", schema: "valid", api: "available", facts: safeFacts("/ready", readyPayload) };
@@ -215,10 +215,10 @@ describe("floor nel frontend MAX", () => {
       return { path: spec.path, http: 401, at: "T", origin: spec.path, api: "unauthorized" };
     });
     const view = projectCapabilities([readyRow, feedRow, { path: "/jarvis/dispatcher/status", http: 401, at: "T", origin: "/jarvis/dispatcher/status", api: "unauthorized" }, ...denied]);
-    expect(view.simOnlyCount).toBe(110);
+    expect(view.simOnlyCount).toBe(109);
     expect(view.links.every((item) => item.task === "UNKNOWN")).toBe(true);
     expect(view.executingCount).toBeUndefined();
-    expect(view.links).toHaveLength(9);
+    expect(view.links).toHaveLength(10);
     expect(JSON.stringify(view)).not.toMatch(/CONNECTED|EXECUTING|"RUNNING"/);
     const watch = view.links.find((item) => item.stationId === "systems.watch");
     expect(watch.capability).toBe("PROCESS_OBSERVED");
@@ -233,7 +233,7 @@ describe("floor nel frontend MAX", () => {
     expect(orch.state).toBe("UNKNOWN");
     expect(orch.queueLiveness).toBe("observed-on");
     expect(orch.task).toBe("UNKNOWN");
-    for (const id of ["jarvis.state", "systems.req", "jarvis.monitor", "revenue.find", "trading.research", "jarvis.approval"]) {
+    for (const id of ["jarvis.state", "systems.req", "jarvis.monitor", "revenue.find", "trading.research", "jarvis.approval", "trading.exec"]) {
       const link = view.links.find((item) => item.stationId === id);
       expect(link.capability).toBe("IMPLEMENTED_UNVERIFIED");
       expect(link.access).toBe("AUTH_REQUIRED");

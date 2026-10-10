@@ -7,6 +7,7 @@ const NOTES = {
   "trading.data": "Il feed osservato non accende la postazione.",
   "jarvis.orch": "La coda accesa nel ready non è una task di questa postazione.",
   "systems.req": "I reparti del payload non sono i reparti del Floor.",
+  "trading.exec": "Legge cio' che l'EA ha confermato. Da qui non parte nessun ordine.",
 };
 
 function linkFrom(spec, row, queueLiveness) {

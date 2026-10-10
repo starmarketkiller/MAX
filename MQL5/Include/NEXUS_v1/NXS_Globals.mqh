@@ -59,6 +59,73 @@ struct SNXSExecResult {
 SNXSExecResult g_lastExec;
 ulong          g_execRequestSeq = 0;
 
+// NEXUS-OTEL-001 — richieste di APERTURA registrate per la telemetria.
+//
+// NXS_DoBuy/NXS_DoSell scrivono qui ogni tentativo (anche rifiutato o bloccato
+// prima dell'invio). Solo dati: nessuna rete, nessun file. NXS_OpenTelemetry.mqh
+// li svuota verso l'outbox fuori dal percorso d'ordine. Buffer circolare: se
+// nessuno svuota, i piu' vecchi vengono sovrascritti, mai l'ordine rallentato.
+#define NXS_OPENREQ_RING 32
+struct SNxsOpenRequest {
+   ulong    request_id;
+   datetime sent_at;
+   ulong    sent_us;        // GetMicrosecondCount(): rende unica la chiave dei rifiuti
+   string   symbol;
+   string   side;           // BUY | SELL
+   long     magic;
+   double   req_volume;
+   double   req_price;
+   double   sl;
+   double   tp;
+   string   comment;
+   bool     sent;           // false = bloccata prima di OrderSend
+   uint     retcode;
+   ulong    order;
+   ulong    deal;
+   double   fill_volume;
+   double   fill_price;
+   string   broker_comment;
+   string   blocked_reason;
+};
+SNxsOpenRequest g_nxsOpenReq[NXS_OPENREQ_RING];
+int             g_nxsOpenReqHead  = 0;   // prossima posizione libera
+int             g_nxsOpenReqCount = 0;   // non ancora svuotate
+
+void _NXS_RecordOpenRequest(const MqlTradeRequest &req, const MqlTradeResult &res,
+                            bool sent, string blockedReason){
+   int i = g_nxsOpenReqHead;
+   g_nxsOpenReq[i].request_id     = g_execRequestSeq;
+   g_nxsOpenReq[i].sent_at        = TimeCurrent();
+   g_nxsOpenReq[i].sent_us        = GetMicrosecondCount();
+   g_nxsOpenReq[i].symbol         = req.symbol;
+   g_nxsOpenReq[i].side           = (req.type == ORDER_TYPE_BUY) ? "BUY" : "SELL";
+   g_nxsOpenReq[i].magic          = (long)req.magic;
+   g_nxsOpenReq[i].req_volume     = req.volume;
+   g_nxsOpenReq[i].req_price      = req.price;
+   g_nxsOpenReq[i].sl             = req.sl;
+   g_nxsOpenReq[i].tp             = req.tp;
+   g_nxsOpenReq[i].comment        = req.comment;
+   g_nxsOpenReq[i].sent           = sent;
+   g_nxsOpenReq[i].retcode        = res.retcode;
+   g_nxsOpenReq[i].order          = res.order;
+   g_nxsOpenReq[i].deal           = res.deal;
+   g_nxsOpenReq[i].fill_volume    = res.volume;
+   g_nxsOpenReq[i].fill_price     = res.price;
+   g_nxsOpenReq[i].broker_comment = res.comment;
+   g_nxsOpenReq[i].blocked_reason = blockedReason;
+   g_nxsOpenReqHead = (g_nxsOpenReqHead + 1) % NXS_OPENREQ_RING;
+   if(g_nxsOpenReqCount < NXS_OPENREQ_RING) g_nxsOpenReqCount++;
+}
+
+//: Estrae la richiesta piu' vecchia non ancora svuotata. false = coda vuota.
+bool NXS_PopOpenRequest(SNxsOpenRequest &out){
+   if(g_nxsOpenReqCount <= 0) return false;
+   int tail = (g_nxsOpenReqHead - g_nxsOpenReqCount + NXS_OPENREQ_RING) % NXS_OPENREQ_RING;
+   out = g_nxsOpenReq[tail];
+   g_nxsOpenReqCount--;
+   return true;
+}
+
 void _NXS_CaptureExec(const MqlTradeRequest &req, const MqlTradeResult &res, bool sent){
    g_execRequestSeq++;
    g_lastExec.request_id  = g_execRequestSeq;
@@ -353,12 +420,6 @@ bool NXS_DoBuy(double volume, string sym, double sl, double tp, string comment){
    // percorsi che non passano da NXS_CommonExposurePreflight. Retcode 0 non
    // e' ritentabile, quindi NXS_SafeBuy non riprova.
    string acctWhy;
-   if(!NXS_AccountGuard_EntryAllowed(acctWhy)){
-      g_tradeRetcode     = 0;
-      g_tradeOrderTicket = 0;
-      PrintFormat("[NEXUS ACCOUNT] apertura %s rifiutata prima di OrderSend: %s", sym, acctWhy);
-      return false;
-   }
    MqlTradeRequest req;  ZeroMemory(req);
    MqlTradeResult  res;  ZeroMemory(res);
    req.action      = TRADE_ACTION_DEAL;
@@ -372,8 +433,24 @@ bool NXS_DoBuy(double volume, string sym, double sl, double tp, string comment){
    req.magic       = g_tradeMagic;
    req.comment     = comment;
    req.type_filling= NXS_FillingForSymbol(sym);
+   if(!NXS_AccountGuard_EntryAllowed(acctWhy)){
+      g_tradeRetcode     = 0;
+      g_tradeOrderTicket = 0;
+      PrintFormat("[NEXUS ACCOUNT] apertura %s rifiutata prima di OrderSend: %s", sym, acctWhy);
+      _NXS_RecordOpenRequest(req, res, false, acctWhy);   // NEXUS-OTEL-001
+      return false;
+   }
    bool ok = OrderSend(req, res);
    _NXS_CaptureExec(req, res, ok);
+   _NXS_RecordOpenRequest(req, res, ok, "");               // NEXUS-OTEL-001
+   // NEXUS-OTEL-001: DONE_PARTIAL apre davvero una posizione (volume ridotto).
+   // Trattarlo come fallimento lasciava una posizione viva senza intent ne'
+   // Virtual SL. Il volume reale lo ricostruisce il ledger dai deal.
+   if(ok && res.retcode == TRADE_RETCODE_DONE_PARTIAL){
+      PrintFormat("[NEXUS EXEC] apertura %s: fill parziale %.2f/%.2f (order=%I64u)",
+                  sym, res.volume, req.volume, res.order);
+      return true;
+   }
    return _NXS_ExecAccepted(ok, res.retcode, "apertura " + sym);
 }
 
@@ -382,12 +459,6 @@ bool NXS_DoSell(double volume, string sym, double sl, double tp, string comment)
    // percorsi che non passano da NXS_CommonExposurePreflight. Retcode 0 non
    // e' ritentabile, quindi NXS_SafeSell non riprova.
    string acctWhy;
-   if(!NXS_AccountGuard_EntryAllowed(acctWhy)){
-      g_tradeRetcode     = 0;
-      g_tradeOrderTicket = 0;
-      PrintFormat("[NEXUS ACCOUNT] apertura %s rifiutata prima di OrderSend: %s", sym, acctWhy);
-      return false;
-   }
    MqlTradeRequest req;  ZeroMemory(req);
    MqlTradeResult  res;  ZeroMemory(res);
    req.action      = TRADE_ACTION_DEAL;
@@ -401,8 +472,24 @@ bool NXS_DoSell(double volume, string sym, double sl, double tp, string comment)
    req.magic       = g_tradeMagic;
    req.comment     = comment;
    req.type_filling= NXS_FillingForSymbol(sym);
+   if(!NXS_AccountGuard_EntryAllowed(acctWhy)){
+      g_tradeRetcode     = 0;
+      g_tradeOrderTicket = 0;
+      PrintFormat("[NEXUS ACCOUNT] apertura %s rifiutata prima di OrderSend: %s", sym, acctWhy);
+      _NXS_RecordOpenRequest(req, res, false, acctWhy);   // NEXUS-OTEL-001
+      return false;
+   }
    bool ok = OrderSend(req, res);
    _NXS_CaptureExec(req, res, ok);
+   _NXS_RecordOpenRequest(req, res, ok, "");               // NEXUS-OTEL-001
+   // NEXUS-OTEL-001: DONE_PARTIAL apre davvero una posizione (volume ridotto).
+   // Trattarlo come fallimento lasciava una posizione viva senza intent ne'
+   // Virtual SL. Il volume reale lo ricostruisce il ledger dai deal.
+   if(ok && res.retcode == TRADE_RETCODE_DONE_PARTIAL){
+      PrintFormat("[NEXUS EXEC] apertura %s: fill parziale %.2f/%.2f (order=%I64u)",
+                  sym, res.volume, req.volume, res.order);
+      return true;
+   }
    return _NXS_ExecAccepted(ok, res.retcode, "apertura " + sym);
 }
 
