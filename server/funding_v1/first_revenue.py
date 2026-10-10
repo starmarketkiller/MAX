@@ -54,6 +54,7 @@ class FirstRevenueStore:
             raise RuntimeError("unsupported first revenue store")
         value.setdefault("attention_events", [])
         value.setdefault("prospects", [])
+        value.setdefault("deliveries", [])
         return value
 
     def _save(self, value):
@@ -226,6 +227,38 @@ class FirstRevenueStore:
             lead["updated_at"] = _now()
         result = self._tx(idempotency_key, apply)
         self._event("LEAD", lead_id, "DELIVERY_TASK_LINKED")
+        return result
+
+    def attach_sourced_delivery(self, lead_id, items, *, idempotency_key=None):
+        """Store a sourced delivery pack. Does not send it and does not mark WON."""
+        if not isinstance(items, list) or not 15 <= len(items) <= 20:
+            raise ValueError("delivery requires 15 to 20 sourced leads")
+        cleaned = []
+        seen = set()
+        for item in items:
+            if not isinstance(item, dict):
+                raise ValueError("delivery item must be an object")
+            name = str(item.get("display_name") or "").strip()
+            source = str(item.get("source_url") or "").strip()
+            if not name or not source.startswith("https://") or source in seen:
+                raise ValueError("each delivery lead needs a name and a unique https source")
+            seen.add(source)
+            cleaned.append({"display_name": name, "source_url": source})
+        delivery_id = f"DLV_{uuid.uuid4().hex[:12].upper()}"
+        def apply(state):
+            lead = next((item for item in state["leads"] if item["lead_id"] == lead_id), None)
+            if not lead:
+                raise KeyError(lead_id)
+            if lead["status"] != "INTERESTED":
+                raise ValueError("delivery pack requires a lead that already replied interested")
+            if any(item["lead_id"] == lead_id for item in state["deliveries"]):
+                raise ValueError("delivery pack already attached")
+            state["deliveries"].append({
+                "delivery_id": delivery_id, "lead_id": lead_id, "offer_id": lead["offer_id"],
+                "items": cleaned, "count": len(cleaned), "sent": False, "created_at": _now(),
+            })
+        result = self._tx(idempotency_key, apply)
+        self._event("LEAD", lead_id, "DELIVERY_PACK_ATTACHED")
         return result
 
     def record_payment(self, record, *, idempotency_key=None):

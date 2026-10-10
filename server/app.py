@@ -72,6 +72,7 @@ from orchestrator_v1.core.local_agent_bridge import LocalAgentBridgeV1
 from orchestrator_v1.core.shared_cognitive_state import SharedCognitiveState
 from jarvis_v1.telegram_adapter import TelegramAdapter, TelegramUpdateError
 from funding_v1.first_revenue import FirstRevenueStore
+from funding_v1 import lead_research_cycle
 from funding_v1.revenue_agent import RevenueAgentCoordinator
 from funding_v1.revenue_automation import (
     ProspectAcquisition, ProspectFileIntake, RevenueAutomationRunner,
@@ -2292,6 +2293,46 @@ def revenue_automation_status(user: str = Depends(require_user)):
 @app.get("/api/revenue/telemetry")
 def revenue_automation_telemetry(user: str = Depends(require_user)):
     return REVENUE_TELEMETRY.snapshot()
+
+
+@app.get("/api/revenue/lead-research/status")
+def lead_research_status(user: str = Depends(require_user)):
+    return lead_research_cycle.public_status(REVENUE_STORE)
+
+
+@app.post("/api/revenue/lead-research/open")
+async def lead_research_open(request: Request, user: str = Depends(require_mutation)):
+    body = await read_json_body(request)
+    try:
+        return lead_research_cycle.open_prospect(
+            REVENUE_STORE, display_name=body.get("display_name"),
+            company=body.get("company"), source_url=body.get("source_url"))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)[:300])
+
+
+@app.post("/api/revenue/lead-research/delivery")
+async def lead_research_delivery(request: Request, user: str = Depends(require_mutation)):
+    body = await read_json_body(request)
+    try:
+        return lead_research_cycle.attach_delivery(
+            REVENUE_STORE, str(body.get("lead_id") or ""), body.get("items"))
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)[:300])
+
+
+@app.post("/api/revenue/lead-research/payment")
+async def lead_research_payment(request: Request, user: str = Depends(require_mutation)):
+    body = await read_json_body(request)
+    try:
+        revenue = lead_research_cycle.book_observed_payment(
+            REVENUE_STORE, lead_id=str(body.get("lead_id") or ""),
+            external_reference=body.get("external_reference"),
+            cost=body.get("cost") or 0)
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)[:300])
+    return {"revenue_id": revenue["revenue_id"], "amount": revenue["amount"],
+            "gross_margin": revenue["gross_margin"], "moved_money": False}
 
 
 @app.get("/api/jarvis/agents")
