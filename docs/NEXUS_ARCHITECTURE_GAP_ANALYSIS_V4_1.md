@@ -39,6 +39,21 @@ Per ciascuno dei 18 item richiesti: trovato con evidenza, o non verificabile in 
 
 **Disciplina rispettata**: dove non c'era evidenza raccolta in questa sessione (item 5, 7, 8, 16), il verdetto è "non verificato", mai un beneficio stimato senza base.
 
+## Riconciliazione con Command Floor di Codex (scoperta a fine sessione)
+
+**Scoperta dopo aver scritto la proposta del Visual Operations Center, non prima**: durante questa stessa sessione, Codex ha mergiato su `origin/main` (`d2c7eed`) un sistema di visualizzazione operativa — "Command Floor" — con la stessa identica filosofia della mia proposta, design diverso. Census dedicato read-only eseguito (`git show origin/main:<path>`, nessun file toccato).
+
+| Aspetto | Command Floor (Codex, già reale) | La mia proposta V4.1 | Verdetto |
+|---|---|---|---|
+| Unità base | "Stazione" (`frontend/src/command/stations.js`, 119 su 7 reparti + Council) — skill/worker/gate/input/output per stazione | "Nodo" (`NEXUS_WORKFLOW_DEFINITION_V1.nodes`) — ruolo/capability/required | **Stesso concetto**, schema diverso |
+| Dati live | `live.js` legge 9 endpoint reali esistenti, `classifyResponse()` fail-closed (`LIVE_VERIFIED` solo con validator esplicito — 2/9 oggi) | `NEXUS_VISUAL_WORKFLOW_STATE_V1` (proposto, non implementato) | **Già implementato da Codex**, con lo stesso rigore fail-closed che proponevo |
+| Esecuzione reale | `floor_workflow.py` — un workflow reale (fashion handoff, 3/10 stazioni con evidenza, le altre dichiarate `NOT_RUN` esplicitamente), passa per l'Orchestrator esistente, si ferma a `WAITING_APPROVAL` | `MultiStageExecutor` + `NEXUS_WORKFLOW_DEFINITION_V1` (proposto) | **Stesso principio già applicato da Codex** su un caso reale, un solo task sul dispatcher esistente |
+| Council | Room "Council" solo come label/dati statici nella UI (`stations.js`), **zero backend**, zero hit per "council" in `server/app.py`/`jarvis_v1/` | `NEXUS_MASTERPLAN_V4_SELF_IMPROVEMENT_AND_COUNCIL.md` (proposta V4) | **Nessuno dei due sistemi lo implementa** — gap reale confermato indipendentemente due volte, la mia proposta resta l'unica sul tavolo |
+| Risultato task | `task_result_view.py` — proiezione reale sola-lettura di `TASK_MANIFEST_V1`/`result_packet`, mai rigenera lavoro mancante | `NEXUS_WORKFLOW_RUN_STATE_V1`/`DEPARTMENT_RESULT_PACKET_V1` (proposti) | **Concettualmente vicino**, scoped al multi-stage generico non per-reparto |
+| Endpoint | `GET /api/jarvis/floor-workflow` (`app.py:1959`), riusa 9 endpoint preesistenti generici, nessun endpoint duplicato | Nessun endpoint nuovo proposto esplicitamente | Coerente |
+
+**Conclusione onesta**: la parte "costruire un Visual Operations Center da zero" della mia proposta è **in gran parte già fatta, con un design migliore e più dettagliato del previsto** (119 stazioni reali, non un concetto astratto). Non è stato sprecato lavoro — i miei contratti JSON Schema restano utili come **proposta di formalizzazione** di `stations.js` (oggi JS ad hoc senza versioning esplicito) se Codex o l'utente lo ritengono utile, non come sostituzione. La **Milestone 2 della roadmap va riletta come "verificare/estendere Command Floor", non "costruire da zero"** — vedi [Roadmap](NEXUS_IMPLEMENTATION_ROADMAP_V4_1.md). Il gap sul Global Improvement Council **resta pienamente valido e ora ha un'evidenza più forte**: due sistemi costruiti indipendentemente, con la stessa visione, nessuno dei due ha ancora un Council funzionante.
+
 ## I 2 rischi infrastrutturali reali più significativi trovati in V4.1 (non in V4)
 
 1. **Backup manuale, stesso disco del primario** — single point of failure reale, non ipotetico (vedi [Render Infrastructure Plan](NEXUS_RENDER_INFRASTRUCTURE_PLAN.md)).

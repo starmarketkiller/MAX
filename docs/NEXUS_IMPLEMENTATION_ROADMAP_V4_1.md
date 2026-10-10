@@ -12,8 +12,11 @@ Le priorità già concordate per chiudere executor/recovery (territorio Codex), 
 **Stato: questa sessione (V4 + V4.1).** 13 documenti V4 + 13 documenti V4.1 + 5 contratti schema. Nessuna azione aggiuntiva richiesta per chiudere questa milestone — è l'output di questo lavoro.
 
 ### Milestone 2 — Read-only Workflow Engineering Viewer
-**Dipende da**: Milestone 1 (fatto), `NEXUS_VISUAL_WORKFLOW_STATE_V1` popolato da almeno un workflow reale.
-Estende `SystemStatusPage.jsx` (vedi [Visual Operations integration](NEXUS_VISUAL_OPERATIONS_SITE_INTEGRATION.md)) con la Modalità A (Engineering View) in sola lettura. Nessuna azione autorizzabile dalla UI in questa milestone.
+**AGGIORNATA dopo la scoperta del Command Floor di Codex (vedi [Gap Analysis V4.1 §Riconciliazione](NEXUS_ARCHITECTURE_GAP_ANALYSIS_V4_1.md#riconciliazione-con-command-floor-di-codex-scoperta-a-fine-sessione))**: questa milestone **è in gran parte già realizzata** da `frontend/src/command/CommandFloorPage.jsx` + `stations.js`/`live.js`/`engine.js` + `server/jarvis_v1/floor_workflow.py`/`task_result_view.py`. Non "costruire da zero" — verificare con l'utente/Codex se:
+(a) basta estendere Command Floor esistente con altri workflow reali oltre al fashion handoff, o
+(b) formalizzare `stations.js` in uno schema versionato (`NEXUS_WORKFLOW_DEFINITION_V1`) ha un beneficio reale, o
+(c) questa milestone è da considerare già chiusa.
+Decisione dell'utente, non presa qui.
 
 ### Milestone 3 — Department Result Packet + Independent Review Foundation
 **Dipende da**: Milestone 1.
@@ -36,8 +39,7 @@ Un `NEXUS_WORKFLOW_DEFINITION_V1` reale per ciascuno degli altri 6 reparti, usan
 Implementazione minima del Council (vedi [NEXUS_MASTERPLAN_V4_SELF_IMPROVEMENT_AND_COUNCIL.md](NEXUS_MASTERPLAN_V4_SELF_IMPROVEMENT_AND_COUNCIL.md)) — estensione di `executive_v1/`, 4 eventi additivi, mai un revisore sincrono di ogni micro-operazione.
 
 ### Milestone 8 — Visual Rooms e pixel-art
-**Dipende da**: Milestone 2 (stessa fonte dati, resa diversa).
-Modalità B del Visual Operations Center — stile ispirato alle immagini di riferimento fornite dall'utente, mai un secondo stato parallelo a `NEXUS_VISUAL_WORKFLOW_STATE_V1`.
+**Parzialmente già presente**: Command Floor di Codex ha già una rappresentazione a "stazioni"/room (`FloorMap.jsx`, `floor.css`) per i 7 reparti — non è lo stile pixel-art delle immagini di riferimento dell'utente, ma la struttura di base (room→stazioni→stato visivo) esiste. Verificare con l'utente se desidera lo stile pixel-art SOPRA questa struttura esistente (restyling) prima di considerare questa milestone da zero.
 
 ### Milestone 9 — Controlled Promotion & Rollback
 **Dipende da**: Milestone 7.
@@ -53,8 +55,10 @@ M1 (fatto) ─┬─> M2 ──────────────────>
 
 ## Priorità immediate raccomandate (le 3 prossime task implementative, non eseguite qui)
 
-1. **Milestone 3** (Department Result Packet + Independent Review Foundation) — sblocca sia il self-improvement sia il Visual Operations Center, costo relativamente basso (adattatori, non nuovi sistemi).
-2. **Backup automatico Render** (da [Render Infrastructure Plan](NEXUS_RENDER_INFRASTRUCTURE_PLAN.md)) — non è nella numerazione delle 9 milestone della task ma è il rischio infrastrutturale più concreto trovato, costo basso, indipendente da tutto il resto.
-3. **Milestone 2** (Workflow Engineering Viewer, sola lettura) — massimo valore visibile per lo sforzo minimo, riusa interamente l'infrastruttura frontend già reale.
+**Rivisto dopo la scoperta del Command Floor di Codex** — Milestone 2 non è più la priorità "a basso sforzo" (è in gran parte già fatta), il Global Improvement Council sale di priorità (gap confermato da due sistemi indipendenti, nessuno dei due lo copre):
 
-Queste 3 non sostituiscono l'ordine delle 9 milestone — sono la sequenza con cui affrontarle per primo valore reale più rapido.
+1. **Global Improvement Council, implementazione minima** (Milestone 7, anticipata) — è l'UNICO gap confermato indipendentemente sia dal mio census sia dal sistema reale di Codex. Il valore di colmarlo ora è più alto di quanto stimato prima di questa scoperta.
+2. **Backup automatico Render** (da [Render Infrastructure Plan](NEXUS_RENDER_INFRASTRUCTURE_PLAN.md)) — non è nella numerazione delle 9 milestone della task ma è il rischio infrastrutturale più concreto trovato, costo basso, indipendente da tutto il resto.
+3. **Decisione con l'utente su Command Floor** — prima di qualunque altra milestone sul Visual Operations Center, chiarire con l'utente/Codex se Milestone 2/8 vanno chiuse com'è, estese, o riprogettate — non una task implementativa, ma un passo di coordinamento necessario prima di scrivere altro codice in quell'area.
+
+Queste 3 non sostituiscono l'ordine delle 9 milestone — sono la sequenza con cui affrontarle per primo valore reale più rapido, aggiornata rispetto a quanto scritto prima della scoperta del Command Floor.
