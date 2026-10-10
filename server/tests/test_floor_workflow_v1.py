@@ -16,7 +16,7 @@ from jarvis_v1.authenticated_scope import resolve_authenticated_scope
 
 
 def _context():
-    return {"evidence_records": [{"evidence_id": "E1", "note": "caller supplied"}]}
+    return {"evidence_records": [{"evidence_id": "E1", "note": "caller supplied", "source": "fixture:caller"}]}
 
 
 def _model_payload():
@@ -41,7 +41,7 @@ def _model_payload():
 def _service(tmp_path, monkeypatch):
     calls = {"n": 0}
 
-    def _fake(prompt, model, json_mode=False):
+    def _fake(prompt, model, json_mode=False, timeout=None):
         calls["n"] += 1
         return {"success": True, "model": model, "response_text": json.dumps(_model_payload()),
                 "wall_seconds": 0.0, "error": None}
@@ -357,3 +357,69 @@ def test_floor_trace_exposes_only_safe_artifact_metadata(tmp_path, monkeypatch):
     assert trace["artifacts"]
     assert all(set(item) == {"kind", "available"} for item in trace["artifacts"])
     assert "linen jacket" not in json.dumps(trace)
+
+
+def test_user_note_is_not_accepted_as_evidence(tmp_path, monkeypatch):
+    service, _calls = _service(tmp_path, monkeypatch)
+    handler = service.floor_workflow.handler
+    unsourced = {"task_id": "TASK_NOTE", "action_params": {"context": {"evidence_records": [
+        {"evidence_id": "USER_CONTEXT_1", "note": "I like green jackets"}]}}}
+    rejected = handler.verify(unsourced, json.dumps(_model_payload()).replace('"E1"', '"USER_CONTEXT_1"'))
+    assert rejected.passed is False
+    assert "evidence source required" in rejected.errors
+    sourced = {"task_id": "TASK_SRC", "action_params": {"context": _context()}}
+    assert handler.verify(sourced, json.dumps(_model_payload())).passed is True
+
+
+def test_malformed_output_blocks_without_steps_or_a_second_call(tmp_path, monkeypatch):
+    service, calls = _service(tmp_path, monkeypatch)
+
+    def _bad(prompt, model, json_mode=False, timeout=None):
+        calls["n"] += 1
+        return {"success": True, "model": model, "response_text": "not-json",
+                "error": None, "wall_seconds": 0}
+
+    monkeypatch.setattr("core.orchestrator.ollama_worker.call_local_model", _bad)
+    task_id = service.floor_workflow.submit(
+        objective="internal handoff", context=_context(), created_by="jarvis:42")
+    DurableQueueDispatcher(service.orchestrator, poll_seconds=0.05, lease_seconds=30).run_once()
+    assert service.queue.get(task_id)["state"] == "BLOCKED"
+    assert calls["n"] == 1
+    assert not any(event["event_type"] == "STEP_COMPLETED"
+                   for event in service.ledger.read_for_task(task_id))
+
+
+def test_resume_refuses_steps_written_before_the_packet(tmp_path, monkeypatch):
+    service, calls = _service(tmp_path, monkeypatch)
+    task_id = service.floor_workflow.submit(
+        objective="internal handoff", context=_context(), created_by="jarvis:42")
+    service.queue.transition(task_id, "RUNNING")
+    service.floor_workflow.handler.record_committed_steps(task_id)
+    assert service.queue.recover_orphaned_running("tester") == [task_id]
+    with pytest.raises(AssertionError, match="durable approval packet"):
+        service.orchestrator.resume_orphaned_task(task_id, requested_by="42")
+    assert service.queue.get(task_id)["state"] == "BLOCKED"
+    assert calls["n"] == 0
+
+
+def test_live_launch_without_gateway_does_not_queue(tmp_path, monkeypatch):
+    service, _calls = _service(tmp_path, monkeypatch)
+    monkeypatch.setattr(backend, "JARVIS_SERVICE", service)
+    monkeypatch.setattr(backend, "FLOOR_WORKFLOW_LIMITER", EndpointRateLimiter(limit=20))
+    monkeypatch.setenv("NEXUS_ENV", "LIVE")
+    monkeypatch.delenv("JARVIS_MINISTRAL_GATEWAY_URL", raising=False)
+    monkeypatch.delenv("JARVIS_MINISTRAL_GATEWAY_TOKEN", raising=False)
+    client = TestClient(backend.app)
+    backend.app.dependency_overrides[backend.require_mutation] = lambda: "42"
+    try:
+        response = client.post(
+            "/api/jarvis/floor-workflow",
+            json={"objective": "Create an internal proposal", "context": _context()},
+            headers={"Idempotency-Key": "live-without-gateway"},
+        )
+        assert response.status_code == 409
+        assert response.json()["detail"]["code"] == "MODEL_UNAVAILABLE"
+        assert service.queue.list_all() == []
+    finally:
+        backend.app.dependency_overrides.clear()
+

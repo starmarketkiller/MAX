@@ -234,8 +234,16 @@ class Orchestrator:
         # exact two-argument call contract.
         if bool(getattr(handler, "json_mode", False)):
             call_kwargs["json_mode"] = True
-        call = ollama_worker.call_local_model(prompt, **call_kwargs)
-        self.ledger.append("TOOL_USED", task_id, {"tool": "ollama_local_model",
+        if getattr(handler, "model_timeout", None):
+            call_kwargs["timeout"] = int(handler.model_timeout)
+        use_gateway = (os.environ.get("NEXUS_ENV") == "LIVE"
+                       and getattr(handler, "require_inference_gateway", False))
+        if use_gateway:
+            from jarvis_v1.inference_gateway_client import complete_json
+            call = complete_json(prompt, timeout=call_kwargs.get("timeout", 20))
+        else:
+            call = ollama_worker.call_local_model(prompt, **call_kwargs)
+        self.ledger.append("TOOL_USED", task_id, {"tool": "inference_gateway" if use_gateway else "ollama_local_model",
                           "model": call["model"], "wall_seconds": call.get("wall_seconds")})
 
         if not call["success"]:
@@ -274,6 +282,8 @@ class Orchestrator:
                         escalation_needed=False)
                     self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet,
                                          approval_effect="ACCEPT_ONLY")
+                    if hasattr(handler, "record_committed_steps"):
+                        handler.record_committed_steps(task_id)
                     return self.queue.get(task_id)
                 if requeue_gate:
                     self.ledger.append("APPROVAL_REQUIRED", task_id,
@@ -329,6 +339,14 @@ class Orchestrator:
                               "errors": errors})
             classification = retry_escalation.classify_failure(
                 errors, is_logic_error_not_crash=vr.is_logic_error)
+
+        if getattr(handler, "fail_closed_without_premium", False):
+            self.ledger.append("TASK_FAILED", task_id, {
+                "classification": classification,
+                "errors": [str(item)[:300] for item in errors]})
+            self.queue.transition(task_id, "BLOCKED",
+                                 dispatch_last_error=str(errors[0])[:500] if errors else classification)
+            return self.queue.get(task_id)
 
         if (getattr(handler, "retry_on_stronger_local", False) and
                 decision.tier == "TIER1_LOCAL_CHEAP"):
@@ -474,6 +492,9 @@ class Orchestrator:
             job_status = self.local_bridge.job_status(task_id)
             if job_status in self.local_bridge.ACTIVE_JOB_STATES:
                 raise AssertionError(f"resume refused: bridge job is still {job_status}")
+        if self._workflow_steps_without_packet(record):
+            raise AssertionError(
+                "resume refused: workflow steps are recorded without a durable approval packet")
         self.ledger.append("TASK_RECOVERY_REQUESTED", task_id,
             {"previous_cause": recovery.get("classification"),
              "previous_recovered_at": recovery.get("recovered_at"),
@@ -507,6 +528,18 @@ class Orchestrator:
         # same policy, same dispatch() idempotency guard already covered by
         # LOCAL_BRIDGE_REWORK_REDISPATCH_FIX_V1).
         return self.queue.get(task_id)
+
+    def _workflow_steps_without_packet(self, record):
+        """Steps written before the approval packet must not be run again."""
+        if record.get("approval_effect") == "ACCEPT_ONLY" and record.get("result_packet"):
+            return False
+        task_id = record["task_id"]
+        for event in self.ledger.read_for_task(task_id):
+            payload = event.get("payload") or {}
+            if (event.get("event_type") in {"STEP_COMPLETED", "TASK_WAITING_APPROVAL"}
+                    and payload.get("workflow_id") == "jarvis.fashion.handoff.v1"):
+                return True
+        return False
 
     # ---- Escalation ----------------------------------------------------
     def _escalate(self, task_id, record, target, classification, errors):

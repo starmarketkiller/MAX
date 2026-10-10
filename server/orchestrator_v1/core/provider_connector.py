@@ -301,6 +301,9 @@ class ProviderConnectorV1:
                                                         escalation["classification"])
                 return True
             target = escalation.get("target")
+            execution = record.get("provider_execution") or {}
+            if execution.get("status") in {"POLICY_BLOCKED", "UNAVAILABLE"}:
+                continue
             provider_id = TARGET_PROVIDER.get(target)
             if provider_id and provider_id in self.adapters and self.adapters[provider_id].state() in (
                     "AVAILABLE", "LOW_QUOTA"):
@@ -511,12 +514,15 @@ class ProviderConnectorV1:
         action_params.rework_instructions), never a second code path for
         'apply a reviewer's patch'."""
         output = result.output
+        problems = "; ".join(output.get("problems_found") or []) or "(nessun problema elencato)"
+        tests = ", ".join(output.get("required_tests") or []) or "(quelli gia' previsti)"
+        risks = "; ".join(output.get("risks") or []) or "(nessuno)"
         feedback = (
             f"Una revisione specialistica ({provider_id}) ha esaminato la patch rifiutata "
-            f"dall'utente e ha trovato: {'; '.join(output.get('problems_found') or []) or '(nessun problema elencato)'}.\n"
+            f"dall'utente e ha trovato: {problems}.\n"
             f"Istruzioni correttive: {output['rework_instructions']}\n"
-            f"Test richiesti: {', '.join(output.get('required_tests') or []) or '(quelli gia\' previsti)'}\n"
-            f"Rischi segnalati: {'; '.join(output.get('risks') or []) or '(nessuno)'}")
+            f"Test richiesti: {tests}\n"
+            f"Rischi segnalati: {risks}")
         record = self.queue.get(task_id)
         action_params = dict(record.get("action_params") or {})
         action_params["rework_instructions"] = feedback

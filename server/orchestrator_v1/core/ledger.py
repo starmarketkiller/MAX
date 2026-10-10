@@ -64,19 +64,31 @@ class EventLedger:
             with open(self.path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(event, ensure_ascii=False) + "\n")
                 f.flush()
+                os.fsync(f.fileno())
         return event
 
     def read_all(self):
         if not os.path.exists(self.path):
             return []
         with self._lock:
-            events = []
-            with open(self.path, encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if line:
-                        events.append(json.loads(line))
-            return events
+            with open(self.path, encoding="utf-8") as handle:
+                raw = handle.read()
+        if not raw:
+            return []
+        lines = raw.splitlines(keepends=True)
+        events = []
+        for index, line in enumerate(lines):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                events.append(json.loads(stripped))
+            except json.JSONDecodeError:
+                # A crash can leave a partial last line. Earlier events stay readable.
+                if index == len(lines) - 1 and not raw.endswith("\n"):
+                    continue
+                raise
+        return events
 
     def read_for_task(self, task_id):
         return [e for e in self.read_all() if e["task_id"] == task_id]

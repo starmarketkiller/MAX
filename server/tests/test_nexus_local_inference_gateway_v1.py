@@ -197,6 +197,28 @@ def _fake_chat_call(success=True, response_text=None, error=None):
     return _call
 
 
+def test_complete_returns_raw_json_text_and_forces_json_mode():
+    seen = {}
+
+    def _call(prompt, model=None, timeout=None, json_mode=False, ensure_single_resident=True):
+        seen["json_mode"] = json_mode
+        seen["prompt"] = prompt
+        return {"success": True, "response_text": '{"title":"kept"}', "error": None}
+
+    result = gw.complete("already built", timeout=20, call_local_model=_call)
+    assert result["ok"] is True
+    assert result["output"]["text"] == '{"title":"kept"}'
+    assert seen == {"json_mode": True, "prompt": "already built"}
+
+
+def test_complete_does_not_validate_the_router_schema():
+    def _call(prompt, model=None, timeout=None, json_mode=False, ensure_single_resident=True):
+        return {"success": True, "response_text": "not the router schema", "error": None}
+
+    result = gw.complete("prompt", call_local_model=_call)
+    assert result["ok"] is True
+
+
 def test_chat_returns_reply_for_well_formed_model_response():
     call = _fake_chat_call(response_text="Ciao! Come posso aiutarti?")
     result = gw.chat("ciao", [], call_local_model=call)

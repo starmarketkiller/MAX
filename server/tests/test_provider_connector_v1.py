@@ -25,6 +25,20 @@ def build(tmp_path, adapter):
     return service, gateway, telegram, connector, dispatcher
 
 
+def test_policy_blocked_escalation_is_not_rewritten_on_the_next_tick(tmp_path):
+    provider = MockProviderAdapter()
+    service, _gateway, telegram, connector, dispatcher = build(tmp_path, provider)
+    task_id = telegram.handle_update(telegram_update(
+        41, "Crea una task per analizzare una opportunità generica."))["task_id"]
+    assert dispatcher.run_once() is True
+    blocked = connector.process_task(task_id)
+    assert blocked["provider_execution"]["status"] in {"POLICY_BLOCKED", "UNAVAILABLE"}
+    stamped = blocked["updated_at"]
+    assert dispatcher.run_once() is False
+    assert service.queue.get(task_id)["updated_at"] == stamped
+    assert provider.calls == []
+
+
 def test_telegram_research_escalates_provider_verifies_and_jarvis_finalizes(tmp_path):
     provider = MockProviderAdapter(result={
         "summary": "Ricerca completata con limiti dichiarati.",

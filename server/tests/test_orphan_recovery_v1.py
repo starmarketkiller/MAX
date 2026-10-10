@@ -243,6 +243,10 @@ def test_http_endpoint_requires_auth_and_maps_resume_outcomes(tmp_path, monkeypa
 
     backend.app.dependency_overrides[backend.require_mutation] = lambda: "test-admin"
     try:
+        foreign = client.post(f"/api/jarvis/tasks/{task_id}/resume-orphaned")
+        assert foreign.status_code == 404
+        assert orch.queue.get(task_id)["state"] == "BLOCKED"
+        backend.app.dependency_overrides[backend.require_mutation] = lambda: "99"
         ok = client.post(f"/api/jarvis/tasks/{task_id}/resume-orphaned")
         assert ok.status_code == 200
         assert ok.json()["state"] == "QUEUED"

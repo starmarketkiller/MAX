@@ -25,6 +25,11 @@ TELEGRAM_MISTRAL_DIRECT_MODE_V1 (2026-10-06) adds a third route:
   same ollama_worker.call_local_model() - just json_mode=False and a
   different, much shorter system prompt. Still never mutates anything: the
   reply text is the only thing returned, nothing is written to disk here.
+
+FLOOR_WORKFLOW_V1 adds:
+  POST /v1/jarvis/complete - one JSON completion for an already-built prompt.
+  The caller validates the text. This route does not apply the router schema
+  and does not write a queue, ledger, or file.
 """
 from __future__ import annotations
 
@@ -146,6 +151,35 @@ def chat(text, history, *, model=None, timeout=None, call_local_model=None):
     return {"ok": True, "output": {"reply": reply}}
 
 
+def complete(prompt, *, model=None, timeout=None, call_local_model=None):
+    """JSON completion for a prompt the caller already built.
+
+    Unlike interpret(), the text is not checked against the router schema.
+    Unlike chat(), json_mode is on. Nothing is written here.
+    """
+    call_local_model = call_local_model or ollama_worker.call_local_model
+    prompt = str(prompt or "")
+    if not prompt.strip():
+        return {"ok": False, "error": "EMPTY_PROMPT", "status": 400}
+    if len(prompt) > 48000:
+        return {"ok": False, "error": "PROMPT_TOO_LARGE", "status": 413}
+    try:
+        bounded = DEFAULT_TIMEOUT_SECONDS if timeout is None else max(1, min(int(timeout), 60))
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "INVALID_TIMEOUT", "status": 400}
+    try:
+        call = call_local_model(prompt, model=model or ollama_worker.DEFAULT_MODEL,
+                                timeout=bounded, json_mode=True, ensure_single_resident=False)
+    except Exception as exc:  # noqa: BLE001 - never leak an unhandled error to the caller
+        return {"ok": False, "error": f"MODEL_CALL_FAILED: {type(exc).__name__}", "status": 502}
+    if not call.get("success"):
+        return {"ok": False, "error": f"MODEL_CALL_FAILED: {call.get('error')}", "status": 502}
+    text = (call.get("response_text") or "").strip()
+    if not text:
+        return {"ok": False, "error": "EMPTY_MODEL_RESPONSE", "status": 502}
+    return {"ok": True, "output": {"text": text}}
+
+
 def interpret(text, context_packet, *, model=None, timeout=None, call_local_model=None):
     """Pure core logic, no HTTP - directly unit-testable. Returns
     {"ok": True, "output": {...}} on a validated, in-bounds interpretation,
@@ -241,7 +275,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
         self._json(200, {"ok": True, "ollama_reachable": ollama_worker.is_ollama_reachable(timeout=2)})
 
     def do_POST(self):  # noqa: N802 - stdlib handler naming
-        if self.path not in ("/v1/jarvis/interpret", "/v1/jarvis/chat"):
+        if self.path not in ("/v1/jarvis/interpret", "/v1/jarvis/chat", "/v1/jarvis/complete"):
             self._json(404, {"ok": False, "error": "NOT_FOUND"})
             return
         if not _check_auth(self.headers.get("Authorization"), self.auth_token):
@@ -251,7 +285,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
             self._json(429, {"ok": False, "error": "RATE_LIMITED"})
             return
         length = int(self.headers.get("Content-Length") or 0)
-        if length <= 0 or length > MAX_REQUEST_BYTES:
+        limit = 65536 if self.path == "/v1/jarvis/complete" else MAX_REQUEST_BYTES
+        if length <= 0 or length > limit:
             self._json(413, {"ok": False, "error": "PAYLOAD_TOO_LARGE"})
             return
         raw = self.rfile.read(length)
@@ -265,6 +300,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
             return
         if self.path == "/v1/jarvis/chat":
             result = chat(body.get("text"), body.get("history"))
+        elif self.path == "/v1/jarvis/complete":
+            result = complete(body.get("prompt"), timeout=body.get("timeout"))
         else:
             result = interpret(body.get("text"), body.get("context_packet"))
         if result["ok"]:

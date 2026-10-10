@@ -124,6 +124,8 @@ describe("floor nel frontend MAX", () => {
     expect(page.includes("FloorWorkflowLauncher")).toBe(true);
     const launcher = source("./FloorWorkflowLauncher.jsx");
     expect(launcher.includes('api.post("/jarvis/floor-workflow"')).toBe(true);
+    expect(launcher.includes("USER_CONTEXT_1")).toBe(false);
+    expect(launcher.includes("verificata")).toBe(false);
     expect(launcher.includes('"Idempotency-Key"')).toBe(true);
     expect(launcher.includes("WAITING_APPROVAL")).toBe(true);
     expect(launcher.includes("ACCEPT_ONLY")).toBe(true);

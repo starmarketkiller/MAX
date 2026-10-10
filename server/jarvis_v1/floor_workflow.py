@@ -46,6 +46,11 @@ def _now():
 
 class FloorWorkflowHandler:
     json_mode = True
+    # A bad or missing model must end locally. It must not escalate to a paid provider.
+    fail_closed_without_premium = True
+    require_inference_gateway = True
+    # Shorter than the dispatcher shutdown (25s) so a deploy does not kill a live call.
+    model_timeout = 20
 
     def __init__(self, ledger):
         self.ledger = ledger
@@ -87,9 +92,30 @@ class FloorWorkflowHandler:
         title = str((outputs.get("PRODUCT_OPPORTUNITY_SCOUT") or {}).get("title") or "").strip()
         if "PRODUCT_OPPORTUNITY_SCOUT" in outputs and not title:
             errors.append("scout title is empty")
+        if not errors and not self._cited_ids_are_sourced(outputs, context):
+            errors.append("evidence source required")
         if errors:
             return VerifyResult(passed=False, errors=errors, is_logic_error=True)
         return VerifyResult(passed=True, parsed_output=outputs)
+
+    @staticmethod
+    def _cited_ids_are_sourced(outputs, context):
+        """An id minted from the user's own note is not a source."""
+        sourced = set()
+        for item in context.get("evidence_records") or []:
+            if not isinstance(item, dict):
+                continue
+            evidence_id = str(item.get("evidence_id") or "")
+            source = str(item.get("source") or item.get("source_url") or "").strip()
+            note = str(item.get("note") or item.get("text") or "").strip()
+            if evidence_id and source and source != note and not evidence_id.startswith("USER_CONTEXT"):
+                sourced.add(evidence_id)
+        cited = []
+        for output in outputs.values():
+            refs = output.get("evidence") if "evidence" in output else output.get("trend_evidence")
+            if isinstance(refs, list):
+                cited.extend(refs)
+        return bool(cited) and set(cited).issubset(sourced)
 
     def apply(self, record, verify_result):
         from orchestrator_v1.core.orchestrator import ApplyResult
@@ -98,6 +124,11 @@ class FloorWorkflowHandler:
         artifacts = [encode_bounded_output(task_type, task_id, outputs[task_type])
                      for _station, _step, task_type in SKILL_STATIONS]
         artifacts.append(f"handoff:{task_id}")
+        # Steps are written only after the queue stores WAITING_APPROVAL.
+        return ApplyResult(artifacts_created=artifacts, touches_real_repo_files=False,
+                           proposal_only=True)
+
+    def record_committed_steps(self, task_id):
         ordered = [
             ("jarvis.intake", "intake", f"task:{task_id}", "DETERMINISTIC", "STEP_COMPLETED", "RECORDED"),
             ("jarvis.intent", "intent", f"intent:{INTENT}", "DETERMINISTIC", "STEP_COMPLETED", "RECORDED"),
@@ -113,8 +144,6 @@ class FloorWorkflowHandler:
         for station_id, step_id, output_ref, provenance, event_type, state in ordered:
             self._step(task_id, step_id, station_id, output_ref, provenance,
                        event_type=event_type, state=state)
-        return ApplyResult(artifacts_created=artifacts, touches_real_repo_files=False,
-                           proposal_only=True)
 
     def _step(self, task_id, step_id, station_id, output_ref, provenance,
               event_type="STEP_COMPLETED", state="RECORDED"):

@@ -2014,14 +2014,21 @@ async def jarvis_floor_workflow_launch(
         raise HTTPException(status_code=422, detail={"code": "INVALID_OBJECTIVE"})
     if not isinstance(context, dict) or len(context) > 25:
         raise HTTPException(status_code=422, detail={"code": "INVALID_CONTEXT"})
-    if set(context) - {"evidence_records"} or not isinstance(context.get("evidence_records"), list):
+    if set(context) - {"evidence_records", "user_input"} or not isinstance(context.get("evidence_records"), list):
         raise HTTPException(status_code=422, detail={"code": "INVALID_CONTEXT_SCHEMA"})
+    user_input = context.get("user_input")
+    if user_input is not None and (not isinstance(user_input, str) or len(user_input) > 4000):
+        raise HTTPException(status_code=422, detail={"code": "INVALID_USER_INPUT"})
     evidence = context["evidence_records"]
     if not (1 <= len(evidence) <= 50) or any(
             not isinstance(item, dict)
             or set(item) - {"evidence_id", "note", "text", "source", "source_url"}
             or not isinstance(item.get("evidence_id"), str)
+            or item["evidence_id"].startswith("USER_CONTEXT")
             or not re.fullmatch(r"[A-Za-z0-9_.:-]{1,80}", item["evidence_id"])
+            or not str(item.get("source") or item.get("source_url") or "").strip()
+            or str(item.get("source") or item.get("source_url") or "").strip()
+               == str(item.get("note") or item.get("text") or "").strip()
             or any(not isinstance(value, str) or len(value) > 4000
                    for key, value in item.items() if key != "evidence_id")
             for item in evidence):
@@ -2030,6 +2037,10 @@ async def jarvis_floor_workflow_launch(
         raise HTTPException(status_code=422, detail={"code": "DUPLICATE_EVIDENCE_ID"})
     if len(json.dumps(context, ensure_ascii=False).encode("utf-8")) > 24 * 1024:
         raise HTTPException(status_code=413, detail={"code": "CONTEXT_TOO_LARGE"})
+    if os.environ.get("NEXUS_ENV") == "LIVE":
+        from jarvis_v1.inference_gateway_client import gateway_configured
+        if not gateway_configured():
+            raise HTTPException(status_code=409, detail={"code": "MODEL_UNAVAILABLE"})
     def _submit_floor_workflow():
         task_id, created = JARVIS_SERVICE.floor_workflow.submit(
             objective=objective.strip(), context=context, created_by=scope.owner,
@@ -2057,6 +2068,7 @@ def jarvis_task_resume_orphaned(task_id: str, user: str = Depends(require_mutati
     automatic resume at boot. Every safety precondition lives in
     Orchestrator.resume_orphaned_task(); this endpoint only authenticates
     and maps its fail-closed AssertionError to a 409."""
+    owned_jarvis_task_or_404(task_id, user)
     try:
         record = JARVIS_SERVICE.orchestrator.resume_orphaned_task(task_id, requested_by=user)
     except KeyError:
