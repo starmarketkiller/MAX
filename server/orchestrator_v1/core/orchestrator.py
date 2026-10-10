@@ -228,22 +228,32 @@ class Orchestrator:
                                   ["authorized local bridge unavailable"])
 
         start = now_iso()
-        prompt = handler.build_prompt(record)
-        call_kwargs = {"model": decision.agent["model_or_runtime"].split(" ")[0]}
-        # Additive opt-in: legacy handlers and their test doubles retain the
-        # exact two-argument call contract.
-        if bool(getattr(handler, "json_mode", False)):
-            call_kwargs["json_mode"] = True
-        if getattr(handler, "model_timeout", None):
-            call_kwargs["timeout"] = int(handler.model_timeout)
-        use_gateway = (os.environ.get("NEXUS_ENV") == "LIVE"
-                       and getattr(handler, "require_inference_gateway", False))
-        if use_gateway:
-            from jarvis_v1.inference_gateway_client import complete_json
-            call = complete_json(prompt, timeout=call_kwargs.get("timeout", 20))
+        if getattr(handler, "skip_model", False):
+            produced = handler.deterministic_response(record)
+            call = {"success": isinstance(produced, str) and bool(produced),
+                    "model": "deterministic",
+                    "response_text": produced if isinstance(produced, str) else "",
+                    "wall_seconds": 0.0,
+                    "error": None if isinstance(produced, str) and produced else "deterministic output missing"}
+            tool_name = "deterministic"
         else:
-            call = ollama_worker.call_local_model(prompt, **call_kwargs)
-        self.ledger.append("TOOL_USED", task_id, {"tool": "inference_gateway" if use_gateway else "ollama_local_model",
+            prompt = handler.build_prompt(record)
+            call_kwargs = {"model": decision.agent["model_or_runtime"].split(" ")[0]}
+            # Additive opt-in: legacy handlers and their test doubles retain the
+            # exact two-argument call contract.
+            if bool(getattr(handler, "json_mode", False)):
+                call_kwargs["json_mode"] = True
+            if getattr(handler, "model_timeout", None):
+                call_kwargs["timeout"] = int(handler.model_timeout)
+            use_gateway = (os.environ.get("NEXUS_ENV") == "LIVE"
+                           and getattr(handler, "require_inference_gateway", False))
+            if use_gateway:
+                from jarvis_v1.inference_gateway_client import complete_json
+                call = complete_json(prompt, timeout=call_kwargs.get("timeout", 20))
+            else:
+                call = ollama_worker.call_local_model(prompt, **call_kwargs)
+            tool_name = "inference_gateway" if use_gateway else "ollama_local_model"
+        self.ledger.append("TOOL_USED", task_id, {"tool": tool_name,
                           "model": call["model"], "wall_seconds": call.get("wall_seconds")})
 
         if not call["success"]:
@@ -537,7 +547,7 @@ class Orchestrator:
         for event in self.ledger.read_for_task(task_id):
             payload = event.get("payload") or {}
             if (event.get("event_type") in {"STEP_COMPLETED", "TASK_WAITING_APPROVAL"}
-                    and payload.get("workflow_id") == "jarvis.fashion.handoff.v1"):
+                    and str(payload.get("workflow_id") or "").startswith("jarvis.")):
                 return True
         return False
 

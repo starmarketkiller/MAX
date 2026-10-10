@@ -173,6 +173,19 @@ const council = build("council", "improve.global", [
     { code: "ADOPT", name: "Adopt/Reject", role: "Il council non modifica la produzione da solo.", skills: ["verify"], worker: "reviewer", gate: "nogo", input: "Proposta", output: "Non adottato", stage: "s6" },
 ]);
 export const STATIONS = [...trading, ...revenue, ...fashion, ...social, ...systems, ...finance, ...jarvis, ...council];
+export const CONTRACT_IDS = Object.freeze([
+    "jarvis.intake", "jarvis.intent", "jarvis.plan", "jarvis.orch", "jarvis.approval",
+    "fashion.trend", "fashion.discover", "fashion.verify", "fashion.plan", "fashion.handoff",
+    "trading.data", "trading.research",
+    "revenue.find", "revenue.market", "revenue.offer", "revenue.proposal", "revenue.outrev",
+    "social.edit", "social.script", "social.create", "social.qc", "social.ok",
+]);
+for (const station of STATIONS) {
+    if (CONTRACT_IDS.includes(station.id)) {
+        station.status = "contract";
+        station.live = "not_executed";
+    }
+}
 export const WORKFLOWS = [
     { id: "trading.pipeline", departmentId: "trading", name: "Ricerca fino al gate", stationIds: trading.map((item) => item.id) },
     { id: "revenue.pipeline", departmentId: "revenue", name: "Offerta fino al permesso", stationIds: revenue.map((item) => item.id) },

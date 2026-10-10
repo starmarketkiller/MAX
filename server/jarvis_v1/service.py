@@ -32,6 +32,10 @@ from review_matrix import get_matrix_entry  # noqa: E402
 from .conversation_store import ConversationStore
 from .programming import build_plan, extract_repo_paths, is_programming_request
 from .floor_workflow import FloorWorkflowCoordinator
+from .sector_workflows import (
+    CouncilFloorCoordinator, FinanceFloorCoordinator, RevenueFloorCoordinator,
+    SocialFloorCoordinator, TradingResearchCoordinator,
+)
 from .free_coding_worker import FreeCodingWorkerHandler
 from .local_bounded_task_handler import BoundedLocalTaskHandler
 from . import ministral_router
@@ -353,6 +357,11 @@ class JarvisService:
         self.queue = self.orchestrator.queue
         self.ledger = self.orchestrator.ledger
         self.floor_workflow = FloorWorkflowCoordinator(self.orchestrator)
+        self.trading_research = TradingResearchCoordinator(self.orchestrator)
+        self.revenue_floor = RevenueFloorCoordinator(self.orchestrator)
+        self.social_floor = SocialFloorCoordinator(self.orchestrator)
+        self.finance_floor = FinanceFloorCoordinator(self.orchestrator)
+        self.council_floor = CouncilFloorCoordinator(self.orchestrator)
         if conversation_path is None:
             base = Path(queue_path).parent if queue_path else SERVER / "orchestrator_v1" / "runtime_state"
             conversation_path = base / "conversation_context_v2.json"

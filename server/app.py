@@ -87,6 +87,10 @@ from executive_v1.snapshots import SnapshotStore
 from executive_v1.priority import INTERACTIVE_GATE as EXECUTIVE_INTERACTIVE_GATE
 from jarvis_v1.ministral_chat import gateway_status as ministral_gateway_status
 from jarvis_v1.floor_workflow import project_trace
+from jarvis_v1.sector_workflows import (
+    LaunchRejected, TRADING_ACTION, TRADING_NOT_RUN, TRADING_WORKFLOW_ID,
+    council_empty, finance_empty, project_sector_trace,
+)
 from jarvis_v1.authenticated_scope import EndpointRateLimiter, resolve_authenticated_scope
 from jarvis_v1.task_authorization import (
     authorize_task_access, authorized_decision_records,
@@ -2052,6 +2056,149 @@ async def jarvis_floor_workflow_launch(
         raise HTTPException(status_code=409, detail={"code": "IDEMPOTENCY_CONFLICT",
                                                       "message": str(exc)[:200]})
     return {"task_id": task_id, "state": record["state"], "created": created}
+
+
+def _sector_idempotency(scope, idempotency_key):
+    if not FLOOR_WORKFLOW_LIMITER.allow(f"{scope.tenant_id}:{scope.user_id}"):
+        raise HTTPException(status_code=429, detail={"code": "RATE_LIMITED"})
+    if not idempotency_key or not re.fullmatch(r"[A-Za-z0-9_.:-]{8,128}", idempotency_key):
+        raise HTTPException(status_code=422, detail={"code": "INVALID_IDEMPOTENCY_KEY"})
+
+
+def _reject_launch(exc: LaunchRejected):
+    raise HTTPException(status_code=exc.status, detail={"code": exc.code})
+
+
+def _require_sector_gateway():
+    if os.environ.get("NEXUS_ENV") == "LIVE":
+        from jarvis_v1.inference_gateway_client import gateway_configured
+        if not gateway_configured():
+            raise HTTPException(status_code=409, detail={"code": "MODEL_UNAVAILABLE"})
+
+
+@app.post("/api/jarvis/trading-research", status_code=202)
+async def jarvis_trading_research(
+        request: Request, user: str = Depends(require_mutation),
+        idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")):
+    scope = resolve_request_scope(user)
+    _sector_idempotency(scope, idempotency_key)
+    body = await read_json_body(request, max_bytes=32 * 1024)
+    if set(body) - {"objective", "context"}:
+        raise HTTPException(status_code=422, detail={"code": "UNEXPECTED_FIELDS"})
+    context = body.get("context")
+    if not isinstance(context, dict):
+        raise HTTPException(status_code=422, detail={"code": "INVALID_CONTEXT"})
+    try:
+        task_id, created = JARVIS_SERVICE.trading_research.submit(
+            objective=body.get("objective"), context=context, created_by=scope.owner,
+            tenant_id=scope.tenant_id, idempotency_key=idempotency_key)
+    except LaunchRejected as exc:
+        _reject_launch(exc)
+    record = JARVIS_SERVICE.queue.get(task_id)
+    return {"task_id": task_id, "state": record["state"], "created": created}
+
+
+@app.get("/api/jarvis/trading-research")
+def jarvis_trading_research_trace(task_id: str | None = None, user: str = Depends(require_user)):
+    scope = resolve_request_scope(user)
+    return project_sector_trace(
+        JARVIS_SERVICE.queue, JARVIS_SERVICE.ledger, task_id, owner=scope.user_id,
+        tenant_id=scope.tenant_id, action=TRADING_ACTION, workflow_id=TRADING_WORKFLOW_ID,
+        not_run=TRADING_NOT_RUN)
+
+
+@app.post("/api/jarvis/revenue-proposal", status_code=202)
+async def jarvis_revenue_proposal(
+        request: Request, user: str = Depends(require_mutation),
+        idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")):
+    scope = resolve_request_scope(user)
+    _sector_idempotency(scope, idempotency_key)
+    _require_sector_gateway()
+    body = await read_json_body(request, max_bytes=32 * 1024)
+    if set(body) - {"objective", "context"}:
+        raise HTTPException(status_code=422, detail={"code": "UNEXPECTED_FIELDS"})
+    context = body.get("context")
+    if not isinstance(context, dict):
+        raise HTTPException(status_code=422, detail={"code": "INVALID_CONTEXT"})
+    try:
+        task_id, created = JARVIS_SERVICE.revenue_floor.submit(
+            objective=body.get("objective"), context=context, created_by=scope.owner,
+            tenant_id=scope.tenant_id, idempotency_key=idempotency_key)
+    except LaunchRejected as exc:
+        _reject_launch(exc)
+    record = JARVIS_SERVICE.queue.get(task_id)
+    return {"task_id": task_id, "state": record["state"], "created": created}
+
+
+@app.post("/api/jarvis/social-draft", status_code=202)
+async def jarvis_social_draft(
+        request: Request, user: str = Depends(require_mutation),
+        idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")):
+    scope = resolve_request_scope(user)
+    _sector_idempotency(scope, idempotency_key)
+    _require_sector_gateway()
+    body = await read_json_body(request, max_bytes=8 * 1024)
+    if set(body) - {"source_task_id"} or not isinstance(body.get("source_task_id"), str):
+        raise HTTPException(status_code=422, detail={"code": "UNEXPECTED_FIELDS"})
+    try:
+        task_id, created = JARVIS_SERVICE.social_floor.submit(
+            source_task_id=body["source_task_id"], created_by=scope.owner,
+            owner=scope.user_id, tenant_id=scope.tenant_id, idempotency_key=idempotency_key)
+    except LaunchRejected as exc:
+        _reject_launch(exc)
+    record = JARVIS_SERVICE.queue.get(task_id)
+    return {"task_id": task_id, "state": record["state"], "created": created}
+
+
+@app.get("/api/jarvis/finance-report")
+def jarvis_finance_report(user: str = Depends(require_user)):
+    resolve_request_scope(user)
+    return JARVIS_SERVICE.finance_floor.empty()
+
+
+@app.post("/api/jarvis/finance-report")
+async def jarvis_finance_report_launch(
+        request: Request, user: str = Depends(require_mutation),
+        idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")):
+    scope = resolve_request_scope(user)
+    _sector_idempotency(scope, idempotency_key)
+    body = await read_json_body(request, max_bytes=32 * 1024)
+    if set(body) - {"claim", "context"}:
+        raise HTTPException(status_code=422, detail={"code": "UNEXPECTED_FIELDS"})
+    context = body.get("context")
+    if not isinstance(context, dict):
+        raise HTTPException(status_code=422, detail={"code": "INVALID_CONTEXT"})
+    try:
+        submitted = JARVIS_SERVICE.finance_floor.submit(
+            claim=body.get("claim"), context=context, created_by=scope.owner,
+            tenant_id=scope.tenant_id, idempotency_key=idempotency_key)
+    except LaunchRejected as exc:
+        _reject_launch(exc)
+    if submitted is None:
+        return finance_empty()
+    task_id, created = submitted
+    record = JARVIS_SERVICE.queue.get(task_id)
+    return JSONResponse(status_code=202, content={
+        "task_id": task_id, "state": record["state"], "created": created})
+
+
+@app.post("/api/jarvis/council-hypothesis")
+async def jarvis_council_hypothesis(
+        request: Request, user: str = Depends(require_mutation),
+        idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")):
+    scope = resolve_request_scope(user)
+    _sector_idempotency(scope, idempotency_key)
+    body = await read_json_body(request, max_bytes=1024)
+    if body:
+        raise HTTPException(status_code=422, detail={"code": "UNEXPECTED_FIELDS"})
+    submitted = JARVIS_SERVICE.council_floor.submit(
+        created_by=scope.owner, tenant_id=scope.tenant_id, idempotency_key=idempotency_key)
+    if submitted is None:
+        return council_empty()
+    task_id, created = submitted
+    record = JARVIS_SERVICE.queue.get(task_id)
+    return JSONResponse(status_code=202, content={
+        "task_id": task_id, "state": record["state"], "created": created})
 
 
 @app.get("/api/jarvis/tasks/{task_id}/diagnostics")

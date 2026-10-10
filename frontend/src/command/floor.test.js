@@ -3,7 +3,7 @@ const path = require("path");
 const { AUTOMATIONS } = require("./graph");
 const { classifyResponse, isCurrent, LIVE_READS, MAX_CONCURRENCY, readLive } = require("./live");
 const { MARKER_REACHED, REVIEW_MARKER } = require("./marker");
-const { DEPARTMENTS, STATIONS, WORKFLOWS, stationById } = require("./stations");
+const { DEPARTMENTS, STATIONS, WORKFLOWS, CONTRACT_IDS, stationById } = require("./stations");
 const { SKILLS, WORKERS } = require("./skills");
 const { layout, allowMotion, assignmentLinks, chooseLayout, panBy, zoomBy } = require("./map");
 const { scriptAt, workerLoad, PHASES, departmentSnapshot, phaseOf } = require("./script");
@@ -24,6 +24,12 @@ describe("floor nel frontend MAX", () => {
     expect(DEPARTMENTS).toHaveLength(7);
     expect(STATIONS.filter((item) => item.departmentId === "council")).toHaveLength(9);
     expect(STATIONS).toHaveLength(119);
+    expect(CONTRACT_IDS).toHaveLength(22);
+    expect(STATIONS.filter((item) => item.status === "contract")).toHaveLength(22);
+    for (const id of ["trading.exec", "revenue.convert", "social.pub", "systems.ship", "jarvis.deliver", "council.adopt"]) {
+      expect(stationById(id).status).toBe("sim");
+    }
+    expect(stationById("jarvis.approval").live).toBe("not_executed");
     expect(WORKFLOWS).toHaveLength(8);
     expect(SKILLS).toHaveLength(19);
     expect(WORKERS).toHaveLength(7);
