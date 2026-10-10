@@ -141,6 +141,44 @@ def transition_post(store, post_id, target, *, actor, approved_by=None, planned_
     return saved
 
 
+def record_external_publication(store, post_id, *, url, published_by):
+    """The human published the approved post in the app; NEXUS only records it.
+
+    Publishing from NEXUS stays hard-disabled; this is bookkeeping of a
+    human action, so it needs the post to be APPROVED/SCHEDULED and a real URL.
+    """
+    require_approval("RECORD_EXTERNAL_PUBLICATION", published_by)
+    post = store.get("social_posts", post_id)
+    if post["state"] not in {"APPROVED", "SCHEDULED"}:
+        raise ValueError("only approved posts can be recorded as published")
+    if not str(url).startswith("https://"):
+        raise ValueError("published post URL required")
+    saved = store.upsert("social_posts", {
+        "post_id": post_id, "state": "PUBLISHED", "published_url": url,
+        "published_by": published_by, "published_at": _now(),
+        "history": post["history"] + [{"from": post["state"], "to": "PUBLISHED",
+                                       "actor": published_by, "at": _now(),
+                                       "mode": "EXTERNAL_HUMAN"}]})
+    store.emit("AGENCY_CONTENT_PUBLISHED", post_id, {"detail": url})
+    return saved
+
+
+def record_account_metrics(store, model_id, *, platform, followers, source, observed_at=None):
+    """Observed account metrics (insights screen, analytics export). Never estimated."""
+    if not isinstance(followers, int) or followers < 0 or not source:
+        raise ValueError("observed follower count and source required")
+    model = store.get("models", model_id)
+    accounts = []
+    for account in model["social_accounts"]:
+        if account["platform"] == platform:
+            previous = account.get("followers") if isinstance(account.get("followers"), int) else None
+            account = {**account, "followers": followers,
+                       "followers_growth": (followers - previous) if previous is not None else None,
+                       "metrics_source": source, "metrics_observed_at": observed_at or _now()}
+        accounts.append(account)
+    return store.upsert("models", {"model_id": model_id, "social_accounts": accounts})
+
+
 def account_overview(store):
     rows = []
     for model in store.snapshot()["models"]:

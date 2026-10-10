@@ -195,7 +195,8 @@ def _has_explicit_mutation_signal(text):
 
 
 _AGENCY_QUERY_RE = re.compile(
-    r"\b(agenzia|fashion agency|modelle|modella|prodotti pronti|campagna|campagne)\b")
+    r"\b(agenzia|fashion agency|modelle|modella|prodotti pronti|campagna|campagne|casting|"
+    r"unreal faces|il lancio)\b")
 
 
 def classify(text: str, metadata: dict | None = None) -> str:

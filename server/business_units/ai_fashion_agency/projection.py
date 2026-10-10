@@ -15,7 +15,9 @@ from datetime import datetime, timezone
 from business_units import build_business_unit_state
 from business_units.revenue import agency_revenue_projection
 
+from .identity import AGENCY_IDENTITY
 from .kpis import agency_kpis, campaign_kpis, model_kpis
+from .launch import launch_summary
 
 ACTIVE_MODEL_STATUSES = {"ACTIVE", "CHARACTER_SHEET_READY"}
 QUEUE_BRIEF_STATES = {"DRAFT", "ASSIGNED", "PACK_READY", "WAITING_APPROVAL", "APPROVED",
@@ -116,6 +118,7 @@ def agency_state(store, *, queue=None):
         alerts.append(f"skill Agency bloccate: {code}")
     return {
         "schema_version": "AI_FASHION_AGENCY_STATE_V1", "health": health,
+        "agency_name": AGENCY_IDENTITY["name"], "launch": launch_summary(s),
         "models_total": len(models),
         "models_active": sum(m["status"] in ACTIVE_MODEL_STATUSES for m in models),
         "models_casting": sum(m["status"] in {"CASTING_DRAFT", "DESIGN_PENDING_APPROVAL"}
@@ -192,6 +195,14 @@ def agency_answer(question, store, *, queue=None):
         items = "; ".join(f"{a['what']}" + (f" ({a['credits']:g} crediti)" if a["credits"] else "")
                           for a in st["approvals"])
         return f"Agenzia — da approvare: {items}.", st
+    if re.search(r"lancio|casting|prossima modella|nuova modella", q):
+        launch = st["launch"]
+        if not launch["open"]:
+            return (f"{launch['agency']}: nessun lancio aperto ({launch['launched']} modelle lanciate). "
+                    "Prossimo passo: aprire il casting della prossima modella."), st
+        o = launch["open"]
+        return (f"{launch['agency']}: lancio di {o['model']} in fase {o['stage']}. "
+                f"Per avanzare serve: {o['gate']}."), st
     if re.search(r"guadagn|ricav|profit|soldi|incass", q):
         return (f"Agenzia: ricavi {_eur(st['revenue_eur'])}, costi {_eur(st['costs_eur'])}, "
                 f"profitto {_eur(st['profit_eur'])}, crediti spesi {st['credits_spent']:g}. "
