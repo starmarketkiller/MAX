@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/nexus-department-result-packet-v1.schema.json",
+  "title": "DEPARTMENT_RESULT_PACKET_V1",
+  "description": "Output strutturato restituito da un responsabile logico di reparto (NEXUS_MASTERPLAN_V4.1 sez.8). Sostituisce/raffina la proposta DEPARTMENT_RESPONSABILE_OUTPUT_V1 di NEXUS_MASTERPLAN_V4_RESPONSABILE_COORDINATION_MODEL.md con i nomi di campo richiesti esplicitamente in V4.1 - stessa logica di riuso: i campi coincidono quasi 1:1 con la forma già reale di executive_v1/sections.py (status/health/key_metrics/blockers/next_actions) più i campi di verifica/approvazione già richiesti in V4. Un responsabile di reparto non ha un canale di scrittura proprio: questo pacchetto arriva sempre tramite l'EventLedger/TaskQueue canonici, mai una notifica diretta all'utente. Proposta di design, non implementata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "department_id", "workflow_run_id", "result", "evidence",
+    "verifier_status", "errors", "resource_cost", "risk", "approval_required", "next_action",
+    "alert_priority"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "DEPARTMENT_RESULT_PACKET_V1"},
+    "department_id": {"$ref": "nexus-workflow-definition-v1.schema.json#/definitions/department_id"},
+    "workflow_run_id": {"type": "string", "description": "run_id di NEXUS_WORKFLOW_RUN_STATE_V1"},
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "summary"],
+      "properties": {
+        "status": {"enum": ["SUCCESS", "PARTIAL_SUCCESS", "FAILURE", "NO_ACTION_TAKEN"]},
+        "summary": {"type": "string", "minLength": 1}
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source", "ref"],
+        "properties": {
+          "source": {"type": "string", "description": "es. 'event_ledger', 'result_packet', 'artifact'"},
+          "ref": {"type": "string"}
+        }
+      }
+    },
+    "verifier_status": {
+      "type": "object", "additionalProperties": false,
+      "required": ["level", "verdict"],
+      "properties": {
+        "level": {"enum": ["L0", "L1", "L2", "L3"]},
+        "verdict": {"enum": ["PASS", "REVISION_REQUIRED", "REJECTED", "BLOCKED", "NOT_YET_REVIEWED"]}
+      }
+    },
+    "errors": {"type": "array", "items": {"type": "string"}},
+    "resource_cost": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "premium_calls_used": {"type": "integer", "minimum": 0},
+        "wall_seconds_used": {"type": ["number", "null"]}
+      }
+    },
+    "risk": {"enum": ["NONE", "LOW", "MEDIUM", "HIGH", "CRITICAL"]},
+    "approval_required": {
+      "type": "object", "additionalProperties": false,
+      "required": ["needed"],
+      "properties": {
+        "needed": {"type": "boolean"},
+        "reason": {"type": ["string", "null"]},
+        "approval_id": {"type": ["string", "null"]}
+      }
+    },
+    "next_action": {"type": ["string", "null"]},
+    "alert_priority": {"$ref": "nexus-workflow-definition-v1.schema.json#/definitions/priority"}
+  }
+}

@@ -4,7 +4,7 @@ domain: system
 status: proposal-and-status
 tags: [masterplan, architettura, 7-reparti, self-improvement, gap-analysis]
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-10
 ---
 
 # NEXUS Masterplan V4 — stato canonico dei 7 reparti
@@ -16,6 +16,17 @@ updated: 2026-10-08
 > dall'utente + un census read-only a 9 agenti paralleli contro il codice
 > reale. Nessuna specifica "Masterplan V4" preesisteva nel vault prima di
 > questa nota.
+
+> **Aggiornamento 2026-10-10 — V4.1:** il Masterplan si estende ora con audit
+> completo di sito/backend/Render/CI, contratti di workflow (DAG dichiarativo,
+> stato runtime, output di reparto, proiezione visuale, revisione a 4
+> livelli), ruoli logici per reparto e roadmap a 9 milestone verso un Visual
+> Operations Center integrato nel sito esistente (non un sito nuovo). Scoperta
+> più rilevante: il sito è una SPA React matura, non va ricostruito. Rischio
+> infrastrutturale più concreto trovato: backup del database su Render solo
+> manuale, sullo stesso disco del primario. Dettaglio tecnico completo:
+> `docs/NEXUS_MASTERPLAN_V4_1.md` (branch `docs/nexus-masterplan-v4.1`, non
+> ancora mergiato su main).
 
 ## I 7 reparti — stato in una riga ciascuno
 

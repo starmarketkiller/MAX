@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""NEXUS_MASTERPLAN_V4 - non-invasive consistency check for the canonical
-documentation set (docs/NEXUS_MASTERPLAN_V4*.md).
+"""NEXUS_MASTERPLAN_V4/V4.1 - non-invasive consistency check for the
+canonical documentation set (docs/NEXUS_MASTERPLAN_V4*.md plus the V4.1
+infrastructure/workflow docs it links to).
 
 This is NOT a code test - the parent task was documentation-first and
 explicitly forbids touching the executor/dispatcher/bridge/CI. What this
-checks instead: that the 13-document set stays internally consistent over
-time (no broken cross-links, no invented status word slipping past the
-IMPLEMENTED/PARTIAL/PLANNED/BLOCKED legend, every department doc actually
+checks instead: that the full document set stays internally consistent
+over time (no broken cross-links, no invented status word slipping past
+the IMPLEMENTED/PARTIAL/PLANNED/BLOCKED legend, every document actually
 present). Read-only, exits non-zero on any failure, safe to wire into CI
 later if desired - not done here (out of this task's documentation-first
 scope).
@@ -20,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 
-REQUIRED_DOCS = [
+REQUIRED_DOCS_V4 = [
     "NEXUS_MASTERPLAN_V4.md",
     "NEXUS_MASTERPLAN_V4_TRADING.md",
     "NEXUS_MASTERPLAN_V4_REVENUE.md",
@@ -36,12 +37,34 @@ REQUIRED_DOCS = [
     "NEXUS_MASTERPLAN_V4_GAP_ANALYSIS.md",
 ]
 
+REQUIRED_DOCS_V4_1 = [
+    "NEXUS_MASTERPLAN_V4_1.md",
+    "NEXUS_WEBSITE_ARCHITECTURE_AUDIT.md",
+    "NEXUS_BACKEND_MODULE_MAP.md",
+    "NEXUS_RENDER_INFRASTRUCTURE_PLAN.md",
+    "NEXUS_GITHUB_CICD_GOVERNANCE.md",
+    "NEXUS_VISUAL_OPERATIONS_SITE_INTEGRATION.md",
+    "NEXUS_WORKFLOW_CONTRACTS_V1.md",
+    "NEXUS_DEPARTMENT_TEAMS_V1.md",
+    "NEXUS_DISTRIBUTED_SELF_IMPROVEMENT_V1.md",
+    "NEXUS_INDEPENDENT_REVIEW_V1.md",
+    "NEXUS_JARVIS_DELIVERY_ARCHITECTURE_V1.md",
+    "NEXUS_ARCHITECTURE_GAP_ANALYSIS_V4_1.md",
+    "NEXUS_IMPLEMENTATION_ROADMAP_V4_1.md",
+]
+
+REQUIRED_DOCS = REQUIRED_DOCS_V4 + REQUIRED_DOCS_V4_1
+
 ALLOWED_STATUS_WORDS = {"IMPLEMENTED", "PARTIAL", "PLANNED", "BLOCKED"}
 # Parole status-simili usate altrove nel repo/ecosistema software che NON
 # sono nel vocabolario di questo set - se compaiono in una cella che sembra
 # una colonna di stato, è probabile un refuso di un termine non canonico.
-SUSPECT_STATUS_WORDS = {"DONE", "TODO", "WIP", "COMPLETE", "COMPLETED", "PENDING",
-                        "IN_PROGRESS", "NOT_STARTED", "DEPRECATED"}
+# COMPLETED/PENDING deliberatamente esclusi da questa lista: sono valori enum
+# legittimi di un vocabolario DIVERSO (stato runtime di un nodo/notifica -
+# visual_state, delivery_status - già definiti nei contratti V4.1 stessi),
+# non refusi del vocabolario di stato-documentazione IMPLEMENTED/PARTIAL/
+# PLANNED/BLOCKED che questo check protegge.
+SUSPECT_STATUS_WORDS = {"DONE", "TODO", "WIP", "COMPLETE", "IN_PROGRESS", "NOT_STARTED", "DEPRECATED"}
 
 MD_LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+\.md)(#[^)]*)?\)")
 
@@ -75,18 +98,42 @@ def check_suspect_status_words(text: str, source_name: str) -> list[str]:
     return errors
 
 
+FINAL_MARKERS = {
+    "NEXUS_MASTERPLAN_V4.md": "NEXUS_MASTERPLAN_V4_CANONICAL_DOCUMENTED",
+    "NEXUS_MASTERPLAN_V4_1.md": "NEXUS_MASTERPLAN_V4_1_COMPLETE_ARCHITECTURE_CANONICAL_DOCUMENTED",
+}
+
+
 def check_final_marker_present(text: str, source_name: str) -> list[str]:
-    if source_name != "NEXUS_MASTERPLAN_V4.md":
+    marker = FINAL_MARKERS.get(source_name)
+    if marker is None:
         return []
-    if "NEXUS_MASTERPLAN_V4_CANONICAL_DOCUMENTED" not in text:
-        return ["MISSING_FINAL_MARKER: NEXUS_MASTERPLAN_V4.md does not mention "
-               "NEXUS_MASTERPLAN_V4_CANONICAL_DOCUMENTED"]
+    if marker not in text:
+        return [f"MISSING_FINAL_MARKER: {source_name} does not mention {marker}"]
     return []
+
+
+REQUIRED_CONTRACTS_V4_1 = [
+    "nexus-workflow-definition-v1.schema.json",
+    "nexus-workflow-run-state-v1.schema.json",
+    "nexus-department-result-packet-v1.schema.json",
+    "nexus-visual-workflow-state-v1.schema.json",
+    "nexus-independent-review-v1.schema.json",
+]
+
+
+def check_contracts_present() -> list[str]:
+    errors = []
+    for name in REQUIRED_CONTRACTS_V4_1:
+        if not (ROOT / "contracts" / name).is_file():
+            errors.append(f"MISSING_CONTRACT: contracts/{name}")
+    return errors
 
 
 def main() -> int:
     errors: list[str] = []
     errors.extend(check_all_docs_present())
+    errors.extend(check_contracts_present())
 
     for name in REQUIRED_DOCS:
         path = DOCS / name

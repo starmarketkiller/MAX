@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/nexus-workflow-run-state-v1.schema.json",
+  "title": "NEXUS_WORKFLOW_RUN_STATE_V1",
+  "description": "Stato runtime di un'esecuzione di NEXUS_WORKFLOW_DEFINITION_V1. Proiezione leggibile sopra i task figli reali già creati/interrogati da MultiStageExecutor (server/jarvis_v1/multi_stage_executor.py) - non uno stato parallelo: ogni campo qui è derivabile da TaskQueue/EventLedger esistenti. È la vista che NEXUS_VISUAL_WORKFLOW_STATE_V1 e il Workflow Engineering Viewer consumano. Proposta di design (NEXUS_MASTERPLAN_V4.1), non implementata in questa sessione.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "workflow_id", "version", "task_id", "state", "active_nodes",
+    "completed_nodes", "blocked_nodes", "events", "artifacts", "verifier_results", "errors",
+    "timings", "costs", "resource_usage"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "NEXUS_WORKFLOW_RUN_STATE_V1"},
+    "run_id": {"type": "string"},
+    "workflow_id": {"type": "string"},
+    "version": {"type": "integer", "minimum": 1},
+    "task_id": {"type": "string", "description": "task_id del parent reale in core/task_queue.py - il run NON ha un ciclo di vita indipendente dal task canonico"},
+    "state": {"enum": ["CREATED", "RUNNING", "WAITING_DEPENDENCY", "WAITING_APPROVAL",
+      "VERIFYING", "BLOCKED", "COMPLETED", "FAILED", "CANCELLED"]},
+    "active_nodes": {"type": "array", "items": {"type": "string"}},
+    "completed_nodes": {"type": "array", "items": {"type": "string"}},
+    "blocked_nodes": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["node_id", "reason"],
+        "properties": {"node_id": {"type": "string"}, "reason": {"type": "string"}}
+      }
+    },
+    "events": {"type": "array", "items": {"type": "string"}, "description": "event_id da core/ledger.py EventLedger - mai eventi duplicati qui, solo riferimenti"},
+    "artifacts": {"type": "array", "items": {"type": "string"}, "description": "percorsi/id di artifact prodotti, stesso concetto di RESULT_PACKET_V1.artifacts_created"},
+    "verifier_results": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["node_id", "level", "verdict"],
+        "properties": {
+          "node_id": {"type": "string"},
+          "level": {"enum": ["L0", "L1", "L2", "L3"]},
+          "verdict": {"enum": ["PASS", "REVISION_REQUIRED", "REJECTED", "BLOCKED"]}
+        }
+      }
+    },
+    "errors": {"type": "array", "items": {"type": "string"}},
+    "timings": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "started_at": {"type": ["string", "null"], "format": "date-time"},
+        "updated_at": {"type": ["string", "null"], "format": "date-time"},
+        "completed_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "costs": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "premium_calls_used": {"type": "integer", "minimum": 0},
+        "estimated_cost_usd": {"type": ["number", "null"]}
+      }
+    },
+    "resource_usage": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "wall_seconds_used": {"type": ["number", "null"]},
+        "retries_used": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

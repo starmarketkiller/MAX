@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/nexus-visual-workflow-state-v1.schema.json",
+  "title": "NEXUS_VISUAL_WORKFLOW_STATE_V1",
+  "description": "Proiezione sola-lettura per il Visual Operations Center (NEXUS_MASTERPLAN_V4.1 sez.12-13). Deriva interamente da NEXUS_WORKFLOW_RUN_STATE_V1 + NEXUS_WORKFLOW_DEFINITION_V1 + EventLedger - la UI legge SOLO questa proiezione, mai le tabelle canoniche direttamente, e non può autorizzare nessuna operazione tramite l'animazione: ogni azione (approvazione, retry) passa dagli endpoint canonici già esistenti (stesso principio già reale per /api/local_bridge e le route di approvazione). Proposta di design, non implementata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "workflow_id", "run_id", "department_id", "nodes", "edges",
+    "active_nodes", "pending_nodes", "verification", "alerts", "approvals", "metrics",
+    "timestamps", "artifact_refs", "event_refs"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "NEXUS_VISUAL_WORKFLOW_STATE_V1"},
+    "workflow_id": {"type": "string"},
+    "run_id": {"type": "string"},
+    "department_id": {"$ref": "nexus-workflow-definition-v1.schema.json#/definitions/department_id"},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["node_id", "role", "visual_state"],
+        "properties": {
+          "node_id": {"type": "string"},
+          "role": {"type": "string"},
+          "visual_state": {"enum": ["IDLE", "READY", "RUNNING", "VERIFYING", "WAITING_CONTEXT",
+            "WAITING_APPROVAL", "BLOCKED", "FAILED", "COMPLETED"]}
+        }
+      }
+    },
+    "edges": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["from_node", "to_node"],
+      "properties": {"from_node": {"type": "string"}, "to_node": {"type": "string"}}
+    }},
+    "active_nodes": {"type": "array", "items": {"type": "string"}},
+    "pending_nodes": {"type": "array", "items": {"type": "string"}},
+    "verification": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["node_id", "level", "verdict"],
+      "properties": {
+        "node_id": {"type": "string"},
+        "level": {"enum": ["L0", "L1", "L2", "L3"]},
+        "verdict": {"enum": ["PASS", "REVISION_REQUIRED", "REJECTED", "BLOCKED", "NOT_YET_REVIEWED"]}
+      }
+    }},
+    "alerts": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["node_id", "priority", "message"],
+      "properties": {
+        "node_id": {"type": ["string", "null"]},
+        "priority": {"$ref": "nexus-workflow-definition-v1.schema.json#/definitions/priority"},
+        "message": {"type": "string"}
+      }
+    }},
+    "approvals": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["approval_id", "node_id", "status"],
+      "properties": {
+        "approval_id": {"type": "string"},
+        "node_id": {"type": "string"},
+        "status": {"enum": ["PENDING", "APPROVED", "REJECTED"]}
+      }
+    }},
+    "metrics": {"type": "object", "description": "Sottoinsieme non normativo di key_metrics già presenti in DEPARTMENT_RESULT_PACKET_V1/executive_v1 - solo per rendering, mai ricalcolato qui"},
+    "timestamps": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "started_at": {"type": ["string", "null"], "format": "date-time"},
+        "last_event_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "artifact_refs": {"type": "array", "items": {"type": "string"}},
+    "event_refs": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -4,7 +4,7 @@ domain: system
 status: active
 tags: [jarvis, nexus, stato]
 created: 2026-10-05
-updated: 2026-10-08
+updated: 2026-10-10
 ---
 
 # CURRENT_STATE — dove siamo (2026-10-05)
@@ -38,6 +38,17 @@ updated: 2026-10-08
   reale: 13 documenti in `docs/`, nessuna modifica a executor/dispatcher/
   bridge/CI. Gap principale trovato: self-improvement locale PLANNED in
   tutti i 7 reparti, nessun Global Improvement Council esiste.
+- **NEXUS MASTERPLAN V4.1** (2026-10-10, branch `docs/nexus-masterplan-v4.1`
+  da V4, storia preservata, **non ancora mergiato su main**) — estende V4
+  con audit sito/backend/Render/CI (3 census dedicati: frontend SPA React
+  matura non censita in V4; `app.py` 7.898 righe/241 route in un solo file;
+  Safe Deploy V1 ancora più rigoroso del previsto, doppio livello di
+  protezione), 5 contratti di workflow proposti (`nexus-workflow-definition`,
+  `-run-state`, `-department-result-packet`, `-visual-workflow-state`,
+  `-independent-review`), 13 nuovi documenti (26 totali con V4). Rischio
+  infrastrutturale più concreto trovato: backup database Render solo
+  manuale, stesso disco del primario. Nessuna implementazione di codice -
+  resta documentation-first come V4.
 - Audit di conoscenza: `NEXUS_KNOWLEDGE_CONSOLIDATION_AUDIT_V1` +
   `HEAVY_SESSION_SPOT_CHECK_V1` — 9/9 milestone campionate su 3 sessioni
   pesanti risultano `FULLY_CAPTURED` nel vault, nessun buco sistemico

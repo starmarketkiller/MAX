@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/nexus-independent-review-v1.schema.json",
+  "title": "NEXUS_INDEPENDENT_REVIEW_V1",
+  "description": "Esito di una revisione indipendente a 4 livelli (NEXUS_MASTERPLAN_V4.1 sez.11), applicabile sia a un singolo nodo di workflow sia a un esperimento di self-improvement (NEXUS_MASTERPLAN_V4_INDEPENDENT_REVIEWER_MODEL.md). Il produttore e il verificatore restano sempre processi/funzioni distinti - nessun agente verifica il proprio stesso output. Riusa core/result_packet.py's verifier:{ran,passed,errors} già reale come L0/L1, estendendolo con L2/L3 che oggi non esistono. Proposta di design, non implementata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "review_id", "subject_ref", "level", "verdict", "checks", "generated_at"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "NEXUS_INDEPENDENT_REVIEW_V1"},
+    "review_id": {"type": "string"},
+    "subject_ref": {"type": "string", "description": "task_id, workflow run_id, o experiment_id (IMPROVEMENT_EXPERIMENT_*) sotto revisione"},
+    "level": {
+      "enum": ["L0", "L1", "L2", "L3"],
+      "description": "L0=schema/invariant (deterministico, es. validate_registry.py); L1=verifica di dominio (es. verifier di core/result_packet.py); L2=revisione indipendente (produttore != verificatore, es. finalization_gate.py); L3=approvazione umana per azioni ad alto rischio"
+    },
+    "verdict": {"enum": ["PASS", "REVISION_REQUIRED", "REJECTED", "BLOCKED"]},
+    "checks": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provenance_verified", "output_correct", "tests_passed", "no_regressions",
+        "security_checked", "privacy_checked", "cost_within_budget", "requirements_met",
+        "metrics_vs_baseline", "permissions_respected"],
+      "properties": {
+        "provenance_verified": {"type": "boolean"},
+        "output_correct": {"type": "boolean"},
+        "tests_passed": {"type": ["boolean", "null"]},
+        "no_regressions": {"type": ["boolean", "null"]},
+        "security_checked": {"type": "boolean"},
+        "privacy_checked": {"type": "boolean"},
+        "cost_within_budget": {"type": "boolean"},
+        "requirements_met": {"type": "boolean"},
+        "metrics_vs_baseline": {"type": ["object", "null"], "description": "{baseline_value, variant_value, threshold_declared_in_advance} - mai una soglia scelta post-hoc"},
+        "permissions_respected": {"type": "boolean"}
+      }
+    },
+    "errors": {"type": "array", "items": {"type": "string"}},
+    "reviewer": {"type": "string", "description": "es. 'finalization_gate.py', 'independent_reviewer_function', 'human:<user_ref>' - mai lo stesso processo del produttore"},
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

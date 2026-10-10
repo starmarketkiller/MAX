@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/nexus-workflow-definition-v1.schema.json",
+  "title": "NEXUS_WORKFLOW_DEFINITION_V1",
+  "description": "Definizione versionata di un workflow di reparto (il DAG dichiarativo: nodi, archi, regole di dipendenza/parallelismo/branching). Non è un motore di esecuzione nuovo - compila verso il pattern già esistente e reale di MultiStageExecutor (server/jarvis_v1/multi_stage_executor.py): un NEXUS_WORKFLOW_DEFINITION_V1 descrive COSA deve succedere e in che ordine, MultiStageExecutor resta responsabile di COME farlo succedere (creazione/polling dei task figli via Orchestrator/TaskQueue canonici, RESULT_PACKET_V1 finale). Proposta di design, non implementata in questa sessione (NEXUS_MASTERPLAN_V4.1, documentation-first).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "workflow_id", "version", "department_id", "objective", "trigger",
+    "input_contract", "output_contract", "nodes", "edges", "dependency_rules", "parallel_groups",
+    "branching_conditions", "verifier_policy", "permission_scope", "resource_budget", "timeout",
+    "retry_policy", "recovery_policy", "completion_criteria"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "NEXUS_WORKFLOW_DEFINITION_V1"},
+    "workflow_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "version": {"type": "integer", "minimum": 1},
+    "department_id": {"$ref": "#/definitions/department_id"},
+    "objective": {"type": "string", "minLength": 1},
+    "trigger": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["USER_REQUEST", "SCHEDULE", "EVENT", "MANUAL"]},
+        "event_type": {"type": ["string", "null"], "description": "Se trigger.type=EVENT, il nexus-event.schema.json event_type che lo attiva"},
+        "schedule_cron": {"type": ["string", "null"]}
+      }
+    },
+    "input_contract": {"type": "object", "description": "Riferimento/forma dei dati richiesti in input - JSON Schema inline o $ref a un contratto esistente"},
+    "output_contract": {"type": "object", "description": "Riferimento/forma dell'output atteso - tipicamente $ref a department-result-packet-v1.schema.json"},
+    "nodes": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/node"}},
+    "edges": {"type": "array", "items": {"$ref": "#/definitions/edge"}},
+    "dependency_rules": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["node_id", "depends_on"],
+        "properties": {
+          "node_id": {"type": "string"},
+          "depends_on": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "parallel_groups": {
+      "type": "array",
+      "description": "Gruppi di node_id eseguibili in parallelo - mai un arco di dipendenza interno al gruppo",
+      "items": {"type": "array", "items": {"type": "string"}, "minItems": 2}
+    },
+    "branching_conditions": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["from_node", "condition", "to_node"],
+        "properties": {
+          "from_node": {"type": "string"},
+          "condition": {"type": "string", "description": "Espressione deterministica valutata su output/evidence del nodo sorgente - mai un giudizio LLM"},
+          "to_node": {"type": "string"}
+        }
+      }
+    },
+    "verifier_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required_level"],
+      "properties": {
+        "required_level": {"enum": ["L0", "L1", "L2", "L3"], "description": "Livello minimo richiesto di NEXUS_INDEPENDENT_REVIEW_V1 prima del completamento"},
+        "per_node_override": {"type": "object", "description": "node_id -> livello, se un nodo specifico richiede un livello diverso dal default"}
+      }
+    },
+    "permission_scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowed_capabilities", "forbidden_capabilities"],
+      "properties": {
+        "allowed_capabilities": {"type": "array", "items": {"type": "string"}},
+        "forbidden_capabilities": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "resource_budget": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "max_premium_calls": {"type": "integer", "minimum": 0},
+        "max_wall_seconds": {"type": "integer", "minimum": 1},
+        "priority": {"$ref": "#/definitions/priority"}
+      }
+    },
+    "timeout": {"type": "integer", "minimum": 1, "description": "secondi, budget totale del workflow run"},
+    "retry_policy": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "max_retries_per_node": {"type": "integer", "minimum": 0},
+        "backoff_seconds": {"type": "array", "items": {"type": "integer"}}
+      }
+    },
+    "recovery_policy": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "on_local_bridge_offline": {"enum": ["WAIT", "ESCALATE", "FAIL"]},
+        "on_node_timeout": {"enum": ["RETRY", "ESCALATE", "FAIL"]}
+      }
+    },
+    "completion_criteria": {
+      "type": "object", "additionalProperties": false,
+      "required": ["all_required_nodes"],
+      "properties": {
+        "all_required_nodes": {"type": "array", "items": {"type": "string"}},
+        "min_verifier_level": {"enum": ["L0", "L1", "L2", "L3"]}
+      }
+    }
+  },
+  "definitions": {
+    "department_id": {
+      "enum": ["trading", "revenue", "ai_fashion_agency", "social_content",
+        "system_development", "finance_cost", "jarvis_automation"]
+    },
+    "priority": {"enum": ["P0", "P1", "P2", "P3", "P4"],
+      "description": "Vedi NEXUS_MASTERPLAN_V4.md per la mappatura dichiarata verso gli stati reali URGENT/HIGH/NORMAL/LOW di core/task_queue.py - questo schema usa P0-P4 come richiesto, la mappatura resta un passaggio esplicito di traduzione, non implicito"},
+    "node": {
+      "type": "object", "additionalProperties": false,
+      "required": ["node_id", "role", "capability_required", "required"],
+      "properties": {
+        "node_id": {"type": "string"},
+        "role": {"type": "string", "description": "Ruolo logico, vedi NEXUS_DEPARTMENT_TEAMS_V1.md (es. 'scout', 'risk_gate', 'verifier')"},
+        "capability_required": {"type": "array", "items": {"type": "string"}},
+        "required": {"type": "boolean", "description": "Se false, il workflow può completare anche se questo nodo resta BLOCKED/SKIPPED"}
+      }
+    },
+    "edge": {
+      "type": "object", "additionalProperties": false,
+      "required": ["from_node", "to_node"],
+      "properties": {
+        "from_node": {"type": "string"},
+        "to_node": {"type": "string"}
+      }
+    }
+  }
+}
