@@ -86,14 +86,16 @@ from executive_v1.state import ExecutiveStateBuilder
 from executive_v1.snapshots import SnapshotStore
 from executive_v1.priority import INTERACTIVE_GATE as EXECUTIVE_INTERACTIVE_GATE
 from jarvis_v1.ministral_chat import gateway_status as ministral_gateway_status
-from jarvis_v1.floor_workflow import ACTION as FLOOR_WORKFLOW_ACTION, project_trace, owns_floor_task
+from jarvis_v1.floor_workflow import project_trace
 from jarvis_v1.authenticated_scope import EndpointRateLimiter, resolve_authenticated_scope
+from jarvis_v1.task_authorization import authorize_task_decision, authorized_decision_records
 from jarvis_v1.multi_stage_executor import MultiStageExecutor
 from orchestrator_v1.core.capability import load_registry as load_agent_capability_registry
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 
 # --------------------------------------------------------------------------- #
 # Config
@@ -2001,14 +2003,16 @@ async def jarvis_floor_workflow_launch(
         raise HTTPException(status_code=422, detail={"code": "DUPLICATE_EVIDENCE_ID"})
     if len(json.dumps(context, ensure_ascii=False).encode("utf-8")) > 24 * 1024:
         raise HTTPException(status_code=413, detail={"code": "CONTEXT_TOO_LARGE"})
-    try:
+    def _submit_floor_workflow():
         task_id, created = JARVIS_SERVICE.floor_workflow.submit(
             objective=objective.strip(), context=context, created_by=scope.owner,
             tenant_id=scope.tenant_id, idempotency_key=idempotency_key)
+        return task_id, created, JARVIS_SERVICE.queue.get(task_id)
+    try:
+        task_id, created, record = await run_in_threadpool(_submit_floor_workflow)
     except AssertionError as exc:
         raise HTTPException(status_code=409, detail={"code": "IDEMPOTENCY_CONFLICT",
                                                       "message": str(exc)[:200]})
-    record = JARVIS_SERVICE.queue.get(task_id)
     return {"task_id": task_id, "state": record["state"], "created": created}
 
 
@@ -2313,7 +2317,9 @@ async def jarvis_local_bridge_failure(
 
 @app.get("/api/jarvis/approvals")
 def jarvis_approvals(user: str = Depends(require_user)):
-    items = JARVIS_SERVICE.queue.list_by_state("WAITING_APPROVAL")
+    scope = resolve_authenticated_scope(user)
+    items = authorized_decision_records(
+        JARVIS_SERVICE.queue, JARVIS_SERVICE.queue.list_by_state("WAITING_APPROVAL"), scope)
     return {"count": len(items), "items": items}
 
 
@@ -2324,10 +2330,10 @@ async def jarvis_approval(task_id: str, request: Request,
         target = JARVIS_SERVICE.queue.get(task_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="task not found")
-    if target.get("action") == FLOOR_WORKFLOW_ACTION:
-        scope = resolve_authenticated_scope(user)
-        if not owns_floor_task(target, owner=scope.user_id, tenant_id=scope.tenant_id):
-            raise HTTPException(status_code=404, detail="task not found")
+    scope = resolve_authenticated_scope(user)
+    if not authorize_task_decision(JARVIS_SERVICE.queue, target, scope).allowed:
+        # Do not disclose whether a cross-owner/cross-tenant task id exists.
+        raise HTTPException(status_code=404, detail="task not found")
     body = await read_json_body(request)
     message = {"message_id": f"web:{secrets.token_hex(8)}", "user_id": user,
                "channel": "WEB", "conversation_id": f"approval:{task_id}",

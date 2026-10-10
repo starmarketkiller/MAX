@@ -24,7 +24,7 @@ def _manifest(task_id, **overrides):
         "blockers": [], "expected_artifacts": [], "success_criteria": ["ok"],
         "verifier": "v.py", "estimated_complexity": "TRIVIAL", "estimated_runtime": "1m",
         "premium_allowed": False, "preferred_executor": "TIER1_LOCAL_CHEAP",
-        "fallback_executors": [], "approval_required": "REVIEW_REQUIRED", "created_by": "test",
+        "fallback_executors": [], "approval_required": "REVIEW_REQUIRED", "created_by": "jarvis:42",
         "created_at": "2026-10-09T00:00:00Z", "tenant_id": "tenant-1", "account_scope_id": None,
     }
     manifest.update(overrides)

@@ -213,6 +213,7 @@ def test_launch_endpoint_auth_validation_and_floor_approval_ownership(tmp_path, 
     monkeypatch.setattr(backend, "FLOOR_WORKFLOW_LIMITER", EndpointRateLimiter(limit=20))
     client = TestClient(backend.app)
     assert client.post("/api/jarvis/floor-workflow", json={}).status_code == 401
+    assert client.post("/api/jarvis/approvals/TASK_UNKNOWN", json={"action": "APPROVE"}).status_code == 401
     backend.app.dependency_overrides[backend.require_mutation] = lambda: "42"
     backend.app.dependency_overrides[backend.require_user] = lambda: "42"
     try:
@@ -233,6 +234,13 @@ def test_launch_endpoint_auth_validation_and_floor_approval_ownership(tmp_path, 
         assert client.post("/api/jarvis/floor-workflow", json={"objective": "x", "context": {}},
                            headers={"Idempotency-Key": "launch-request-003"}).status_code == 422
         DurableQueueDispatcher(service.orchestrator, poll_seconds=0.05, lease_seconds=30).run_once()
+        other_task = service.floor_workflow.submit(
+            objective="not mine", context=_context(), created_by="jarvis:7")
+        service.queue.transition(other_task, "RUNNING")
+        service.queue.transition(other_task, "WAITING_APPROVAL")
+        visible = client.get("/api/jarvis/approvals").json()
+        assert visible["count"] == 1
+        assert visible["items"][0]["task_id"] == task_id
         backend.app.dependency_overrides[backend.require_mutation] = lambda: "7"
         denied = client.post(f"/api/jarvis/approvals/{task_id}", json={"action": "APPROVE"})
         assert denied.status_code == 404
