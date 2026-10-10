@@ -60,7 +60,7 @@ def test_guard_allows_only_tester_demo_or_a_pinned_live_login():
     assert "login != InpLiveAccountLogin" in body
     assert body.count("return true;") == 2
     # nothing else in the guard sends or modifies orders
-    assert "OrderSend" not in _src("NXS_AccountGuard.mqh")
+    assert "OrderSend(" not in _src("NXS_AccountGuard.mqh")
 
 
 def test_close_paths_do_not_call_the_account_gate():
@@ -69,6 +69,36 @@ def test_close_paths_do_not_call_the_account_gate():
         match = re.search(r"bool\s+" + name + r"\s*\(", globals_src)
         assert match, name
         assert "NXS_AccountGuard" not in _function_body(globals_src, match.group(0))
+
+
+def test_every_opening_order_send_is_behind_the_account_gate():
+    """Backstop: PipSequence and Data Collection Mode skip the common preflight."""
+    globals_src = _src("NXS_Globals.mqh")
+    assert "#include <NEXUS_v1\\NXS_AccountGuard.mqh>" in globals_src
+    for name in ("NXS_DoBuy", "NXS_DoSell"):
+        body = _function_body(globals_src, f"bool {name}(")
+        assert body.index("NXS_AccountGuard_EntryAllowed(") < body.index("OrderSend(")
+        assert "g_tradeRetcode     = 0;" in body       # not retryable in NXS_Safe*
+    assert "_NXS_IsRetryable" in _src("NXS_SafeOrder.mqh")
+    assert "rc == 0" not in _function_body(_src("NXS_SafeOrder.mqh"), "bool _NXS_IsRetryable(")
+    # NXS_DoBuy/NXS_DoSell are the only opening OrderSend sites in the EA tree
+    opening = []
+    for path in list(INC.glob("*.mqh")) + [ROOT / "MQL5" / "Experts" / "NEXUS_EA_v2.mq5"]:
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"OrderSend(?:Async)?\(", text):
+            head = text[max(0, text.rfind("\nbool ", 0, match.start())):match.start()]
+            if "req.position" not in head and "TRADE_ACTION_SLTP" not in head:
+                opening.append((path.name, head.split("(")[0].strip()))
+    assert sorted(opening) == [("NXS_Globals.mqh", "bool NXS_DoBuy"),
+                               ("NXS_Globals.mqh", "bool NXS_DoSell")]
+
+
+def test_an_unread_account_is_unknown_and_blocked():
+    body = _function_body(_src("NXS_AccountGuard.mqh"), "string NXS_AccountModeName(")
+    unknown = body.index('if(GetLastError() != 0 || login <= 0) return "UNKNOWN";')
+    assert unknown < body.index('return "DEMO"')
+    guard = _function_body(_src("NXS_AccountGuard.mqh"), "bool NXS_AccountGuard_EntryAllowed(")
+    assert 'if(mode == "UNKNOWN"){' in guard
 
 
 def test_trace_maps_the_new_gate_without_renumbering():
@@ -94,6 +124,8 @@ def test_push_declares_the_account():
     ({"accountTradeMode": "LIVE", "liveTradingArmed": True, "accountEntriesAllowed": False}, "LIVE_BLOCKED"),
     ({"accountTradeMode": "CONTEST", "liveTradingArmed": True, "accountEntriesAllowed": True}, "LIVE_ARMED"),
     ({"accountTradeMode": "SOMETHING"}, "UNKNOWN"),
+    ({"accountTradeMode": "DEMO", "accountLogin": 0}, "UNKNOWN"),
+    ({"accountTradeMode": "DEMO"}, "UNKNOWN"),
 ])
 def test_classify(payload, verdict):
     assert ea_account_mode.classify(payload)["verdict"] == verdict

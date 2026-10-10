@@ -24,7 +24,11 @@ def classify(payload):
                 "note": "EA build without NEXUS-ACCT-001: account type unknown"}
     entries = _bool(payload.get("accountEntriesAllowed"))
     armed = _bool(payload.get("liveTradingArmed"))
+    has_login = login not in (None, "", 0, "0")
     if mode not in KNOWN_MODES:
+        verdict = "UNKNOWN"
+    elif mode == "DEMO" and not has_login:
+        # Un DEMO senza login e' un conto non ancora letto, non un DEMO.
         verdict = "UNKNOWN"
     elif mode in {"DEMO", "TESTER"}:
         verdict = f"{mode}_REPORTED"

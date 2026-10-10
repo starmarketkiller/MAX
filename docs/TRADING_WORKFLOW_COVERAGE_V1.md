@@ -100,6 +100,26 @@ Il backend legge soltanto ciò che l'EA dichiara. Un DEMO dichiarato dall'EA non
 - `.claude/skills/mql5-engineering/verifier.py`: 0 finding sui file nuovi o modificati, salvo l'avviso preesistente su `NXS_WebBridge.mqh` (stato globale senza `NXS_Profile_TF`, non legato a questo cambio).
 - **Non compilato.** Serve `handle_compile_ea` sul PC con MT5, poi un avvio su DEMO (log atteso `[NEXUS ACCOUNT] ... mode=DEMO new_entries=ALLOWED`) e un avvio su un conto reale senza autorizzazione (atteso `BLOCKED` e `[NEXUS GATE]` con `gate_id":"ACCOUNT_MODE"` al primo segnale).
 
+### Revisione della PR #36 (secondo commit)
+
+Difetti trovati e corretti:
+
+1. **CI rosso**: `deploy/deployment-manifest.json` certifica lo sha256 di `NEXUS_EA_v2.mq5`; il manifest non era stato rigenerato. Rigenerato con `contracts/generate_deployment_manifest.py`.
+2. **Fail-open su conto non ancora letto**: `ACCOUNT_TRADE_MODE_DEMO` vale 0, lo stesso valore che `AccountInfoInteger` restituisce prima che il terminale carichi il conto. Ora servono login > 0 e una lettura senza errori, altrimenti il conto è `UNKNOWN` e bloccato. Lato backend un `DEMO` senza login è `UNKNOWN`.
+3. **Bypass del gate**: due percorsi aprono senza passare da `NXS_CommonExposurePreflight`: la riapertura di `NXS_PipSequence.mqh` (`InpUsePipSeq`, spento di default) e `InpDataCollectionMode` in `NEXUS_EA_v2.mq5` (spento di default; usa solo `NXS_PreFlight`). Il gate è stato aggiunto anche in `NXS_DoBuy`/`NXS_DoSell`, gli unici `OrderSend` che aprono, con retcode 0 non ritentabile. Un test verifica che nel sorgente non esistano altri `OrderSend` di apertura.
+
+Verificato senza modifiche:
+
+- Chiusure (`NXS_DoClose`, `NXS_DoClosePartial`, `NXS_Prot_ClosePositionWithReason`) e modifiche (`NXS_DoModify`) non chiamano il gate.
+- `InpLiveTradingAuthorized` e `InpLiveAccountLogin` aggiungono un requisito e non saltano altri controlli: il gate ritorna, e poi licenza, ruin, protezioni, stop, stato incerto e RiskShield continuano a girare. Non sono letti dalle impostazioni remote né dai comandi del backend; si cambiano solo dalle proprietà dell'EA o da un `.set`.
+- Netting: l'EA rifiuta l'avvio su conti non hedging (`AUD0-LEDGER-007`, `OnInit`), quindi non esiste un caso netting da gestire.
+- Telemetria: login, nome del server e tipo di conto. Nessuna password, nessun nome intestatario. `/api/ea/status` richiede sessione autenticata; `/api/ea/push` richiede `X-Nexus-Token`.
+- `NXR_OpenTrade` non passa dal preflight comune, ma `InpNXR_Enable` è una costante `false` (non un `input`): codice morto. Ora è comunque coperto dal backstop.
+
+Rimane aperto, fuori da questa PR: PipSequence e Data Collection Mode non applicano licenza, ruin, protezioni e controlli di stato incerto del preflight comune. Instradarli lì cambia il comportamento di funzioni di strategia e richiede una decisione separata.
+
+Stato compilazione: **NOT_COMPILED** (nessun MetaEditor in questo ambiente).
+
 ## Primo ciclo DEMO: cosa manca dopo questo PR
 
 | Passo | Pronto | Manca |

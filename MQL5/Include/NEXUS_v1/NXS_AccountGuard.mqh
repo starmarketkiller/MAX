@@ -15,13 +15,24 @@
 //|                                                                    |
 //|  Chiusure, parziali e modifiche NON passano da qui: ridurre il     |
 //|  rischio non deve mai essere bloccabile da un gate di apertura.    |
+//|  Il gate e' chiamato due volte: in NXS_CommonExposurePreflight     |
+//|  (con telemetria) e come ultimo controllo in NXS_DoBuy/NXS_DoSell, |
+//|  gli unici OrderSend che aprono: copre anche percorsi che non      |
+//|  passano dal preflight (PipSequence, Data Collection Mode).        |
 //+------------------------------------------------------------------+
 #ifndef __NXS_ACCOUNT_GUARD_MQH__
 #define __NXS_ACCOUNT_GUARD_MQH__
 
 string NXS_AccountModeName(){
    if(MQLInfoInteger(MQL_TESTER) || MQLInfoInteger(MQL_OPTIMIZATION)) return "TESTER";
-   long mode = AccountInfoInteger(ACCOUNT_TRADE_MODE);
+   // ACCOUNT_TRADE_MODE_DEMO vale 0, lo stesso valore restituito quando il
+   // terminale non ha ancora caricato il conto (avvio, riconnessione). Senza
+   // un login valido e una lettura senza errori il conto resta UNKNOWN, cioe'
+   // bloccato: un conto non ancora letto non e' un DEMO.
+   ResetLastError();
+   long login = AccountInfoInteger(ACCOUNT_LOGIN);
+   long mode  = AccountInfoInteger(ACCOUNT_TRADE_MODE);
+   if(GetLastError() != 0 || login <= 0) return "UNKNOWN";
    if(mode == ACCOUNT_TRADE_MODE_DEMO)    return "DEMO";
    if(mode == ACCOUNT_TRADE_MODE_CONTEST) return "CONTEST";
    if(mode == ACCOUNT_TRADE_MODE_REAL)    return "LIVE";
