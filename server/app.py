@@ -2057,6 +2057,11 @@ def jarvis_task_resume_orphaned(task_id: str, user: str = Depends(require_mutati
     automatic resume at boot. Every safety precondition lives in
     Orchestrator.resume_orphaned_task(); this endpoint only authenticates
     and maps its fail-closed AssertionError to a 409."""
+    # Authorization must happen before the recovery service can mutate queue
+    # state or append recovery events.  The shared helper resolves the signed
+    # session scope server-side and deliberately returns the same 404 for a
+    # missing task and for an owner/tenant mismatch.
+    owned_jarvis_task_or_404(task_id, user)
     try:
         record = JARVIS_SERVICE.orchestrator.resume_orphaned_task(task_id, requested_by=user)
     except KeyError:
