@@ -78,5 +78,19 @@
     "Same-bar target and stop: the stop is counted first (conservative)",
     "Stop fills at the stop price: no slippage modelled",
     "Overlapping events (impulses close in time) are not independent; month-block bootstrap is descriptive, dependence diagnostics of phase7/engine come later"
+  ],
+  "amendments": [
+    {
+      "amendment_id": "A1",
+      "declared_at": "2026-10-11",
+      "before_any_real_data_access": true,
+      "params_changed": false,
+      "adds": [
+        "secondary analyses (behavior_lab_v1/analysis.py): profit factor, cost sensitivity (+0.05/+0.10/+0.20 R per trade, double spread), control comparison stratified by direction x session x ATR tercile (cuts from the control population), entry hour profile, selection profile",
+        "decision rules BL01_DECISION_RULES_V1 (behavior_lab_v1/decision.py): STOP on data/detector failure, n_closed < 30, month-block CI95 entirely below 0, or no positive expectancy and no stratified advantage; GO only if n_closed >= 60, net expectancy > 0 with CI95 low > 0, stratified delta > 0 in >= 60% of usable cells, >= 60% positive quarters, still > 0 at +0.10 R, no direction below -0.10 R (n>=20), no UTC hour above 35% of entries; otherwise INVESTIGATE",
+        "GO authorises one internal_validation read with frozen params; it is not a proven edge"
+      ],
+      "context": "only real data seen before this amendment: H4 detector firing rates (no outcomes) on MARKET_STATE_V1 2019-02..2022-02 (DISCOVERY_REUSE, outside every split of this hypothesis): impulses 183 (3.8%), pullbacks 167 (3.5%), both NORMAL; 91% of impulses become pullbacks"
+    }
   ]
 }

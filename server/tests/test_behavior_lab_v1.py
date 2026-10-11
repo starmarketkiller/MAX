@@ -373,3 +373,115 @@ def test_python_side_never_trades():
                      for p in (RESEARCH / "behavior_lab_v1").glob("*.py"))
     for banned in ("order_send", "OrderSend", "MetaTrader5", "requests.", "urllib", "WebRequest"):
         assert banned not in text
+
+
+# --------------------------------------------------- BL-01 analysis, decision, report --
+from behavior_lab_v1 import bl01  # noqa: E402
+from behavior_lab_v1.analysis import (cost_sensitivity, profit_factor,  # noqa: E402
+                                      stratified_vs_control)
+from behavior_lab_v1.decision import decide  # noqa: E402
+from behavior_lab_v1.report import render  # noqa: E402
+
+
+def trade(r, direction=1, session="LONDON", atr=10.0, month=1, spread_r=0.05):
+    return {"status": "CLOSED", "exit_reason": "TARGET" if r > 0 else "STOP", "realized_r_net": r,
+            "realized_r": r, "spread_cost_r": spread_r, "direction": direction, "session": session,
+            "atr_h4": atr, "entry_time": ep(f"2023-{month:02d}-10T09:00:00")}
+
+
+def test_profit_factor_and_breakeven():
+    rows = [trade(2.0), trade(-1.0), trade(-1.0)]
+    assert profit_factor(rows) == pytest.approx(1.0)
+    costs = cost_sensitivity(rows, 2.0)
+    assert costs["breakeven_win_rate_gross"] == pytest.approx(1 / 3)
+    assert costs["extra_0.10R"] == pytest.approx(-0.1) and costs["double_spread"] == pytest.approx(-0.05)
+
+
+def test_stratified_comparison_only_compares_like_with_like():
+    # events all in LONDON high-vol; controls good in LONDON, bad in TOKYO: a raw comparison
+    # would flatter the events, the stratified one must not
+    controls = [trade(2.0 if n % 2 else -1.0, session="LONDON", atr=30.0) for n in range(40)] + \
+               [trade(-1.0, session="TOKYO", atr=30.0) for _ in range(40)] + \
+               [trade(-1.0, session="TOKYO", atr=a) for a in (1.0, 2.0) for _ in range(20)]
+    events = [trade(2.0 if n % 2 else -1.0, session="LONDON", atr=30.0) for n in range(20)]
+    res = stratified_vs_control(events, controls)
+    assert res["adjusted_delta_expectancy_r"] == pytest.approx(0.0)
+    assert res["cells_used"] == 1 and res["events_without_comparable_control"] == 0
+
+
+def base_summary(**over):
+    s = {"smoke": False,
+         "data_checks": {"tick_audit": {"verdict": "PASS"}, "alignment_mismatches": [],
+                         "reference_h4_mismatches": [], "manifest": {"verdict": "MATCH"}},
+         "detector_health": {"IMPULSE": {"status": "NORMAL"}, "PULLBACK": {"status": "NORMAL"}},
+         "events": {"n_closed": 80, "expectancy_r_net": 0.2,
+                    "expectancy_r_net_ci95_month_blocks": {"low": 0.05, "high": 0.4}},
+         "vs_control_stratified": {"adjusted_delta_expectancy_r": 0.1, "cells_used": 5, "cells_event_better": 4},
+         "stability": {"quarters_with_n_ge_5": 5, "quarters_positive": 4},
+         "cost_sensitivity": {"extra_0.10R": 0.1},
+         "by_direction": {"BUY": {"n_closed": 40, "expectancy_r_net": 0.2},
+                          "SELL": {"n_closed": 40, "expectancy_r_net": 0.0}},
+         "hour_profile": {"max_hour_share": 0.2}}
+    s.update(over)
+    return s
+
+
+def test_decision_rules_go_investigate_stop():
+    assert decide(base_summary())["decision"] == "GO"
+    weak = base_summary(events={"n_closed": 80, "expectancy_r_net": 0.05,
+                                "expectancy_r_net_ci95_month_blocks": {"low": -0.1, "high": 0.2}})
+    inv = decide(weak)
+    assert inv["decision"] == "INVESTIGATE" and "month-block CI95 low > 0" in inv["reasons"]
+    small = base_summary(events={"n_closed": 12, "expectancy_r_net": 0.9})
+    assert decide(small)["kind"] == "SAMPLE"
+    negative = base_summary(events={"n_closed": 80, "expectancy_r_net": -0.3,
+                                    "expectancy_r_net_ci95_month_blocks": {"low": -0.5, "high": -0.1}})
+    assert decide(negative)["kind"] == "NEGATIVE"
+    broken = base_summary(data_checks={"tick_audit": {"verdict": "FAIL"}, "alignment_mismatches": [],
+                                       "reference_h4_mismatches": [], "manifest": {"verdict": "MATCH"}})
+    assert decide(broken)["kind"] == "DATA_OR_DETECTOR"
+    clock = base_summary(hour_profile={"max_hour_share": 0.6})
+    assert decide(clock)["decision"] == "INVESTIGATE"
+
+
+def _write_ticks(decoded, days):
+    for day in days:
+        folder = decoded / day[:4]
+        folder.mkdir(parents=True, exist_ok=True)
+        with gzip.open(folder / f"{day}.csv.gz", "wt", newline="", encoding="utf-8") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(["epoch_ms", "bid", "ask", "bid_vol", "ask_vol"])
+            for ts, bid, ask in synthetic_ticks(ep(f"{day}T00:00:00"), 24 * 60, step=120):
+                writer.writerow([ts, bid, ask, 1.0, 1.0])
+
+
+def test_full_run_report_has_every_section(tmp_path, monkeypatch):
+    decoded = tmp_path / "decoded"
+    _write_ticks(decoded, ["2023-02-06", "2023-02-07", "2023-02-08"])
+    monkeypatch.setattr(run_experiment, "DATA_DIR", str(tmp_path / "data"))
+    full = run_experiment.main(["--split", "discovery", "--phase7-decoded", str(decoded),
+                                "--phase6-decoded", str(decoded), "--manifest", str(tmp_path / "x.json"),
+                                "--reference-h4", str(tmp_path / "x.csv"), "--out", str(tmp_path / "out")])
+    assert full["status"] == "EXPLORATORY_DISCOVERY"
+    assert full["decision"]["decision"] == "STOP"          # manifest missing on a full run
+    assert full["peak_rss_mb"] is None or full["peak_rss_mb"] > 0
+    outputs = json.loads((tmp_path / "out" / "outputs.sha256.json").read_text())
+    assert set(outputs) == {"summary.json", "events.csv", "controls.csv", "run.log"}
+    pre = bl01.preflight(str(decoded), str(decoded), str(tmp_path / "x.json"))
+    text = render(pre, None, full, [])
+    for n in range(1, 8):
+        assert f"## {n}." in text
+
+
+def test_bl01_stops_before_running_when_preflight_fails(tmp_path, monkeypatch):
+    decoded = tmp_path / "decoded"
+    _write_ticks(decoded, ["2023-02-06"])
+    monkeypatch.setattr(bl01, "RUNS", str(tmp_path / "runs"))
+    monkeypatch.setattr(run_experiment, "DATA_DIR", str(tmp_path / "data"))
+    code = bl01.main(["--phase7-decoded", str(decoded), "--phase6-decoded", str(decoded),
+                      "--manifest", str(tmp_path / "absent.json")])
+    assert code == 1
+    [report] = list((tmp_path / "runs").glob("*/report.md"))
+    text = report.read_text(encoding="utf-8")
+    assert "STOP obbligatorio" in text and "tick manifest MISSING" in text
+    assert not list((tmp_path / "runs").glob("*/smoke"))        # nothing ran after the blocker

@@ -42,6 +42,20 @@ Output in `behavior_lab_v1/data/runs/<run_id>/` (gitignored): `summary.json` (ha
 
 `--split internal_validation` scrive l'accesso nel ledger persistente `data/validation_access_log.json` (massimo 3 letture, policy Phase 7). `locked_validation` e `final_holdout` sono rifiutati. Uno stesso `hypothesis_id` non può girare con parametri diversi.
 
+## BL-01 in un solo comando (sul PC)
+
+```bash
+cd server/research_scripts
+pip install -r ../requirements-dev.txt
+python -m behavior_lab_v1.bl01 --expect-commit <sha della PR #39>
+```
+
+Sequenza: preflight (commit e working tree del lab, dipendenze, hash del manifest, file discovery, warmup Phase 6) → smoke di 10 giorni con STOP obbligatorio su tick audit FAIL, disallineamenti H4/M15 o con le H4 Phase 7.1, eccezioni (incluse le asserzioni di causalità) → discovery completa → `report.md`.
+
+Output in `behavior_lab_v1/data/bl01/<timestamp>/` (gitignored): `preflight.json`, `smoke/` e `discovery/` con `summary.json`, `events.csv`, `controls.csv`, `run.log`, `outputs.sha256.json`, e `report.md` con le sette sezioni (HEAD e hash, qualità dati, statistiche del detector, confronto con il controllo, limiti, decisione, prossimo esperimento non eseguito).
+
+La decisione applica le regole `BL01_DECISION_RULES_V1` (`decision.py`), dichiarate nell'emendamento A1 della pre-registrazione prima di qualunque accesso ai tick reali. `internal_validation` non viene mai letto da `bl01`.
+
 ## Regole di evidenza
 
 - Si itera solo su `discovery`. `internal_validation` si legge dopo aver deciso, senza cambiare parametri.

@@ -18,11 +18,16 @@ import csv
 import hashlib
 import json
 import os
+import platform
 import subprocess
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 
 from . import prereg as prereg_mod
+from .analysis import (cost_sensitivity, hour_profile, profit_factor, selection_profile,
+                       stratified_vs_control)
+from .decision import decide
 from .bars import H4, M15, build_bars, check_alignment, compare_with_reference_h4
 from .events import run_family
 from .sessions import dst_transition_check, gap_report
@@ -38,7 +43,7 @@ EXPECTED_MANIFEST_SHA256 = "605249c671178c92c7a2a3e91a670f17c12ca4bea10576407292
 DATA_DIR = os.path.join(HERE, "data")
 PREREG = os.path.join(HERE, "prereg_BL-H4M15-IPC-001.json")
 CODE_FILES = ("ticks.py", "bars.py", "sessions.py", "events.py", "stats.py", "prereg.py",
-              "run_experiment.py")
+              "analysis.py", "decision.py", "run_experiment.py")
 
 sys.path.insert(0, os.path.join(RESEARCH, "phase7", "engine"))
 from validation_access_ledger import ValidationAccessLedger, load_policy  # noqa: E402
@@ -68,6 +73,49 @@ def git_commit():
         return None
 
 
+def peak_rss_mb():
+    """Peak resident memory of this process, Linux/macOS or Windows; None if unknown."""
+    try:
+        import resource
+        peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        return peak / (1024 * 1024) if sys.platform == "darwin" else peak / 1024
+    except ImportError:
+        pass
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        class Counters(ctypes.Structure):
+            _fields_ = [("cb", wintypes.DWORD), ("PageFaultCount", wintypes.DWORD),
+                        ("PeakWorkingSetSize", ctypes.c_size_t), ("WorkingSetSize", ctypes.c_size_t),
+                        ("QuotaPeakPagedPoolUsage", ctypes.c_size_t), ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                        ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                        ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                        ("PagefileUsage", ctypes.c_size_t), ("PeakPagefileUsage", ctypes.c_size_t)]
+        counters = Counters()
+        counters.cb = ctypes.sizeof(Counters)
+        handle = ctypes.windll.kernel32.GetCurrentProcess()
+        if ctypes.windll.psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb):
+            return counters.PeakWorkingSetSize / (1024 * 1024)
+    except (AttributeError, OSError):
+        pass
+    return None
+
+
+class RunLog:
+    def __init__(self):
+        self.lines, self.t0, self.timings = [], time.perf_counter(), {}
+
+    def step(self, name, started):
+        self.timings[name] = round(time.perf_counter() - started, 2)
+        self.write(f"{name}: {self.timings[name]} s")
+
+    def write(self, text):
+        line = f"{datetime.now(timezone.utc).isoformat()} {text}"
+        self.lines.append(line)
+        print(line, flush=True)
+
+
 def persistent_ledger(path):
     policy = load_policy(os.path.join(RESEARCH, "phase7", "policies", "validation_access_policy_v1.json"))
     ledger = ValidationAccessLedger(policy)
@@ -80,7 +128,7 @@ def persistent_ledger(path):
     return ledger
 
 
-def write_events(path, rows):
+def write_rows(path, rows):
     fields = sorted({k for r in rows for k in r if k != "window"})
     with open(path, "w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
@@ -101,6 +149,7 @@ def main(argv=None):
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
 
+    log = RunLog()
     prereg = prereg_mod.load(PREREG)
     split_start, split_end, warmup_start = prereg_mod.split_window(prereg, args.split)
     smoke = args.smoke_days > 0
@@ -136,9 +185,12 @@ def main(argv=None):
     ticks = ((ts, b, a) for ts, b, a in iter_ticks([args.phase7_decoded, args.phase6_decoded],
                                                    start_dt, end_dt, missing)
              if ts < split_end * 1000)
+    started = time.perf_counter()
     bars = build_bars(ticks, [M15, H4], audit)
     m15, h4 = bars[M15], bars[H4]
+    log.step("read_ticks_and_build_bars", started)
 
+    started = time.perf_counter()
     checks = {"tick_audit": audit.report(), "missing_day_files": missing,
               "alignment_mismatches": check_alignment(h4, m15)[:50],
               "m15_gaps": gap_report(m15, M15), "dst_signature": dst_transition_check(m15),
@@ -149,37 +201,66 @@ def main(argv=None):
     else:
         checks["reference_h4_mismatches"] = "REFERENCE_NOT_PRESENT"
 
+    log.step("data_checks", started)
+    started = time.perf_counter()
     result = run_family(h4, m15, prereg["params"], split_start, split_end)
+    log.step("detectors_confirmation_outcomes", started)
     out_dir = args.out or os.path.join(DATA_DIR, "runs", run_id)
     os.makedirs(out_dir, exist_ok=True)
-    write_events(os.path.join(out_dir, "events.csv"), result["events"])
+    write_rows(os.path.join(out_dir, "events.csv"), result["events"])
+    write_rows(os.path.join(out_dir, "controls.csv"), result["controls"])
     summary = {
         "run_id": run_id, "hypothesis_id": prereg["hypothesis_id"], "split": args.split,
         "smoke": smoke, "split_start": split_start, "split_end": split_end,
         "prereg_sha256": sha256_file(PREREG), "params_sha256": prereg["params_sha256"],
         "code_sha256": {f: sha256_file(os.path.join(HERE, f)) for f in CODE_FILES},
         "git_commit": git_commit(), "validation_access": access, "data_checks": checks,
+        "environment": {"python": sys.version.split()[0], "platform": platform.platform(),
+                        "machine": platform.node()},
         "n_m15_bars": len(m15), "n_h4_bars": len(h4),
+        "n_h4_bars_in_split": result["n_h4_bars_in_split"],
         "detector_health": detector_health(result),
         "funnel_events": funnel(result["events"]), "funnel_controls": funnel(result["controls"]),
     }
     if not smoke:
-        events = result["events"]
+        started = time.perf_counter()
+        events, controls = result["events"], result["controls"]
         summary.update({
-            "events": summarize(events), "controls": summarize(result["controls"]),
+            "events": summarize(events), "controls": summarize(controls),
+            "profit_factor": {"events": profit_factor(events), "controls": profit_factor(controls)},
+            "cost_sensitivity": cost_sensitivity(events, prereg["params"]["target_r"]),
+            "cost_sensitivity_controls": cost_sensitivity(controls, prereg["params"]["target_r"]),
             "by_direction": breakdown(events, lambda r: "BUY" if r["direction"] == 1 else "SELL"),
             "by_session": breakdown(events, lambda r: r.get("session")),
-            "stability": stability(events),
+            "controls_by_direction": breakdown(controls, lambda r: "BUY" if r["direction"] == 1 else "SELL"),
+            "stability": stability(events), "stability_controls": stability(controls),
+            "vs_control_stratified": stratified_vs_control(events, controls),
+            "hour_profile": hour_profile(events), "hour_profile_controls": hour_profile(controls),
+            "selection": selection_profile(events, controls),
+            "status": "EXPLORATORY_DISCOVERY" if args.split == "discovery" else "INTERNAL_VALIDATION",
         })
+        log.step("statistics", started)
+    summary["decision"] = decide(summary)
+    summary["timings_s"] = log.timings
+    summary["total_seconds"] = round(time.perf_counter() - log.t0, 2)
+    summary["peak_rss_mb"] = peak_rss_mb()
     with open(os.path.join(out_dir, "summary.json"), "w", encoding="utf-8") as handle:
         json.dump(summary, handle, indent=2, default=str)
+    log.write(f"decision: {summary['decision']['decision']} peak_rss_mb={summary['peak_rss_mb']}")
+    with open(os.path.join(out_dir, "run.log"), "w", encoding="utf-8") as handle:
+        handle.write("\n".join(log.lines) + "\n")
+    outputs = {name: sha256_file(os.path.join(out_dir, name))
+               for name in ("summary.json", "events.csv", "controls.csv", "run.log")}
+    with open(os.path.join(out_dir, "outputs.sha256.json"), "w", encoding="utf-8") as handle:
+        json.dump(outputs, handle, indent=2)
     registry[prereg["hypothesis_id"]]["runs"].append({"run_id": run_id, "split": args.split,
                                                        "smoke": smoke})
     with open(registry_path, "w", encoding="utf-8") as handle:
         json.dump(registry, handle, indent=2)
     print(json.dumps({"run_id": run_id, "out": out_dir, "tick_audit": checks["tick_audit"]["verdict"],
                       "alignment_mismatches": len(checks["alignment_mismatches"]),
-                      "funnel_events": summary["funnel_events"]}, indent=2))
+                      "funnel_events": summary["funnel_events"],
+                      "decision": summary["decision"]["decision"]}, indent=2))
     return summary
 
 
