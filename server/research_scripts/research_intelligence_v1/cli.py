@@ -9,6 +9,8 @@ no network, no model call.
   python -m research_intelligence_v1.cli generate-bl01
   python -m research_intelligence_v1.cli queue --available DATASET_ID [...]
   python -m research_intelligence_v1.cli brief FAMILY
+  python -m research_intelligence_v1.cli loop-run --available ID --catalog catalog.json [--inbox summary.json]
+  python -m research_intelligence_v1.cli loop-status | roles
   python -m research_intelligence_v1.cli checkpoint --note "after review X"
 
 Run from server/research_scripts. --memory selects another file (tests, other projects).
@@ -19,7 +21,7 @@ import argparse
 import json
 import sys
 
-from . import ingest, lessons, pilot, priority_queue, review
+from . import agents, ingest, lessons, pilot, priority_queue, review
 from .memory import DEFAULT_PATH, ResearchMemory
 
 
@@ -37,6 +39,14 @@ def main(argv=None):
     sub.add_parser("generate-bl01")
     p = sub.add_parser("brief")
     p.add_argument("family")
+    p = sub.add_parser("loop-run", help="run or resume one research-loop cycle (no schedule)")
+    p.add_argument("--available", nargs="*", default=[])
+    p.add_argument("--catalog", help="JSON file: data_needed id -> dataset descriptor")
+    p.add_argument("--inbox", nargs="*", default=[], help="Behavior Lab summary.json files to ingest")
+    p.add_argument("--no-approval-channel", action="store_true",
+                   help="refuse APPROVAL_REQUIRED actions instead of queueing them in the orchestrator")
+    sub.add_parser("loop-status")
+    sub.add_parser("roles")
     p = sub.add_parser("checkpoint")
     p.add_argument("--note", default="")
     p = sub.add_parser("queue")
@@ -66,6 +76,20 @@ def main(argv=None):
                "new_proposals": [r["record_id"] for r in new], "linked_proposals": linked}
     elif args.cmd == "brief":
         out = lessons.briefing(mem, args.family)
+    elif args.cmd in ("loop-run", "loop-status"):
+        from .loop import ResearchLoop
+        if args.cmd == "loop-status":
+            out = ResearchLoop(mem).status()
+        else:
+            bridge = None
+            if not args.no_approval_channel:
+                from .approval_bridge import ApprovalBridge
+                bridge = ApprovalBridge()
+            catalog = json.load(open(args.catalog, encoding="utf-8")) if args.catalog else {}
+            out = ResearchLoop(mem, bridge=bridge, availability={d: True for d in args.available},
+                               dataset_catalog=catalog, inbox=args.inbox).run_cycle()
+    elif args.cmd == "roles":
+        out = {"roles": agents.ROLES, "step_owner": agents.STEP_OWNER, "problems": agents.validate_roles()}
     elif args.cmd == "checkpoint":
         out = mem.checkpoint(args.note)
     elif args.cmd == "generate-bl01":

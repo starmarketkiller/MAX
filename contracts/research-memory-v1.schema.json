@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "nexus/research-memory-v1",
   "title": "NEXUS Research Memory V1",
-  "description": "One append-only record of the shared research memory (server/research_scripts/research_intelligence_v1). The envelope is common; `body` is validated against definitions/<record_type>. Records are never edited: a correction is a new record whose relations contain SUPERSEDES. Vocabulary reused from phase7_26 (lifecycle states, failure taxonomy) and engine/candidate_signature.py (hypothesis signatures).",
+  "description": "One append-only record of the shared research memory (server/research_scripts/research_intelligence_v1). The envelope is common; `body` is validated against definitions/<record_type>. Records are never edited: a correction is a new record whose relations contain SUPERSEDES. Vocabulary reused from phase7_26 (lifecycle states, failure taxonomy) and engine/candidate_signature.py (hypothesis signatures). Extended additively for RI-02 (research loop): record types LOOP_TRANSITION, EXPERIMENT_PLAN, ACTION, EVALUATION, IMPROVEMENT_TRIAL and optional baseline/success_criterion on IMPROVEMENT_PROPOSAL. No existing field removed or renamed.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -26,7 +26,7 @@
     },
     "record_id": {
       "type": "string",
-      "pattern": "^(EXP|HYP|OBS|REV|PROP|PRIO)-[A-Z0-9][A-Z0-9_.-]{2,80}$"
+      "pattern": "^(EXP|HYP|OBS|REV|PROP|PRIO|LOOP|PLAN|ACT|EVAL|TRIAL)-[A-Z0-9][A-Z0-9_.-]{2,100}$"
     },
     "record_type": {
       "enum": [
@@ -35,7 +35,12 @@
         "OBSERVATION",
         "REVIEW",
         "IMPROVEMENT_PROPOSAL",
-        "PRIORITIZATION"
+        "PRIORITIZATION",
+        "LOOP_TRANSITION",
+        "EXPERIMENT_PLAN",
+        "ACTION",
+        "EVALUATION",
+        "IMPROVEMENT_TRIAL"
       ]
     },
     "created_at": {
@@ -555,6 +560,12 @@
         },
         "decided_by": {
           "type": "string"
+        },
+        "baseline": {
+          "type": "object"
+        },
+        "success_criterion": {
+          "type": "string"
         }
       }
     },
@@ -629,6 +640,273 @@
         "INDEPENDENT_FORWARD",
         "MECHANICAL_VERIFICATION"
       ]
+    },
+    "loop_step": {
+      "enum": [
+        "OBSERVE",
+        "REVIEW",
+        "LEARN",
+        "HYPOTHESIZE",
+        "PRIORITIZE",
+        "PLAN",
+        "EXECUTE",
+        "EVALUATE"
+      ]
+    },
+    "authorization_mode": {
+      "enum": [
+        "AUTO_SAFE",
+        "APPROVAL_REQUIRED",
+        "PROHIBITED"
+      ]
+    },
+    "LOOP_TRANSITION": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cycle_id",
+        "step",
+        "status",
+        "attempt",
+        "input_sha256",
+        "output"
+      ],
+      "properties": {
+        "cycle_id": {
+          "type": "string"
+        },
+        "step": {
+          "$ref": "#/definitions/loop_step"
+        },
+        "status": {
+          "enum": [
+            "CYCLE_OPENED",
+            "STARTED",
+            "COMPLETED",
+            "FAILED",
+            "CYCLE_CLOSED",
+            "CYCLE_ABANDONED"
+          ]
+        },
+        "attempt": {
+          "type": "integer"
+        },
+        "input_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "output": {
+          "type": "object"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "EXPERIMENT_PLAN": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cycle_id",
+        "hypothesis_record",
+        "equivalence_key",
+        "dataset",
+        "evidence_target",
+        "decision_rule",
+        "falsification",
+        "alpha",
+        "min_sample",
+        "compute_estimate",
+        "overfitting_checks",
+        "statistical_review",
+        "status",
+        "actions"
+      ],
+      "properties": {
+        "cycle_id": {
+          "type": "string"
+        },
+        "hypothesis_record": {
+          "type": "string"
+        },
+        "equivalence_key": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "dataset": {
+          "$ref": "#/definitions/dataset"
+        },
+        "evidence_target": {
+          "$ref": "#/definitions/evidence_level"
+        },
+        "decision_rule": {
+          "type": "string"
+        },
+        "falsification": {
+          "type": "string"
+        },
+        "alpha": {
+          "type": "number"
+        },
+        "min_sample": {
+          "type": "integer"
+        },
+        "compute_estimate": {
+          "type": "object"
+        },
+        "overfitting_checks": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "statistical_review": {
+          "type": "object"
+        },
+        "status": {
+          "enum": [
+            "DRAFT_PREREGISTRATION",
+            "REJECTED_BY_REVIEW"
+          ]
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "ACTION": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cycle_id",
+        "kind",
+        "mode",
+        "reasons",
+        "status",
+        "params_sha256",
+        "params"
+      ],
+      "properties": {
+        "cycle_id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/definitions/authorization_mode"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "enum": [
+            "EXECUTED",
+            "FAILED",
+            "AWAITING_APPROVAL",
+            "REFUSED"
+          ]
+        },
+        "params_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "plan_record": {
+          "type": "string"
+        },
+        "result": {
+          "type": "object"
+        },
+        "orchestrator_task_id": {
+          "type": "string"
+        },
+        "resources": {
+          "type": "object"
+        },
+        "params": {
+          "type": "object"
+        }
+      }
+    },
+    "EVALUATION": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cycle_id",
+        "metrics_version",
+        "metrics",
+        "notes"
+      ],
+      "properties": {
+        "cycle_id": {
+          "type": "string"
+        },
+        "metrics_version": {
+          "type": "string"
+        },
+        "metrics": {
+          "type": "object"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "IMPROVEMENT_TRIAL": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposal_record",
+        "phase",
+        "metric",
+        "baseline",
+        "success_criterion"
+      ],
+      "properties": {
+        "proposal_record": {
+          "type": "string"
+        },
+        "phase": {
+          "enum": [
+            "BASELINE",
+            "RESULT"
+          ]
+        },
+        "metric": {
+          "type": "string"
+        },
+        "baseline": {
+          "type": "object"
+        },
+        "success_criterion": {
+          "type": "string"
+        },
+        "after": {
+          "type": "object"
+        },
+        "verdict": {
+          "enum": [
+            "IMPROVED",
+            "NOT_IMPROVED",
+            "INSUFFICIENT_EVIDENCE"
+          ]
+        },
+        "independent_records": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }

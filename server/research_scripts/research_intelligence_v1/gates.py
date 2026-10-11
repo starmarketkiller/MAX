@@ -124,6 +124,8 @@ def check_record(prior_records, by_id, record):
             assert_decision_by_human(body.get("decided_by", ""))
             if not any(by_id[t]["record_type"] == "IMPROVEMENT_PROPOSAL" for t in _supersedes(record)):
                 raise GateViolation("a decision must supersede the proposal it decides")
+    elif rtype in ("ACTION", "EXPERIMENT_PLAN", "IMPROVEMENT_TRIAL"):
+        check_loop_record(prior_records, by_id, record)
     elif rtype == "EXPERIMENT":
         if origin != "HUMAN":
             for ds in body["datasets"]:
@@ -137,3 +139,37 @@ def check_record(prior_records, by_id, record):
                         and pm["params_sha256"] not in ("UNKNOWN", "") and pm["params_sha256"] != m["params_sha256"]:
                     raise GateViolation(f"frozen parameters of {body['hypothesis_id']} differ from {r['record_id']}: "
                                         "a parameter change needs a new hypothesis id")
+
+
+def check_loop_record(prior_records, by_id, record):
+    """Invariants for RI-02 loop records (called from check_record)."""
+    rtype, body = record["record_type"], record["body"]
+    if rtype == "ACTION":
+        from . import authorization  # local import: authorization imports gates
+        from .memory import canonical, sha256_text
+        if sha256_text(canonical(body["params"])) != body["params_sha256"]:
+            raise GateViolation("action params do not match params_sha256")
+        mode, _ = authorization.classify(body["kind"], body["params"])
+        if mode != body["mode"]:
+            raise GateViolation(f"action {body['kind']} recorded as {body['mode']} but classifies as {mode}")
+        allowed = {"EXECUTED": {"AUTO_SAFE"}, "FAILED": {"AUTO_SAFE"},
+                   "AWAITING_APPROVAL": {"APPROVAL_REQUIRED"},
+                   "REFUSED": {"PROHIBITED", "APPROVAL_REQUIRED", "AUTO_SAFE"}}[body["status"]]
+        if mode not in allowed:
+            raise GateViolation(f"a {mode} action cannot be {body['status']}")
+        if body["status"] == "AWAITING_APPROVAL" and not body.get("orchestrator_task_id"):
+            raise GateViolation("an approval request must name its orchestrator task")
+    elif rtype == "EXPERIMENT_PLAN":
+        if body["dataset"]["split"] in protected_splits():
+            raise GateViolation("a plan never targets a one-shot split")
+        if body["status"] == "DRAFT_PREREGISTRATION":
+            if body["statistical_review"].get("verdict") != "PASS" or \
+                    any(c["status"] == "BLOCK" for c in body["overfitting_checks"]):
+                raise GateViolation("a draft preregistration needs a passing statistical review")
+        if EVIDENCE_ORDER.index(body["evidence_target"]) > EVIDENCE_ORDER.index("INDEPENDENT_FORWARD") or \
+                (body["dataset"]["split"] == "discovery" and body["evidence_target"] != "DISCOVERY_ONLY"):
+            raise GateViolation("evidence target above what the split allows")
+    elif rtype == "IMPROVEMENT_TRIAL" and body["phase"] == "RESULT":
+        if not any(r["type"] == "DERIVED_FROM" and by_id.get(r["target"], {}).get("record_type") ==
+                   "IMPROVEMENT_TRIAL" for r in record["relations"]):
+            raise GateViolation("a trial result must point at its baseline")

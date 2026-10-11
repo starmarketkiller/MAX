@@ -101,3 +101,22 @@ def register_candidates(memory, candidates, *, base_record, source_record, famil
         except BudgetExhausted as exc:
             report["over_budget"].append({"candidate": hyp_id, "reason": str(exc)})
     return report
+
+
+def spec_from_record(hyp):
+    """Rebuild a candidate spec from a stored HYPOTHESIS (its canonical signature plus
+    declarations), so triggers can derive variants of any family, not only the pilot."""
+    import re
+    b = hyp["body"]
+    head, conds = {}, []
+    for line in b["signature"].splitlines():
+        if line.startswith("STATE."):
+            m = re.match(r"STATE\.(.+?)(==|!=|>=|<=|>|<)(.+)", line)
+            conds.append({"feature_id": m.group(1), "operator": m.group(2), "threshold": m.group(3)})
+        else:
+            k, _, v = line.partition("=")
+            head[k] = v
+    return {"event_family": head["EVENT"], "direction": head["DIR"], "state_conditions": conds,
+            "outcome_definition": head["OUTCOME"], "mechanism": b["mechanism"], "falsification": b["falsification"],
+            "data_needed": list(b["data_needed"]), "overfitting_risk": b["overfitting_risk"],
+            "expected_information_value": b["expected_information_value"]}

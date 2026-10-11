@@ -200,6 +200,50 @@ class TaskQueue:
             self._save(data)
             return record, True
 
+    def submit_accept_only_proposal(self, manifest, *, idempotency_scope, idempotency_key,
+                                    result_packet, action_params=None):
+        """Atomically create an ACCEPT_ONLY proposal directly in WAITING_APPROVAL.
+
+        For callers that only need a human decision recorded (approve/reject via
+        the existing Jarvis path), never an execution: the record is never QUEUED,
+        so no dispatcher can claim it between creation and the approval gate.
+        Same scoped idempotency as submit_idempotent."""
+        errors = validate(manifest, TASK_MANIFEST_SCHEMA)
+        if errors:
+            raise AssertionError(f"TASK_MANIFEST_V1 non valido: {errors}")
+        request_fingerprint = hashlib.sha256(json.dumps({
+            "action": None, "action_params": action_params or {},
+            "objective": manifest.get("objective"),
+        }, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+        with self._lock:
+            data = self._load()
+            for record in data.values():
+                marker = record.get("idempotency") or {}
+                if marker.get("scope") == idempotency_scope and marker.get("key") == idempotency_key:
+                    if marker.get("request_fingerprint") != request_fingerprint:
+                        raise AssertionError("idempotency key reused with a different request")
+                    return record, False
+            task_id = manifest["task_id"]
+            if task_id in data:
+                raise AssertionError(f"task_id gia' esistente: {task_id}")
+            now = _now_iso()
+            record = {
+                "task_id": task_id, "manifest": manifest, "state": "WAITING_APPROVAL",
+                "priority": manifest["priority"], "dependencies": [],
+                "action": None, "action_params": action_params or {},
+                "executor": None, "retry_count": 0, "created_at": now,
+                "updated_at": now, "started_at": None, "completed_at": None,
+                "result_packet": result_packet, "approval_effect": "ACCEPT_ONLY",
+                "provenance": {"source": "orchestrator_v1_core", "created_by": manifest.get("created_by")},
+                "escalation": None, "dispatch_claim": None, "dispatch_attempts": 0,
+                "dispatch_next_attempt_at": None, "dispatch_last_error": None,
+                "idempotency": {"scope": idempotency_scope, "key": idempotency_key,
+                                "request_fingerprint": request_fingerprint},
+            }
+            data[task_id] = record
+            self._save(data)
+            return record, True
+
     def get(self, task_id):
         with self._lock:
             data = self._load()
