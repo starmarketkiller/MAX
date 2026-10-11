@@ -178,7 +178,12 @@ python -m research_intelligence_v1.cli verify
 Then commit the memory file in a PR. Next improvement cycle: a person reads the review, decides proposals
 (`proposals.decide`), and preregisters any alternative under its own id before any run.
 
-## 10. Not done in V1
+## 10. Research loop (RI-02)
+
+The cycle that drives these modules (state machine, authorization, planning, improvement evaluation) is in
+`docs/RESEARCH_LOOP_V1.md`.
+
+## 11. Not done in V1
 
 - Real BL-01 discovery numbers (data only on the research PC).
 - Macro, liquidity and literature triggers (templates to add; no paid data or API).

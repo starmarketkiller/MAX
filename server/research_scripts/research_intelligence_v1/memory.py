@@ -7,6 +7,7 @@ one, so a rewritten line breaks `verify()`.
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
@@ -114,7 +115,9 @@ class ResearchMemory:
             "schema_version": "research-memory-v1", "record_id": record_id, "record_type": record_type,
             "created_at": created_at or datetime.now(timezone.utc).isoformat(),
             "author": author, "origin": origin, "project": project, "family": family,
-            "provenance": list(provenance), "relations": list(relations), "body": body,
+            # deep copies: a caller mutating its objects after append must not alter a stored record
+            "provenance": copy.deepcopy(list(provenance)), "relations": copy.deepcopy(list(relations)),
+            "body": copy.deepcopy(body),
             "prev_hash": self.records[-1]["record_hash"] if self.records else GENESIS,
         }
         record["record_hash"] = record_hash(record)

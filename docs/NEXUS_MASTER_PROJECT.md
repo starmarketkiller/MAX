@@ -13621,6 +13621,10 @@ They may not promote a strategy or alter live parameters.
 Implementation of the research side: `docs/RESEARCH_INTELLIGENCE_V1.md` (append-only research memory,
 post-experiment review, improvement proposals decided by a person, hypothesis generation with deduplication
 and budgets, priority queue that never reads protected splits).
+The research loop on top of it (`docs/RESEARCH_LOOP_V1.md`) runs OBSERVE → REVIEW → LEARN → HYPOTHESIZE →
+PRIORITIZE → PLAN → EXECUTE → EVALUATE with persistent, resumable state; it executes only AUTO_SAFE actions,
+sends real-data work to a person through the orchestrator's ACCEPT_ONLY approval path, and refuses protected
+holdouts, parameter changes, promotion and anything touching live trading.
 
 ## 26. AI and risk advice
 

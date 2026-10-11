@@ -189,6 +189,10 @@ def review(memory, experiment_record_id, *, author="improvement-reviewer-rules",
         if len(new) >= gates.MAX_PROPOSALS_PER_REVIEW:
             break
         body = _proposal(exp, finding)
+        from .evaluation import baseline_for, success_criterion  # local: evaluation imports review
+        base = baseline_for(memory, exp["family"], finding["check"])
+        body["baseline"] = dict(base, metric=f"finding_rate:{finding['check']}", rules_version=RULES_VERSION)
+        body["success_criterion"] = success_criterion(base)
         gates.check_proposal(body)
         new.append(memory.append("IMPROVEMENT_PROPOSAL", pid, body, author=author, origin="RULE_ENGINE",
                                  project=exp["project"], family=exp["family"],
