@@ -39,7 +39,9 @@ RESEARCH = os.path.dirname(HERE)
 PHASE7_DECODED = os.path.join(RESEARCH, "phase7", "data_cache_new_period", "decoded")
 PHASE6_DECODED = os.path.join(RESEARCH, "phase6", "data_cache_holdout", "decoded")
 PHASE7_MANIFEST = os.path.join(RESEARCH, "phase7", "data_cache_new_period", "manifest.json")
-EXPECTED_MANIFEST_SHA256 = "605249c671178c92c7a2a3e91a670f17c12ca4bea10576407292ccd99e64fbde"
+# Semantic content hash recorded by phase7/dataset_version_registry_v2.json and
+# new_dataset_integrity_report_v1.json (canonical JSON, not raw file bytes).
+EXPECTED_MANIFEST_CONTENT_HASH = "605249c671178c92c7a2a3e91a670f17c12ca4bea10576407292ccd99e64fbde"
 DATA_DIR = os.path.join(HERE, "data")
 PREREG = os.path.join(HERE, "prereg_BL-H4M15-IPC-001.json")
 CODE_FILES = ("ticks.py", "bars.py", "sessions.py", "events.py", "stats.py", "prereg.py",
@@ -47,6 +49,7 @@ CODE_FILES = ("ticks.py", "bars.py", "sessions.py", "events.py", "stats.py", "pr
 
 sys.path.insert(0, os.path.join(RESEARCH, "phase7", "engine"))
 from validation_access_ledger import ValidationAccessLedger, load_policy  # noqa: E402
+from dataset_version_guard import compute_manifest_content_hash  # noqa: E402  (same hash as the registry)
 
 
 def sha256_file(path):
@@ -60,9 +63,11 @@ def sha256_file(path):
 def manifest_check(path):
     if not os.path.exists(path):
         return {"present": False, "verdict": "MISSING"}
-    actual = sha256_file(path)
-    return {"present": True, "sha256": actual, "expected": EXPECTED_MANIFEST_SHA256,
-            "verdict": "MATCH" if actual == EXPECTED_MANIFEST_SHA256 else "MISMATCH"}
+    content = compute_manifest_content_hash(path)
+    return {"present": True, "sha256": content, "file_sha256": sha256_file(path),
+            "hash_method": "dataset_version_guard.compute_manifest_content_hash (canonical JSON)",
+            "expected": EXPECTED_MANIFEST_CONTENT_HASH,
+            "verdict": "MATCH" if content == EXPECTED_MANIFEST_CONTENT_HASH else "MISMATCH"}
 
 
 def git_commit():
