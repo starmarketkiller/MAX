@@ -1,0 +1,634 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "nexus/research-memory-v1",
+  "title": "NEXUS Research Memory V1",
+  "description": "One append-only record of the shared research memory (server/research_scripts/research_intelligence_v1). The envelope is common; `body` is validated against definitions/<record_type>. Records are never edited: a correction is a new record whose relations contain SUPERSEDES. Vocabulary reused from phase7_26 (lifecycle states, failure taxonomy) and engine/candidate_signature.py (hypothesis signatures).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_id",
+    "record_type",
+    "created_at",
+    "author",
+    "origin",
+    "project",
+    "family",
+    "provenance",
+    "relations",
+    "body",
+    "prev_hash",
+    "record_hash"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "research-memory-v1"
+    },
+    "record_id": {
+      "type": "string",
+      "pattern": "^(EXP|HYP|OBS|REV|PROP|PRIO)-[A-Z0-9][A-Z0-9_.-]{2,80}$"
+    },
+    "record_type": {
+      "enum": [
+        "EXPERIMENT",
+        "HYPOTHESIS",
+        "OBSERVATION",
+        "REVIEW",
+        "IMPROVEMENT_PROPOSAL",
+        "PRIORITIZATION"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T"
+    },
+    "author": {
+      "type": "string"
+    },
+    "origin": {
+      "enum": [
+        "HUMAN",
+        "REGISTRY_BACKFILL",
+        "RULE_ENGINE",
+        "AI_PROPOSAL"
+      ]
+    },
+    "project": {
+      "type": "string"
+    },
+    "family": {
+      "type": "string"
+    },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/source"
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/relation"
+      }
+    },
+    "body": {
+      "type": "object"
+    },
+    "prev_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "record_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "definitions": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "ref"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "FILE",
+            "GIT_COMMIT",
+            "PR",
+            "RUN",
+            "DATASET",
+            "RECORD",
+            "EXTERNAL"
+          ]
+        },
+        "ref": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "target"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "TESTS",
+            "DERIVED_FROM",
+            "REFINES",
+            "ALTERNATIVE_TO",
+            "CONTRADICTS",
+            "SUPPORTS",
+            "SAME_FAMILY",
+            "DUPLICATE_OF",
+            "SUPERSEDES",
+            "REVIEWS",
+            "PROPOSED_BY"
+          ]
+        },
+        "target": {
+          "type": "string"
+        }
+      }
+    },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset_id",
+        "split",
+        "exposure"
+      ],
+      "properties": {
+        "dataset_id": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "split": {
+          "enum": [
+            "discovery",
+            "internal_validation",
+            "locked_validation",
+            "final_holdout",
+            "forward",
+            "outside_splits",
+            "unknown"
+          ]
+        },
+        "period": {
+          "type": "string"
+        },
+        "exposure": {
+          "enum": [
+            "UNSEEN",
+            "DISCOVERY_REUSE",
+            "SEEN_FOR_SIGNALS",
+            "SEEN_FOR_ECONOMICS",
+            "CONSUMED_AS_OOS",
+            "UNKNOWN"
+          ]
+        }
+      }
+    },
+    "EXPERIMENT": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hypothesis_id",
+        "status",
+        "result",
+        "datasets",
+        "method",
+        "metrics",
+        "limits",
+        "anomalies",
+        "alternative_explanations",
+        "conclusions",
+        "evidence_level"
+      ],
+      "properties": {
+        "hypothesis_id": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "COMPLETED",
+            "NOT_RUN",
+            "ABORTED",
+            "PARTIAL"
+          ]
+        },
+        "result": {
+          "enum": [
+            "POSITIVE",
+            "NEGATIVE",
+            "INCONCLUSIVE",
+            "NOT_AVAILABLE"
+          ]
+        },
+        "datasets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dataset"
+          }
+        },
+        "method": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "description",
+            "params_sha256",
+            "code_commit",
+            "preregistered"
+          ],
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "params_sha256": {
+              "type": "string"
+            },
+            "code_commit": {
+              "type": "string"
+            },
+            "preregistered": {
+              "type": "boolean"
+            },
+            "control": {
+              "type": "string"
+            },
+            "multiple_testing_family": {
+              "type": "string"
+            }
+          }
+        },
+        "metrics": {
+          "type": "object"
+        },
+        "data_checks": {
+          "type": "object"
+        },
+        "resources": {
+          "type": "object"
+        },
+        "limits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "anomalies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alternative_explanations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "conclusions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "failure_modes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/failure_mode"
+          }
+        },
+        "evidence_level": {
+          "$ref": "#/definitions/evidence_level"
+        },
+        "decision": {
+          "type": "string"
+        }
+      }
+    },
+    "HYPOTHESIS": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hypothesis_id",
+        "statement",
+        "lifecycle_state",
+        "signature",
+        "signature_sha256",
+        "mechanism",
+        "falsification",
+        "data_needed",
+        "overfitting_risk",
+        "expected_information_value",
+        "evidence_level"
+      ],
+      "properties": {
+        "hypothesis_id": {
+          "type": "string"
+        },
+        "statement": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "lifecycle_state": {
+          "enum": [
+            "OBSERVATION",
+            "HYPOTHESIS",
+            "PREREGISTERED",
+            "TESTING",
+            "SUPPORTED",
+            "REJECTED",
+            "INCONCLUSIVE"
+          ]
+        },
+        "signature": {
+          "type": "string"
+        },
+        "signature_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "mechanism": {
+          "type": "string"
+        },
+        "falsification": {
+          "type": "string"
+        },
+        "data_needed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "overfitting_risk": {
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "UNKNOWN"
+          ]
+        },
+        "expected_information_value": {
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "UNKNOWN"
+          ]
+        },
+        "evidence_level": {
+          "$ref": "#/definitions/evidence_level"
+        },
+        "is_proposal_only": {
+          "type": "boolean"
+        }
+      }
+    },
+    "OBSERVATION": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "statement",
+        "scope",
+        "dataset",
+        "values",
+        "evidence_level",
+        "not_evidence_for"
+      ],
+      "properties": {
+        "statement": {
+          "type": "string"
+        },
+        "scope": {
+          "enum": [
+            "EXPLORATORY",
+            "STRUCTURAL_HEALTH",
+            "DESCRIPTIVE"
+          ]
+        },
+        "dataset": {
+          "$ref": "#/definitions/dataset"
+        },
+        "values": {
+          "type": "object"
+        },
+        "evidence_level": {
+          "$ref": "#/definitions/evidence_level"
+        },
+        "not_evidence_for": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "REVIEW": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewed_record",
+        "rules_version",
+        "input_sha256",
+        "findings"
+      ],
+      "properties": {
+        "reviewed_record": {
+          "type": "string"
+        },
+        "rules_version": {
+          "type": "string"
+        },
+        "input_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/finding"
+          }
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check",
+        "area",
+        "severity",
+        "detail",
+        "proposal_class"
+      ],
+      "properties": {
+        "check": {
+          "type": "string"
+        },
+        "area": {
+          "enum": [
+            "DATA_QUALITY",
+            "METHODOLOGY",
+            "CAUSALITY_LEAKAGE",
+            "STATISTICAL_POWER",
+            "RESOURCES",
+            "INFORMATION_VALUE",
+            "TOOLING"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "INFO",
+            "WARNING",
+            "BLOCKER"
+          ]
+        },
+        "detail": {
+          "type": "string"
+        },
+        "proposal_class": {
+          "$ref": "#/definitions/proposal_class"
+        }
+      }
+    },
+    "IMPROVEMENT_PROPOSAL": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposal_class",
+        "title",
+        "rationale",
+        "steps",
+        "status",
+        "reversible",
+        "revert_plan",
+        "touches_frozen_or_live",
+        "requires"
+      ],
+      "properties": {
+        "proposal_class": {
+          "$ref": "#/definitions/proposal_class"
+        },
+        "title": {
+          "type": "string"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "enum": [
+            "PROPOSED",
+            "ACCEPTED",
+            "REJECTED",
+            "IMPLEMENTED",
+            "REVERTED"
+          ]
+        },
+        "reversible": {
+          "type": "boolean"
+        },
+        "revert_plan": {
+          "type": "string"
+        },
+        "touches_frozen_or_live": {
+          "type": "boolean"
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "HUMAN_APPROVAL",
+              "NEW_PREREGISTRATION",
+              "DETERMINISTIC_REPRODUCTION",
+              "REGRESSION_TEST",
+              "IMPACT_ANALYSIS",
+              "MORE_DATA",
+              "BETTER_DESIGN",
+              "DEDICATED_METHOD_TEST"
+            ]
+          }
+        },
+        "decided_by": {
+          "type": "string"
+        }
+      }
+    },
+    "PRIORITIZATION": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rules_version",
+        "budget",
+        "ranked",
+        "excluded"
+      ],
+      "properties": {
+        "rules_version": {
+          "type": "string"
+        },
+        "budget": {
+          "type": "object"
+        },
+        "ranked": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "excluded": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "failure_mode": {
+      "enum": [
+        "NO_SIGNAL_INFORMATION",
+        "WRONG_DIRECTION",
+        "POOR_ENTRY_TIMING",
+        "STOP_BEFORE_MOVE",
+        "INSUFFICIENT_FOLLOW_THROUGH",
+        "EXIT_TOO_EARLY",
+        "EXIT_TOO_LATE",
+        "REGIME_DEPENDENT",
+        "DIRECTION_DEPENDENT",
+        "OUTLIER_DEPENDENT",
+        "TEMPORALLY_CONCENTRATED",
+        "COST_DESTROYED",
+        "EXECUTION_DESTROYED",
+        "LOW_SAMPLE",
+        "OOS_DEGRADATION",
+        "IMPLEMENTATION_DEFECT",
+        "DATA_QUALITY",
+        "UNKNOWN"
+      ]
+    },
+    "proposal_class": {
+      "enum": [
+        "PROCESS_IMPROVEMENT",
+        "NEW_HYPOTHESIS",
+        "DEFECT_FIX",
+        "INSUFFICIENT_EVIDENCE",
+        "NONE"
+      ]
+    },
+    "evidence_level": {
+      "enum": [
+        "NONE_PROPOSAL",
+        "EXPLORATORY",
+        "DISCOVERY_ONLY",
+        "INTERNAL_VALIDATION",
+        "LOCKED_VALIDATION",
+        "INDEPENDENT_FORWARD",
+        "MECHANICAL_VERIFICATION"
+      ]
+    }
+  }
+}
