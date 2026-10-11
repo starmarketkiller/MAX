@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "hypothesis_id": "BL-H4M15-IPC-001",
+  "title": "XAUUSD: H4 impulse -> H4 pullback -> M15 micro-break confirmation -> next move",
+  "declared_at": "2026-10-11",
+  "declared_before_data_access": true,
+  "data_access_statement": "Written in a cloud container that has no copy of the Phase 7 tick files and cannot reach Dukascopy. No outcome, event count or price of this family has been computed on any period before this file was committed.",
+  "question": "After a directional H4 impulse and a pullback of at least 38.2% of the leg, does an M15 micro-break in the impulse direction reach +2R before -1R more often than the same M15 rule without the H4 context, net of the bid/ask spread?",
+  "primary_outcome": "p_target_first: share of closed trades that touch +target_r R before the stop, entries on the fill side (long on ask, short on bid), exits on the opposite side",
+  "secondary_outcomes": [
+    "expectancy_r_net",
+    "expectancy_r_before_spread",
+    "mean_spread_cost_r",
+    "mfe_r and mae_r quantiles",
+    "quarterly stability",
+    "direction split",
+    "session split"
+  ],
+  "comparator": "CONTROL rows: same M15 confirmation, stop and outcome rule applied at every other H4 close of the split, both directions, without impulse or pullback. Descriptive comparator, not the matched baseline of phase7/engine/baseline_engine_v4.py (that integration is a later step).",
+  "params": {
+    "atr_period": 14,
+    "impulse_body_atr_mult": 1.5,
+    "impulse_body_to_range_min": 0.6,
+    "pullback_max_h4_bars": 6,
+    "pullback_retrace_min": 0.382,
+    "confirm_window_m15_bars": 16,
+    "confirm_min_prior_bars": 2,
+    "max_entry_gap_seconds": 3600,
+    "min_risk_atr": 0.25,
+    "max_risk_atr": 3.0,
+    "target_r": 2.0,
+    "horizon_m15_bars": 96,
+    "commission_r": 0.0,
+    "tick_audit_max_spread": 5.0
+  },
+  "param_provenance": {
+    "impulse_body_atr_mult": "1.5 = DISPLACEMENT threshold of phase5/build_events.py CFG, but measured on ATR of the previous bar (causal) instead of ATR including the bar itself",
+    "pullback_retrace_min": "0.382 Fibonacci retracement, chosen a priori, not fitted",
+    "target_r": "2.0 chosen a priori; MFE quantiles are reported so other targets can be read descriptively, never re-selected on validation",
+    "commission_r": "0: Dukascopy spread only. Broker commission is not modelled; results are an upper bound for a commission account"
+  },
+  "params_sha256": "7c66d51c10a33e0012dc874eedd7efdb7c49d3f30ebd758d022600579f7235c9",
+  "splits": {
+    "discovery": {
+      "start_utc": "2023-02-04T00:00:00+00:00",
+      "end_utc": "2024-08-04T00:00:00+00:00",
+      "warmup_start_utc": "2022-11-04T00:00:00+00:00",
+      "warmup_source": "phase6/data_cache_holdout/decoded (lookback only, never evaluated)",
+      "access": "ITERABLE per validation_access_policy_v1.json"
+    },
+    "internal_validation": {
+      "start_utc": "2024-08-04T00:00:00+00:00",
+      "end_utc": "2025-05-04T00:00:00+00:00",
+      "warmup_start_utc": "2024-07-04T00:00:00+00:00",
+      "warmup_source": "last 31 days of discovery, lookback only",
+      "access": "LIMITED, max 3 reads per candidate, recorded in the persistent ledger by run_experiment.py"
+    },
+    "locked_validation": {
+      "start_utc": "2025-05-04T00:00:00+00:00",
+      "end_utc": "2026-02-04T00:00:00+00:00",
+      "access": "NOT AVAILABLE to run_experiment.py V1 (refused). One-shot, only after a PRE_REGISTERED_CANDIDATE verdict on internal_validation."
+    },
+    "final_holdout": {
+      "start_utc": "2026-02-04T00:00:00+00:00",
+      "end_utc": "2026-09-17T00:00:00+00:00",
+      "access": "NOT AVAILABLE to run_experiment.py V1 (refused)."
+    }
+  },
+  "exposure_statement": {
+    "this_hypothesis": "No period has been read for this hypothesis.",
+    "neighbouring_studies": "MT5 studies of BREAKOUT_ACC (2019-02..2026-09), ORDER_BLOCK (2023-10..2026-09) and LIQ_SWEEP (2023-10..2026-09) looked at signals and P&L across locked_validation and final_holdout (phase7_26/data_exposure_registry_v1.json). An H4 impulse is close to the breakout/displacement family, so neither window is a fully independent holdout for this hypothesis.",
+    "consequence": "A positive result here can at most reach PRE_REGISTERED_CANDIDATE after internal_validation. Independence must then come from data after 2026-09-17 (forward collection), not from re-reading 2025-2026.",
+    "rule": "Parameters may change only under a new hypothesis_id. run_experiment.py refuses a run whose params hash differs from an earlier run of the same hypothesis_id."
+  },
+  "censoring": "Outcomes never read bars ending after the split end; trades that need them are CENSORED and excluded from the primary outcome.",
+  "known_limits": [
+    "BID-based levels from Dukascopy, not the XM broker feed; MT5 parity is a later step",
+    "Same-bar target and stop: the stop is counted first (conservative)",
+    "Stop fills at the stop price: no slippage modelled",
+    "Overlapping events (impulses close in time) are not independent; month-block bootstrap is descriptive, dependence diagnostics of phase7/engine come later"
+  ]
+}
