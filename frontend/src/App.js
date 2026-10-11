@@ -81,6 +81,7 @@ export default function App() {
                 <Route path="/backtest" element={<Protected><Dashboard section="backtest" /></Protected>} />
                 <Route path="/research" element={<Protected><Dashboard section="research" /></Protected>} />
                 <Route path="/research/control-plane" element={<Protected><Dashboard section="research-control-plane" /></Protected>} />
+                <Route path="/research/intelligence" element={<Protected><Dashboard section="research-intelligence" /></Protected>} />
                 <Route path="/research/sequences" element={<Protected><Dashboard section="research-sequences" /></Protected>} />
                 <Route path="/company" element={<Protected><Dashboard section="company" /></Protected>} />
                 <Route path="/floor" element={<Protected><Dashboard section="floor" /></Protected>} />

@@ -58,6 +58,7 @@ import company_control_plane
 import strategy_pipeline_read_model
 import strategy_census_read_model
 import research_control_plane
+import research_intelligence_read_model
 from jarvis_v1.gateway import JarvisGateway
 from jarvis_v1.service import JarvisService
 from orchestrator_v1.core.dispatcher import DurableQueueDispatcher
@@ -4028,6 +4029,12 @@ def company_strategy_census_detail(strategy_id: str, user: str = Depends(require
 
 
 # ================= RESEARCH CONTROL PLANE V2 (READ-ONLY) =============== #
+@app.get("/api/research/intelligence/control-center")
+def research_intelligence_control_center(user: str = Depends(require_user)):
+    """Authenticated read-only projection of canonical RI-01/RI-02 memory."""
+    return research_intelligence_read_model.CATALOG.build()
+
+
 @app.get("/api/research/control-plane/overview")
 def research_control_plane_overview(user: str = Depends(require_user)):
     model = research_control_plane.CONTROL_PLANE.build()
