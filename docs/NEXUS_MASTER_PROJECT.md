@@ -15495,3 +15495,21 @@ Final comparison against NEXUS: NOT YET DECLARED COMPLETE
 - Un’occorrenza non dimostra che una regola sia corretta, completa o traducibile automaticamente in codice.
 - Le strategie dei corsi possono usare la stessa parola con significati differenti; la normalizzazione deve essere fatta corso per corso.
 - Nessun concetto verrà inserito nel Master NEXUS come requisito operativo prima della formalizzazione e della verifica.
+
+---
+
+# RI-03 — Research Control Center
+
+Stato: implementazione proposta in PR indipendente, non ancora distribuita.
+
+RI-03 integra RI-01 e RI-02 nel workspace Research esistente tramite una proiezione autenticata e read-only della memoria canonica. La dashboard espone loop, esperimenti, coda ipotesi, improvement, memoria, agenti e approvazioni senza creare un secondo motore, una nuova coda o un nuovo approval gate.
+
+Vincoli canonici:
+
+- dati assenti o non materializzati restano esplicitamente `UNAVAILABLE` / `NOT_MATERIALIZED`;
+- la provenienza e l'integrità della memoria sono esposte;
+- l'Approval Center è display-only;
+- nessun holdout protetto, trading live, EA o risk policy viene toccato;
+- nessun nuovo servizio Render o costo operativo viene introdotto.
+
+Contratto API e limiti: `docs/RESEARCH_CONTROL_CENTER_V1.md`.

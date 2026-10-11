@@ -17,7 +17,8 @@ from datetime import datetime, timezone
 HERE = os.path.dirname(os.path.abspath(__file__))
 SERVER = os.path.abspath(os.path.join(HERE, "..", ".."))
 ROOT = os.path.dirname(SERVER)
-SCHEMA_PATH = os.path.join(ROOT, "contracts", "research-memory-v1.schema.json")
+CONTRACTS_DIR = os.environ.get("NEXUS_CONTRACTS_DIR", os.path.join(ROOT, "contracts"))
+SCHEMA_PATH = os.path.join(CONTRACTS_DIR, "research-memory-v1.schema.json")
 DEFAULT_PATH = os.path.join(HERE, "memory", "research_memory_v1.jsonl")
 GENESIS = "0" * 64
 

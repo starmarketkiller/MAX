@@ -21,6 +21,7 @@ import LocalBridgePage from "@/pages/LocalBridgePage";
 import KnowledgePage from "@/pages/KnowledgePage";
 import ResearchPage from "@/pages/ResearchPage";
 import ResearchControlPlanePage from "@/pages/ResearchControlPlanePage";
+import ResearchIntelligencePage from "@/pages/ResearchIntelligencePage";
 import SequenceExplorerPage from "@/pages/SequenceExplorerPage";
 import CompanyPage from "@/pages/CompanyPage";
 import CommandFloorPage from "@/pages/CommandFloorPage";
@@ -754,6 +755,7 @@ export default function Dashboard({ section = "home" }) {
           {section === "backtest" && <BacktestPage />}
           {section === "research" && <ResearchPage />}
           {section === "research-control-plane" && <ResearchControlPlanePage />}
+          {section === "research-intelligence" && <ResearchIntelligencePage />}
           {section === "research-sequences" && <SequenceExplorerPage />}
           {section === "company" && <CompanyPage />}
           {section === "floor" && <CommandFloorPage />}
