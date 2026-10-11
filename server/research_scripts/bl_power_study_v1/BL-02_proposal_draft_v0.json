@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "experiment_id": "BL-02",
+  "status": "DRAFT_NOT_FROZEN",
+  "drafted_at": "2026-10-11",
+  "drafted_by": "claude-trading-research (proposal; requires human approval before any data access)",
+  "written_before": "any BL-01 run: no BL-01 outcome, count or price of the 2023-2026 splits has been read",
+  "hypothesis": {
+    "hypothesis_id": "BL-H4M15-IPC-001",
+    "memory_record": "HYP-BL-H4M15-IPC-001",
+    "params_sha256": "7c66d51c10a33e0012dc874eedd7efdb7c49d3f30ebd758d022600579f7235c9",
+    "note": "Same hypothesis, same frozen parameters as BL-01 (A1 amendment included). BL-02 is a second, independent experiment on it, not a new hypothesis. None of the generated alternatives (ALT-*, NULL-*, ABL-*) is part of BL-02."
+  },
+  "question": "On XAUUSD data that no NEXUS study has read, is the net expectancy of BL-H4M15-IPC-001 at least the declared minimum effect, or can effects of that size be excluded?",
+  "data": {
+    "primary_window": {"start_utc": "2008-01-01T00:00:00+00:00", "end_utc": "2019-01-01T00:00:00+00:00",
+                        "lookback_only": "2007-10-01..2007-12-31"},
+    "optional_extension": {"start_utc": "2004-01-01T00:00:00+00:00", "end_utc": "2008-01-01T00:00:00+00:00",
+                            "condition": "only if the integrity audit of that period passes BEFORE the run, decided on audit metrics alone (gaps, zero-tick days, spread distribution), never on outcomes"},
+    "source": "Dukascopy XAUUSD ticks (bid/ask), downloaded on the research PC; the cloud container cannot reach Dukascopy",
+    "exposure_check": {
+      "registry": "server/research_scripts/phase7/phase7_26/data_exposure_registry_v1.json",
+      "status_found": "pre-2019 data: UNVERIFIED (BREAKOUT_ACC::pre_2019.02.03), NOT_USED (ORDER_BLOCK, LIQ_SWEEP pre_2023.10.02); not part of MARKET_STATE_V1 (2019-02..2022-02), of the Phase 6 holdout (2022-02..2023-02) or of the Phase 7 partitions (2023-02..2026-09)",
+      "required_before_download": "add a data exposure record UNSEEN for the window, with the download manifest hash"
+    }
+  },
+  "periods_rejected_as_not_independent": [
+    {"period": "2019-02-03..2022-02-03", "reason": "MARKET_STATE_V1: Phase 5 discovery reuse, BREAKOUT_ACC (displacement neighbour) signals and economics from 2019-02-21, and the BL H4 selectivity counts (OBS-BL-H4-SELECTIVITY-2019-2022)"},
+    {"period": "2022-02-04..2023-02-03", "reason": "Phase 6 true holdout consumed by H006; also BL-01 lookback"},
+    {"period": "2023-02-04..2026-09-16", "reason": "BL-01 partitions; locked_validation and final_holdout are one-shot and reserved; BREAKOUT_ACC/ORDER_BLOCK/LIQ_SWEEP exposures overlap"},
+    {"period": "after 2026-09-17", "reason": "independent but slow (about 30-45 trades per year): forward collection, not a historical window"}
+  ],
+  "primary_endpoint": "net expectancy in R per closed trade (spread paid on entry and exit), month-block bootstrap CI95 as in BL-01",
+  "minimum_effect": {
+    "value_net_r": 0.20,
+    "status": "PROPOSED, to be confirmed by a person before freezing",
+    "rationale": "declared now, before any BL-01 outcome: below about 0.2 R per trade a single-instrument setup with about 30-45 trades per year is not worth its unmodelled execution uncertainty (slippage and commission are not in the data; BL-01 already stresses +0.10 R). Smaller effects need 750-1700 trades (17-76 years), which no available XAUUSD window provides.",
+    "alternatives_shown_to_the_decider": "see bl01_power_report_v1.json bl02.sample_size (0.10 to 0.30 R)"
+  },
+  "sample_size": {
+    "assumptions": "SD 1.40 R per trade, design effect 1.10 (within-month dependence), alpha 0.05 two-sided, power 0.80",
+    "trades_needed": 424,
+    "expected_trades_primary_window": "11 years x 55.65 pullbacks/year x conversion (unknown: 0.4 -> 245, 0.6 -> 367, 0.8 -> 490)",
+    "mde_reachable_primary_window_net_r": {"conversion_0.4": 0.263, "conversion_0.6": 0.215, "conversion_0.8": 0.186},
+    "rule_declared_now": "The pullback-to-trade conversion is a structural quantity. It is measured as the closed-trades/pullbacks ratio of the BL-01 discovery run (no outcome used). If the expected BL-02 trades are below 424, BL-02 is labelled UNDERPOWERED_FOR_0.20R before it runs and reports the MDE it can reach. The window may then extend to 2004 only under the integrity-audit condition above. The minimum effect is never changed after BL-01 results are known."
+  },
+  "decision_rule_draft": {
+    "SUPPORTED_AT_REPLICATION_LEVEL": "n >= 0.8 x trades_needed AND CI95 low > 0 AND point estimate > 0 after +0.10 R extra cost",
+    "EFFECT_BELOW_MINIMUM": "CI95 high < 0.20 R (effects of the declared size excluded, an informative negative)",
+    "INCONCLUSIVE": "otherwise",
+    "never": "no parameter or endpoint chosen after seeing BL-02 data; no promotion beyond INTERNAL_VALIDATION evidence; locked_validation/final_holdout untouched"
+  },
+  "gating_on_bl01_declared_now": {
+    "BL-01 STOP DATA_OR_DETECTOR": "BL-02 waits for the defect fix (same code serves both)",
+    "BL-01 STOP NEGATIVE (CI95 entirely below 0)": "hypothesis closed, BL-02 not run",
+    "BL-01 GO / INVESTIGATE / STOP NO_ADVANTAGE / STOP SAMPLE": "BL-02 may run as drafted; BL-01 outcomes are never used to set BL-02 parameters or the minimum effect"
+  },
+  "multiple_testing": "single preregistered primary hypothesis, family of 1. The loop's 0.05/6 correction counted untested AI alternatives and does not apply (see PROP-PLANNING_ALPHA_FAMILY in research memory).",
+  "costs_and_limits": [
+    "Dukascopy prices, not the broker feed; 2008-2012 spreads are wider in R terms, cost stress mandatory",
+    "regime differences (2008 crisis, 2011 peak, 2013 crash) are part of the test, reported by sub-period descriptively",
+    "approval required: RUN_EXPERIMENT_REAL_DATA and RESTRICTED_DATASET_ACCESS through the research loop approval bridge"
+  ]
+}

@@ -178,6 +178,11 @@ python -m research_intelligence_v1.cli verify
 Then commit the memory file in a PR. Next improvement cycle: a person reads the review, decides proposals
 (`proposals.decide`), and preregisters any alternative under its own id before any run.
 
+## 9b. BL-01 power and BL-02
+
+Power verification of BL-01 under its own decision rule, the H4-frequency vs trade-count distinction, and the
+BL-02 draft (unseen 2008-2018 data, same frozen hypothesis) are in `docs/BL01_POWER_AND_BL02_PROPOSAL.md`.
+
 ## 10. Research loop (RI-02)
 
 The cycle that drives these modules (state machine, authorization, planning, improvement evaluation) is in

@@ -64,8 +64,8 @@ def main(argv=None):
     elif args.cmd == "ingest-bl01":
         rec = ingest.import_behavior_lab_summary(mem, args.summary, "HYP-BL-H4M15-IPC-001",
                                                  prereg_relpath=pilot.PREREG_REF,
-                                                 supersedes="EXP-BL-01-DISCOVERY" if mem.get("EXP-BL-01-DISCOVERY")
-                                                 else None)
+                                                 supersedes=(mem.current("EXP-BL-01-DISCOVERY")["record_id"]
+                                                             if mem.get("EXP-BL-01-DISCOVERY") else None))
         rev, new, linked = review.review(mem, rec["record_id"])
         out = {"experiment": rec["record_id"], "review": rev["record_id"],
                "findings": [f["check"] for f in rev["body"]["findings"]],

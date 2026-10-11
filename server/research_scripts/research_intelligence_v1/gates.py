@@ -100,6 +100,9 @@ def check_record(prior_records, by_id, record):
     """Invariants enforced on every append and replayed by verify(), so no write path
     (register, review, decide, or a raw append) can bypass the gates."""
     rtype, origin, body = record["record_type"], record["origin"], record["body"]
+    for target in _supersedes(record):
+        if any(t == target for r in prior_records for t in _supersedes(r)):
+            raise GateViolation(f"{target} is already superseded: supersede its current version, history is linear")
     if rtype == "HYPOTHESIS":
         if origin in GENERATED and (body["lifecycle_state"] not in ("OBSERVATION", "HYPOTHESIS")
                                     or body["evidence_level"] != "NONE_PROPOSAL" or not body["is_proposal_only"]):
