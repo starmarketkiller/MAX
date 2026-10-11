@@ -412,8 +412,6 @@ def test_cli_round_trip(tmp_path, capsys):
 
 def test_committed_memory_is_valid():
     path = RESEARCH / "research_intelligence_v1" / "memory" / "research_memory_v1.jsonl"
-    if not path.exists():
-        pytest.skip("no committed memory")
     assert ResearchMemory(str(path)).verify() == []
 
 
@@ -423,3 +421,150 @@ def test_no_scheduler_or_network_in_package():
     for banned in ("import sched", "crontab", "APScheduler", "time.sleep", "requests.", "urllib", "socket", "subprocess",
                    "anthropic", "openai", "MetaTrader5", "OrderSend("):
         assert banned not in text, banned
+
+
+# ---- integrity hardening (PR #40 verification) -------------------------------------------------------------
+def _rewrite_chain(path, mutate):
+    from research_intelligence_v1.memory import GENESIS, record_hash
+    recs = [json.loads(line) for line in Path(path).read_text().splitlines()]
+    prev = GENESIS
+    for r in recs:
+        mutate(r)
+        r["prev_hash"] = prev
+        r["record_hash"] = record_hash(r)
+        prev = r["record_hash"]
+    Path(path).write_text("".join(json.dumps(r) + "\n" for r in recs))
+
+
+def test_removed_tail_record_is_caught_by_checkpoint(mem):
+    base_hypothesis(mem)
+    synth_experiment(mem)
+    mem.checkpoint("after experiment")
+    lines = Path(mem.path).read_text().splitlines()
+    Path(mem.path).write_text(lines[0] + "\n")
+    reopened = ResearchMemory(mem.path)
+    assert any("records removed" in p for p in reopened.verify())
+
+
+def test_recomputed_chain_is_caught_by_checkpoint(mem):
+    base_hypothesis(mem)
+    synth_experiment(mem, result="NEGATIVE")
+    mem.checkpoint()
+
+    def flip(r):
+        if r["record_id"] == "EXP-SYNTH-001":
+            r["body"]["result"] = "POSITIVE"
+    _rewrite_chain(mem.path, flip)
+    problems = ResearchMemory(mem.path).verify()
+    assert problems and all("checkpoint" in p for p in problems)
+
+
+def test_checkpoint_file_is_itself_chained(mem):
+    base_hypothesis(mem)
+    mem.checkpoint()
+    synth_experiment(mem)
+    mem.checkpoint()
+    cps = Path(mem.checkpoint_path).read_text().splitlines()
+    Path(mem.checkpoint_path).write_text(cps[1] + "\n")
+    assert any("checkpoint chain broken" in p for p in ResearchMemory(mem.path).verify())
+    assert mem.checkpoint() == mem.checkpoint()
+
+
+def test_gates_hold_even_for_raw_appends(mem):
+    base_hypothesis(mem)
+    h = register(mem, "SYNTH-GEN", spec(direction="SHORT"), statement="g", origin="RULE_ENGINE", author="t",
+                 project="SYNTH", family="SYN")
+    raw = dict(author="x", project="SYNTH", family="SYN")
+    promoted = dict(h["body"], lifecycle_state="SUPPORTED", evidence_level="DISCOVERY_ONLY", is_proposal_only=False)
+    with pytest.raises(MemoryViolation, match="gate"):
+        mem.append("HYPOTHESIS", "HYP-SYNTH-GEN.S1", promoted, origin="HUMAN",
+                   relations=[{"type": "SUPERSEDES", "target": h["record_id"]}], **raw)
+    with pytest.raises(MemoryViolation, match="human decisions"):
+        mem.append("HYPOTHESIS", "HYP-SYNTH-GEN.S2", dict(h["body"], lifecycle_state="OBSERVATION"),
+                   origin="AI_PROPOSAL", relations=[{"type": "SUPERSEDES", "target": h["record_id"]}], **raw)
+    with pytest.raises(MemoryViolation, match="new hypothesis id"):
+        changed = dict(h["body"], signature_sha256="f" * 64)
+        mem.append("HYPOTHESIS", "HYP-SYNTH-GEN.S3", changed, origin="HUMAN",
+                   relations=[{"type": "SUPERSEDES", "target": h["record_id"]}], **raw)
+    with pytest.raises(MemoryViolation, match="duplicate"):
+        mem.append("HYPOTHESIS", "HYP-SYNTH-COPY", dict(h["body"], hypothesis_id="SYNTH-COPY"), origin="HUMAN", **raw)
+    with pytest.raises(MemoryViolation, match="proposal"):
+        mem.append("HYPOTHESIS", "HYP-SYNTH-AI", dict(h["body"], hypothesis_id="SYNTH-AI", signature_sha256="e" * 64,
+                                                      evidence_level="INTERNAL_VALIDATION"),
+                   origin="AI_PROPOSAL", **raw)
+
+
+def test_frozen_params_and_protected_splits_enforced_in_memory(mem):
+    base_hypothesis(mem)
+    synth_experiment(mem)
+    with pytest.raises(MemoryViolation, match="frozen parameters"):
+        synth_experiment(mem, exp_id="EXP-SYNTH-002",
+                         method={"description": "s", "params_sha256": "9" * 64, "code_commit": "b" * 40,
+                                 "preregistered": True})
+    for origin in ("RULE_ENGINE", "AI_PROPOSAL", "REGISTRY_BACKFILL"):
+        body = dict(mem.get("EXP-SYNTH-001")["body"],
+                    datasets=[{"dataset_id": "X", "split": "final_holdout", "exposure": "UNSEEN"}])
+        with pytest.raises(MemoryViolation, match="human"):
+            mem.append("EXPERIMENT", f"EXP-SYNTH-{origin}", body, author="bot", origin=origin, project="SYNTH",
+                       family="SYN")
+
+
+def test_self_approval_refused_in_memory(mem):
+    base_hypothesis(mem)
+    synth_experiment(mem)
+    _, new, _ = review.review(mem, "EXP-SYNTH-001", created_at=T0)
+    p = new[0]
+    accepted = dict(p["body"], status="ACCEPTED", decided_by="max")
+    for origin in ("RULE_ENGINE", "AI_PROPOSAL"):
+        with pytest.raises(MemoryViolation, match="only a person"):
+            mem.append("IMPROVEMENT_PROPOSAL", p["record_id"] + ".X" + origin[:2], accepted, author="bot",
+                       origin=origin, project="SYNTH", family="SYN",
+                       relations=[{"type": "SUPERSEDES", "target": p["record_id"]}])
+    with pytest.raises(MemoryViolation, match="supersede"):
+        mem.append("IMPROVEMENT_PROPOSAL", "PROP-FREE-STANDING-OK", accepted, author="max", origin="HUMAN",
+                   project="SYNTH", family="SYN")
+
+
+def test_hand_written_line_violating_a_gate_is_reported(mem):
+    base_hypothesis(mem)
+    h = register(mem, "SYNTH-GEN", spec(direction="SHORT"), statement="g", origin="AI_PROPOSAL", author="t",
+                 project="SYNTH", family="SYN")
+
+    def promote(r):
+        if r["record_id"] == h["record_id"]:
+            r["body"]["lifecycle_state"] = "SUPPORTED"
+    _rewrite_chain(mem.path, promote)
+    assert any("gate" in p for p in ResearchMemory(mem.path).verify())
+
+
+def test_open_defect_holds_family_until_a_person_closes_it(mem):
+    base_hypothesis(mem)
+    register(mem, "SYNTH-NEXT", spec(direction="SHORT"), statement="n", origin="RULE_ENGINE", author="t",
+             project="SYNTH", family="SYN")
+    synth_experiment(mem, data_checks={"alignment_mismatches": 4})
+    _, new, _ = review.review(mem, "EXP-SYNTH-001", created_at=T0)
+    defect = next(p["record_id"] for p in new if p["body"]["proposal_class"] == "DEFECT_FIX")
+    brief = __import__("research_intelligence_v1.lessons", fromlist=["x"]).briefing(mem, "SYN")
+    assert brief["open_defects_block_new_runs"] == [defect]
+    assert "DEFECT_FIX" in brief["open_proposals"]
+    held = priority_queue.build_queue(mem, {"SYNTH_DATA": True}, write=False)
+    assert held["ranked"] == [] and "DEFECT_FIX" in held["excluded"][-1]["reason"]
+    proposals.decide(mem, defect, "ACCEPTED", decided_by="max", note="fix loader")
+    proposals.decide(mem, defect, "IMPLEMENTED", decided_by="max", note="PR with regression test")
+    freed = priority_queue.build_queue(mem, {"SYNTH_DATA": True}, write=False)
+    assert [r["record_id"] for r in freed["ranked"]] == ["HYP-SYNTH-NEXT"]
+
+
+def test_backfill_evidence_follows_source_registry(mem):
+    ingest.import_phase7_26(mem)
+    tsi = mem.get("HYP-H_TSI_TF_GUARD_FIX_EFFECTIVE")["body"]
+    assert tsi["lifecycle_state"] == "SUPPORTED" and tsi["evidence_level"] == "MECHANICAL_VERIFICATION"
+    assert mem.get("HYP-H2_BREAKOUT_ACC_BUY_MORE_ROBUST_THAN_SELL")["body"]["evidence_level"] == "DISCOVERY_ONLY"
+    assert mem.verify() == []
+
+
+def test_committed_memory_has_checkpoint():
+    path = RESEARCH / "research_intelligence_v1" / "memory" / "research_memory_v1.jsonl"
+    m = ResearchMemory(str(path))
+    cps = m.checkpoints()
+    assert cps and cps[-1]["count"] == len(m.records) and cps[-1]["head_hash"] == m.head_hash()

@@ -11,6 +11,7 @@ import os
 import re
 
 from .hypotheses import register as register_hypothesis
+from .gates import EVIDENCE_ORDER
 from .memory import sha256_file
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -70,6 +71,11 @@ def import_phase7_26(memory, author="registry-backfill"):
     exposure = {r["dataset_id"]: r["holdout_status"].split(" ")[0]
                 for r in _payload(exp_reg_path)["records"]}
     failures = _payload(fail_path)["strategies"]
+    best = {}
+    for e in _payload(exp_path)["experiments"]:
+        lvl = (VERDICT_OVERRIDES.get(e["experiment_id"]) or VERDICT_MAP.get(e["verdict"]) or (None, None))[1]
+        if lvl and EVIDENCE_ORDER.index(lvl) > EVIDENCE_ORDER.index(best.get(e["hypothesis_id"], "DISCOVERY_ONLY")):
+            best[e["hypothesis_id"]] = lvl
 
     for h in _payload(hyp_path)["hypotheses"]:
         record_id = rid("HYP", h["hypothesis_id"])
@@ -83,7 +89,9 @@ def import_phase7_26(memory, author="registry-backfill"):
         register_hypothesis(memory, record_id[4:], spec, statement=h["statement"], origin="REGISTRY_BACKFILL",
                             author=author, project="NEXUS_TRADING_RESEARCH",
                             family=(h.get("originating_strategies") or ["UNKNOWN"])[0],
-                            lifecycle_state=h["lifecycle_state"], evidence_level="DISCOVERY_ONLY",
+                            lifecycle_state=h["lifecycle_state"],
+                            evidence_level=("MECHANICAL_VERIFICATION" if h.get("mechanical_verification_exception")
+                                            else best.get(h["hypothesis_id"], "DISCOVERY_ONLY")),
                             provenance=[_source(hyp_path, h["hypothesis_id"])])
         report["added"].append(record_id)
 

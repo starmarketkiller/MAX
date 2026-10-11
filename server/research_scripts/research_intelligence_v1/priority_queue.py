@@ -14,6 +14,7 @@ The family budget fixes how many tests may run and the per-test alpha
 from __future__ import annotations
 
 from . import gates
+from .lessons import open_defects
 from .memory import canonical, sha256_text
 
 RULES_VERSION = "RI_QUEUE_RULES_V1"
@@ -77,6 +78,11 @@ def build_queue(memory, availability, *, family_budget=6, family_alpha=0.05, aut
         if needs_protected:
             excluded.append({"record_id": hyp["record_id"],
                              "reason": f"needs a one-shot split {needs_protected}: never queued automatically"})
+            continue
+        defects = open_defects(memory, hyp["family"])
+        if defects:
+            excluded.append({"record_id": hyp["record_id"],
+                             "reason": f"family has open DEFECT_FIX {defects}: fix before testing more"})
             continue
         s = score(memory, hyp, availability)
         ranked.append({"record_id": hyp["record_id"], "family": hyp["family"], "scores": s,

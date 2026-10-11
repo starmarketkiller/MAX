@@ -8,6 +8,8 @@ no network, no model call.
   python -m research_intelligence_v1.cli review EXP-...
   python -m research_intelligence_v1.cli generate-bl01
   python -m research_intelligence_v1.cli queue --available DATASET_ID [...]
+  python -m research_intelligence_v1.cli brief FAMILY
+  python -m research_intelligence_v1.cli checkpoint --note "after review X"
 
 Run from server/research_scripts. --memory selects another file (tests, other projects).
 """
@@ -17,7 +19,7 @@ import argparse
 import json
 import sys
 
-from . import ingest, pilot, priority_queue, review
+from . import ingest, lessons, pilot, priority_queue, review
 from .memory import DEFAULT_PATH, ResearchMemory
 
 
@@ -33,6 +35,10 @@ def main(argv=None):
     p = sub.add_parser("review")
     p.add_argument("record_id")
     sub.add_parser("generate-bl01")
+    p = sub.add_parser("brief")
+    p.add_argument("family")
+    p = sub.add_parser("checkpoint")
+    p.add_argument("--note", default="")
     p = sub.add_parser("queue")
     p.add_argument("--available", nargs="*", default=[])
     p.add_argument("--dry-run", action="store_true")
@@ -58,6 +64,10 @@ def main(argv=None):
         rev, new, linked = review.review(mem, args.record_id)
         out = {"review": rev["record_id"], "findings": rev["body"]["findings"],
                "new_proposals": [r["record_id"] for r in new], "linked_proposals": linked}
+    elif args.cmd == "brief":
+        out = lessons.briefing(mem, args.family)
+    elif args.cmd == "checkpoint":
+        out = mem.checkpoint(args.note)
     elif args.cmd == "generate-bl01":
         out = pilot.generate_alternatives(mem)
     else:

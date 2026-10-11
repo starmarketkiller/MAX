@@ -43,6 +43,14 @@ typed relations (`TESTS`, `DERIVED_FROM`, `ALTERNATIVE_TO`, `CONTRADICTS`, `SUPP
 - No update, no delete: a correction is a new record that `SUPERSEDES` the old one; the old one stays
   readable. `verify()` detects any rewritten or removed line.
 - Relations must point to existing records. Duplicate ids are refused.
+- **Gates live in the store**: `memory.append` runs `gates.check_record` on every record, whatever the caller
+  (register, review, decide or a raw append), and `verify()` replays the same checks on every line, so a
+  hand-edited file that breaks a gate is reported too.
+- **External checkpoints** (`research_memory_v1.checkpoints.jsonl`, append-only, itself hash-chained): each entry
+  stores `{count, head_hash}`. The chain alone cannot see a removed last record or a chain recomputed from
+  scratch; a checkpoint can. Both files are committed, so git history is the outer anchor: undoing a
+  checkpointed record means editing an older checkpoint line, which is a visible diff and breaks the checkpoint
+  chain. Run `cli checkpoint` after each session that adds records, before committing.
 - Evidence levels: `NONE_PROPOSAL < EXPLORATORY < DISCOVERY_ONLY < MECHANICAL_VERIFICATION <
   INTERNAL_VALIDATION < LOCKED_VALIDATION < INDEPENDENT_FORWARD`. AI or rule proposals are always
   `NONE_PROPOSAL`.
@@ -93,13 +101,35 @@ availability; nothing is fetched), data on a one-shot split. Ranking: 12 criteri
 every queue: per-family hypothesis cap, family alpha 0.05 split by Bonferroni over the family,
 `max_runs_without_approval = 0` — the queue orders work, a person starts it.
 
+## 6b. Learning loop (`lessons.py`)
+
+`cli brief FAMILY` gives what memory already knows before the next experiment: refuted hypotheses and
+negative results, failure modes seen, data already exposed, open proposals by class, remaining budget, per-test
+alpha. The queue uses it: a family with an open DEFECT_FIX is held until a person marks the fix
+IMPLEMENTED or REJECTED. Reviews link to proposals already open instead of repeating them; budgets and novelty
+count what is already in memory.
+
+### Operational today vs designed only
+
+| Capability | Status |
+|---|---|
+| Review a concluded experiment, find data/method/leakage/power/resource problems | **Operational** (fixed rules, run on request) |
+| Classified, traceable proposals (provenance = review record + experiment hash) | **Operational** |
+| Falsifiable hypotheses from results | **Operational for declared templates** (LOW_SELECTIVITY); other triggers designed |
+| Dedup and useless variants | **Operational** (signature dedup, family budget, Bonferroni alpha) |
+| Record what was learned | **Operational** (append-only memory, decisions as records, checkpoints) |
+| Use it in the next research | **Partly operational**: briefing, open-defect hold, novelty/budget from memory. Not automatic: accepted process improvements do not rewrite review rules or preregistrations; a person applies them in a PR |
+| Automatic triggering after each run | **Not enabled by design** (no schedule); `ingest-bl01` reviews immediately when called |
+| Model-written hypotheses (Tier 1–3) | **Designed**: same `register_candidates` path, no model wired |
+
 ## 7. Safety gates (`gates.py`)
 
 | Rule | Where |
 |---|---|
-| No change to frozen params | `assert_params_frozen`; a change is a new hypothesis id |
-| No automatic protected-holdout access | `assert_no_automatic_protected_access`, queue exclusion, review BLOCKER |
-| No promotion on discovery alone | `assert_promotion_allowed` (SUPPORTED needs ≥ INTERNAL_VALIDATION) |
+| No change to frozen params | store refuses a preregistered experiment whose params sha differs from an earlier one of the same hypothesis; a revised hypothesis must keep its signature |
+| No automatic protected-holdout access | store refuses non-human experiment records on one-shot splits; queue exclusion; review BLOCKER |
+| No promotion on discovery alone | store refuses SUPPORTED below INTERNAL_VALIDATION (MECHANICAL_VERIFICATION only for code/data claims flagged as such in phase7_26); generated hypotheses stay NONE_PROPOSAL; lifecycle changes need HUMAN origin |
+| No self-approval | store refuses decided proposals unless origin HUMAN, a human `decided_by`, and SUPERSEDES the proposal. The name is declared, not authenticated: the real control is that memory changes land only through a reviewed PR |
 | No live risk increase / EA change | `check_proposal` live markers + human approval; package has no MT5, order or network code (tested) |
 | No deletion of negative evidence | append-only chain + `negative_evidence_preserved` |
 | No unlimited self-modification | proposals only, max 10 per review, human decisions, budgets |
@@ -141,6 +171,7 @@ Seeded in the committed memory:
 cd server/research_scripts
 python -m research_intelligence_v1.cli ingest-bl01 <run_dir>/summary.json   # adds EXP, SUPERSEDES the placeholder, reviews it
 python -m research_intelligence_v1.cli queue --available DUKASCOPY_XAUUSD_TICKS_2022-11_2024-08 --dry-run
+python -m research_intelligence_v1.cli checkpoint --note "BL-01 discovery ingested"
 python -m research_intelligence_v1.cli verify
 ```
 

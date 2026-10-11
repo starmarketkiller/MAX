@@ -42,7 +42,10 @@ def assert_params_frozen(declared_sha256, proposed_params_sha256):
 def assert_promotion_allowed(target_state, evidence_level):
     if target_state != "SUPPORTED":
         return
-    if EVIDENCE_ORDER.index(evidence_level) < EVIDENCE_ORDER.index("INTERNAL_VALIDATION"):
+    # MECHANICAL_VERIFICATION supports claims about code or data (exact counts, source reading),
+    # never a market edge: phase7_26 marks those with mechanical_verification_exception.
+    if evidence_level != "MECHANICAL_VERIFICATION" and \
+            EVIDENCE_ORDER.index(evidence_level) < EVIDENCE_ORDER.index("INTERNAL_VALIDATION"):
         raise GateViolation(f"SUPPORTED needs at least INTERNAL_VALIDATION evidence, not {evidence_level}: "
                             "no promotion on discovery alone")
 
@@ -83,3 +86,54 @@ def negative_evidence_preserved(before_records, after_records):
     if lost:
         raise GateViolation(f"negative evidence removed or altered: {lost}")
     return True
+
+
+GENERATED = ("RULE_ENGINE", "AI_PROPOSAL")
+DECIDED = ("ACCEPTED", "REJECTED", "IMPLEMENTED", "REVERTED")
+
+
+def _supersedes(record):
+    return [r["target"] for r in record["relations"] if r["type"] == "SUPERSEDES"]
+
+
+def check_record(prior_records, by_id, record):
+    """Invariants enforced on every append and replayed by verify(), so no write path
+    (register, review, decide, or a raw append) can bypass the gates."""
+    rtype, origin, body = record["record_type"], record["origin"], record["body"]
+    if rtype == "HYPOTHESIS":
+        if origin in GENERATED and (body["lifecycle_state"] not in ("OBSERVATION", "HYPOTHESIS")
+                                    or body["evidence_level"] != "NONE_PROPOSAL" or not body["is_proposal_only"]):
+            raise GateViolation("a generated hypothesis is a proposal: lifecycle HYPOTHESIS, evidence NONE_PROPOSAL")
+        if body["lifecycle_state"] == "SUPPORTED":
+            assert_promotion_allowed("SUPPORTED", body["evidence_level"])
+        olds = [by_id[t] for t in _supersedes(record) if by_id[t]["record_type"] == "HYPOTHESIS"]
+        for old in olds:
+            if old["body"]["signature_sha256"] != body["signature_sha256"]:
+                raise GateViolation("a hypothesis with different conditions is a new hypothesis id, not a revision")
+            if old["body"]["lifecycle_state"] != body["lifecycle_state"] and origin != "HUMAN":
+                raise GateViolation("lifecycle changes are human decisions")
+        if not olds and any(r["record_type"] == "HYPOTHESIS" and r["body"]["signature_sha256"] ==
+                            body["signature_sha256"] for r in prior_records):
+            raise GateViolation("duplicate hypothesis signature")
+    elif rtype == "IMPROVEMENT_PROPOSAL":
+        if body["status"] == "PROPOSED":
+            check_proposal(body)
+        else:
+            if origin != "HUMAN":
+                raise GateViolation("only a person decides a proposal")
+            assert_decision_by_human(body.get("decided_by", ""))
+            if not any(by_id[t]["record_type"] == "IMPROVEMENT_PROPOSAL" for t in _supersedes(record)):
+                raise GateViolation("a decision must supersede the proposal it decides")
+    elif rtype == "EXPERIMENT":
+        if origin != "HUMAN":
+            for ds in body["datasets"]:
+                if ds["split"] in protected_splits():
+                    raise GateViolation(f"'{ds['split']}' can only be recorded by a human, ledgered decision")
+        m = body["method"]
+        if m["preregistered"] and m["params_sha256"] not in ("UNKNOWN", ""):
+            for r in prior_records:
+                pm = r["body"].get("method") if r["record_type"] == "EXPERIMENT" else None
+                if pm and pm["preregistered"] and r["body"]["hypothesis_id"] == body["hypothesis_id"] \
+                        and pm["params_sha256"] not in ("UNKNOWN", "") and pm["params_sha256"] != m["params_sha256"]:
+                    raise GateViolation(f"frozen parameters of {body['hypothesis_id']} differ from {r['record_id']}: "
+                                        "a parameter change needs a new hypothesis id")
