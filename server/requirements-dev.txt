@@ -4,3 +4,10 @@ pytest==8.4.1
 # Scientific research tests are collected by the canonical backend suite.
 # Keep this CI/test-only: the production API image does not import pandas.
 pandas==3.0.5
+# Research engine (phase7/engine: dependence tests, bootstrap, permutation
+# tests) imports scipy; it was used but never declared. Wheels verified for
+# CPython 3.12 Linux (CI) and 3.12/3.13 Windows (research PC).
+scipy==1.18.1
+# zoneinfo needs the IANA database; Windows has none of its own. Used by
+# research_scripts/behavior_lab_v1/sessions.py for London/New York/Rome DST.
+tzdata==2026.5
