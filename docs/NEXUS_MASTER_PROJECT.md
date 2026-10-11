@@ -13618,6 +13618,10 @@ Research agents may:
 
 They may not promote a strategy or alter live parameters.
 
+Implementation of the research side: `docs/RESEARCH_INTELLIGENCE_V1.md` (append-only research memory,
+post-experiment review, improvement proposals decided by a person, hypothesis generation with deduplication
+and budgets, priority queue that never reads protected splits).
+
 ## 26. AI and risk advice
 
 The Risk Advisor may:
