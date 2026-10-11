@@ -485,3 +485,28 @@ def test_bl01_stops_before_running_when_preflight_fails(tmp_path, monkeypatch):
     text = report.read_text(encoding="utf-8")
     assert "STOP obbligatorio" in text and "tick manifest MISSING" in text
     assert not list((tmp_path / "runs").glob("*/smoke"))        # nothing ran after the blocker
+
+
+def test_manifest_check_uses_the_registry_content_hash(tmp_path, monkeypatch):
+    """The registry records a canonical-JSON hash of the manifest; raw bytes differ with formatting."""
+    import hashlib
+    sys.path.insert(0, str(RESEARCH / "phase6_6"))
+    from canonical_utils import canonical_sha256
+    content = {"days": {"2023-02-04": {"ticks": 10, "sha256": "ab"}}, "symbol": "XAUUSD"}
+    pretty, compact = tmp_path / "pretty.json", tmp_path / "compact.json"
+    pretty.write_text(json.dumps(content, indent=4))
+    compact.write_text(json.dumps(content, separators=(",", ":")))
+    assert hashlib.sha256(pretty.read_bytes()).hexdigest() != hashlib.sha256(compact.read_bytes()).hexdigest()
+    monkeypatch.setattr(run_experiment, "EXPECTED_MANIFEST_CONTENT_HASH", canonical_sha256(content))
+    for path in (pretty, compact):
+        check = run_experiment.manifest_check(str(path))
+        assert check["verdict"] == "MATCH" and check["file_sha256"] != check["sha256"]
+    changed = tmp_path / "changed.json"
+    changed.write_text(json.dumps(dict(content, symbol="XAGUSD")))
+    assert run_experiment.manifest_check(str(changed))["verdict"] == "MISMATCH"
+
+
+def test_expected_manifest_hash_matches_the_dataset_registry():
+    reg = json.loads((RESEARCH / "phase7" / "dataset_version_registry_v2.json").read_text())
+    text = json.dumps(reg)
+    assert run_experiment.EXPECTED_MANIFEST_CONTENT_HASH in text
