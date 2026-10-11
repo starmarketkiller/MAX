@@ -132,6 +132,14 @@ The loop was run on a copy of the RI-01 seed memory, with a declared catalog for
 - **Real-data run refused:** the real-data run was refused as underpowered, and the next cycle did not plan the siblings on the same dataset.
 - **Implication for BL-01:** the preregistered discovery window (2023-02..2024-08) is probably too short to detect an effect of that size. This is a design question for a person (extend the period under a new preregistration, or state a larger minimum effect). The loop did not change BL-01.
 
+> **Correction (2026-10-11, `docs/BL01_POWER_AND_BL02_PROPOSAL.md`).** The 0.24 / 372 figures are arithmetically right
+> but answer a different question from BL-01's. They use a one-sample z-test on `p_target_first`, alpha 0.05/6 (the
+> family counted 5 untested AI alternatives), 80 assumed events (the H4 setup count, not trades) and no costs.
+> Under BL-01's own decision rule (month-block CI of net expectancy, n ≥ 60, quarters, +0.10 R stress) the power for
+> the same lift is 0.01–0.13, and the run is mainly descriptive and feasibility-oriented. The person kept BL-01
+> unchanged. Two method proposals are open in research memory (`PROP-POWER_MODEL_MISMATCH-*`,
+> `PROP-PLANNING_ALPHA_FAMILY-*`).
+
 ## 8. Usage
 
 ```bash
