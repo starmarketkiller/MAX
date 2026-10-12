@@ -16,8 +16,8 @@ Scope: Max Total Drawdown only. No live trading, production deploy, merge, or ho
 ## Implemented safety contract
 
 - Permanent high-water mark over adjusted equity.
-- Only `DEAL_TYPE_BALANCE` neutralized as verified owner capital flow.
-- Ambiguous `CREDIT`, `BONUS`, and `CORRECTION` records fail closed.
+- No broker deal type is accepted as owner-flow provenance by itself.
+- `BALANCE`, `CREDIT`, `BONUS`, and `CORRECTION` records fail closed until separately verified.
 - Replay cursor `(DEAL_TIME_MSC, ticket)` is durable and sorted before replay.
 - Missing, corrupt, foreign, or schema-v5 snapshots fail closed outside Strategy Tester when Max Total DD is enabled.
 - Existing authenticated, confirmed, rate-limited and append-only-audited `reset_protections` command is the sole reset authority.
@@ -33,8 +33,8 @@ Scope: Max Total Drawdown only. No live trading, production deploy, merge, or ho
 | Daily rollover | Latch remains an independent gate | Source-contract test |
 | Restart after trigger | Restored latch/peak; surviving exposure flattened again | Source-contract test |
 | Missing/corrupt/legacy snapshot | No new exposure; explicit recovery reason | Source-contract test |
-| Deposit/withdrawal | Adjusted equity and DD unchanged | Deterministic reference-model test |
-| Ambiguous account flow | `RECOVERY_REQUIRED`, new exposure blocked | Source-contract test |
+| Verified deposit/withdrawal | Adjusted equity and DD unchanged | Deterministic reference-model only; no trusted runtime attestation exists yet |
+| Unverified balance/account flow | `RECOVERY_REQUIRED`, new exposure blocked; no automatic neutralization | Source-contract test |
 | Concurrent/same-ms deals | Ordered by `(time_msc,ticket)`, processed once | Source-contract review; runtime broker replay remains to be exercised |
 | Manual reset | Audited new epoch, immediate persistence | Existing command-policy tests + new source-contract test |
 | Incomplete flatten | Retry loop and restart recovery | Source-contract test |
@@ -57,5 +57,23 @@ Scope: Max Total Drawdown only. No live trading, production deploy, merge, or ho
 2. Final raw helper coverage depends on review/integration of PR #36; this PR does not change execution helper authorization.
 3. Schema v5 cannot be safely auto-migrated because the missing peak/latch cannot be reconstructed. The chosen fail-closed manual recovery is intentional and operationally disruptive by design.
 4. No production or live-account validation has been performed or authorized.
+
+## Final safety review before merge
+
+The final review found and fixed two residual safety gaps:
+
+1. `DEAL_TYPE_BALANCE` alone is not proof of an owner deposit or withdrawal. It may be an economic correction. Such entries now enter `UNVERIFIED_BALANCE_FLOW` recovery and are not neutralized automatically.
+2. A close accepted as `TRADE_RETCODE_PLACED` can remain in flight while the position is still visible. Flatten retry/restart now checks active orders by `POSITION_IDENTIFIER`/`ORDER_POSITION_ID` before sending another close. The position remains counted, so the entry latch stays closed until exposure is actually gone.
+
+Evidence levels are deliberately separated:
+
+- **Executable Python reference lifecycle:** save -> object disposal -> restore preserves peak/latch and keeps the entry gate closed; missing, corrupt and legacy reference snapshots fail closed.
+- **Static source assertions:** initialization order is load -> capital-flow reconciliation -> flatten recovery, terminal reset replay is rejected before mutation, and temp snapshot validation precedes main replacement.
+- **Compiled MQL5:** isolated MetaEditor compile succeeds with 0 errors (2 pre-existing warnings).
+- **MQL5 runtime persistence:** not executed in this review because the isolated tester installation has no configured test account. The terminal rejected the run before loading the EA. Existing account credentials/profile were not reused.
+
+The three local Windows failures were reproduced exactly and are outside this PR's files: one BL-01 committed-memory SHA mismatch and two Contextual Edge MACD failures rooted in the frozen preregistration byte hash. Linux GitHub CI is green. They are cross-platform canonical-byte issues, not Max-DD behavior failures.
+
+PR #36 is conceptually compatible: its account-mode gate is additive in `NXS_CommonExposurePreflight` and at the final `NXS_DoBuy`/`NXS_DoSell` entry helpers, while close/modify paths remain available. Its branch is stale relative to current `main` and must be integrated semantically/rebased; merging its old tree wholesale would conflict in shared MQL5 files and the deployment manifest.
 
 Rollback: revert this PR. Existing schema-v5 snapshots remain untouched on disk but are intentionally incompatible with schema v6; rollback must be treated as a safety migration, not a casual hot rollback on an attached account.

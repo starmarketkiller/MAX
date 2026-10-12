@@ -218,6 +218,26 @@ int NXS_Prot_OpenNexusCount(){
    return n;
 }
 
+// A market close accepted as PLACED may still be visible as an active order
+// while the position remains open. On a retry or restart, do not submit a
+// second close for the same position identifier. The position is still
+// counted as remaining, so the durable flatten state stays fail-closed.
+bool NXS_Prot_CloseAlreadyInFlight(ulong positionTicket){
+   if(!PositionSelectByTicket(positionTicket)) return false;
+   ulong positionId = (ulong)PositionGetInteger(POSITION_IDENTIFIER);
+   long positionType = PositionGetInteger(POSITION_TYPE);
+   for(int i=OrdersTotal()-1; i>=0; i--){
+      ulong orderTicket = OrderGetTicket(i);
+      if(orderTicket == 0) continue;
+      if((ulong)OrderGetInteger(ORDER_POSITION_ID) != positionId) continue;
+      ENUM_ORDER_TYPE orderType = (ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);
+      if((positionType == POSITION_TYPE_BUY && orderType == ORDER_TYPE_SELL) ||
+         (positionType == POSITION_TYPE_SELL && orderType == ORDER_TYPE_BUY))
+         return true;
+   }
+   return false;
+}
+
 int NXS_Prot_CloseAllWithReason(string reason, string cause=""){
    int closed = 0;
    for(int i = PositionsTotal()-1; i >= 0; i--){
@@ -227,6 +247,10 @@ int NXS_Prot_CloseAllWithReason(string reason, string cause=""){
       // la protezione (di conto, non di simbolo).
       if(!_nxs_prot_inScope(PositionGetString(POSITION_SYMBOL))) continue;
       if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+      if(NXS_Prot_CloseAlreadyInFlight(t)){
+         PrintFormat("[NEXUS PROT] close already in flight for position %I64u", t);
+         continue;
+      }
       if(NXS_Prot_ClosePositionWithReason(t, reason, cause)) closed++;
    }
    return closed;
@@ -316,9 +340,14 @@ bool NXS_Prot_AccountCapitalFlowValues(ulong ticket, long dealMsc,
                                       ENUM_DEAL_TYPE dealType, double dealProfit){
    if(!NXS_Prot_IsAfterFlowCursor(dealMsc, ticket)) return true;
    if(dealType == DEAL_TYPE_BALANCE){
-      g_maxDDNetCapitalFlow += dealProfit;
-      PrintFormat("[NEXUS PROT] verified capital flow ticket=%I64u amount=%.2f net=%.2f",
-                  ticket, dealProfit, g_maxDDNetCapitalFlow);
+      // MT5's DEAL_TYPE_BALANCE identifies an accounting entry, not its
+      // economic provenance. It can represent an owner deposit/withdrawal,
+      // but also a broker correction or another P/L-bearing adjustment.
+      // Without a separate trusted attestation we must not neutralize it.
+      g_maxDDRecoveryRequired = true;
+      g_maxDDRecoveryReason = StringFormat("UNVERIFIED_BALANCE_FLOW_TICKET_%I64u", ticket);
+      PrintFormat("[NEXUS PROT][ALERT] %s amount=%.2f - new exposure blocked",
+                  g_maxDDRecoveryReason, dealProfit);
    } else if(NXS_Prot_IsAmbiguousCapitalFlowType(dealType)){
       g_maxDDRecoveryRequired = true;
       g_maxDDRecoveryReason = StringFormat("UNVERIFIED_CAPITAL_FLOW_TYPE_%d_TICKET_%I64u",

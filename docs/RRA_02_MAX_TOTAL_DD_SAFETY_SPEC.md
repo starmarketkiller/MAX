@@ -13,9 +13,9 @@ The gate applies to creation of new exposure. Position management and emergency 
 
 ## Capital-flow policy
 
-`DEAL_TYPE_BALANCE` is the only broker-history record treated as a verified external deposit or withdrawal. Its signed `DEAL_PROFIT` is added to the net capital-flow accumulator. Trading P/L and broker charges remain economic performance and are not neutralized.
+No broker-history deal type is sufficient provenance for an owner deposit or withdrawal. In particular, `DEAL_TYPE_BALANCE` can also represent an economic correction. Until a separately authenticated capital-flow attestation exists, balance, credit, bonus and correction records enter recovery mode and block new exposure. They are not neutralized automatically. An authorized, audited reset may deliberately establish a new epoch; it is not an implicit classification of the accounting entry.
 
-Ambiguous balance-changing records (`CREDIT`, `BONUS`, `CORRECTION`) cannot safely be classified as owner capital or performance. They put the protection in `RECOVERY_REQUIRED` and block new exposure until an authorized reset. Missing, corrupt, foreign or pre-v6 snapshots have the same fail-closed outcome outside Strategy Tester.
+Ambiguous balance-changing records (`BALANCE`, `CREDIT`, `BONUS`, `CORRECTION`) cannot safely be classified as owner capital or performance. They put the protection in `RECOVERY_REQUIRED` and block new exposure until an authorized reset. Missing, corrupt, foreign or pre-v6 snapshots have the same fail-closed outcome outside Strategy Tester.
 
 ## Numerical examples
 

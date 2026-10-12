@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import json
 from pathlib import Path
 
 
@@ -28,6 +29,33 @@ class ReferenceMaxDD:
     def flow(self, amount: float) -> None:
         self.equity += amount
         self.net_flow += amount
+
+    def entry_allowed(self) -> bool:
+        return not self.hit
+
+    def save(self, path: Path) -> None:
+        payload = {
+            "schema": 6,
+            "equity": self.equity,
+            "net_flow": self.net_flow,
+            "peak": self.peak,
+            "hit": self.hit,
+        }
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+        tmp.replace(path)
+
+    @classmethod
+    def restore(cls, path: Path) -> "ReferenceMaxDD":
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if payload.get("schema") != 6:
+            raise ValueError("incompatible snapshot")
+        return cls(
+            equity=float(payload["equity"]),
+            net_flow=float(payload["net_flow"]),
+            peak=float(payload["peak"]),
+            hit=bool(payload["hit"]),
+        )
 
 
 def test_adjusted_high_water_mark_neutralizes_verified_deposit_and_withdrawal():
@@ -64,15 +92,50 @@ def test_latch_is_permanent_across_rollover_and_restart_contract():
     assert "#define NXS_STATE_SCHEMA  6" in STATE
 
 
+def test_reference_save_shutdown_restore_keeps_peak_latch_and_entry_gate(tmp_path):
+    snapshot = tmp_path / "maxdd.json"
+    before = ReferenceMaxDD(equity=8_900, peak=10_000, hit=True)
+    before.save(snapshot)
+
+    after = ReferenceMaxDD.restore(snapshot)
+    assert after.peak == 10_000
+    assert after.hit is True
+    assert after.entry_allowed() is False
+
+
+def test_reference_missing_corrupt_and_legacy_snapshots_fail_closed(tmp_path):
+    for name, contents in (
+        ("missing.json", None),
+        ("corrupt.json", "{not-json"),
+        ("legacy.json", json.dumps({"schema": 5})),
+    ):
+        snapshot = tmp_path / name
+        if contents is not None:
+            snapshot.write_text(contents, encoding="utf-8")
+        blocked = False
+        try:
+            ReferenceMaxDD.restore(snapshot)
+        except (FileNotFoundError, ValueError, json.JSONDecodeError):
+            blocked = True
+        assert blocked
+
+
 def test_missing_corrupt_or_legacy_snapshot_fails_closed_outside_tester():
     assert 'g_maxDDRecoveryReason="MAX_DD_SNAPSHOT_MISSING"' in STATE
     assert 'g_maxDDRecoveryReason="MAX_DD_SNAPSHOT_INVALID_OR_INCOMPATIBLE"' in STATE
     assert "magic != NXS_STATE_MAGIC || ver != NXS_STATE_SCHEMA" in STATE
     assert "g_stateRestoreHealthy=false" in STATE
+    assert EA.index("NXS_State_Load();") < EA.index("NXS_Prot_ResumeMaxDDFlatten();")
 
 
 def test_capital_flow_policy_and_event_driven_accounting_are_explicit():
     assert "dealType == DEAL_TYPE_BALANCE" in PROT
+    balance_branch = PROT.split("if(dealType == DEAL_TYPE_BALANCE){", 1)[1].split(
+        "} else if", 1
+    )[0]
+    assert "g_maxDDNetCapitalFlow +=" not in balance_branch
+    assert "UNVERIFIED_BALANCE_FLOW_TICKET" in balance_branch
+    assert "g_maxDDRecoveryRequired = true" in balance_branch
     for ambiguous in ("DEAL_TYPE_CREDIT", "DEAL_TYPE_BONUS", "DEAL_TYPE_CORRECTION"):
         assert ambiguous in PROT
     assert "NXS_Prot_ReconcileCapitalFlows()" in EA
@@ -113,6 +176,30 @@ def test_protection_blocks_new_exposure_without_disabling_position_management_co
     assert "g_maxDDHit" in resume
     assert "NXS_Prot_FlattenAll" in resume
     assert "NXS_State_Save(true)" in resume
+    assert "NXS_Prot_CloseAlreadyInFlight" in PROT
+    in_flight = PROT.split("bool NXS_Prot_CloseAlreadyInFlight", 1)[1].split(
+        "int NXS_Prot_CloseAllWithReason", 1
+    )[0]
+    assert "ORDER_POSITION_ID" in in_flight
+    assert "POSITION_IDENTIFIER" in in_flight
+
+
+def test_reset_replay_is_rejected_before_the_mutating_handler():
+    replay_guard = WEB.index("string prior = _nxs_cmd_seenStatus(commandId)")
+    reset_handler = WEB.index('else if(action == "reset_protections")')
+    assert replay_guard < reset_handler
+    assert "_nxs_cmd_seenRecord(commandId, status)" in WEB
+
+
+def test_atomic_save_keeps_last_snapshot_until_validated_replacement():
+    save = STATE.split("void NXS_State_Save(bool force=false)", 1)[1].split(
+        "void NXS_State_Load()", 1
+    )[0]
+    validate_tmp = save.index("_NXS_StateRead(tmp, false)")
+    preserve_previous = save.index("FileCopy(main, FILE_COMMON, prev")
+    replace_main = save.index("FileMove(tmp, FILE_COMMON, main")
+    assert validate_tmp < preserve_previous < replace_main
+    assert "g_stateRestoreHealthy=false" in save
 
 
 def test_all_current_main_exposure_paths_retain_common_protection_gate():

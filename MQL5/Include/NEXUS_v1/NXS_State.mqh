@@ -440,6 +440,9 @@ bool _NXS_StateRead(string fileName, bool apply){
    PrintFormat("[NEXUS STATE] schema=%d restored positions=%d saved=%s giorno=%s",
                ver, count, TimeToString((datetime)savedAt, TIME_DATE|TIME_SECONDS),
                (sameDay ? "stesso" : "nuovo"));
+   PrintFormat("[NEXUS STATE] MaxTotalDD restored peak=%.2f latch=%s recovery=%s reason=%s",
+               g_maxDDPeakEquity, (g_maxDDHit ? "true" : "false"),
+               (g_maxDDRecoveryRequired ? "true" : "false"), g_maxDDRecoveryReason);
    return true;
 }
 
