@@ -1,12 +1,12 @@
 # NEXUS RRA-01 — Research Recovery & Cross-Engine Architecture: Master Findings
 
-**Stato: documento parziale, interrotto per limite di utilizzo della sessione.** Copre la sintesi dei 7 censimenti paralleli eseguiti (Fasi A/C/D/E/F del task + ricognizione per l'addendum coverage/gap). Non copre ancora: mappa strategie/varianti completa in formato tabellare, coverage matrix multidimensionale materializzata, shortlist scientifica finale, top 20 domande, piano di integrazione dettagliato. Questi restano da scrivere — vedi "Lavoro rimanente" in fondo.
+**Stato: completo per quanto verificabile in questa sessione.** Copre la sintesi dei 7 censimenti paralleli (Fasi A/C/D/E/F del task + addendum coverage/gap). I deliverable di dettaglio (mappa strategie/varianti, Untested Experiment Registry, coverage matrix sparsa, shortlist, Top 20 domande, roadmap RECOVER/REPAIR/EXPLORE) sono in due documenti correlati: [NEXUS_RRA_01_STRATEGY_LEDGER_AND_COVERAGE.md](NEXUS_RRA_01_STRATEGY_LEDGER_AND_COVERAGE.md) e [NEXUS_RRA_01_SHORTLIST_AND_ROADMAP.md](NEXUS_RRA_01_SHORTLIST_AND_ROADMAP.md). Resta aperto solo il punto 7 di "Lavoro rimanente" (verifica indipendente sul codice — ora risolta, vedi §0 aggiornato) e l'implementazione effettiva (fuori scope di un audit: proposte, non codice).
 
 Fonti: 7 censimenti in sola lettura (nessuna modifica a codice/EA, nessuno sweep, nessun accesso a split protetti) su `server/research_scripts/phase2..phase7_28`, `vault/01-Trading` (309 note), MQL5 detector coverage, caccia trasversale MT5/TradingView/parità, inventario Fast Research Engine.
 
-## 0. Flag di sicurezza — non aspettare la sintesi completa
+## 0. Flag di sicurezza — causa confermata sul codice
 
-**Protezione Max Total Drawdown non verificata/non scattante.** Fonte: nota vault "Verifica Max Total DD" — drawdown reale osservato 22.83% contro soglia configurata 10%, **zero trigger della protezione**, stato dichiarato "non risolta". Non riverificato sul codice MQL5 in questo giro. Priorità alta prima di qualunque promozione a live, indipendente dal resto di questo audit.
+**Protezione Max Total Drawdown non verificata/non scattante — causa trovata.** Fonte: nota vault "Verifica Max Total DD" (DD reale 22.83% contro soglia 10%, zero trigger, "non risolta"). Verificato sul codice reale: `g_maxDDPeakEquity` (`NXS_Globals.mqh:169`) è inizializzata a `0.0` e **non viene mai persistita su file** — a ogni riavvio dell'EA (ricompilazione, riavvio terminale/VPS, nuova sessione Tester) si azzera, e il tick successivo la imposta all'equity corrente, dimenticando qualunque picco storico precedente al riavvio. Se un riavvio avviene durante un drawdown già in corso, la protezione sottostima il drawdown reale dal vero picco storico. Non è confermato che questo sia stato LA causa dell'incidente specifico del 22.83% (servirebbe il log di riavvio di quel periodo), ma è un difetto reale e verificabile indipendentemente da quell'incidente. Nessuna modifica al codice eseguita (richiede autorizzazione esplicita separata, trattandosi di MQL5 live) — vedi roadmap REPAIR nel documento shortlist.
 
 ## 1. Discrepanze fattuali trovate (da riconciliare, non risolte qui)
 
@@ -58,14 +58,19 @@ Phase 5 (discovery) → RECLAIM SUPPORTED_EDGE (n=300) → Phase 5.5 (audit retr
 
 Baseline Engine v4 (matching NN direction/state-aware), Market Regime Layer v1, Multiple Testing Ledger BH-FDR, Leakage Guard, Dependence/clustering audit + block bootstrap, Dukascopy downloader v2, Research Evidence Ledger + Decision Card schema, `sequence_structural_feasibility_gate.py`, `candidate_lifecycle.py` (macchina a stati GENERATED→...→SUPPORTED/REFUTED), `nxs_benchmark_generators.py` (modelli nulli: random/unconditional/periodic/regime-matched), protocollo diagnostico same-feed A/B/C (BREAKOUT_ACC/ORDER_BLOCK) — candidato a standard per le 9 strategie DEFECT_CONFIRMED non ancora corrette.
 
-## 7. Lavoro rimanente (non completato in questa sessione)
+## 7. Stato dei deliverable
 
-1. Mappa completa strategie × varianti in formato tabellare consultabile (83 identità, lineage, 22 legacy/deprecated, 6 alias — dati già raccolti nei censimenti, non ancora tabulati in un unico file).
-2. Untested Experiment Registry con stati TESTED_VALID/INCONCLUSIVE/INVALID/PARTIALLY_TESTED/NEVER_TESTED/UNKNOWN per ogni combinazione censita (dati grezzi presenti nei 7 report dei censimenti, classificazione aggregata non ancora scritta).
-3. Coverage Matrix sparsa multidimensionale (Strategy/Detector × TF × Regime × Session × Direction × Indicator × Entry/Exit × Dataset × Engine).
-4. Shortlist scientifica finale (non per PF) e Top 20 domande di ricerca più informative.
-5. Piano di integrazione ordinato per dipendenze (RECOVER/REPAIR/EXPLORE) con task assegnati a Claude/Codex.
-6. Aggiornamento formale di `docs/RESEARCH_INTELLIGENCE_V1.md`/vault masterplan con questi risultati (va fatto con un adapter, non duplicando — es. `ingest.import_contextual_edge()` nuovo, nessun secondo ledger).
-7. Verifica indipendente del flag di sicurezza Max Total DD sul codice MQL5 reale (§0).
+Completati in questa sessione (vedi i 2 documenti correlati):
+1. Mappa strategie/varianti con stato di test per famiglia — [STRATEGY_LEDGER_AND_COVERAGE §1](NEXUS_RRA_01_STRATEGY_LEDGER_AND_COVERAGE.md#1-registro-storico-per-famiglia-stato-di-test-non-di-implementazione).
+2. Untested Experiment Registry (TESTED_VALID/INCONCLUSIVE/INVALID/PARTIALLY_TESTED/NEVER_TESTED/UNKNOWN) — [§2](NEXUS_RRA_01_STRATEGY_LEDGER_AND_COVERAGE.md#2-untested-experiment-registry--gap-espliciti-perimetro-censito-dichiarato).
+3. Coverage Matrix sparsa (solo combinazioni osservate, non materializzata esaustivamente come richiesto) — [§3](NEXUS_RRA_01_STRATEGY_LEDGER_AND_COVERAGE.md#3-coverage-matrix--rappresentazione-sparsa-solo-combinazioni-osservate).
+4. Test da non ripetere — [§4](NEXUS_RRA_01_STRATEGY_LEDGER_AND_COVERAGE.md#4-test-da-non-ripetere-evidenza-negativa-sufficiente).
+5. Shortlist scientifica + Top 20 domande + roadmap RECOVER/REPAIR/EXPLORE — [SHORTLIST_AND_ROADMAP.md](NEXUS_RRA_01_SHORTLIST_AND_ROADMAP.md).
+6. Flag di sicurezza Max Total DD — causa confermata sul codice, §0 sopra.
 
-Tutto il materiale grezzo dei 7 censimenti (ciascuno 2000-4000 parole, denso e citato per file) è disponibile nella trascrizione della sessione corrente — nessuna sintesi qui ha inventato numeri non presenti in quei report.
+Non fatto (proposte esplicitamente fuori scope di un audit, richiedono decisione/autorizzazione dell'utente):
+- Implementazione dell'adapter `research_intelligence_v1.ingest.import_contextual_edge()` (proposto, non scritto).
+- Qualunque modifica al codice MQL5 (persistenza `g_maxDDPeakEquity`, fix `.gitattributes`, ricalcolo per-pass di ADX/RSI/MACD) — tutte richiedono autorizzazione esplicita separata, elencate nella roadmap REPAIR.
+- Esecuzione di una qualunque delle 20 domande di ricerca (vincolo del task: solo audit/progettazione).
+
+Tutto il materiale grezzo dei 7 censimenti (ciascuno 2000-4000 parole, denso e citato per file) resta nella trascrizione della sessione — nessuna sintesi in questi 3 documenti ha inventato numeri non presenti in quei report.
