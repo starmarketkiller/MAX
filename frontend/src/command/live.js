@@ -13,6 +13,7 @@ export const LIVE_READS = [
   { name: "Revenue", stationId: "revenue.find", capabilityId: "revenue-automation", path: "/revenue/automation/status" },
   { name: "Trading Research", stationId: "trading.research", capabilityId: "research-overview", path: "/research/control-plane/overview" },
   { name: "Approvals", stationId: "jarvis.approval", capabilityId: "approvals", path: "/jarvis/approvals" },
+  { name: "Execution Telemetry", stationId: "trading.exec", capabilityId: "open-telemetry", path: "/trading/open-telemetry" },
 ];
 
 function objectRecord(data) {

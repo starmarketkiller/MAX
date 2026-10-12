@@ -108,6 +108,7 @@
 #include <NEXUS_v1\NXS_Dashboard.mqh>
 #include <NEXUS_v1\NXS_HistorySync.mqh>
 #include <NEXUS_v1\NXS_TradeLedger.mqh>   // PR1 - ciclo di vita trade (deal/order/position/logico)
+#include <NEXUS_v1\NXS_OpenTelemetry.mqh> // NEXUS-OTEL-001 - conferma aperture verso NEXUS
 #include <NEXUS_v1\NXS_Diagnostics.mqh>
 #include <NEXUS_v1\NXS_StratStats.mqh>
 #include <NEXUS_v1\NXS_WebBridge.mqh>
@@ -878,6 +879,11 @@ int OnInit(){
       }
       if(offlineFinals > 0)
          PrintFormat("[NEXUS LEDGER] boot: %d trade logici chiusi offline riconciliati", offlineFinals);
+      // NEXUS-OTEL-001: le posizioni vive al boot vengono dichiarate a NEXUS
+      // con lo stato visto ora dal terminale (aperture perse durante il crash).
+      int bootSnaps = NXS_OTel_ResyncOpenPositions("boot");
+      if(bootSnaps > 0)
+         PrintFormat("[NEXUS OTEL] boot: %d posizioni vive accodate per la riconciliazione", bootSnaps);
    }
 
    // PR2 - Virtual SL: ricostruzione stato armato dopo restart (validato per
@@ -1095,6 +1101,7 @@ void OnTimer(){
       // secondo successivo invece di allungare lo scatto corrente. Le
       // protezioni e il ledger stanno fuori dal budget: non slittano mai.
       uint tmBudgetStart = GetTickCount();
+      NXS_OTel_Flush();      // NEXUS-OTEL-001: solo accodamento locale, niente rete
       NXS_Outbox_Drain();
       // AUD0-MQL-008: il pull delle impostazioni vive qui, non nel tick.
       NXS_PullSettings();
@@ -1837,6 +1844,8 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
                         const MqlTradeResult& tradeRes){
    // v2.0.9 Sprint 3 — event-driven fill capture (replaces polling)
    NXS_EA_OnTradeTx(trans);
+   // NEXUS-OTEL-001: l'esito di OrderSend va in coda prima del suo deal.
+   NXS_OTel_Flush();
    if(trans.type != TRADE_TRANSACTION_DEAL_ADD) return;
 
    // PR2 - Virtual SL: aggancio "dopo il fill reale". Filtra DEAL_ENTRY_IN
@@ -1849,6 +1858,8 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
    // deal duplicati e disordine di consegna non producono mai doppi eventi.
    double realizedDelta = 0.0;
    int ev = NXS_Ledger_OnDeal(trans.deal, realizedDelta);
+   // NEXUS-OTEL-001: deal IN confermato dal ledger (duplicati gia' scartati).
+   NXS_OTel_OnDealIn(trans.deal, ev);
    if(ev == NXS_LEDGER_EV_NONE) return;
 
    // NB: NXS_OnTradeClosed (contatore perdite consecutive / anti-revenge /
