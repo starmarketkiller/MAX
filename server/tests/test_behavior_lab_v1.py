@@ -220,8 +220,8 @@ def test_future_bars_cannot_change_a_past_event():
 def test_detector_health_is_not_pathological_on_quiet_data():
     h4 = h4_series()
     result = {"n_h4_bars_in_split": len(h4),
-              "impulses": detect_impulses(h4, wilder_atr(h4, 14), PARAMS)}
-    result["pullbacks"] = detect_pullbacks(h4, result["impulses"], PARAMS)
+              "impulses_in_split": detect_impulses(h4, wilder_atr(h4, 14), PARAMS)}
+    result["pullbacks_in_split"] = detect_pullbacks(h4, result["impulses_in_split"], PARAMS)
     health = detector_health(result)
     assert health["IMPULSE"]["allowed_for_discovery"] is True
     assert health["PULLBACK"]["status"] != "PATHOLOGICAL"
@@ -510,3 +510,21 @@ def test_expected_manifest_hash_matches_the_dataset_registry():
     reg = json.loads((RESEARCH / "phase7" / "dataset_version_registry_v2.json").read_text())
     text = json.dumps(reg)
     assert run_experiment.EXPECTED_MANIFEST_CONTENT_HASH in text
+
+
+def test_detector_health_ignores_warmup_detections():
+    """Real smoke run (2026-10-12): 17 impulses found over warmup + split were divided by the
+    39 split bars only, giving a false PATHOLOGICAL. Warmup detections must not count."""
+    h4 = h4_series()
+    impulses = detect_impulses(h4, wilder_atr(h4, 14), PARAMS)
+    assert impulses, "the synthetic series must contain at least one impulse"
+    last_event_end = max(h4[e["i"]]["end"] for e in impulses)
+    split_start = last_event_end + 1
+    split_end = h4[-1]["end"]
+    result = run_family(h4, [], PARAMS, split_start, split_end, controls=False)
+    assert result["impulses"] and result["impulses_in_split"] == []
+    health = detector_health(result)
+    assert health["IMPULSE"]["n_events"] == 0
+    assert health["IMPULSE"]["status"] != "PATHOLOGICAL"
+    inside = run_family(h4, [], PARAMS, h4[0]["end"], split_end, controls=False)
+    assert len(inside["impulses_in_split"]) == len(impulses)
