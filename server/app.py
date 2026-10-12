@@ -52,7 +52,8 @@ import knowledge_browser
 import research_read_model
 import market_read_model
 import execution_read_model
-from trading_v1.supervisor import read_state as read_trading_state
+from trading_v1.supervisor import TradingSupervisor, read_state as read_trading_state
+from trading_v1.ea_bridge import ingest_positions as _ingest_ea_positions
 import library_read_model
 import sequence_research_read_model
 import company_control_plane
@@ -2624,6 +2625,15 @@ async def ea_push(request: Request, x_nexus_token: Optional[str] = Header(None))
         kv_set("equity_history", hist[-300:])
     except Exception:
         pass
+    # Trading supervision (read-only): registra le posizioni reali che l'EA
+    # ha gia' riportato. Mai inviare nulla - best-effort, non deve poter
+    # rompere l'ack all'EA se la supervisione non e' configurata o fallisce.
+    trading_state_path = os.environ.get("NEXUS_TRADING_STATE", "")
+    if trading_state_path:
+        try:
+            _ingest_ea_positions(TradingSupervisor(trading_state_path), data)
+        except Exception:
+            pass
     return {"ok": True}
 
 
