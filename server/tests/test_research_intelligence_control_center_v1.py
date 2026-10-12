@@ -25,11 +25,28 @@ def test_projection_is_verified_and_never_invents_loop_or_queue():
     assert model["status"] == "HEALTHY"
     assert model["provenance"]["verified"] is True
     assert model["provenance"]["records"] > 0
-    assert model["research_loop"]["status"] == "IDLE_NOT_RUN"
-    assert model["hypothesis_queue"]["status"] == "NOT_MATERIALIZED"
+    # committed memory holds two closed RI-02 cycles (BL-01 discovery ingest and its analysis)
+    assert model["research_loop"]["status"] == "CYCLE_CLOSED"
+    assert model["research_loop"]["current_cycle"] is None and model["research_loop"]["last_cycle"] == "C0002"
+    assert model["research_loop"]["next_actions"] == []
+    # PRIORITIZE ran but every candidate was excluded (family budget): an empty queue, nothing invented
+    assert model["hypothesis_queue"]["status"] == "AVAILABLE"
     assert model["hypothesis_queue"]["items"] == []
     assert model["experiment_registry"]["count"] == 10
     assert all(item["provenance"] for item in model["experiment_registry"]["items"])
+    bl01 = [i for i in model["experiment_registry"]["items"] if i["hypothesis_id"] == "BL-H4M15-IPC-001"]
+    assert [(i["status"], i["result"], i["decision"]) for i in bl01] == [("COMPLETED", "INCONCLUSIVE", "INVESTIGATE")]
+    assert_contract(model)
+
+
+def test_memory_without_loop_runs_is_idle(tmp_path):
+    from research_intelligence_v1 import pilot
+    from research_intelligence_v1.memory import ResearchMemory
+    pilot.seed(ResearchMemory(str(tmp_path / "memory.jsonl")))
+    model = ResearchIntelligenceReadModel(tmp_path / "memory.jsonl").build()
+    assert model["research_loop"]["status"] == "IDLE_NOT_RUN"
+    assert model["research_loop"]["next_actions"] == ["Start a cycle explicitly"]
+    assert model["hypothesis_queue"]["status"] == "NOT_MATERIALIZED" and model["hypothesis_queue"]["items"] == []
     assert_contract(model)
 
 

@@ -1,0 +1,790 @@
+{
+ "code_sha256": {
+  "analysis.py": "eed1cce637cc435f76524a373fbeabff920b9aa62cf4bfc26606674cb646634c",
+  "bars.py": "2544af9854785cb0b6fc866e8b9414bef70719e25a7ae2a3cc0f829d78f40275",
+  "decision.py": "777c7cf7daf851736a272e32cc352757657da5e5a9ed4a57260af794037b957e",
+  "events.py": "6abcf2faffa278ebc587a554a2d46f1c5353c0de7df9700ce929e601b9507b9e",
+  "prereg.py": "6fdbfc1ad55614b3d1a4262f55a1296dc8c721abcba865aaf02682a13872f4ce",
+  "run_experiment.py": "ba430fb1f54a09d5f08da51315c30eb85b49921fcce4f9c58b469ac08262cecb",
+  "sessions.py": "65353561df172f6d15ae695d999970106b74ffc7042fd6e4678f8e52bfe392d1",
+  "stats.py": "7f475b945dd0ceaff0fa24a49a7a751d2d8416e0cae3225984c1003dd8e66c8f",
+  "ticks.py": "dab1b5262e9bbffce347159e5944b594517d904fc15e06454e66f49d5f0d66aa"
+ },
+ "controls": {
+  "expectancy_r_before_spread": 0.016864774255187162,
+  "expectancy_r_net": -0.0452114659811125,
+  "expectancy_r_net_ci95_month_blocks": {
+   "high": 0.037202902197786276,
+   "low": -0.13379441000984915,
+   "n_blocks": 19,
+   "n_boot": 2000,
+   "seed": 20261011
+  },
+  "n_closed": 1803,
+  "p_target_first": {
+   "high": 0.2558594988282483,
+   "low": 0.21670079644057877,
+   "p": 0.23571824736550195
+  }
+ },
+ "data_checks": {
+  "alignment_mismatches": [],
+  "manifest": {
+   "expected": "605249c671178c92c7a2a3e91a670f17c12ca4bea10576407292ccd99e64fbde",
+   "file_sha256": "7c4a0ff64bd8e37a0c89410595399d74bc0655a23b31fbf730298ba3fd1cd82a",
+   "hash_method": "dataset_version_guard.compute_manifest_content_hash (canonical JSON)",
+   "present": true,
+   "sha256": "605249c671178c92c7a2a3e91a670f17c12ca4bea10576407292ccd99e64fbde",
+   "verdict": "MATCH"
+  },
+  "reference_h4_mismatches": [],
+  "tick_audit": {
+   "verdict": "PASS_WITH_NOTES"
+  }
+ },
+ "dataset_id": "DUKASCOPY_XAUUSD_TICKS_2022-11_2024-08",
+ "decision": {
+  "checks": {
+   "adjusted delta vs control > 0": true,
+   "event better than control in >= 60% of usable cells": false,
+   "month-block CI95 low > 0": false,
+   "n_closed >= 60": false,
+   "net expectancy > 0": true,
+   "no direction below -0.1R with n>=20": true,
+   "no single UTC hour above 35% of entries": true,
+   "positive in >= 60% of quarters with n>=5": true,
+   "still > 0 with +0.10R extra cost": true
+  },
+  "decision": "INVESTIGATE",
+  "reasons": [
+   "n_closed >= 60",
+   "month-block CI95 low > 0",
+   "event better than control in >= 60% of usable cells"
+  ],
+  "rules": "BL01_DECISION_RULES_V1"
+ },
+ "detector_health": {
+  "IMPULSE": {
+   "allowed_for_discovery": true,
+   "clustering_metrics": {
+    "cluster_gap_threshold": 10,
+    "clustering_rate": 0.3584905660377358,
+    "median_gap_bars": 18.0
+   },
+   "event_family": "H4_IMPULSE",
+   "firing_rate": 0.04469507101086048,
+   "n_bars": 2394,
+   "n_events": 107,
+   "reason": "firing_rate=0.045 nella fascia NORMAL - nessuna preoccupazione strutturale.",
+   "status": "NORMAL"
+  },
+  "PULLBACK": {
+   "allowed_for_discovery": true,
+   "clustering_metrics": {
+    "cluster_gap_threshold": 10,
+    "clustering_rate": 0.3404255319148936,
+    "median_gap_bars": 18.0
+   },
+   "event_family": "H4_PULLBACK_AFTER_IMPULSE",
+   "firing_rate": 0.03968253968253968,
+   "n_bars": 2394,
+   "n_events": 95,
+   "reason": "firing_rate=0.040 nella fascia NORMAL - nessuna preoccupazione strutturale.",
+   "status": "NORMAL"
+  }
+ },
+ "events": {
+  "expectancy_r_before_spread": 0.3163935682399735,
+  "expectancy_r_net": 0.26182338831467455,
+  "expectancy_r_net_ci95_month_blocks": {
+   "high": 0.5282235903373564,
+   "low": -0.06081699209200266,
+   "n_blocks": 16,
+   "n_boot": 2000,
+   "seed": 20261011
+  },
+  "n_closed": 49,
+  "p_target_first": {
+   "high": 0.4868906478056021,
+   "low": 0.2292420960931444,
+   "p": 0.3469387755102041
+  }
+ },
+ "funnel_controls": {
+  "CANCELLED_ANCHOR_BROKEN": 1823,
+  "CENSORED": 2,
+  "CLOSED": 1803,
+  "NO_ENTRY_BAR": 19,
+  "NO_M15_DATA": 2,
+  "RISK_OUT_OF_BOUNDS": 62,
+  "UNCONFIRMED": 887
+ },
+ "funnel_events": {
+  "CANCELLED_ANCHOR_BROKEN": 4,
+  "CLOSED": 49,
+  "RISK_OUT_OF_BOUNDS": 6,
+  "UNCONFIRMED": 36
+ },
+ "git_commit": "87f7f10eca3c6ee7c23190017e42286974d64e48",
+ "hypothesis_id": "BL-H4M15-IPC-001",
+ "params_sha256": "7c66d51c10a33e0012dc874eedd7efdb7c49d3f30ebd758d022600579f7235c9",
+ "peak_rss_mb": null,
+ "profit_factor": {
+  "controls": 0.9240439612106915,
+  "events": 1.554652007055956
+ },
+ "report_md": {
+  "by_direction": {
+   "BUY": [
+    29,
+    0.414,
+    0.448
+   ],
+   "SELL": [
+    20,
+    0.25,
+    -0.008
+   ]
+  },
+  "by_session": {
+   "LONDON": [
+    7,
+    0.429,
+    0.286
+   ],
+   "LONDON_NY_OVERLAP": [
+    7,
+    0.143,
+    -0.236
+   ],
+   "NEW_YORK": [
+    8,
+    0.375,
+    0.427
+   ],
+   "OFF": [
+    9,
+    0.222,
+    -0.04
+   ],
+   "TOKYO": [
+    18,
+    0.444,
+    0.524
+   ]
+  },
+  "controls_median_mfe_mae_r": [
+   0.758,
+   1.024
+  ],
+  "cost_sensitivity_events": {
+   "breakeven_win_rate_gross": 0.333,
+   "net_at_plus_0_10r": 0.162
+  },
+  "discovery_days": "547/547",
+  "dst_days": {
+   "US_DST": 22,
+   "US_STANDARD": 23
+  },
+  "events_mean_spread_r": 0.055,
+  "events_median_mfe_mae_r": [
+   0.876,
+   0.812
+  ],
+  "m15_gaps": {
+   "other": 16,
+   "pause": 345,
+   "weekend": 89
+  },
+  "max_hour_share": 0.143,
+  "missing_day_files": 0,
+  "platform": "Windows-11-10.0.26100-SP0 Python 3.12.10",
+  "quarters": {
+   "2023Q1": [
+    4,
+    0.25,
+    -0.046
+   ],
+   "2023Q2": [
+    6,
+    0.333,
+    0.498
+   ],
+   "2023Q3": [
+    7,
+    0.286,
+    -0.143
+   ],
+   "2023Q4": [
+    11,
+    0.455,
+    0.543
+   ],
+   "2024Q1": [
+    7,
+    0.143,
+    -0.325
+   ],
+   "2024Q2": [
+    9,
+    0.444,
+    0.578
+   ],
+   "2024Q3": [
+    5,
+    0.4,
+    0.426
+   ]
+  },
+  "quarters_positive_n_ge_5": {
+   "controls": "2/7",
+   "events": "4/6"
+  },
+  "smoke_seconds": 106.35,
+  "tick_audit": {
+   "crossed_nonpositive_nonmonotonic_duplicates": 0,
+   "mean_spread": 0.356,
+   "spread_above_max": 325,
+   "ticks": 72159303
+  },
+  "tuple_format": "[n, P(+2R), net expectancy R]",
+  "warmup_days": "92/92"
+ },
+ "run_id": "BL-H4M15-IPC-001_discovery_20261012T083523Z",
+ "selection": {
+  "controls_closed_share": 0.39212701174423664,
+  "controls_seen": 4598,
+  "events_closed_share": 0.5157894736842106,
+  "events_seen": 95
+ },
+ "smoke": false,
+ "split": "discovery",
+ "split_end": 1722729600,
+ "split_start": 1675468800,
+ "status": "EXPLORATORY_DISCOVERY",
+ "timings_s": {
+  "data_checks": 0.4,
+  "detectors_confirmation_outcomes": 0.21,
+  "read_ticks_and_build_bars": 711.55,
+  "statistics": 0.27
+ },
+ "total_seconds": 712.58,
+ "transcription": {
+  "added_by_transcription": [
+   "dataset_id"
+  ],
+  "exact_fields": [
+   "run_id",
+   "hypothesis_id",
+   "split",
+   "smoke",
+   "split_start",
+   "split_end",
+   "peak_rss_mb",
+   "timings_s",
+   "detector_health",
+   "vs_control_stratified",
+   "events.n_closed",
+   "events.p_target_first",
+   "events.expectancy_r_net",
+   "events.expectancy_r_net_ci95_month_blocks",
+   "controls.n_closed",
+   "controls.p_target_first",
+   "controls.expectancy_r_net",
+   "controls.expectancy_r_net_ci95_month_blocks",
+   "data_checks.manifest",
+   "data_checks.reference_h4_mismatches",
+   "params_sha256",
+   "code_sha256",
+   "git_commit",
+   "funnel_events",
+   "funnel_controls",
+   "profit_factor",
+   "selection",
+   "status",
+   "decision",
+   "total_seconds",
+   "events.expectancy_r_before_spread",
+   "controls.expectancy_r_before_spread"
+  ],
+  "method": "not a copy of the file: fields printed on the research PC with json.dumps of named keys (exact) and values read from the run report.md (rounded); the PC session's safety policy blocked transferring the whole file",
+  "other_output_sha256": {
+   "controls.csv": "c03e1d30f2a456484da89e6770dad583e260d610aa9aedd47ce94af27e80c9be",
+   "events.csv": "8cea3a1d3fdf882f3292fabf1359318db7332237d9fd044ee1fb26c759e3d5e1",
+   "run.log": "521a858af2167061779f69f00ad882add9c6e1ccd0e6d69eb55c7188196ef453"
+  },
+  "relpath": "server/research_scripts/behavior_lab_v1/results/BL-01_discovery_20261012T083523Z/summary.transcribed.json",
+  "rounded_from_report_md": [
+   "report_md.*"
+  ],
+  "source_bytes": 47935,
+  "source_file": "C:/Users/User/ClaudeWork/MAX-bl01/server/research_scripts/behavior_lab_v1/data/bl01/20261012T083336Z/discovery/summary.json",
+  "source_sha256": "61a5cd9b15dfc0def98b72cd81664473b6796e854bbba4cc3a05868fa3cc78bb",
+  "transcribed_at": "2026-10-12"
+ },
+ "vs_control_stratified": {
+  "adjusted_delta_expectancy_r": 0.26869403252362795,
+  "adjusted_delta_p": 0.09187927250355657,
+  "cells": [
+   {
+    "controls": {
+     "exp": 0.22196387204565796,
+     "n": 54,
+     "p": 0.2962962962962963
+    },
+    "events": {
+     "exp": 0.5,
+     "n": 2,
+     "p": 0.5
+    },
+    "stratum": [
+     "BUY",
+     "LONDON",
+     "HIGH"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.05991671374968256,
+     "n": 54,
+     "p": 0.24074074074074073
+    },
+    "events": {
+     "exp": 2.0,
+     "n": 1,
+     "p": 1.0
+    },
+    "stratum": [
+     "BUY",
+     "LONDON",
+     "MID"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": 0.024259574235516723,
+     "n": 48,
+     "p": 0.22916666666666666
+    },
+    "events": {
+     "exp": 0.7235699873304636,
+     "n": 1,
+     "p": 0.0
+    },
+    "stratum": [
+     "BUY",
+     "LONDON_NY_OVERLAP",
+     "HIGH"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.2221084168077624,
+     "n": 36,
+     "p": 0.1111111111111111
+    },
+    "events": {
+     "exp": -1.0,
+     "n": 1,
+     "p": 0.0
+    },
+    "stratum": [
+     "BUY",
+     "LONDON_NY_OVERLAP",
+     "LOW"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.07102700482019292,
+     "n": 60,
+     "p": 0.2
+    },
+    "events": {
+     "exp": 2.0,
+     "n": 1,
+     "p": 1.0
+    },
+    "stratum": [
+     "BUY",
+     "LONDON_NY_OVERLAP",
+     "MID"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": 0.2437250006428428,
+     "n": 90,
+     "p": 0.2777777777777778
+    },
+    "events": {
+     "exp": -0.18557890687834458,
+     "n": 1,
+     "p": 0.0
+    },
+    "stratum": [
+     "BUY",
+     "NEW_YORK",
+     "HIGH"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": 0.4033493378911975,
+     "n": 72,
+     "p": 0.3194444444444444
+    },
+    "events": {
+     "exp": 1.25,
+     "n": 4,
+     "p": 0.75
+    },
+    "stratum": [
+     "BUY",
+     "NEW_YORK",
+     "MID"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.0823637348888433,
+     "n": 48,
+     "p": 0.25
+    },
+    "events": {
+     "exp": -1.0,
+     "n": 3,
+     "p": 0.0
+    },
+    "stratum": [
+     "BUY",
+     "OFF",
+     "HIGH"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": 0.07921100745557935,
+     "n": 43,
+     "p": 0.3023255813953488
+    },
+    "events": {
+     "exp": -0.42650418888043334,
+     "n": 2,
+     "p": 0.0
+    },
+    "stratum": [
+     "BUY",
+     "OFF",
+     "LOW"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.03606882347052139,
+     "n": 37,
+     "p": 0.2972972972972973
+    },
+    "events": {
+     "exp": 2.0,
+     "n": 1,
+     "p": 1.0
+    },
+    "stratum": [
+     "BUY",
+     "OFF",
+     "MID"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": 0.10966556349318446,
+     "n": 95,
+     "p": 0.3157894736842105
+    },
+    "events": {
+     "exp": 0.7876530663027256,
+     "n": 8,
+     "p": 0.5
+    },
+    "stratum": [
+     "BUY",
+     "TOKYO",
+     "HIGH"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.005558111379884548,
+     "n": 114,
+     "p": 0.30701754385964913
+    },
+    "events": {
+     "exp": -1.0,
+     "n": 2,
+     "p": 0.0
+    },
+    "stratum": [
+     "BUY",
+     "TOKYO",
+     "LOW"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": 0.10727955070722683,
+     "n": 94,
+     "p": 0.32978723404255317
+    },
+    "events": {
+     "exp": 0.5,
+     "n": 2,
+     "p": 0.5
+    },
+    "stratum": [
+     "BUY",
+     "TOKYO",
+     "MID"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.07862845398894712,
+     "n": 42,
+     "p": 0.19047619047619047
+    },
+    "events": {
+     "exp": 0.5,
+     "n": 2,
+     "p": 0.5
+    },
+    "stratum": [
+     "SELL",
+     "LONDON",
+     "HIGH"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": 0.07673244242048553,
+     "n": 74,
+     "p": 0.24324324324324326
+    },
+    "events": {
+     "exp": -1.0,
+     "n": 1,
+     "p": 0.0
+    },
+    "stratum": [
+     "SELL",
+     "LONDON",
+     "LOW"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.5279050272642817,
+     "n": 50,
+     "p": 0.14
+    },
+    "events": {
+     "exp": -1.0,
+     "n": 1,
+     "p": 0.0
+    },
+    "stratum": [
+     "SELL",
+     "LONDON",
+     "MID"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.23995156760446382,
+     "n": 51,
+     "p": 0.13725490196078433
+    },
+    "events": {
+     "exp": -0.6881083979541309,
+     "n": 2,
+     "p": 0.0
+    },
+    "stratum": [
+     "SELL",
+     "LONDON_NY_OVERLAP",
+     "HIGH"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.06959500904662778,
+     "n": 48,
+     "p": 0.1875
+    },
+    "events": {
+     "exp": -1.0,
+     "n": 1,
+     "p": 0.0
+    },
+    "stratum": [
+     "SELL",
+     "LONDON_NY_OVERLAP",
+     "LOW"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.07966515183149665,
+     "n": 39,
+     "p": 0.1794871794871795
+    },
+    "events": {
+     "exp": -1.0,
+     "n": 1,
+     "p": 0.0
+    },
+    "stratum": [
+     "SELL",
+     "LONDON_NY_OVERLAP",
+     "MID"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.1930344605060339,
+     "n": 68,
+     "p": 0.17647058823529413
+    },
+    "events": {
+     "exp": -0.27305983799320155,
+     "n": 1,
+     "p": 0.0
+    },
+    "stratum": [
+     "SELL",
+     "NEW_YORK",
+     "HIGH"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.32869044668022107,
+     "n": 80,
+     "p": 0.1125
+    },
+    "events": {
+     "exp": -0.5630749014454641,
+     "n": 2,
+     "p": 0.0
+    },
+    "stratum": [
+     "SELL",
+     "NEW_YORK",
+     "MID"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.4924685181990685,
+     "n": 25,
+     "p": 0.16
+    },
+    "events": {
+     "exp": 0.5,
+     "n": 2,
+     "p": 0.5
+    },
+    "stratum": [
+     "SELL",
+     "OFF",
+     "LOW"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.27803793519152287,
+     "n": 23,
+     "p": 0.21739130434782608
+    },
+    "events": {
+     "exp": 0.4889039242218918,
+     "n": 1,
+     "p": 0.0
+    },
+    "stratum": [
+     "SELL",
+     "OFF",
+     "MID"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": 0.0525517029078473,
+     "n": 79,
+     "p": 0.3037974683544304
+    },
+    "events": {
+     "exp": 0.42593226137529905,
+     "n": 5,
+     "p": 0.4
+    },
+    "stratum": [
+     "SELL",
+     "TOKYO",
+     "HIGH"
+    ],
+    "used": true
+   },
+   {
+    "controls": {
+     "exp": -0.17672387494416866,
+     "n": 75,
+     "p": 0.25333333333333335
+    },
+    "events": {
+     "exp": 2.0,
+     "n": 1,
+     "p": 1.0
+    },
+    "stratum": [
+     "SELL",
+     "TOKYO",
+     "LOW"
+    ],
+    "used": true
+   }
+  ],
+  "cells_event_better": 13,
+  "cells_used": 25,
+  "events_in_covered_cells": 49,
+  "events_without_comparable_control": 0,
+  "min_control_per_cell": 20,
+  "volatility_cuts_atr": [
+   7.7085980992773875,
+   10.274439464303052
+  ]
+ }
+}

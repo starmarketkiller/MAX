@@ -143,14 +143,27 @@ def _skip(memory, record_id, path, report):
 DECISION_TO_RESULT = {"GO": "POSITIVE", "INVESTIGATE": "INCONCLUSIVE", "SMOKE_PASSED": "NOT_AVAILABLE"}
 
 
+def _interval(ci):
+    """Month-block bootstrap intervals come as {"low", "high", ...}; review checks expect [low, high]."""
+    if isinstance(ci, dict):
+        return [ci.get("low"), ci.get("high")]
+    return ci
+
+
 def import_behavior_lab_summary(memory, summary_path, hypothesis_record, *, author="behavior-lab-adapter",
                                 prereg_relpath=None, supersedes=None):
     """One Behavior Lab run (summary.json from behavior_lab_v1) as an EXPERIMENT record.
 
     `supersedes` names the NOT_RUN placeholder of the same experiment: it stays
-    in memory, the run record points at it."""
+    in memory, the run record points at it.
+
+    A summary carrying a `transcription` block is a declared copy of a summary.json
+    that stays on the research PC: the RUN provenance then holds the sha256 of the
+    original file, the transcription itself is recorded as a FILE, and the record
+    lists the transcription among its limits."""
     with open(summary_path, encoding="utf-8") as handle:
         s = json.load(handle)
+    tr = s.get("transcription")
     decision = (s.get("decision") or {}).get("decision", "STOP")
     kind = (s.get("decision") or {}).get("kind")
     if decision == "STOP" and kind == "DATA_OR_DETECTOR":
@@ -162,7 +175,7 @@ def import_behavior_lab_summary(memory, summary_path, hypothesis_record, *, auth
         result = DECISION_TO_RESULT.get(decision, "INCONCLUSIVE")
     ev = s.get("events") or {}
     metrics = {"n_closed": ev.get("n_closed"), "expectancy_r_net": ev.get("expectancy_r_net"),
-               "expectancy_ci95": ev.get("expectancy_r_net_ci95_month_blocks"),
+               "expectancy_ci95": _interval(ev.get("expectancy_r_net_ci95_month_blocks")),
                "p_target_first": ev.get("p_target_first"),
                "controls": {k: (s.get("controls") or {}).get(k) for k in ("n_closed", "expectancy_r_net")},
                "vs_control_stratified": {k: (s.get("vs_control_stratified") or {}).get(k)
@@ -174,7 +187,7 @@ def import_behavior_lab_summary(memory, summary_path, hypothesis_record, *, auth
                "funnel_events": s.get("funnel_events")}
     checks = s.get("data_checks") or {}
     body = {"hypothesis_id": s.get("hypothesis_id", "UNKNOWN"), "status": status, "result": result,
-            "datasets": [{"dataset_id": "DUKASCOPY_NEWPERIOD_2023H1_ONWARD_V1",
+            "datasets": [{"dataset_id": s.get("dataset_id") or "DUKASCOPY_NEWPERIOD_2023H1_ONWARD_V1",
                           "sha256": (checks.get("manifest") or {}).get("sha256", "UNVERIFIED"),
                           "split": s.get("split", "unknown"), "period": f"{s.get('split_start')}..{s.get('split_end')}",
                           "exposure": "UNSEEN"}],
@@ -191,12 +204,20 @@ def import_behavior_lab_summary(memory, summary_path, hypothesis_record, *, auth
             "resources": {"total_seconds": s.get("total_seconds"), "peak_rss_mb": s.get("peak_rss_mb"),
                           "timings_s": s.get("timings_s")},
             "limits": ["Dukascopy prices, not the broker feed", "no slippage, no commission",
-                       "descriptive control, not baseline v4", "dependence diagnostics not applied"],
+                       "descriptive control, not baseline v4", "dependence diagnostics not applied"]
+                      + ([f"transcribed from {tr['source_file']} (sha256 {tr['source_sha256']}): {tr['method']}"]
+                         if tr else []),
             "anomalies": [], "alternative_explanations": [],
             "conclusions": [f"decision {decision}" + (f" ({kind})" if kind else "")],
             "evidence_level": "DISCOVERY_ONLY" if s.get("split") == "discovery" else "INTERNAL_VALIDATION",
             "decision": decision}
-    provenance = [{"kind": "RUN", "ref": s.get("run_id", "unknown"), "sha256": sha256_file(summary_path)}]
+    if tr:
+        provenance = [{"kind": "RUN", "ref": s.get("run_id", "unknown"), "sha256": tr["source_sha256"],
+                       "note": f"original {tr['source_file']}, not transferred"},
+                      {"kind": "FILE", "ref": tr.get("relpath", os.path.basename(summary_path)),
+                       "sha256": sha256_file(summary_path), "note": "declared transcription of the RUN summary"}]
+    else:
+        provenance = [{"kind": "RUN", "ref": s.get("run_id", "unknown"), "sha256": sha256_file(summary_path)}]
     if prereg_relpath:
         provenance.append({"kind": "FILE", "ref": prereg_relpath})
     return memory.append("EXPERIMENT", rid("EXP", s.get("run_id", "BL-RUN")), body, author=author,

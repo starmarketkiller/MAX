@@ -306,6 +306,30 @@ def test_behavior_lab_summary_adapter(mem, tmp_path):
     assert "CI_CROSSES_ZERO" in {f["check"] for f in rev["body"]["findings"]}
 
 
+def test_adapter_reads_runner_interval_and_declared_transcription(mem, tmp_path):
+    """behavior_lab_v1 writes the month-block CI as a dict; a transcription keeps the original's hash."""
+    pilot.seed(mem, created_at=T0)
+    summary = {"run_id": "BL01-SYNTH-TRANSCRIBED", "hypothesis_id": "BL-H4M15-IPC-001", "split": "discovery",
+               "dataset_id": "SYNTH_TICKS", "params_sha256": pilot.PARAMS_SHA, "git_commit": "d" * 40,
+               "decision": {"decision": "INVESTIGATE"},
+               "events": {"n_closed": 49, "expectancy_r_net": 0.26,
+                          "expectancy_r_net_ci95_month_blocks": {"low": -0.06, "high": 0.53, "n_blocks": 16}},
+               "transcription": {"source_file": "RUN/discovery/summary.json", "source_sha256": "a" * 64,
+                                 "method": "values copied from the run report", "relpath": "x/summary.json"}}
+    path = tmp_path / "summary.json"
+    path.write_text(json.dumps(summary))
+    rec = ingest.import_behavior_lab_summary(mem, str(path), "HYP-BL-H4M15-IPC-001")
+    body = rec["body"]
+    assert body["metrics"]["expectancy_ci95"] == [-0.06, 0.53]
+    assert body["datasets"][0]["dataset_id"] == "SYNTH_TICKS"
+    assert any("transcribed from RUN/discovery/summary.json" in x for x in body["limits"])
+    run, copy = rec["provenance"]
+    assert run["kind"] == "RUN" and run["sha256"] == "a" * 64
+    assert copy["kind"] == "FILE" and copy["ref"] == "x/summary.json" and copy["sha256"] == sha256_file(path)
+    rev, _, _ = review.review(mem, rec["record_id"])
+    assert "CI_CROSSES_ZERO" in {f["check"] for f in rev["body"]["findings"]}
+
+
 # ---- BL-01 pilot ---------------------------------------------------------------------------------------
 def test_bl01_pilot_keeps_preregistration_and_separates_exploratory(mem):
     pilot.seed(mem, created_at=T0)

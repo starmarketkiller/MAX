@@ -95,10 +95,12 @@ def test_record_knowledge_is_idempotent_and_keeps_bl01_unchanged(tmp_path):
     assert record_knowledge.record(mem) == []
     assert mem.verify() == []
     assert mem.get("HYP-BL-H4M15-IPC-001")["record_hash"] == hyp_hash
-    cur = mem.current("EXP-BL-01-DISCOVERY")
-    assert cur["record_id"] == "EXP-BL-01-DISCOVERY.R1" and cur["body"]["status"] == "NOT_RUN"
-    assert cur["body"]["method"]["params_sha256"] == pilot.PARAMS_SHA and cur["body"]["method"]["preregistered"]
-    assert any("preregistration kept unchanged" in c for c in cur["body"]["conclusions"])
+    r1 = mem.get("EXP-BL-01-DISCOVERY.R1")
+    assert r1["body"]["status"] == "NOT_RUN"
+    assert r1["body"]["method"]["params_sha256"] == pilot.PARAMS_SHA and r1["body"]["method"]["preregistered"]
+    assert any("preregistration kept unchanged" in c for c in r1["body"]["conclusions"])
+    cur = mem.current("EXP-BL-01-DISCOVERY")  # the real discovery run supersedes the placeholder
+    assert cur["body"]["status"] == "COMPLETED" and cur["body"]["method"]["params_sha256"] == pilot.PARAMS_SHA
     obs = mem.get("OBS-BL01-POWER-ANALYSIS-V1")["body"]
     assert "presence or absence of an edge" in obs["not_evidence_for"]
 
