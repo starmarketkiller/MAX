@@ -5,7 +5,7 @@
 #define __NXS_STATE_MQH__
 
 #define NXS_STATE_MAGIC   0x4E585335
-#define NXS_STATE_SCHEMA  6   // RRA-02: persistent Max-DD peak/latch/capital-flow cursor
+#define NXS_STATE_SCHEMA  7   // RRA-02: Max-DD state + durable reset command id
 #define NXS_STATE_MAX_POS 512
 
 struct SNXSManagedState {
@@ -249,7 +249,7 @@ bool _NXS_StateWrite(string fileName){
    _NXS_WInt(h, g_autoClosePending ? 1 : 0);
    _NXS_WInt(h, g_flattenPending ? 1 : 0);
    _NXS_WriteString(h, g_flattenReason);
-   // v6 — permanent Max Total DD state. These fields are safety critical:
+   // v7 — permanent Max Total DD state plus reset-command idempotency.
    // omitting any of them would make restart a way to erase the high-water
    // mark, the latch, or already-accounted capital flows.
    _NXS_WDbl(h, g_maxDDPeakEquity);
@@ -259,6 +259,7 @@ bool _NXS_StateWrite(string fileName){
    _NXS_WLong(h, (long)g_maxDDFlowCursorTicket);
    _NXS_WInt(h, g_maxDDRecoveryRequired ? 1 : 0);
    _NXS_WriteString(h, g_maxDDRecoveryReason);
+   _NXS_WriteString(h, g_maxDDLastResetCommandId);
    _NXS_WInt(h, g_streakWins);
    _NXS_WInt(h, g_streakLosses);
    _NXS_WDbl(h, g_streakLotMult);
@@ -335,6 +336,7 @@ bool _NXS_StateRead(string fileName, bool apply){
    ulong maxDDCursorTicket = (ulong)_NXS_RLong(h);
    int maxDDRecovery = _NXS_RInt(h);
    string maxDDRecoveryReason = _NXS_ReadString(h);
+   string maxDDLastResetCommandId = _NXS_ReadString(h);
    int streakW       = _NXS_RInt(h);
    int streakL       = _NXS_RInt(h);
    double streakMult = _NXS_RDbl(h);
@@ -410,6 +412,7 @@ bool _NXS_StateRead(string fileName, bool apply){
    g_maxDDFlowCursorTicket= maxDDCursorTicket;
    g_maxDDRecoveryRequired = (maxDDRecovery != 0);
    g_maxDDRecoveryReason  = maxDDRecoveryReason;
+   g_maxDDLastResetCommandId = maxDDLastResetCommandId;
    g_streakWins         = streakW;
    g_streakLosses       = streakL;
    g_streakLotMult      = (streakMult > 0 ? streakMult : 1.0);

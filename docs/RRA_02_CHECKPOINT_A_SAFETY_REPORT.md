@@ -19,7 +19,7 @@ Scope: Max Total Drawdown only. No live trading, production deploy, merge, or ho
 - No broker deal type is accepted as owner-flow provenance by itself.
 - `BALANCE`, `CREDIT`, `BONUS`, and `CORRECTION` records fail closed until separately verified.
 - Replay cursor `(DEAL_TIME_MSC, ticket)` is durable and sorted before replay.
-- Missing, corrupt, foreign, or schema-v5 snapshots fail closed outside Strategy Tester when Max Total DD is enabled.
+- Missing, corrupt, foreign, or pre-v7 snapshots fail closed outside Strategy Tester when Max Total DD is enabled.
 - Existing authenticated, confirmed, rate-limited and append-only-audited `reset_protections` command is the sole reset authority.
 - Reset establishes a new explicit epoch and persists it immediately.
 - New exposure is blocked; position management and emergency flattening remain reachable.
@@ -64,6 +64,7 @@ The final review found and fixed two residual safety gaps:
 
 1. `DEAL_TYPE_BALANCE` alone is not proof of an owner deposit or withdrawal. It may be an economic correction. Such entries now enter `UNVERIFIED_BALANCE_FLOW` recovery and are not neutralized automatically.
 2. A close accepted as `TRADE_RETCODE_PLACED` can remain in flight while the position is still visible. Flatten retry/restart now checks active orders by `POSITION_IDENTIFIER`/`ORDER_POSITION_ID` before sending another close. The position remains counted, so the entry latch stays closed until exposure is actually gone.
+3. Reset replay was durable only in the separate command-seen file. A crash after the safety snapshot but before that file could move the baseline twice. Snapshot schema v7 now stores the reset command ID with the new epoch and skips a replayed mutation.
 
 Evidence levels are deliberately separated:
 
@@ -76,4 +77,4 @@ The three local Windows failures were reproduced exactly and are outside this PR
 
 PR #36 is conceptually compatible: its account-mode gate is additive in `NXS_CommonExposurePreflight` and at the final `NXS_DoBuy`/`NXS_DoSell` entry helpers, while close/modify paths remain available. Its branch is stale relative to current `main` and must be integrated semantically/rebased; merging its old tree wholesale would conflict in shared MQL5 files and the deployment manifest.
 
-Rollback: revert this PR. Existing schema-v5 snapshots remain untouched on disk but are intentionally incompatible with schema v6; rollback must be treated as a safety migration, not a casual hot rollback on an attached account.
+Rollback: revert this PR. Existing pre-v7 snapshots remain untouched on disk but are intentionally incompatible with schema v7; rollback must be treated as a safety migration, not a casual hot rollback on an attached account.

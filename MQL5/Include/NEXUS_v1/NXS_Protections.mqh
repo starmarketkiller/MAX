@@ -423,7 +423,11 @@ void NXS_Prot_OnDeal(ulong ticket){
    if(NXS_Prot_AccountCapitalFlowDeal(ticket)) NXS_State_Save(true);
 }
 
-void NXS_Prot_AuthorizedMaxDDReset(){
+void NXS_Prot_AuthorizedMaxDDReset(string commandId){
+   if(StringLen(commandId) > 0 && commandId == g_maxDDLastResetCommandId){
+      PrintFormat("[NEXUS PROT] reset command %s already persisted; mutation skipped", commandId);
+      return;
+   }
    double eq = AccountInfoDouble(ACCOUNT_EQUITY);
    g_maxDDPeakEquity = eq;
    g_maxDDNetCapitalFlow = 0.0;
@@ -446,6 +450,9 @@ void NXS_Prot_AuthorizedMaxDDReset(){
       g_maxDDRecoveryRequired = true;
       g_maxDDRecoveryReason = "RESET_HISTORY_UNAVAILABLE";
    }
+   // Stored in the same safety snapshot as the new epoch. A crash before the
+   // separate command ACK/seen log cannot make replay move the baseline twice.
+   g_maxDDLastResetCommandId = commandId;
    NXS_State_Save(true);
 }
 

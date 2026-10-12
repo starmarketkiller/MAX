@@ -35,7 +35,7 @@ class ReferenceMaxDD:
 
     def save(self, path: Path) -> None:
         payload = {
-            "schema": 6,
+            "schema": 7,
             "equity": self.equity,
             "net_flow": self.net_flow,
             "peak": self.peak,
@@ -48,7 +48,7 @@ class ReferenceMaxDD:
     @classmethod
     def restore(cls, path: Path) -> "ReferenceMaxDD":
         payload = json.loads(path.read_text(encoding="utf-8"))
-        if payload.get("schema") != 6:
+        if payload.get("schema") != 7:
             raise ValueError("incompatible snapshot")
         return cls(
             equity=float(payload["equity"]),
@@ -86,10 +86,11 @@ def test_latch_is_permanent_across_rollover_and_restart_contract():
         "g_maxDDFlowCursorTicket",
         "g_maxDDRecoveryRequired",
         "g_maxDDRecoveryReason",
+        "g_maxDDLastResetCommandId",
     ):
         assert field in GLOBALS
         assert field in STATE
-    assert "#define NXS_STATE_SCHEMA  6" in STATE
+    assert "#define NXS_STATE_SCHEMA  7" in STATE
 
 
 def test_reference_save_shutdown_restore_keeps_peak_latch_and_entry_gate(tmp_path):
@@ -107,7 +108,7 @@ def test_reference_missing_corrupt_and_legacy_snapshots_fail_closed(tmp_path):
     for name, contents in (
         ("missing.json", None),
         ("corrupt.json", "{not-json"),
-        ("legacy.json", json.dumps({"schema": 5})),
+        ("legacy.json", json.dumps({"schema": 6})),
     ):
         snapshot = tmp_path / name
         if contents is not None:
@@ -144,18 +145,20 @@ def test_capital_flow_policy_and_event_driven_accounting_are_explicit():
 
 
 def test_authorized_reset_creates_and_persists_a_new_epoch():
-    reset = PROT.split("void NXS_Prot_AuthorizedMaxDDReset()", 1)[1].split(
+    reset = PROT.split("void NXS_Prot_AuthorizedMaxDDReset(string commandId)", 1)[1].split(
         "void NXS_Prot_CheckMaxTotalDD", 1
     )[0]
     assert "g_maxDDPeakEquity = eq" in reset
     assert "g_maxDDNetCapitalFlow = 0.0" in reset
     assert "g_maxDDHit = false" in reset
     assert "g_maxDDRecoveryRequired = false" in reset
+    assert "commandId == g_maxDDLastResetCommandId" in reset
+    assert "g_maxDDLastResetCommandId = commandId" in reset
     assert "NXS_State_Save(true)" in reset
     web_reset = WEB.split('else if(action == "reset_protections")', 1)[1].split(
         'else if(action == "resync_trades")', 1
     )[0]
-    assert "NXS_Prot_AuthorizedMaxDDReset()" in web_reset
+    assert "NXS_Prot_AuthorizedMaxDDReset(commandId)" in web_reset
     assert "_nxs_cmd_isSafetyReset(action)" in WEB
     assert "_nxs_cmd_auditLocal" in WEB
 

@@ -718,7 +718,7 @@ void NXS_WebPoll(){
       // RRA-02: this authenticated/confirmed/audited command is the only
       // authority that may create a new Max-DD epoch. It resets the peak to
       // current equity and persists the new flow cursor immediately.
-      NXS_Prot_AuthorizedMaxDDReset();
+      NXS_Prot_AuthorizedMaxDDReset(commandId);
       detail = StringFormat("protezioni azzerate; MaxTotalDD nuova baseline %.2f",
                             g_maxDDPeakEquity);
       Print("[NEXUS] protections reset; MaxTotalDD new audited epoch persisted");

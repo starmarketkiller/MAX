@@ -173,6 +173,7 @@ long     g_maxDDFlowCursorMsc  = 0;
 ulong    g_maxDDFlowCursorTicket = 0;
 bool     g_maxDDRecoveryRequired = false;
 string   g_maxDDRecoveryReason = "";
+string   g_maxDDLastResetCommandId = ""; // durable idempotency for safety reset
 // AUD0-PROT-003 — il nome dice "in pausa fino alla prossima apertura", ma il
 // comportamento e' piu' forte: quando e' attivo NXS_Prot_OnTick esce PRIMA di
 // ogni altro controllo (max-hold, perdita per posizione, ESL, DPT, auto-close),
