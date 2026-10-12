@@ -19,9 +19,9 @@ class DecisionAuthorization:
     owner_task_id: str | None = None
 
 
-def authorize_task_decision(queue, record: dict, scope: AuthenticatedScope,
-                            *, _visited: frozenset[str] = frozenset()) -> DecisionAuthorization:
-    """Authorize an authenticated user to approve/reject ``record``.
+def authorize_task_access(queue, record: dict, scope: AuthenticatedScope,
+                          *, _visited: frozenset[str] = frozenset()) -> DecisionAuthorization:
+    """Authorize an authenticated user to access ``record``.
 
     The only supported delegation in V1 is the structural multi-stage parent
     relationship written by the canonical executor.  It is deliberately
@@ -47,7 +47,7 @@ def authorize_task_decision(queue, record: dict, scope: AuthenticatedScope,
         parent = queue.get(parent_id)
     except KeyError:
         return DecisionAuthorization(False, "TASK_PARENT_NOT_FOUND")
-    parent_auth = authorize_task_decision(
+    parent_auth = authorize_task_access(
         queue, parent, scope, _visited=_visited | {task_id})
     if not parent_auth.allowed:
         return parent_auth
@@ -55,7 +55,12 @@ def authorize_task_decision(queue, record: dict, scope: AuthenticatedScope,
                                  parent_auth.owner_task_id or parent_id)
 
 
+def authorize_task_decision(queue, record: dict, scope: AuthenticatedScope) -> DecisionAuthorization:
+    """Decisions share the exact verified owner/tenant boundary used by reads."""
+    return authorize_task_access(queue, record, scope)
+
+
 def authorized_decision_records(queue, records: list[dict], scope: AuthenticatedScope) -> list[dict]:
     """Return only tasks on which ``scope`` may make a decision."""
     return [record for record in records
-            if authorize_task_decision(queue, record, scope).allowed]
+            if authorize_task_access(queue, record, scope).allowed]

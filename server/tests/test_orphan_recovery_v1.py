@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 import app as backend
 from jarvis_v1.free_coding_worker import FreeCodingWorkerHandler
 from jarvis_v1.service import JarvisService, classify
+from nexus_tenant import canonical_tenant_id
 from orchestrator_v1.core.local_agent_bridge import LocalAgentBridgeV1
 from orchestrator_v1.core.orchestrator import Orchestrator
 
@@ -225,9 +226,11 @@ def test_e2e_resume_through_dispatcher_and_bridge_to_waiting_approval(tmp_path):
     assert events.index("TASK_RESUMED") < events.index("RESULT_DELIVERED")
 
 
-def test_http_endpoint_requires_auth_and_maps_resume_outcomes(tmp_path, monkeypatch):
+def test_http_endpoint_enforces_owner_tenant_and_maps_resume_outcomes(tmp_path, monkeypatch):
     orch, bridge = build(tmp_path)
-    task_id = submit_and_orphan(orch, value=manifest(task_id="TASK_HTTP_RESUME"))
+    task_id = submit_and_orphan(orch, value=manifest(
+        task_id="TASK_HTTP_RESUME", created_by="jarvis:owner-a",
+        tenant_id=canonical_tenant_id()))
     service = JarvisService(queue_path=tmp_path / "unused_queue.json",
                             ledger_path=tmp_path / "unused_ledger.json")
     service.orchestrator = orch
@@ -241,8 +244,19 @@ def test_http_endpoint_requires_auth_and_maps_resume_outcomes(tmp_path, monkeypa
     denied = client.post(f"/api/jarvis/tasks/{task_id}/resume-orphaned")
     assert denied.status_code in (401, 403)
 
-    backend.app.dependency_overrides[backend.require_mutation] = lambda: "test-admin"
+    # A different authenticated owner receives the same non-revealing 404 as
+    # a missing task.  Authorization runs before resume, so neither queue nor
+    # Ledger changes.
+    before = orch.queue.get(task_id)
+    before_events = list(orch.ledger.read_for_task(task_id))
+    backend.app.dependency_overrides[backend.require_mutation] = lambda: "owner-b"
     try:
+        foreign = client.post(f"/api/jarvis/tasks/{task_id}/resume-orphaned")
+        assert foreign.status_code == 404
+        assert orch.queue.get(task_id) == before
+        assert orch.ledger.read_for_task(task_id) == before_events
+
+        backend.app.dependency_overrides[backend.require_mutation] = lambda: "owner-a"
         ok = client.post(f"/api/jarvis/tasks/{task_id}/resume-orphaned")
         assert ok.status_code == 200
         assert ok.json()["state"] == "QUEUED"
@@ -253,6 +267,34 @@ def test_http_endpoint_requires_auth_and_maps_resume_outcomes(tmp_path, monkeypa
 
         missing = client.post("/api/jarvis/tasks/TASK_DOES_NOT_EXIST/resume-orphaned")
         assert missing.status_code == 404
+    finally:
+        backend.app.dependency_overrides.pop(backend.require_mutation, None)
+
+
+def test_http_resume_denies_foreign_tenant_and_unverifiable_legacy_owner(tmp_path, monkeypatch):
+    orch, bridge = build(tmp_path)
+    foreign_tenant = submit_and_orphan(orch, value=manifest(
+        task_id="TASK_HTTP_FOREIGN_TENANT", created_by="jarvis:owner-a",
+        tenant_id="tenant-foreign"))
+    legacy = submit_and_orphan(orch, value=manifest(
+        task_id="TASK_HTTP_LEGACY", created_by="legacy-import",
+        tenant_id=canonical_tenant_id()))
+    service = JarvisService(queue_path=tmp_path / "unused_queue.json",
+                            ledger_path=tmp_path / "unused_ledger.json")
+    service.orchestrator = orch
+    service.queue = orch.queue
+    service.ledger = orch.ledger
+    monkeypatch.setattr(backend, "JARVIS_SERVICE", service)
+    backend.app.dependency_overrides[backend.require_mutation] = lambda: "owner-a"
+    client = TestClient(backend.app)
+    try:
+        for task_id in (foreign_tenant, legacy):
+            before = orch.queue.get(task_id)
+            before_events = list(orch.ledger.read_for_task(task_id))
+            response = client.post(f"/api/jarvis/tasks/{task_id}/resume-orphaned")
+            assert response.status_code == 404
+            assert orch.queue.get(task_id) == before
+            assert orch.ledger.read_for_task(task_id) == before_events
     finally:
         backend.app.dependency_overrides.pop(backend.require_mutation, None)
 

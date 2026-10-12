@@ -3,6 +3,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
+import pytest
 from fastapi.testclient import TestClient
 
 import app as backend
@@ -11,6 +12,7 @@ from jarvis_v1.floor_workflow import NOT_RUN, WORKFLOW_ID, project_trace
 from jarvis_v1.gateway import JarvisGateway
 from jarvis_v1.service import JarvisService
 from jarvis_v1.authenticated_scope import EndpointRateLimiter
+from jarvis_v1.authenticated_scope import resolve_authenticated_scope
 
 
 def _context():
@@ -163,6 +165,92 @@ def test_a_failed_skill_does_not_complete_the_handoff(tmp_path, monkeypatch):
 def test_floor_workflow_read_requires_a_session():
     client = TestClient(backend.app)
     assert client.get("/api/jarvis/floor-workflow").status_code == 401
+
+
+def test_authenticated_scope_accepts_the_real_email_subject_without_normalizing_it():
+    subject = "owner+nexus@example.com"
+    scope = resolve_authenticated_scope(subject)
+    assert scope.user_id == subject
+    assert scope.owner == f"jarvis:{subject}"
+    assert scope.tenant_id == "tenant-1"
+
+
+def test_authenticated_scope_rejects_missing_or_malformed_subjects():
+    for subject in (None, "", " user@example.com", "user@example.com ",
+                    "user name@example.com", "user/example.com", "user\n@example.com"):
+        with pytest.raises(PermissionError):
+            resolve_authenticated_scope(subject)
+
+
+def test_scope_endpoints_accept_email_subject_and_control_invalid_identity(tmp_path, monkeypatch):
+    service, _calls = _service(tmp_path, monkeypatch)
+    monkeypatch.setattr(backend, "JARVIS_SERVICE", service)
+    client = TestClient(backend.app)
+    email = "owner+nexus@example.com"
+    task_id = service.floor_workflow.submit(
+        objective="email owner", context=_context(), created_by=f"jarvis:{email}")
+    backend.app.dependency_overrides[backend.require_user] = lambda: email
+    try:
+        floor = client.get(f"/api/jarvis/floor-workflow?task_id={task_id}")
+        approvals = client.get("/api/jarvis/approvals")
+        assert floor.status_code == 200
+        assert floor.json()["task_id"] == task_id
+        assert approvals.status_code == 200
+        assert client.get(f"/api/jarvis/tasks/{task_id}").status_code == 200
+        assert client.get(f"/api/jarvis/tasks/{task_id}/diagnostics").status_code == 200
+        activity = client.get("/api/jarvis/activity")
+        assert activity.status_code == 200
+        assert all(event["task_id"] == task_id for event in activity.json()["events"])
+    finally:
+        backend.app.dependency_overrides.clear()
+
+    backend.app.dependency_overrides[backend.require_mutation] = lambda: "bad identity@example.com"
+    try:
+        response = client.post(
+            "/api/jarvis/floor-workflow",
+            json={"objective": "must fail closed", "context": _context()},
+            headers={"Idempotency-Key": "invalid-subject-001"},
+        )
+        assert response.status_code == 401
+        assert response.json()["detail"]["code"] == "AUTHENTICATED_IDENTITY_INVALID"
+    finally:
+        backend.app.dependency_overrides.clear()
+
+    backend.app.dependency_overrides[backend.require_user] = lambda: "other@example.com"
+    try:
+        foreign_floor = client.get(f"/api/jarvis/floor-workflow?task_id={task_id}")
+        assert foreign_floor.status_code == 200
+        assert foreign_floor.json()["task_id"] is None
+        assert client.get(f"/api/jarvis/tasks/{task_id}").status_code == 404
+        assert client.get(f"/api/jarvis/tasks/{task_id}/diagnostics").status_code == 404
+        activity = client.get("/api/jarvis/activity")
+        assert activity.status_code == 200
+        assert activity.json() == {"count": 0, "events": []}
+    finally:
+        backend.app.dependency_overrides.clear()
+
+    backend.app.dependency_overrides[backend.require_user] = lambda: "bad identity@example.com"
+    try:
+        for path in ("/api/jarvis/floor-workflow", "/api/jarvis/approvals"):
+            response = client.get(path)
+            assert response.status_code == 401
+            assert response.json()["detail"]["code"] == "AUTHENTICATED_IDENTITY_INVALID"
+    finally:
+        backend.app.dependency_overrides.clear()
+
+
+def test_real_login_cookie_preserves_email_subject_for_scope_endpoints(tmp_path, monkeypatch):
+    service, _calls = _service(tmp_path, monkeypatch)
+    monkeypatch.setattr(backend, "JARVIS_SERVICE", service)
+    email = "production.owner+nexus@example.com"
+    monkeypatch.setattr(backend, "ADMIN_USER", email)
+    client = TestClient(backend.app)
+    login = client.post("/api/auth/login", json={
+        "email": email, "password": backend.ADMIN_PASSWORD,
+    })
+    assert login.status_code == 200
+    assert client.get("/api/jarvis/floor-workflow").status_code == 200
+    assert client.get("/api/jarvis/approvals").status_code == 200
 
 
 def test_service_registers_the_workflow_handler(tmp_path, monkeypatch):
