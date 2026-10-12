@@ -57,7 +57,10 @@ enum ENUM_NXS_GATE_REASON {
    GATE_OPENED,
    // estensioni dichiarate (gate reali senza bucket canonico corrispondente):
    GATE_LICENSE,
-   GATE_STATE_UNCERTAIN
+   GATE_STATE_UNCERTAIN,
+   // NEXUS-ACCT-001: conto non DEMO senza autorizzazione LIVE (in coda: i
+   // valori numerici precedenti restano invariati).
+   GATE_ACCOUNT_MODE
 };
 
 string NXS_GateReasonName(ENUM_NXS_GATE_REASON g){
@@ -82,6 +85,7 @@ string NXS_GateReasonName(ENUM_NXS_GATE_REASON g){
       case GATE_OPENED:            return "OPENED";
       case GATE_LICENSE:           return "LICENSE";
       case GATE_STATE_UNCERTAIN:   return "STATE_UNCERTAIN";
+      case GATE_ACCOUNT_MODE:      return "ACCOUNT_MODE";
       default:                     return "UNKNOWN";
    }
 }
@@ -269,6 +273,7 @@ ENUM_NXS_GATE_REASON NXS_GateReasonFromFailure(const string r){
    if(StringFind(r, "state_restore_failed") >= 0)  return GATE_STATE_UNCERTAIN;
    if(StringFind(r, "indicators_degraded") >= 0)   return GATE_STATE_UNCERTAIN;
    if(StringFind(r, "vsl_persist_unhealthy") >= 0) return GATE_STATE_UNCERTAIN;
+   if(StringFind(r, "account_mode")      >= 0)     return GATE_ACCOUNT_MODE;
    if(StringFind(r, "license")           >= 0)     return GATE_LICENSE;
    if(StringFind(r, "regime_veto")       >= 0)     return GATE_PROTECTIONS;
    if(StringFind(r, "invalid_sl_distance") >= 0)   return GATE_INVALID_STOPS;

@@ -169,6 +169,18 @@ void NXS_WebPush(SNXSHTF &htf, SNXSVel &vel, SNXSAMD &amd, SNXSSweep &sw){
    body += "\"magic\":"        + (string)InpMagic + ",";
    body += "\"symbol\":\""     + g_sym + "\",";
    body += "\"online\":true,";
+   // NEXUS-ACCT-001: identita' del conto su cui gira l'EA. Senza questi campi
+   // il backend non poteva sapere se l'istanza tradava su DEMO o su LIVE.
+   {
+      string acctWhy;
+      bool acctOK = NXS_AccountGuard_EntryAllowed(acctWhy);
+      body += "\"accountLogin\":"    + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + ",";
+      body += "\"accountServer\":\""  + _JsonEsc(AccountInfoString(ACCOUNT_SERVER)) + "\",";
+      body += "\"accountTradeMode\":\"" + NXS_AccountModeName() + "\",";
+      body += "\"liveTradingArmed\":" + (NXS_AccountGuard_LiveArmed() ? "true" : "false") + ",";
+      body += "\"accountEntriesAllowed\":" + (acctOK ? "true" : "false") + ",";
+      body += "\"environment\":\""    + _JsonEsc(InpEnvironment) + "\",";
+   }
    body += "\"balance\":"      + _D2(balance)  + ",";
    body += "\"equity\":"       + _D2(equity)   + ",";
    body += "\"floatPnL\":"     + _D2(floatPnL) + ",";

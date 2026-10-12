@@ -804,6 +804,13 @@ input double   InpVSL_MaxOfflineRiskMult = 2.0;  // tetto del rischio offline (x
 // controllo (solo per installazioni a ambiente unico).
 input string   InpEnvironment      = "";     // DEVELOPMENT|SIMULATION|DEMO|PAPER|LIVE
 
+// NEXUS-ACCT-001: autorizzazione LIVE separata e spenta. Su un conto REAL o
+// CONTEST l'EA non apre nulla finche' entrambi i campi non sono impostati e il
+// login coincide con quello del terminale (vedi NXS_AccountGuard.mqh). Su DEMO
+// e in Strategy Tester questi campi non hanno effetto.
+input bool     InpLiveTradingAuthorized = false;  // LIVE: OFF. Non attivare senza approvazione
+input long     InpLiveAccountLogin      = 0;      // LIVE: login del conto autorizzato (0 = nessuno)
+
 // input group "=== CONFLUENCE + COOLDOWN (Phase 3) ==="
 bool     InpUseConfluence    = true;
 int      InpConfluenceBonus2 = 10;
