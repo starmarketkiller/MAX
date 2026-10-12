@@ -295,20 +295,169 @@ void NXS_Prot_CheckESL(){
 // drawdown che si e' accumulato su piu' giorni - il buco che la nota
 // vault "FVG_CONT Prop-Compliant" (07-09) aveva descritto senza ancora
 // costruire la soluzione.
+bool NXS_Prot_IsAmbiguousCapitalFlowType(ENUM_DEAL_TYPE dealType){
+   return (dealType == DEAL_TYPE_CREDIT || dealType == DEAL_TYPE_BONUS ||
+           dealType == DEAL_TYPE_CORRECTION);
+}
+
+bool NXS_Prot_IsAfterFlowCursor(long dealMsc, ulong ticket){
+   return (dealMsc > g_maxDDFlowCursorMsc ||
+           (dealMsc == g_maxDDFlowCursorMsc && ticket > g_maxDDFlowCursorTicket));
+}
+
+void NXS_Prot_AdvanceFlowCursor(long dealMsc, ulong ticket){
+   if(NXS_Prot_IsAfterFlowCursor(dealMsc, ticket)){
+      g_maxDDFlowCursorMsc = dealMsc;
+      g_maxDDFlowCursorTicket = ticket;
+   }
+}
+
+bool NXS_Prot_AccountCapitalFlowValues(ulong ticket, long dealMsc,
+                                      ENUM_DEAL_TYPE dealType, double dealProfit){
+   if(!NXS_Prot_IsAfterFlowCursor(dealMsc, ticket)) return true;
+   if(dealType == DEAL_TYPE_BALANCE){
+      g_maxDDNetCapitalFlow += dealProfit;
+      PrintFormat("[NEXUS PROT] verified capital flow ticket=%I64u amount=%.2f net=%.2f",
+                  ticket, dealProfit, g_maxDDNetCapitalFlow);
+   } else if(NXS_Prot_IsAmbiguousCapitalFlowType(dealType)){
+      g_maxDDRecoveryRequired = true;
+      g_maxDDRecoveryReason = StringFormat("UNVERIFIED_CAPITAL_FLOW_TYPE_%d_TICKET_%I64u",
+                                           (int)dealType, ticket);
+      PrintFormat("[NEXUS PROT][ALERT] %s - new exposure blocked", g_maxDDRecoveryReason);
+   }
+   NXS_Prot_AdvanceFlowCursor(dealMsc, ticket);
+   return true;
+}
+
+bool NXS_Prot_AccountCapitalFlowDeal(ulong ticket){
+   if(ticket == 0 || !HistoryDealSelect(ticket)) return false;
+   return NXS_Prot_AccountCapitalFlowValues(
+      ticket,
+      (long)HistoryDealGetInteger(ticket, DEAL_TIME_MSC),
+      (ENUM_DEAL_TYPE)HistoryDealGetInteger(ticket, DEAL_TYPE),
+      HistoryDealGetDouble(ticket, DEAL_PROFIT));
+}
+
+// Replays only records after the durable cursor. This catches deposits or
+// withdrawals that occurred while the terminal/EA was offline.
+bool NXS_Prot_ReconcileCapitalFlows(){
+   if(!InpUseMaxTotalDD) return true;
+   datetime from = (g_maxDDFlowCursorMsc > 0)
+                   ? (datetime)MathMax(0, g_maxDDFlowCursorMsc / 1000 - 1)
+                   : (datetime)0;
+   if(!HistorySelect(from, TimeCurrent())){
+      g_maxDDRecoveryRequired = true;
+      g_maxDDRecoveryReason = "CAPITAL_FLOW_HISTORY_UNAVAILABLE";
+      return false;
+   }
+   int total = HistoryDealsTotal();
+   ulong tickets[]; long times[]; int types[]; double profits[];
+   int candidateCount = 0;
+   for(int i=0; i<total; i++){
+      ulong ticket = HistoryDealGetTicket(i);
+      if(ticket == 0) continue;
+      long dealMsc = (long)HistoryDealGetInteger(ticket, DEAL_TIME_MSC);
+      if(!NXS_Prot_IsAfterFlowCursor(dealMsc, ticket)) continue;
+      ArrayResize(tickets, candidateCount + 1);
+      ArrayResize(times, candidateCount + 1);
+      ArrayResize(types, candidateCount + 1);
+      ArrayResize(profits, candidateCount + 1);
+      tickets[candidateCount] = ticket;
+      times[candidateCount] = dealMsc;
+      types[candidateCount] = (int)HistoryDealGetInteger(ticket, DEAL_TYPE);
+      profits[candidateCount] = HistoryDealGetDouble(ticket, DEAL_PROFIT);
+      candidateCount++;
+   }
+   // History order is not trusted. Sort the small post-cursor set by the
+   // durable (time_msc, ticket) key so simultaneous operations are replayed
+   // exactly once across restarts.
+   for(int i=0; i<candidateCount; i++){
+      int first = i;
+      for(int j=i+1; j<candidateCount; j++)
+         if(times[j] < times[first] ||
+            (times[j] == times[first] && tickets[j] < tickets[first])) first = j;
+      if(first != i){
+         ulong ut=tickets[i]; tickets[i]=tickets[first]; tickets[first]=ut;
+         long lt=times[i]; times[i]=times[first]; times[first]=lt;
+         int it=types[i]; types[i]=types[first]; types[first]=it;
+         double dt=profits[i]; profits[i]=profits[first]; profits[first]=dt;
+      }
+      NXS_Prot_AccountCapitalFlowValues(tickets[i], times[i],
+                                        (ENUM_DEAL_TYPE)types[i], profits[i]);
+   }
+   if(candidateCount > 0) NXS_State_Save(true);
+   return !g_maxDDRecoveryRequired;
+}
+
+void NXS_Prot_OnDeal(ulong ticket){
+   if(!InpUseMaxTotalDD || ticket == 0) return;
+   if(NXS_Prot_AccountCapitalFlowDeal(ticket)) NXS_State_Save(true);
+}
+
+void NXS_Prot_AuthorizedMaxDDReset(){
+   double eq = AccountInfoDouble(ACCOUNT_EQUITY);
+   g_maxDDPeakEquity = eq;
+   g_maxDDNetCapitalFlow = 0.0;
+   g_maxDDHit = false;
+   g_maxDDRecoveryRequired = false;
+   g_maxDDRecoveryReason = "";
+   g_maxDDFlowCursorMsc = 0;
+   g_maxDDFlowCursorTicket = 0;
+   // Establish the reset epoch at the newest existing history record so old
+   // deposits/withdrawals cannot be counted again after reset.
+   if(HistorySelect(0, TimeCurrent())){
+      int total = HistoryDealsTotal();
+      for(int i=0; i<total; i++){
+         ulong ticket = HistoryDealGetTicket(i);
+         if(ticket == 0) continue;
+         long dealMsc = (long)HistoryDealGetInteger(ticket, DEAL_TIME_MSC);
+         NXS_Prot_AdvanceFlowCursor(dealMsc, ticket);
+      }
+   } else {
+      g_maxDDRecoveryRequired = true;
+      g_maxDDRecoveryReason = "RESET_HISTORY_UNAVAILABLE";
+   }
+   NXS_State_Save(true);
+}
+
+void NXS_Prot_ResumeMaxDDFlatten(){
+   if(!InpUseMaxTotalDD || !g_maxDDHit) return;
+   if(NXS_Prot_OpenNexusCount() <= 0) return;
+   // A persisted latch with surviving exposure means a previous flatten was
+   // incomplete or the terminal stopped mid-protection. Resume closure; do
+   // not wait for a fresh threshold calculation that will short-circuit on
+   // the already-set latch.
+   g_pausedUntilNextOpen = true;
+   NXS_Prot_FlattenAll(NXS_R_DD, "TOTAL_DD_RESTART_RECOVERY");
+   NXS_State_Save(true);
+}
+
 void NXS_Prot_CheckMaxTotalDD(){
    if(!InpUseMaxTotalDD) return;
+   if(g_maxDDRecoveryRequired) return;
    double eq = AccountInfoDouble(ACCOUNT_EQUITY);
-   if(eq > g_maxDDPeakEquity) g_maxDDPeakEquity = eq;
+   double adjustedEq = eq - g_maxDDNetCapitalFlow;
+   if(adjustedEq <= 0.0){
+      g_maxDDRecoveryRequired = true;
+      g_maxDDRecoveryReason = "NON_POSITIVE_ADJUSTED_EQUITY";
+      NXS_State_Save(true);
+      return;
+   }
+   if(adjustedEq > g_maxDDPeakEquity) g_maxDDPeakEquity = adjustedEq;
    if(g_maxDDHit) return;               // gia' scattato: resta bloccato finche' non resettato a mano
    if(g_maxDDPeakEquity <= 0.0) return;
-   double ddPct = (g_maxDDPeakEquity - eq) / g_maxDDPeakEquity * 100.0;
+   double ddPct = (g_maxDDPeakEquity - adjustedEq) / g_maxDDPeakEquity * 100.0;
    if(ddPct >= InpMaxTotalDDPct){
       g_maxDDHit = true;
       g_pausedUntilNextOpen = true;
       bool flat = NXS_Prot_FlattenAll(NXS_R_DD, "TOTAL_DD");
-      PrintFormat("[NEXUS PROT] MAX_TOTAL_DD HIT: equity=%.2f picco=%.2f dd=%.2f%%>=%.2f%%. "
+      // Persist after flatten so an incomplete close cannot be forgotten by
+      // a crash in the protection path.
+      NXS_State_Save(true);
+      PrintFormat("[NEXUS PROT] MAX_TOTAL_DD HIT: equity=%.2f adjusted=%.2f picco=%.2f dd=%.2f%%>=%.2f%%. "
                   "Flat=%s. Bloccato fino a reset manuale (dashboard: reset_protections).",
-                  eq, g_maxDDPeakEquity, ddPct, InpMaxTotalDDPct, (flat ? "SI" : "NO - retry in corso"));
+                  eq, adjustedEq, g_maxDDPeakEquity, ddPct, InpMaxTotalDDPct,
+                  (flat ? "SI" : "NO - retry in corso"));
    }
 }
 
@@ -526,7 +675,8 @@ bool NXS_Prot_EntryBlocked(){
    // sicurezza, non un filtro di ricerca.
    if(g_flattenPending) return true;
    if(MQLInfoInteger(MQL_TESTER) && !InpTesterProtectionParity) return false;
-   return g_pausedUntilNextOpen || g_eslHit || g_dptHit || g_autoClosePending;
+   return g_pausedUntilNextOpen || g_eslHit || g_dptHit || g_autoClosePending ||
+          g_maxDDHit || g_maxDDRecoveryRequired;
 }
 
 // ===================================================================

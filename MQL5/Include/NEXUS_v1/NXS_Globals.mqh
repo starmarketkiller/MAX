@@ -168,6 +168,11 @@ bool     g_dptHit              = false;
 // "reset_protections" (intervento umano esplicito).
 double   g_maxDDPeakEquity     = 0.0;
 bool     g_maxDDHit            = false;
+double   g_maxDDNetCapitalFlow = 0.0;
+long     g_maxDDFlowCursorMsc  = 0;
+ulong    g_maxDDFlowCursorTicket = 0;
+bool     g_maxDDRecoveryRequired = false;
+string   g_maxDDRecoveryReason = "";
 // AUD0-PROT-003 — il nome dice "in pausa fino alla prossima apertura", ma il
 // comportamento e' piu' forte: quando e' attivo NXS_Prot_OnTick esce PRIMA di
 // ogni altro controllo (max-hold, perdita per posizione, ESL, DPT, auto-close),
