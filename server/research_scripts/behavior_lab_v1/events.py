@@ -202,7 +202,12 @@ def run_family(h4, m15, params, split_start, split_end, controls=True):
                         "pullback_extreme": min(lows) if d == 1 else max(highs)}
                 control_rows.append(_trade(m15, starts, h4, atr, ctrl, params, split_end,
                                            kind="CONTROL"))
-    return {"n_h4_bars_in_split": sum(1 for b in h4 if split_start <= b["end"] <= split_end),
+    in_split = lambda t: split_start <= t <= split_end  # noqa: E731  (same bounds as the bar count)
+    return {"n_h4_bars_in_split": sum(1 for b in h4 if in_split(b["end"])),
+            # Warmup bars only feed ATR and lookback: their detections must not count
+            # against the split's bars in the firing-rate health check.
+            "impulses_in_split": [e for e in impulses if in_split(h4[e["i"]]["end"])],
+            "pullbacks_in_split": [p for p in pullbacks if in_split(p["known_at"])],
             "impulses": impulses, "pullbacks": pullbacks, "events": rows, "controls": control_rows}
 
 
