@@ -117,7 +117,7 @@ def funnel(rows):
 def detector_health(result):
     n = result["n_h4_bars_in_split"]
     return {
-        "IMPULSE": build_detector_health("H4_IMPULSE", n, [e["i"] for e in result["impulses"]]),
+        "IMPULSE": build_detector_health("H4_IMPULSE", n, [e["i"] for e in result["impulses_in_split"]]),
         "PULLBACK": build_detector_health("H4_PULLBACK_AFTER_IMPULSE", n,
-                                          [p["pullback_j"] for p in result["pullbacks"]]),
+                                          [p["pullback_j"] for p in result["pullbacks_in_split"]]),
     }
