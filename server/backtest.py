@@ -192,7 +192,16 @@ _YF_INTERVAL = {
     "4h": ("1h", "2y"),  "1h": ("1h", "2y"),
     "30m": ("30m", "60d"), "15m": ("15m", "60d"), "5m": ("5m", "60d"),
 }
+SUPPORTED_TIMEFRAMES = frozenset(_YF_INTERVAL)
+_EXECUTION_TIMEFRAME_ALIASES = {
+    "m5": "5m", "m15": "15m", "m30": "30m",
+    "h1": "1h", "h4": "4h", "d1": "1d", "w1": "1wk",
+}
 _REAL_BARS_CAP = 2500  # tieni le ultime N barre (equilibrio realismo/velocità)
+
+
+class DataSourceUnavailableError(RuntimeError):
+    """Raised when a scientific run forbids synthetic data fallback."""
 
 
 def _resample_4h(candles):
@@ -340,7 +349,8 @@ def _fetch_dukascopy(symbol: str, interval: str, bars: int = _REAL_BARS_CAP):
     return candles[-cap:]
 
 
-def _fetch_real(symbol: str, interval: str = "1d", bars: int = 800):
+def _fetch_real(symbol: str, interval: str = "1d", bars: int = 800,
+                allow_synthetic_fallback: bool = True):
     """Dati OHLC reali: prima Dukascopy locale (se presente), poi Yahoo
     (riusa sweep.fetch_yahoo, che passa dal proxy), poi get_ohlc/sintetico.
     Converte {t,o,h,l,c} -> {time,open,high,low,close}.
@@ -374,6 +384,10 @@ def _fetch_real(symbol: str, interval: str = "1d", bars: int = 800):
         return out, src
     except Exception as e:
         print(f"[backtest] real fetch fallita {symbol}/{interval}: {str(e)[:80]}")
+        if not allow_synthetic_fallback:
+            raise DataSourceUnavailableError(
+                f"real data unavailable for {symbol}/{interval}"
+            ) from e
         return get_ohlc(symbol, bars)
 
 
@@ -4695,7 +4709,10 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  grid_regime_filter=True, max_per_dir=None, adx_min=None,
                  direction_lock=None, htf_factor=None, htf_fresh_bars=None,
                  track_floating_dd=False, regime_filter=None, master_bias=None,
-                trailing_activate_atr=0.0, htf_native_ema=False, breakout_acc_cooldown=False):
+                trailing_activate_atr=0.0, htf_native_ema=False, breakout_acc_cooldown=False,
+                strict_execution_contract=False, execution_model_id="PY_BACKTEST_LEGACY_V1",
+                experiment_id=None, dataset_fingerprint=None,
+                indicator_implementation_version=None):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -4831,7 +4848,31 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # reale (NXS_DefaultSLTP e' gia' keyed by stratName in MQL5). Strategia
     # assente dal dict o strategy_profiles=None -> usa i parametri globali
     # (comportamento invariato).
-    candles, src = _fetch_real(symbol, timeframe, bars)
+    raw_tf = str(timeframe).lower()
+    normalized_tf = _EXECUTION_TIMEFRAME_ALIASES.get(raw_tf, raw_tf)
+    if strict_execution_contract and normalized_tf not in SUPPORTED_TIMEFRAMES:
+        raise ValueError(f"unsupported timeframe: {timeframe}")
+    if strict_execution_contract:
+        missing_contract = [name for name, value in (
+            ("experiment_id", experiment_id),
+            ("dataset_fingerprint", dataset_fingerprint),
+            ("indicator_implementation_version", indicator_implementation_version),
+        ) if not value]
+        if missing_contract:
+            raise ValueError(
+                "missing scientific execution contract fields: " + ", ".join(missing_contract)
+            )
+        if len(str(dataset_fingerprint)) != 64 or any(
+                char not in "0123456789abcdef" for char in str(dataset_fingerprint).lower()):
+            raise ValueError("dataset_fingerprint must be a 64-character SHA-256 hex digest")
+    if strict_execution_contract:
+        candles, src = _fetch_real(
+            symbol, normalized_tf, bars, allow_synthetic_fallback=False
+        )
+    else:
+        # Keep the historical three-argument call shape so existing fixtures
+        # and consumers remain byte-for-byte compatible.
+        candles, src = _fetch_real(symbol, timeframe, bars)
     # 04/08 - bar_range: (start_frac, end_frac) su [0,1], per isolare una
     # finestra temporale CONTIGUA della stessa serie (es. (0.0,0.6)=prime 60%
     # "in-sample", (0.6,1.0)=ultime 40% "out-of-sample", MAI viste durante
@@ -5053,6 +5094,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     curve = [{"i": 0, "equity": round(equity, 2),
               "ts": str(candles[0]["time"]), "close": candles[0]["close"]}]
     trades = []
+    cost_cap_occurrences = 0
     pos = None  # {dir, entry, sl, tp, open_i, risk_money, strat, risk_dist}
     last_close_i = -10 ** 9   # per il cooldown
     last_loss_i = -10 ** 9    # per il loss_cooldown_bars (solo perdite vere)
@@ -5234,6 +5276,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                         # mai violata, anche sotto cap).
                         raw_cost_r = spread_r + commission_r + slip_r
                         cost_r = min(raw_cost_r, MAX_COST_R_PER_TRADE)
+                        if raw_cost_r > MAX_COST_R_PER_TRADE:
+                            cost_cap_occurrences += 1
                         cap_scale = (cost_r / raw_cost_r) if raw_cost_r > 0 else 1.0
                         r_mult_net = r_mult - cost_r
                         total_pnl += r_mult_net * leg["risk_money"]
@@ -5389,6 +5433,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                                 slip_r += slippage_price / rd
                         raw_cost_r = spread_r + commission_r + slip_r
                         cost_r = min(raw_cost_r, MAX_COST_R_PER_TRADE)
+                        if raw_cost_r > MAX_COST_R_PER_TRADE:
+                            cost_cap_occurrences += 1
                         cap_scale = (cost_r / raw_cost_r) if raw_cost_r > 0 else 1.0
                         r_mult_net = r_mult - cost_r
                         total_pnl += r_mult_net * leg["risk_money"]
@@ -5438,6 +5484,29 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     res["bars"] = len(candles)
     if track_floating_dd:
         res["floating_max_dd_pct"] = round(floating_maxdd, 2)
+    if strict_execution_contract:
+        res["execution_contract"] = {
+            "schema_version": "RESEARCH_EXECUTION_MODEL_V1",
+            "experiment_id": experiment_id,
+            "engine_version": execution_model_id,
+            "dataset_fingerprint": str(dataset_fingerprint).lower(),
+            "fill_model": "SIGNAL_CLOSE_LEGACY",
+            "intrabar_policy": "MANAGEMENT_THEN_STOP_FIRST",
+            "data_source": src,
+            "timeframe_contract": normalized_tf,
+            "cost_model": {
+                "spread_price": spread_price,
+                "commission_r": commission_r,
+                "slippage_price": slippage_price,
+                "max_cost_r_per_trade": MAX_COST_R_PER_TRADE,
+            },
+            "cost_cap_occurrences": cost_cap_occurrences,
+            "execution_fidelity_class": "PYTHON_BAR_APPROXIMATION",
+            "indicator_implementation_version": indicator_implementation_version,
+            "legacy_compatibility": True,
+            "warnings": (["ZERO_COST_SIMULATION"]
+                         if not any((spread_price, commission_r, slippage_price)) else []),
+        }
     return res
 
 

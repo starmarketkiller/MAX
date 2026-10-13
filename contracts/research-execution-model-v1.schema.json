@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.local/contracts/research-execution-model-v1.schema.json",
+  "title": "RESEARCH_EXECUTION_MODEL_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "engine_version",
+    "dataset_fingerprint",
+    "data_source",
+    "timeframe_contract",
+    "fill_model",
+    "intrabar_policy",
+    "cost_model",
+    "cost_cap_occurrences",
+    "execution_fidelity_class",
+    "indicator_implementation_version"
+  ],
+  "properties": {
+    "schema_version": {"const": "RESEARCH_EXECUTION_MODEL_V1"},
+    "experiment_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "engine_version": {"type": "string", "minLength": 1},
+    "dataset_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "data_source": {"type": "string", "minLength": 1},
+    "timeframe_contract": {
+      "enum": ["5m", "15m", "30m", "1h", "4h", "1d", "1wk"]
+    },
+    "fill_model": {"enum": ["SIGNAL_CLOSE_LEGACY", "NEXT_OPEN_V1"]},
+    "intrabar_policy": {
+      "enum": ["MANAGEMENT_THEN_STOP_FIRST", "STOP_FIRST", "TARGET_FIRST", "AMBIGUOUS_REJECT"]
+    },
+    "cost_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spread_price", "commission_r", "slippage_price", "max_cost_r_per_trade"],
+      "properties": {
+        "spread_price": {"type": "number", "minimum": 0},
+        "commission_r": {"type": "number", "minimum": 0},
+        "slippage_price": {"type": "number", "minimum": 0},
+        "max_cost_r_per_trade": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "cost_cap_occurrences": {"type": "integer", "minimum": 0},
+    "execution_fidelity_class": {
+      "enum": ["PYTHON_BAR_APPROXIMATION", "MT5_STRATEGY_TESTER", "MT5_RUNTIME", "TRADINGVIEW_BAR_MODEL"]
+    },
+    "indicator_implementation_version": {"type": "string", "minLength": 1},
+    "legacy_compatibility": {"type": "boolean"},
+    "warnings": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+  }
+}
