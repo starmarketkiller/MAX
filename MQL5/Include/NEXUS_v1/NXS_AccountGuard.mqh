@@ -63,6 +63,23 @@ bool NXS_AccountGuard_EntryAllowed(string &reason){
    return true;
 }
 
+// DataCollection e' uno strumento diagnostico, non una modalita' operativa.
+// Anche un conto LIVE/CONTEST esplicitamente armato per il trading normale non
+// puo' usarlo: il lotto fisso e l'apertura di ogni segnale valido hanno una
+// semantica diversa dal router operativo.  Tester/optimization sono sandbox;
+// DEMO e' consentito ma resta soggetto a tutti i gate economici del percorso.
+bool NXS_AccountGuard_DataCollectionAllowed(string &reason){
+   reason = "";
+   string mode = NXS_AccountModeName();
+   if(mode == "TESTER" || mode == "DEMO") return true;
+   if(mode == "UNKNOWN"){
+      reason = "data_collection_account_unknown: tipo di conto non verificabile";
+      return false;
+   }
+   reason = "data_collection_non_demo_forbidden: modalita' diagnostica vietata su conto " + mode;
+   return false;
+}
+
 // Senza effetti collaterali: usato dalla telemetria verso il backend.
 bool NXS_AccountGuard_LiveArmed(){
    return InpLiveTradingAuthorized && InpLiveAccountLogin > 0

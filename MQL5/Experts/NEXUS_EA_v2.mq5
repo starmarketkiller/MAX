@@ -1347,6 +1347,20 @@ void OnTick(){
    // Journal quali hanno edge, senza escluderne nessuna a priori. Solo demo.
    if(InpDataCollectionMode){
       NXS_Context_Update(htf, sweep, amd);   // per taggare il contesto (tier HTF/LTF)
+      // DATA-COLLECTION-SAFETY-V1: questa modalita' diagnostica non e' mai
+      // autorizzata su REAL/CONTEST, nemmeno quando il normale live trading e'
+      // armato. UNKNOWN resta fail-closed. Non falliamo OnInit: gestione e
+      // chiusura di posizioni esistenti devono continuare a funzionare.
+      string dcAccountReason = "";
+      if(!NXS_AccountGuard_DataCollectionAllowed(dcAccountReason)){
+         for(int td = 0; td < n; td++){
+            if(all[td].dir == DIR_NONE) continue;
+            NXS_Trace_Blocked(all[td], (ENUM_TIMEFRAMES)InpTFEntry,
+                              GATE_ACCOUNT_MODE, dcAccountReason);
+         }
+         PrintFormat("[NEXUS DATA COLLECTION][BLOCKED] %s", dcAccountReason);
+         return;
+      }
       double dstep = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP); if(dstep <= 0) dstep = 0.01;
       double dminL = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);  if(dminL <= 0) dminL = 0.01;
       double dlots = MathMax(dminL, MathFloor(InpDataCollectionLot / dstep) * dstep);
@@ -1397,8 +1411,22 @@ void OnTick(){
                                           : SymbolInfoDouble(g_sym, SYMBOL_BID);
          double dsl = s.slPrice, dtp = s.tpPrice; string dpf = "";
          ENUM_ORDER_TYPE dot = (s.dir == DIR_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
-         if(!NXS_PreFlight(dot, dlots, refP, dsl, dtp, dpf)){            // sicurezza dura
-            NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, NXS_GateReasonFromFailure(dpf), dpf);
+         // I due gate sono complementari: NXS_CheckProtections copre limiti
+         // giornalieri/concorrenza/rischio aggregato; CommonExposurePreflight
+         // copre account, permanent DD/ruin, stato, RiskShield, esposizione,
+         // margine proiettato e broker preflight. Nel Tester l'unico opt-out
+         // resta quello ESPLICITO gia' versionato (InpTesterProtectionParity).
+         string dcProtReason = "";
+         if(!NXS_CheckProtections(dcProtReason)){
+            NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry,
+                              GATE_PROTECTIONS, "data_collection:" + dcProtReason);
+            continue;
+         }
+         ENUM_NXS_GATE_REASON dcGate = GATE_NONE;
+         if(!NXS_CommonExposurePreflight("DATA_COLLECTION:" + s.stratName,
+                                         s.stratName, s.dir, dlots, dot, refP,
+                                         dsl, dtp, dpf, dcGate)){
+            NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, dcGate, dpf);
             continue;
          }
          NXS_TradeSetMagic(InpMagic + MAGIC_CORE);

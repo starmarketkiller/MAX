@@ -72,7 +72,7 @@ def test_close_paths_do_not_call_the_account_gate():
 
 
 def test_every_opening_order_send_is_behind_the_account_gate():
-    """Backstop: PipSequence and Data Collection Mode skip the common preflight."""
+    """Final account backstop remains independent of route-level preflight."""
     globals_src = _src("NXS_Globals.mqh")
     assert "#include <NEXUS_v1\\NXS_AccountGuard.mqh>" in globals_src
     for name in ("NXS_DoBuy", "NXS_DoSell"):
