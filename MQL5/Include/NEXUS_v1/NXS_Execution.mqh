@@ -5,6 +5,10 @@
 #ifndef __NXS_EXECUTION_MQH__
 #define __NXS_EXECUTION_MQH__
 
+// NEXUS-ACCT-001: il gate sul tipo di conto vive nell'invariante di esposizione
+// qui sotto. Incluso da qui cosi' ogni EA che usa NXS_Execution lo riceve.
+#include <NEXUS_v1\NXS_AccountGuard.mqh>
+
 enum ENUM_NXS_OPEN_RC {
    OPEN_OK = 0,
    OPEN_FAIL_INVALID_STOPS,
@@ -71,6 +75,15 @@ bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR di
    bool licOK = NXS_License_Enforce();
    NXS_GateTelemetry(route, "LICENSE", licOK, 0, 0, licOK ? "" : "license_denied");
    if(!licOK){ reason = "license_denied"; gateOut = GATE_LICENSE; return false; }
+
+   // --- (1b) NEXUS-ACCT-001: tipo di conto ---------------------------------
+   // DEMO e Tester aprono; un conto REAL/CONTEST apre solo con autorizzazione
+   // LIVE esplicita legata al login. Sta qui, nell'unico invariante di
+   // esposizione, cosi' copre segnali primari, grid, pyramid, reclaim e add.
+   string acctWhy;
+   bool acctOK = NXS_AccountGuard_EntryAllowed(acctWhy);
+   NXS_GateTelemetry(route, "ACCOUNT_MODE", acctOK, 0, 0, acctOK ? "" : acctWhy);
+   if(!acctOK){ reason = acctWhy; gateOut = GATE_ACCOUNT_MODE; return false; }
 
    // --- (2) Kill switch di conto ------------------------------------------
    // AUD0-ADD-002: il freeze risk-of-ruin era verificato solo in NXS_OpenTrade,

@@ -52,6 +52,7 @@ import knowledge_browser
 import research_read_model
 import market_read_model
 import execution_read_model
+import ea_account_mode
 import library_read_model
 import sequence_research_read_model
 import company_control_plane
@@ -89,7 +90,9 @@ from executive_v1.priority import INTERACTIVE_GATE as EXECUTIVE_INTERACTIVE_GATE
 from jarvis_v1.ministral_chat import gateway_status as ministral_gateway_status
 from jarvis_v1.floor_workflow import project_trace
 from jarvis_v1.authenticated_scope import EndpointRateLimiter, resolve_authenticated_scope
-from jarvis_v1.task_authorization import authorize_task_decision, authorized_decision_records
+from jarvis_v1.task_authorization import (
+    authorize_task_access, authorized_decision_records,
+)
 from jarvis_v1.multi_stage_executor import MultiStageExecutor
 from orchestrator_v1.core.capability import load_registry as load_agent_capability_registry
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
@@ -1412,6 +1415,34 @@ def require_mutation(request: Request,
     return data["sub"]
 
 
+def resolve_request_scope(user: str):
+    """Map a verified session subject to Jarvis scope without leaking a 500.
+
+    Authentication has already verified the signed JWT.  Scope validation is
+    still fail-closed: malformed subjects receive a controlled 401 and never
+    acquire a default identity, owner or tenant.
+    """
+    try:
+        return resolve_authenticated_scope(user)
+    except PermissionError:
+        raise HTTPException(status_code=401, detail={
+            "code": "AUTHENTICATED_IDENTITY_INVALID",
+            "message": "La sessione autenticata contiene un'identità non valida.",
+        })
+
+
+def owned_jarvis_task_or_404(task_id: str, user: str):
+    """Return a task only when the verified session owns its tenant scope."""
+    scope = resolve_request_scope(user)
+    try:
+        record = JARVIS_SERVICE.queue.get(task_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="task not found")
+    if not authorize_task_access(JARVIS_SERVICE.queue, record, scope).allowed:
+        raise HTTPException(status_code=404, detail="task not found")
+    return record
+
+
 # --------------------------------------------------------------------------- #
 # App
 # --------------------------------------------------------------------------- #
@@ -1955,16 +1986,13 @@ async def jarvis_message(request: Request, user: str = Depends(require_mutation)
 
 @app.get("/api/jarvis/tasks/{task_id}")
 def jarvis_task(task_id: str, user: str = Depends(require_user)):
-    try:
-        return JARVIS_SERVICE.queue.get(task_id)
-    except KeyError:
-        raise HTTPException(status_code=404, detail="task not found")
+    return owned_jarvis_task_or_404(task_id, user)
 
 
 @app.get("/api/jarvis/floor-workflow")
 def jarvis_floor_workflow(task_id: str | None = None, user: str = Depends(require_user)):
     """Latest internal handoff trace. Steps only; no manifest or ledger dump."""
-    scope = resolve_authenticated_scope(user)
+    scope = resolve_request_scope(user)
     return project_trace(JARVIS_SERVICE.queue, JARVIS_SERVICE.ledger, task_id,
                          owner=scope.user_id, tenant_id=scope.tenant_id)
 
@@ -1974,7 +2002,7 @@ async def jarvis_floor_workflow_launch(
         request: Request, user: str = Depends(require_mutation),
         idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")):
     """Queue the one implemented Floor workflow; never execute in-request."""
-    scope = resolve_authenticated_scope(user)
+    scope = resolve_request_scope(user)
     if not FLOOR_WORKFLOW_LIMITER.allow(f"{scope.tenant_id}:{scope.user_id}"):
         raise HTTPException(status_code=429, detail={"code": "RATE_LIMITED"})
     if not idempotency_key or not re.fullmatch(r"[A-Za-z0-9_.:-]{8,128}", idempotency_key):
@@ -2020,10 +2048,7 @@ async def jarvis_floor_workflow_launch(
 @app.get("/api/jarvis/tasks/{task_id}/diagnostics")
 def jarvis_task_diagnostics(task_id: str, user: str = Depends(require_user)):
     """Sanitized canonical lifecycle; no message bodies, tokens or secrets."""
-    try:
-        record = JARVIS_SERVICE.queue.get(task_id)
-    except KeyError:
-        raise HTTPException(status_code=404, detail="task not found")
+    record = owned_jarvis_task_or_404(task_id, user)
     return {"task_id": task_id, **JARVIS_SERVICE._task_details(record, technical=True)}
 
 
@@ -2034,6 +2059,11 @@ def jarvis_task_resume_orphaned(task_id: str, user: str = Depends(require_mutati
     automatic resume at boot. Every safety precondition lives in
     Orchestrator.resume_orphaned_task(); this endpoint only authenticates
     and maps its fail-closed AssertionError to a 409."""
+    # Authorization must happen before the recovery service can mutate queue
+    # state or append recovery events.  The shared helper resolves the signed
+    # session scope server-side and deliberately returns the same 404 for a
+    # missing task and for an owner/tenant mismatch.
+    owned_jarvis_task_or_404(task_id, user)
     try:
         record = JARVIS_SERVICE.orchestrator.resume_orphaned_task(task_id, requested_by=user)
     except KeyError:
@@ -2046,7 +2076,13 @@ def jarvis_task_resume_orphaned(task_id: str, user: str = Depends(require_mutati
 
 @app.get("/api/jarvis/activity")
 def jarvis_activity(limit: int = 100, user: str = Depends(require_user)):
-    events = JARVIS_SERVICE.ledger.read_all()
+    scope = resolve_request_scope(user)
+    allowed = {
+        record["task_id"] for record in JARVIS_SERVICE.queue.list_all()
+        if authorize_task_access(JARVIS_SERVICE.queue, record, scope).allowed
+    }
+    events = [event for event in JARVIS_SERVICE.ledger.read_all()
+              if event.get("task_id") in allowed]
     return {"count": len(events), "events": events[-max(1, min(limit, 500)):]}
 
 
@@ -2318,7 +2354,7 @@ async def jarvis_local_bridge_failure(
 
 @app.get("/api/jarvis/approvals")
 def jarvis_approvals(user: str = Depends(require_user)):
-    scope = resolve_authenticated_scope(user)
+    scope = resolve_request_scope(user)
     items = authorized_decision_records(
         JARVIS_SERVICE.queue, JARVIS_SERVICE.queue.list_by_state("WAITING_APPROVAL"), scope)
     return {"count": len(items), "items": items}
@@ -2327,14 +2363,9 @@ def jarvis_approvals(user: str = Depends(require_user)):
 @app.post("/api/jarvis/approvals/{task_id}")
 async def jarvis_approval(task_id: str, request: Request,
                           user: str = Depends(require_mutation)):
-    try:
-        target = JARVIS_SERVICE.queue.get(task_id)
-    except KeyError:
-        raise HTTPException(status_code=404, detail="task not found")
-    scope = resolve_authenticated_scope(user)
-    if not authorize_task_decision(JARVIS_SERVICE.queue, target, scope).allowed:
-        # Do not disclose whether a cross-owner/cross-tenant task id exists.
-        raise HTTPException(status_code=404, detail="task not found")
+    # The service checks decision authority again so Telegram and HTTP share
+    # the same policy; this endpoint-level check prevents foreign-id reads.
+    owned_jarvis_task_or_404(task_id, user)
     body = await read_json_body(request)
     message = {"message_id": f"web:{secrets.token_hex(8)}", "user_id": user,
                "channel": "WEB", "conversation_id": f"approval:{task_id}",
@@ -2608,7 +2639,7 @@ async def ea_push(request: Request, x_nexus_token: Optional[str] = Header(None))
             "INSERT INTO ea_status_history(account_id,magic,symbol,balance,equity,"
             "floating_pl,daily_pl,drawdown_pct,margin_level,open_positions,paused,"
             "payload,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (_pick(data, "account_id", "accountId", "account") or 0, magic, symbol,
+            (_pick(data, "account_id", "accountId", "account", "accountLogin") or 0, magic, symbol,
              _pick(data, "balance"), _pick(data, "equity"),
              _pick(data, "floatPnL", "floating_pl"), _pick(data, "dailyPnL", "daily_pl"),
              _pick(data, "ddPct", "drawdown_pct"), _pick(data, "marginLevel", "margin_level"),
@@ -4867,7 +4898,9 @@ def ea_status_dash(user: str = Depends(require_user)):
     primary, rows = _primary_ea()
     if not primary:
         return {"online": False, "connected": False, "eas": [], "demo": False}
-    return {"online": bool(primary.get("_online")), "connected": True, "eas": rows, **primary}
+    # NEXUS-ACCT-001: conto dichiarato dall'EA (DEMO/LIVE), mai dedotto.
+    return {"online": bool(primary.get("_online")), "connected": True, "eas": rows, **primary,
+            "account": ea_account_mode.classify(primary)}
 
 
 def _profit_factor(limit=200):
@@ -4951,6 +4984,12 @@ def _compute_ea_health(primary):
         (f"PF {pf} su {pf_n} trade" if pf is not None else "dati insufficienti"))
     if pf is not None and pf < 0.8 and pf_n >= 10:
         anomaly.append({"code": "low_pf", "msg": f"Profit factor basso: {pf} su {pf_n} trade."})
+
+    # NEXUS-ACCT-001: un EA che dichiara LIVE armato va visto subito.
+    account = ea_account_mode.classify(primary)
+    if account["verdict"] == "LIVE_ARMED":
+        anomaly.append({"code": "live_armed",
+                        "msg": f"EA autorizzato a tradare sul conto LIVE {account['account_login']}."})
 
     scored = [c for c in checks if c["ok"] is not None]
     wsum = sum(c["weight"] for c in scored) or 1
