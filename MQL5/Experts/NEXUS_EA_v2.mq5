@@ -844,6 +844,12 @@ int OnInit(){
    // === Phase 1: state persistence resume ===
    NXS_Blk_Reset();
    NXS_State_Load();
+   // RRA-02 Max-DD: account for verified deposits/withdrawals that happened
+   // while the terminal was offline before any new exposure can be created.
+   if(InpUseMaxTotalDD && !NXS_Prot_ReconcileCapitalFlows())
+      PrintFormat("[NEXUS PROT][ALERT] capital-flow reconciliation failed: %s",
+                  g_maxDDRecoveryReason);
+   NXS_Prot_ResumeMaxDDFlatten();
 
    // Diagnostics
    NXS_Diag_OnInit();
@@ -1838,6 +1844,10 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
    // v2.0.9 Sprint 3 — event-driven fill capture (replaces polling)
    NXS_EA_OnTradeTx(trans);
    if(trans.type != TRADE_TRANSACTION_DEAL_ADD) return;
+
+   // Capital-flow accounting is independent of NEXUS position ownership:
+   // deposits and withdrawals are account-level events.
+   NXS_Prot_OnDeal(trans.deal);
 
    // PR2 - Virtual SL: aggancio "dopo il fill reale". Filtra DEAL_ENTRY_IN
    // internamente, matcha l'intent pending per DEAL_ORDER e registra con

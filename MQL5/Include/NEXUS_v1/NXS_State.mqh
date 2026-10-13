@@ -5,7 +5,7 @@
 #define __NXS_STATE_MQH__
 
 #define NXS_STATE_MAGIC   0x4E585335
-#define NXS_STATE_SCHEMA  5   // 12/08 — v5: aggiunto il moltiplicatore streak per-strategia (NXS_StreakRisk.mqh)
+#define NXS_STATE_SCHEMA  7   // RRA-02: Max-DD state + durable reset command id
 #define NXS_STATE_MAX_POS 512
 
 struct SNXSManagedState {
@@ -249,6 +249,17 @@ bool _NXS_StateWrite(string fileName){
    _NXS_WInt(h, g_autoClosePending ? 1 : 0);
    _NXS_WInt(h, g_flattenPending ? 1 : 0);
    _NXS_WriteString(h, g_flattenReason);
+   // v7 — permanent Max Total DD state plus reset-command idempotency.
+   // omitting any of them would make restart a way to erase the high-water
+   // mark, the latch, or already-accounted capital flows.
+   _NXS_WDbl(h, g_maxDDPeakEquity);
+   _NXS_WInt(h, g_maxDDHit ? 1 : 0);
+   _NXS_WDbl(h, g_maxDDNetCapitalFlow);
+   _NXS_WLong(h, g_maxDDFlowCursorMsc);
+   _NXS_WLong(h, (long)g_maxDDFlowCursorTicket);
+   _NXS_WInt(h, g_maxDDRecoveryRequired ? 1 : 0);
+   _NXS_WriteString(h, g_maxDDRecoveryReason);
+   _NXS_WriteString(h, g_maxDDLastResetCommandId);
    _NXS_WInt(h, g_streakWins);
    _NXS_WInt(h, g_streakLosses);
    _NXS_WDbl(h, g_streakLotMult);
@@ -318,6 +329,14 @@ bool _NXS_StateRead(string fileName, bool apply){
    int autoClose     = _NXS_RInt(h);
    int flattenPend   = _NXS_RInt(h);
    string flattenRsn = _NXS_ReadString(h);
+   double maxDDPeak  = _NXS_RDbl(h);
+   int maxDDHit      = _NXS_RInt(h);
+   double maxDDFlow  = _NXS_RDbl(h);
+   long maxDDCursorMsc = _NXS_RLong(h);
+   ulong maxDDCursorTicket = (ulong)_NXS_RLong(h);
+   int maxDDRecovery = _NXS_RInt(h);
+   string maxDDRecoveryReason = _NXS_ReadString(h);
+   string maxDDLastResetCommandId = _NXS_ReadString(h);
    int streakW       = _NXS_RInt(h);
    int streakL       = _NXS_RInt(h);
    double streakMult = _NXS_RDbl(h);
@@ -386,6 +405,14 @@ bool _NXS_StateRead(string fileName, bool apply){
    g_autoClosePending   = (autoClose != 0);
    g_flattenPending     = (flattenPend != 0);
    g_flattenReason      = flattenRsn;
+   g_maxDDPeakEquity      = maxDDPeak;
+   g_maxDDHit             = (maxDDHit != 0);
+   g_maxDDNetCapitalFlow  = maxDDFlow;
+   g_maxDDFlowCursorMsc   = maxDDCursorMsc;
+   g_maxDDFlowCursorTicket= maxDDCursorTicket;
+   g_maxDDRecoveryRequired = (maxDDRecovery != 0);
+   g_maxDDRecoveryReason  = maxDDRecoveryReason;
+   g_maxDDLastResetCommandId = maxDDLastResetCommandId;
    g_streakWins         = streakW;
    g_streakLosses       = streakL;
    g_streakLotMult      = (streakMult > 0 ? streakMult : 1.0);
@@ -416,6 +443,9 @@ bool _NXS_StateRead(string fileName, bool apply){
    PrintFormat("[NEXUS STATE] schema=%d restored positions=%d saved=%s giorno=%s",
                ver, count, TimeToString((datetime)savedAt, TIME_DATE|TIME_SECONDS),
                (sameDay ? "stesso" : "nuovo"));
+   PrintFormat("[NEXUS STATE] MaxTotalDD restored peak=%.2f latch=%s recovery=%s reason=%s",
+               g_maxDDPeakEquity, (g_maxDDHit ? "true" : "false"),
+               (g_maxDDRecoveryRequired ? "true" : "false"), g_maxDDRecoveryReason);
    return true;
 }
 
@@ -444,16 +474,39 @@ void NXS_State_Save(bool force=false){
 }
 
 void NXS_State_Load(){
-   if(!_NXS_StatePersistEnabled()) return;
+   if(!_NXS_StatePersistEnabled()){
+      // Strategy Tester may intentionally disable persistence to keep runs
+      // isolated. Operational mode may not silently run Max-DD without its
+      // durable high-water mark.
+      if(InpUseMaxTotalDD && !MQLInfoInteger(MQL_TESTER)){
+         g_maxDDRecoveryRequired=true;
+         g_maxDDRecoveryReason="STATE_PERSISTENCE_DISABLED";
+         g_stateRestoreHealthy=false;
+      }
+      return;
+   }
    string main=_NXS_StateFile(), prev=_NXS_StatePrev();
-   if(!FileIsExist(main, FILE_COMMON)){ Print("[NEXUS STATE] no prior state - fresh start"); return; }
+   if(!FileIsExist(main, FILE_COMMON)){
+      Print("[NEXUS STATE] no prior state - fresh start");
+      if(InpUseMaxTotalDD && !MQLInfoInteger(MQL_TESTER)){
+         g_maxDDRecoveryRequired=true;
+         g_maxDDRecoveryReason="MAX_DD_SNAPSHOT_MISSING";
+         g_stateRestoreHealthy=false;
+      }
+      return;
+   }
    bool ok=_NXS_StateRead(main, true);
    if(!ok && FileIsExist(prev, FILE_COMMON)){
       Print("[NEXUS STATE] primary invalid, restoring previous snapshot");
       ok=_NXS_StateRead(prev, true);
    }
    g_stateRestoreHealthy=ok;
-   if(!ok){ Print("[NEXUS STATE] STATE_RESTORE_FAILED - new exposure blocked"); return; }
+   if(!ok){
+      g_maxDDRecoveryRequired=InpUseMaxTotalDD;
+      g_maxDDRecoveryReason="MAX_DD_SNAPSHOT_INVALID_OR_INCOMPATIBLE";
+      Print("[NEXUS STATE] STATE_RESTORE_FAILED - new exposure blocked");
+      return;
+   }
    NXS_State_ReconcileBroker();
 }
 
