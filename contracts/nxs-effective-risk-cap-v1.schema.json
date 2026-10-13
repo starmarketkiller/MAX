@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.local/contracts/nxs-effective-risk-cap-v1.schema.json",
+  "title": "NXS_EFFECTIVE_RISK_CAP_V1",
+  "description": "Design contract only. No policy values are approved by this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy_version", "route", "account_mode", "inputs", "result"],
+  "properties": {
+    "schema_version": {"const": "NXS_EFFECTIVE_RISK_CAP_V1"},
+    "policy_version": {"type": "string", "minLength": 1},
+    "route": {"type": "string", "minLength": 1},
+    "strategy_id": {"type": ["string", "null"]},
+    "account_mode": {"enum": ["TESTER", "DEMO", "LIVE", "CONTEST", "UNKNOWN"]},
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["balance", "equity", "final_lots", "stop_distance", "tick_size", "tick_value", "open_risk_pct"],
+      "properties": {
+        "balance": {"type": "number", "exclusiveMinimum": 0},
+        "equity": {"type": "number"},
+        "final_lots": {"type": "number", "exclusiveMinimum": 0},
+        "stop_distance": {"type": "number", "exclusiveMinimum": 0},
+        "tick_size": {"type": "number", "exclusiveMinimum": 0},
+        "tick_value": {"type": "number", "exclusiveMinimum": 0},
+        "open_risk_pct": {"type": "number", "minimum": 0}
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "effective_trade_risk_pct", "projected_aggregate_risk_pct", "reason_code", "audit_id"],
+      "properties": {
+        "decision": {"enum": ["ALLOW", "REJECT", "POLICY_NOT_APPROVED"]},
+        "effective_trade_risk_pct": {"type": ["number", "null"], "minimum": 0},
+        "projected_aggregate_risk_pct": {"type": ["number", "null"], "minimum": 0},
+        "reason_code": {"type": "string", "minLength": 1},
+        "audit_id": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
