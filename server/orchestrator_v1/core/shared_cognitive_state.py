@@ -187,6 +187,21 @@ class SharedCognitiveState:
         return self._transaction(apply, expected_revision=expected_revision,
                                  idempotency_key=idempotency_key)
 
+    def apply_work_graph_transaction(self, mutator, *, expected_revision: int | None = None,
+                                     idempotency_key: str | None = None) -> dict:
+        """Apply one atomic policy mutation to the existing work graph.
+
+        This is intentionally a storage primitive, not a second task queue.  The
+        Execution Control policy layer uses it to enforce transition and WIP
+        invariants under the same lock and durable replace as the canonical
+        ``SharedCognitiveState`` projection.
+        """
+        def apply(state):
+            mutator(state["work_graph"])
+
+        return self._transaction(apply, expected_revision=expected_revision,
+                                 idempotency_key=idempotency_key)
+
     def upsert_decision(self, decision: dict, *, expected_revision: int | None = None,
                         idempotency_key: str | None = None) -> dict:
         required = {"decision_id", "title", "status", "decision", "provenance"}

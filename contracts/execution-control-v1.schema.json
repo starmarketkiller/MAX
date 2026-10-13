@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/execution-control-v1.schema.json",
+  "title": "NEXUS_EXECUTION_CONTROL_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy", "items"],
+  "properties": {
+    "schema_version": {"const": "NEXUS_EXECUTION_CONTROL_V1"},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical_source", "runtime_source", "history_source", "implementation_wip_limit", "github_sync"],
+      "properties": {
+        "canonical_source": {"const": "NEXUS_SHARED_COGNITIVE_STATE_V1.work_graph"},
+        "runtime_source": {"const": "TASK_QUEUE_V1"},
+        "history_source": {"const": "EVENT_LEDGER_V1"},
+        "implementation_wip_limit": {"type": "integer", "const": 2},
+        "github_sync": {"enum": ["DISABLED_NOT_AUTHORIZED", "READ_ONLY"]}
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/item"}
+    }
+  },
+  "definitions": {
+    "provenance": {
+      "type": "object",
+      "required": ["source", "confidence"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "reference": {"type": ["string", "null"]},
+        "confidence": {"enum": ["VERIFIED", "DECLARED"]},
+        "observed_at": {"type": "string"}
+      }
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent_id", "role"],
+      "properties": {
+        "agent_id": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1}
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "required": ["code", "reason"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "requires_human": {"type": "boolean"}
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "title", "kind", "status", "owner", "completion_criteria", "dependencies", "blockers", "provenance"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9_-]+$"},
+        "title": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["MILESTONE", "IMPLEMENTATION", "RESEARCH", "AUDIT", "REVIEW", "OPERATIONS"]},
+        "status": {"enum": ["BACKLOG", "READY", "IN_PROGRESS", "BLOCKED", "REVIEW", "VERIFIED", "DELIVERED"]},
+        "owner": {"$ref": "#/definitions/owner"},
+        "completion_criteria": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "dependencies": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "blockers": {"type": "array", "items": {"$ref": "#/definitions/blocker"}},
+        "provenance": {"$ref": "#/definitions/provenance"},
+        "external_refs": {"type": "array", "items": {"type": "object"}},
+        "notes": {"type": "array", "items": {"type": "string"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "BLOCKED"}}},
+          "then": {"properties": {"blockers": {"minItems": 1}}}
+        }
+      ]
+    }
+  }
+}

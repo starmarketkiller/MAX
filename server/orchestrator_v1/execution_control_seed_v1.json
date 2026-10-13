@@ -1,0 +1,80 @@
+{
+  "schema_version": "NEXUS_EXECUTION_CONTROL_V1",
+  "policy": {
+    "canonical_source": "NEXUS_SHARED_COGNITIVE_STATE_V1.work_graph",
+    "runtime_source": "TASK_QUEUE_V1",
+    "history_source": "EVENT_LEDGER_V1",
+    "implementation_wip_limit": 2,
+    "github_sync": "DISABLED_NOT_AUTHORIZED"
+  },
+  "items": [
+    {
+      "id": "M1-EXECUTION-CONTROL-V1",
+      "title": "Single Execution Queue",
+      "kind": "IMPLEMENTATION",
+      "milestone_id": "M1",
+      "status": "IN_PROGRESS",
+      "owner": {"agent_id": "CODEX", "role": "IMPLEMENTER"},
+      "completion_criteria": [
+        "One canonical work graph reuses SharedCognitiveState, TaskQueue and EventLedger",
+        "WIP, transitions, dependencies and handoffs pass deterministic tests",
+        "A reviewable PR is open; no merge or deploy has occurred"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "external_refs": [{"kind": "GIT_BRANCH", "value": "feature/execution-control-v1"}],
+      "provenance": {"source": "USER_APPROVAL", "reference": "NEXUS_M1_2026-10-13", "confidence": "DECLARED"}
+    },
+    {
+      "id": "M2-MQL5-SAFETY-RUNTIME-VERIFICATION",
+      "title": "MQL5 Safety Runtime Verification",
+      "kind": "MILESTONE",
+      "milestone_id": "M2",
+      "status": "BACKLOG",
+      "owner": {"agent_id": "CODEX", "role": "PROPOSED_IMPLEMENTER"},
+      "completion_criteria": ["Runtime safety evidence is reviewed and accepted under a separately authorized milestone"],
+      "dependencies": ["M1-EXECUTION-CONTROL-V1"],
+      "blockers": [{"code": "NOT_AUTHORIZED", "reason": "Only M1 is authorized", "requires_human": true}],
+      "provenance": {"source": "USER_ROADMAP", "reference": "NEXUS_M1_2026-10-13", "confidence": "DECLARED"}
+    },
+    {
+      "id": "M3-CONTROLLED-PRODUCTION-ALIGNMENT",
+      "title": "Controlled Production Alignment",
+      "kind": "MILESTONE",
+      "milestone_id": "M3",
+      "status": "BACKLOG",
+      "owner": {"agent_id": "CODEX", "role": "PROPOSED_IMPLEMENTER"},
+      "completion_criteria": ["Production alignment is verified under separate human authorization"],
+      "dependencies": ["M2-MQL5-SAFETY-RUNTIME-VERIFICATION"],
+      "blockers": [{"code": "NOT_AUTHORIZED", "reason": "M2 and M3 are outside current scope", "requires_human": true}],
+      "provenance": {"source": "USER_ROADMAP", "reference": "NEXUS_M1_2026-10-13", "confidence": "DECLARED"}
+    },
+    {
+      "id": "SCALPER-BASELINE-DECISION-RESEARCH",
+      "title": "Scalper baseline research: Z_SCORE_BREAKOUT, BOLLINGER, EMA_PULLBACK",
+      "kind": "RESEARCH",
+      "status": "IN_PROGRESS",
+      "owner": {"agent_id": "SCALPER", "role": "ECONOMIC_RESEARCHER"},
+      "completion_criteria": [
+        "Original artifacts for the three declared baselines are transferred with provenance and SHA-256",
+        "Results remain research evidence and do not authorize economic promotion"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "notes": ["M1 does not execute or alter this approved external activity"],
+      "provenance": {"source": "USER_DECLARATION", "reference": "MARKET_OPPORTUNITY_CHECKPOINT_APPROVAL", "confidence": "DECLARED"}
+    },
+    {
+      "id": "CLAUDE-ACTIVE-WORK-RECONCILIATION",
+      "title": "Reconcile Claude current approved activity",
+      "kind": "AUDIT",
+      "status": "BLOCKED",
+      "owner": {"agent_id": "CLAUDE", "role": "SCIENTIFIC_REVIEWER"},
+      "completion_criteria": ["Exact current objective, artifact and closure criterion are supplied and recorded without changing scope"],
+      "dependencies": [],
+      "blockers": [{"code": "CURRENT_OBJECTIVE_NOT_MACHINE_DISCOVERABLE", "reason": "Repository evidence does not identify one current Claude assignment unambiguously", "requires_human": true}],
+      "notes": ["This control record does not interrupt or redefine Claude work already approved outside the repository"],
+      "provenance": {"source": "USER_DECLARATION", "reference": "NEXUS_M1_2026-10-13", "confidence": "DECLARED"}
+    }
+  ]
+}
