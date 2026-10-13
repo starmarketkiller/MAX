@@ -127,11 +127,14 @@ def test_current_exposure_path_census_keeps_known_exceptions_explicit():
         if needs_common:
             assert "NXS_CommonExposurePreflight(" in source, name
 
-    # Separate, pre-existing findings: this PR neither hides nor refactors
-    # DataCollection or the currently disabled NXR execution pipeline.
-    assert "NXS_CommonExposurePreflight(" not in _body(
-        _src(EA), "void OnTick()"
-    ).split("if(InpDataCollectionMode)", 1)[1].split("return;", 1)[0]
+    # DataCollection is now part of the reviewed economic-gate family. NXR is
+    # still the separate, disabled pre-existing finding.
+    data_collection = _body(_src(EA), "void OnTick()").split(
+        "if(InpDataCollectionMode)", 1
+    )[1].split("// === CORE ISTITUZIONALE", 1)[0]
+    assert "NXS_AccountGuard_DataCollectionAllowed(" in data_collection
+    assert "NXS_CheckProtections(" in data_collection
+    assert "NXS_CommonExposurePreflight(" in data_collection
     nxr = _src(INC / "NXS_ReusePerformancePack.mqh")
     assert "NXS_CommonExposurePreflight(" not in nxr
     assert re.search(r"InpNXR_Enable\s*=\s*false", nxr)
