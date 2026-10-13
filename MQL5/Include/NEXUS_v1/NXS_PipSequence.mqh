@@ -40,6 +40,34 @@ bool   g_pipSeqAwaitingReentry = false;
 int    g_pipSeqReentryDir = 0;
 double g_pipSeqReentrySLDist = 0;
 
+// Safety state for the one-shot re-entry decision.  A denial by either
+// account-wide protections or the common exposure invariant is terminal:
+// the request is cleared and is never retried on a later tick.  The state and
+// reason remain inspectable for diagnostics until a genuinely new SAR chain
+// arms another request (or the EA restarts, which also cannot resurrect it).
+enum ENUM_NXS_PIPSEQ_REENTRY_STATE {
+   PIPSEQ_REENTRY_IDLE = 0,
+   PIPSEQ_REENTRY_ARMED,
+   PIPSEQ_REENTRY_CANCELLED_PROTECTION,
+   PIPSEQ_REENTRY_CANCELLED_COMMON_GATE,
+   PIPSEQ_REENTRY_SENT,
+   PIPSEQ_REENTRY_SEND_FAILED
+};
+ENUM_NXS_PIPSEQ_REENTRY_STATE g_pipSeqReentryState = PIPSEQ_REENTRY_IDLE;
+string g_pipSeqReentryTerminalReason = "";
+ENUM_NXS_GATE_REASON g_pipSeqReentryTerminalGate = GATE_NONE;
+
+void _pipSeqFinishReentry(ENUM_NXS_PIPSEQ_REENTRY_STATE state,
+                          string reason,
+                          ENUM_NXS_GATE_REASON gate){
+   g_pipSeqReentryState = state;
+   g_pipSeqReentryTerminalReason = reason;
+   g_pipSeqReentryTerminalGate = gate;
+   g_pipSeqAwaitingReentry = false;
+   g_pipSeqReentryDir = 0;
+   g_pipSeqReentrySLDist = 0;
+}
+
 // 30/08 - stesso problema segnalato dall'utente per SLReclaim: senza un
 // limite, il loop di riapertura ricombatte la stessa direzione stantia
 // all'infinito se SAR ha semplicemente chiamato il verso sbagliato per un
@@ -119,6 +147,9 @@ void NXS_ManagePipSequence(){
             g_pipSeqReentrySLDist = 0;
          } else {
             g_pipSeqAwaitingReentry = true;
+            g_pipSeqReentryState = PIPSEQ_REENTRY_ARMED;
+            g_pipSeqReentryTerminalReason = "";
+            g_pipSeqReentryTerminalGate = GATE_NONE;
             PrintFormat("[NEXUS PIPSEQ] ticket=%I64u chiuso dopo il pareggio (pnl=%.2f, catena=%d/%d) - riapertura programmata dir=%d dist=%.2f",
                         t, closedPnl, g_pipSeqChainLosses, InpPipSeqMaxChain, g_pipSeqReentryDir, g_pipSeqReentrySLDist);
          }
@@ -141,19 +172,46 @@ void NXS_ManagePipSequence(){
          double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
          double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
          string cmt = InpComment + "|SAR|PIPSEQ_REENTRY|" + EnumToString(PERIOD_H4);
-         bool ok;
-         if(g_pipSeqReentryDir == 1){
-            double sl = NormPrice(ask - g_pipSeqReentrySLDist);
-            ok = NXS_SafeBuy(InpPipSeqLot, g_sym, sl, 0, cmt);
-         } else {
-            double sl = NormPrice(bid + g_pipSeqReentrySLDist);
-            ok = NXS_SafeSell(InpPipSeqLot, g_sym, sl, 0, cmt);
+         ENUM_NXS_DIR dir = (g_pipSeqReentryDir == 1) ? DIR_BUY : DIR_SELL;
+         ENUM_ORDER_TYPE otype = (g_pipSeqReentryDir == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
+         double price = (g_pipSeqReentryDir == 1) ? ask : bid;
+         double sl = (g_pipSeqReentryDir == 1)
+                     ? NormPrice(ask - g_pipSeqReentrySLDist)
+                     : NormPrice(bid + g_pipSeqReentrySLDist);
+         double tp = 0;
+         string protReason = "";
+         string pfReason = "";
+         ENUM_NXS_GATE_REASON pfGate = GATE_NONE;
+
+         // F1 / P0: PipSequence historically jumped directly to SafeBuy/Sell.
+         // The two gates are complementary, not substitutes: CheckProtections
+         // owns daily-DD/trade-count/aggregate-risk policy, while the common
+         // preflight owns Max-DD/ruin/state/RiskShield/exposure/projected-margin
+         // and the final account authorization.  A denial consumes this
+         // one-shot request by approved policy; no latent retry survives.
+         if(!NXS_CheckProtections(protReason)){
+            string terminal = "PIPSEQ_PROTECTION_DENIED:" + protReason;
+            PrintFormat("[NEXUS PIPSEQ] re-entry terminally cancelled code=PIPSEQ_PROTECTION_DENIED reason=%s", protReason);
+            _pipSeqFinishReentry(PIPSEQ_REENTRY_CANCELLED_PROTECTION, terminal, GATE_PROTECTIONS);
+            return;
          }
+         if(!NXS_CommonExposurePreflight("PIPSEQ_REENTRY", "SAR", dir, InpPipSeqLot,
+                                        otype, price, sl, tp, pfReason, pfGate)){
+            string terminal = "PIPSEQ_COMMON_GATE_DENIED:" + EnumToString(pfGate) + ":" + pfReason;
+            PrintFormat("[NEXUS PIPSEQ] re-entry terminally cancelled code=PIPSEQ_COMMON_GATE_DENIED gate=%s reason=%s",
+                        EnumToString(pfGate), pfReason);
+            _pipSeqFinishReentry(PIPSEQ_REENTRY_CANCELLED_COMMON_GATE, terminal, pfGate);
+            return;
+         }
+
+         bool ok = (g_pipSeqReentryDir == 1)
+                   ? NXS_SafeBuy(InpPipSeqLot, g_sym, sl, tp, cmt)
+                   : NXS_SafeSell(InpPipSeqLot, g_sym, sl, tp, cmt);
          PrintFormat("[NEXUS PIPSEQ] riapertura dir=%d lot=%.2f slDist=%.2f esito=%s",
                      g_pipSeqReentryDir, InpPipSeqLot, g_pipSeqReentrySLDist, (ok?"OK":"FALLITA"));
-         g_pipSeqAwaitingReentry = false;
-         g_pipSeqReentryDir = 0;
-         g_pipSeqReentrySLDist = 0;
+         _pipSeqFinishReentry(ok ? PIPSEQ_REENTRY_SENT : PIPSEQ_REENTRY_SEND_FAILED,
+                              ok ? "PIPSEQ_REENTRY_SENT" : "PIPSEQ_REENTRY_SEND_FAILED",
+                              GATE_NONE);
       }
    }
 
