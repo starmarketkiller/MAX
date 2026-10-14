@@ -21,7 +21,7 @@ import random
 import statistics
 import time
 
-from . import authorization, evaluation, ingest, lessons, planner, priority_queue, review
+from . import authorization, evaluation, id_resolver, ingest, lessons, planner, priority_queue, review
 from .agents import STEP_OWNER
 from .generator import register_candidates, selectivity_alternatives, spec_from_record
 from .hypotheses import FamilyBudget
@@ -244,12 +244,13 @@ class ResearchLoop:
             with open(path, encoding="utf-8") as handle:
                 summary = json.load(handle)
             exp_id = ingest.rid("EXP", summary.get("run_id", "BL-RUN"))
-            hyp = f"HYP-{summary.get('hypothesis_id')}"
+            hyp = id_resolver.resolve(self.memory, summary.get("hypothesis_id"))
             if self.memory.get(exp_id):
                 skipped.append({"report": path, "reason": f"already ingested as {exp_id}"})
                 continue
-            if not self.memory.get(hyp):
-                skipped.append({"report": path, "reason": f"{hyp} not in memory"})
+            if hyp is None:
+                skipped.append({"report": path, "reason": f"HYP-{summary.get('hypothesis_id')} not in memory "
+                                                          "and no valid manifest alias"})
                 continue
             placeholder = next((e["record_id"] for e in self.memory.of_type("EXPERIMENT")
                                 if e["body"]["hypothesis_id"] == summary.get("hypothesis_id")

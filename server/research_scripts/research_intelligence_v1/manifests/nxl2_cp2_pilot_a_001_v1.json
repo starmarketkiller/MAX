@@ -1,0 +1,159 @@
+{
+ "manifest_schema": "research-id-alias-manifest-v1",
+ "manifest_id": "NXL2-CP2-PILOT-A-001-v1",
+ "experiment_id": "NXL2-CP2-PILOT-A-001",
+ "authorization_id": "NXL2-CP2-A-20261014-01",
+ "canonical_source_note": "ResearchMemory (research_memory_v1.jsonl) remains the only canonical source of hypotheses. This manifest declares ID aliases and provenance only; it does not define, create or modify hypotheses.",
+ "project": "NEXUS",
+ "family": "NXL2-CP2-PILOT",
+ "package": {
+  "file": "NEXUS_lab_v2_CP2_prep.tar.gz",
+  "sha256": "e4dd83215d45df41d4ea9a0746d30bcf82c265955359a38055a1857568b820d7"
+ },
+ "frozen_file_hashes": {
+  "CP2_prep/docs/PROTOCOLLO_CP2_v1.md": "188ecfe9e0cbc5f4d9cb21283ef3ae1cabc8c0de932bfa81ad2f8d7eecc7dcd8",
+  "CP2_prep/fixtures/b3_reference_signals.json": "e319352e823768c02f97e884c35c5283c199dc68dbff8f844da818bbe1045072",
+  "CP2_prep/code/frozen_spec.json": "f230c6955403bc79382f9553528e132896bd684d5aae7393029f381bcde3644d",
+  "CP2_prep/code/gate_cp2.py": "ac0ef4ac64582cb0a68cde5ba524b397487d088083ce770f76ddb0f16b2b1687",
+  "CP2_prep/code/mql5_transcribed.py": "85583b5aa94e9931ba9d565783d9aad343aa05a5c00d60589a2ea6dcdba3db9d",
+  "CP2_prep/code/nxl2_event_study.py": "41550b3b3bba8f6f0b89f84b3b3d771261f9c7ff41ab1b4efc792ad55364f969",
+  "CP2_prep/code/pinned/backtest.py": "db74749d96544f7c90787454451cfbfae2f32d3f2cad352bcedd44b385e39ddc",
+  "CP2_prep/code/pinned/contracts/strategy-registry.json": "73918bd982ddff236335a4d47bc8d4ce61a46bc42f8f509d5e1f10107ec2fdc4",
+  "CP2_prep/code/pinned/path_resolver.py": "62835b1cd85cc069d913eb28a4ab86d6ca247525d64d29c2b04f0682f78401d6",
+  "CP2_prep/code/pinned/research_execution_model_v1.py": "fe9bba146aad8ca38773bee3c4f60d08ba52c4f43c7321cf5a9aeb9713d6bab5",
+  "CP2_prep/code/pinned/strategy_registry.py": "4d4c11be50978be5916e789c13cf2786c9329bb70c82f1f4a757590da1956349",
+  "CP2_prep/code/run_cp2.py": "1ef3c75740efd1a86d68b532e6db2fad4eaa9a3551ad6c1c11824cea2bbd8d36"
+ },
+ "seeds": {
+  "seed_base": 20261014,
+  "rng_rule": "numpy default_rng([seed_base, cell_index, event_bar_index])",
+  "bootstrap_seed": 20261014,
+  "source": "CP2_prep/code/frozen_spec.json"
+ },
+ "statistical_family": {
+  "primary": {
+   "name": "NXL2-CP2-PRIMARY",
+   "size": 12,
+   "method": "Benjamini-Yekutieli",
+   "q": 0.1
+  },
+  "secondary": {
+   "name": "NXL2-CP2-SECONDARY",
+   "size": 102,
+   "method": "Benjamini-Yekutieli",
+   "q": 0.1,
+   "uso": "SOLO descrittivo, nessuna decisione"
+  },
+  "cap": {
+   "cells": 24,
+   "comparisons": 216,
+   "used_cells": 12,
+   "used_comparisons": 114,
+   "reserve_note": "la riserva NON puo' essere usata retroattivamente su ipotesi scelte guardando i risultati"
+  }
+ },
+ "rm_reference": {
+  "branch": "prereg/nxl2-cp2-pilot-a-001",
+  "commit": "26668afe06dee9ae9916dcf8961175ca0bef23ef",
+  "checkpoint_count": 136,
+  "checkpoint_head": "3e0546d5afc0e7cc0f1d02372eda1e51f57e9cb8945622680e738ba48ca4046d"
+ },
+ "aliases": [
+  {
+   "alias": "NXL2-BOLLINGER-BUY-H4-ctxHTF1-A",
+   "record_id": "HYP-NXL2-BOLLINGER-BUY-H4-CTXHTF1-A",
+   "record_hash": "6e76e22126da5bb65146ae4c5c6ac148ba3b02018ad91d51ec19769d0b04b348",
+   "signature_sha256": "1e320c0074fb2b0b2dd4de5715151a8a295d8c51f051d4c8b7a120e629d25641",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-BOLLINGER-BUY-H4-ctxHTF1-A.json",
+   "draft_sha256": "c94c292aad73a418c98e70a8f894e25e0ec4ace503add678376086ce7a0deb49"
+  },
+  {
+   "alias": "NXL2-BOLLINGER-BUY-H4-ctxNONE-A",
+   "record_id": "HYP-NXL2-BOLLINGER-BUY-H4-CTXNONE-A",
+   "record_hash": "1c05034eab29810ebd8df207c9a69a1e9a5b651b5bb3a30806a8b6beca473762",
+   "signature_sha256": "aec47e226f69f2f01c15c52a287c986278810ddb63be1b59f1acd44ff1a6aacf",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-BOLLINGER-BUY-H4-ctxNONE-A.json",
+   "draft_sha256": "e7f87bd611bd425d6ad29d9d7d862d649dd440933724c6c18c4dcc4ce03060e3"
+  },
+  {
+   "alias": "NXL2-BOLLINGER-SELL-H4-ctxHTF1-A",
+   "record_id": "HYP-NXL2-BOLLINGER-SELL-H4-CTXHTF1-A",
+   "record_hash": "64d66e831e34430a3796b1ab2e97a600743040000099815af4381e986e86b1a9",
+   "signature_sha256": "548187ba2d0d3ea0bb156ee27bc989ce4e1c2966d344de5be38c516ec8fb0ca2",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-BOLLINGER-SELL-H4-ctxHTF1-A.json",
+   "draft_sha256": "28054af7758f53d32e9f91533ffd088f6efd0b4bb8c50fa8a8b8a8ae56f712d0"
+  },
+  {
+   "alias": "NXL2-BOLLINGER-SELL-H4-ctxNONE-A",
+   "record_id": "HYP-NXL2-BOLLINGER-SELL-H4-CTXNONE-A",
+   "record_hash": "136cb036d679c6665a1e5a515fbae9ef426f884a7a9986c8139757df42ee8065",
+   "signature_sha256": "ee93d3f1470785f9d5808040b266c3e327f1ff20d1796ab152a531c42ce2a16f",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-BOLLINGER-SELL-H4-ctxNONE-A.json",
+   "draft_sha256": "ac3e75b0a149de8bedf6707c2ce54db168cf31e2d38f732a017d964dbf06c93b"
+  },
+  {
+   "alias": "NXL2-EMA_PULLBACK-BUY-H4-ctxHTF1-A",
+   "record_id": "HYP-NXL2-EMA_PULLBACK-BUY-H4-CTXHTF1-A",
+   "record_hash": "5a5eb422660a7b5a8b1233e01bb1e3b8b3fea0d74cbd84106a43649b6a511990",
+   "signature_sha256": "6a57a94f074b0dab73a400431cb87da4f4b9f78fb41d9ceeba41b7c1fc5849ca",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-EMA_PULLBACK-BUY-H4-ctxHTF1-A.json",
+   "draft_sha256": "de73e9d271d8275affd816cdbb0234e93733fb95482bb5dad42af2c371f7d3fe"
+  },
+  {
+   "alias": "NXL2-EMA_PULLBACK-BUY-H4-ctxNONE-A",
+   "record_id": "HYP-NXL2-EMA_PULLBACK-BUY-H4-CTXNONE-A",
+   "record_hash": "1d3e4c571c46c9fed5811763f65ef7b79e748a5160713fe5659ffc0b3a2b8c00",
+   "signature_sha256": "fb9d6de6809f9688f6e805a6a5e1c3d49f46f261d9ae8618bcf50b33ea174422",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-EMA_PULLBACK-BUY-H4-ctxNONE-A.json",
+   "draft_sha256": "5c1371c67f970e9fac29b4f9b80d23a5983ab0401dbbf440085787774ce9c1f1"
+  },
+  {
+   "alias": "NXL2-EMA_PULLBACK-SELL-H4-ctxHTF1-A",
+   "record_id": "HYP-NXL2-EMA_PULLBACK-SELL-H4-CTXHTF1-A",
+   "record_hash": "fa74e0608a58ba6f7a84d1fe6a3bc462274b9c69112bb472a073d5e79df4e2cf",
+   "signature_sha256": "63982dc9898db790404604fbdb574984be63166bb733377a8c18fc6c1aa06db1",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-EMA_PULLBACK-SELL-H4-ctxHTF1-A.json",
+   "draft_sha256": "362d62bd911a43737ccefc499b0201efb78b80e616170c2afe1880822a78f65c"
+  },
+  {
+   "alias": "NXL2-EMA_PULLBACK-SELL-H4-ctxNONE-A",
+   "record_id": "HYP-NXL2-EMA_PULLBACK-SELL-H4-CTXNONE-A",
+   "record_hash": "da6cf9d2dc49f6db6da29d23f059fb62f7c6f4371dabcb38a39b212228bc9e1c",
+   "signature_sha256": "0f088a3655f36d6cc7f6209aaffbe32f39042feb011bc6f310e1fd2faca68e46",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-EMA_PULLBACK-SELL-H4-ctxNONE-A.json",
+   "draft_sha256": "cb2dc4ea50ddd3b4b3146a2cda5599d4cc18eeafe99acb2d69fdba8ceb3d34f3"
+  },
+  {
+   "alias": "NXL2-Z_SCORE_BREAKOUT-BUY-H1-ctxHTF1-A",
+   "record_id": "HYP-NXL2-Z_SCORE_BREAKOUT-BUY-H1-CTXHTF1-A",
+   "record_hash": "94c2cc5994337853b60bc66b7a797640687c2ffc043d334c75c69de28601f9a8",
+   "signature_sha256": "cfdf05fa3f6a98857bc98f742bad76a271fe8041285e0ffafd97ee59ff52097d",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-Z_SCORE_BREAKOUT-BUY-H1-ctxHTF1-A.json",
+   "draft_sha256": "ba80ca506152ef49512b27649407669d691e2325a6f67d1f40b1c23d7c62da79"
+  },
+  {
+   "alias": "NXL2-Z_SCORE_BREAKOUT-BUY-H1-ctxNONE-A",
+   "record_id": "HYP-NXL2-Z_SCORE_BREAKOUT-BUY-H1-CTXNONE-A",
+   "record_hash": "b27c9693692eba150df8b5538d4f58417e76f9a079709eaa86bf38d4b4fb3bd7",
+   "signature_sha256": "764495597621525c9d7a31b98d33ff3b4c4cf2115e9ca1a475857087772ddb4a",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-Z_SCORE_BREAKOUT-BUY-H1-ctxNONE-A.json",
+   "draft_sha256": "c50bc7a558cc52c3b9202aac90528445dd258e6dd59b589c7cd655d4b0c60ef4"
+  },
+  {
+   "alias": "NXL2-Z_SCORE_BREAKOUT-SELL-H1-ctxHTF1-A",
+   "record_id": "HYP-NXL2-Z_SCORE_BREAKOUT-SELL-H1-CTXHTF1-A",
+   "record_hash": "c5418d1d47f61dd87b3ce7dcdb9de6eaf34b2e9d5de78e82b0848ec1294efa09",
+   "signature_sha256": "e3c66298b681828d34349846d1b715e9963004ac9942fed456959fcd46357f27",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-Z_SCORE_BREAKOUT-SELL-H1-ctxHTF1-A.json",
+   "draft_sha256": "0e68ad6e459a64ce16517d436b007e5140b476d757d73df7599f11daec73c477"
+  },
+  {
+   "alias": "NXL2-Z_SCORE_BREAKOUT-SELL-H1-ctxNONE-A",
+   "record_id": "HYP-NXL2-Z_SCORE_BREAKOUT-SELL-H1-CTXNONE-A",
+   "record_hash": "3e0546d5afc0e7cc0f1d02372eda1e51f57e9cb8945622680e738ba48ca4046d",
+   "signature_sha256": "8858c74f5ea924c46f667db7b08c7f2d4658c67f88c1ea84dcba21c2cd9b6c6e",
+   "draft_file": "CP2_prep/drafts_researchmemory/NXL2-Z_SCORE_BREAKOUT-SELL-H1-ctxNONE-A.json",
+   "draft_sha256": "e6d614112a3d9f28208a28f4c4b7b399ae76e0ef35e9fcf5860faa54d02e49cd"
+  }
+ ]
+}
