@@ -120,6 +120,69 @@ def test_identical_duplicate_declaration_is_not_a_conflict(mem, cells):
     assert id_resolver.resolve(mem, HIDS[0], manifests=m) == cells[0]["record_id"]
 
 
+@pytest.mark.parametrize("field", ["record_id", "record_hash", "signature_sha256", "draft_sha256"])
+def test_discordant_duplicate_entry_field_rejected(mem, cells, field):
+    a, b = manifest_for(cells), manifest_for(cells)
+    other = {"record_id": cells[1]["record_id"]}.get(field, "9" * 64)
+    b["aliases"][0] = dict(b["aliases"][0], **{field: other})
+    for order in ([("a.json", a), ("b.json", b)], [("b.json", b), ("a.json", a)]):
+        table, conflicts = id_resolver.alias_table(order)
+        assert conflicts == [HIDS[0]] and HIDS[0] not in table
+        assert id_resolver.resolve(mem, HIDS[0], manifests=order) is None
+        assert id_resolver.resolve(mem, HIDS[2], manifests=order) == cells[2]["record_id"]
+
+
+@pytest.mark.parametrize("over", [{"package": {"sha256": "8" * 64}}, {"manifest_id": "SYN-v2"},
+                                  {"experiment_id": "OTHER-EXPERIMENT"}])
+def test_discordant_duplicate_manifest_field_rejected(mem, cells, over):
+    a, b = manifest_for(cells), manifest_for(cells, **over)
+    for order in ([("a.json", a), ("b.json", b)], [("b.json", b), ("a.json", a)]):
+        table, conflicts = id_resolver.alias_table(order)
+        assert conflicts == sorted(HIDS) and table == {}
+        assert all(id_resolver.resolve(mem, h, manifests=order) is None for h in HIDS)
+
+
+def test_result_independent_of_manifest_order(mem, cells):
+    a = manifest_for(cells)
+    b = manifest_for(cells)
+    b["aliases"][3] = dict(b["aliases"][3], record_hash="7" * 64)
+    c = manifest_for(cells)
+    perms = [[("a.json", a), ("b.json", b), ("c.json", c)], [("c.json", c), ("b.json", b), ("a.json", a)],
+             [("b.json", b), ("a.json", a), ("c.json", c)]]
+    results = [([id_resolver.resolve(mem, h, manifests=m) for h in HIDS], id_resolver.alias_table(m)[1])
+               for m in perms]
+    assert all(r == results[0] for r in results)
+    assert results[0][1] == [HIDS[3]] and results[0][0][3] is None and results[0][0][0] == cells[0]["record_id"]
+
+
+def test_exact_candidate_with_wrong_type_rejected_without_alias_fallback(mem, cells):
+    """The contract accepts a non-HYPOTHESIS record carrying a HYP- id; the resolver must not."""
+    pilot.seed(mem, created_at=T0)
+    obs_body = mem.get("OBS-BL-H4-SELECTIVITY-2019-2022")["body"]
+    mem.append("OBSERVATION", "HYP-SYN-WRONGTYPE", obs_body, author="synthetic", origin="HUMAN",
+               project="NEXUS", family="SYN-OTHER", created_at=T0)
+    hijack = {"manifest_schema": id_resolver.MANIFEST_SCHEMA, "aliases": [
+        {"alias": "SYN-WRONGTYPE", "record_id": cells[0]["record_id"]}]}
+    assert id_resolver.resolve(mem, "SYN-WRONGTYPE", manifests=[]) is None
+    assert id_resolver.resolve(mem, "SYN-WRONGTYPE", manifests=[("h.json", hijack)],
+                               validate_provenance=False) is None
+
+
+def test_exact_candidate_with_mismatched_hypothesis_id_rejected_without_alias_fallback(mem, cells):
+    body = dict(cells[0]["body"], hypothesis_id="SYN-SOMETHING-ELSE",
+                signature_sha256=None)
+    spec = dict(pilot.BL001_SPEC, event_family="SYNTH_MISMATCH")
+    body["signature"], body["signature_sha256"] = signature_of(spec)
+    mem.append("HYPOTHESIS", "HYP-SYN-MISMATCH", body, author="synthetic", origin="HUMAN", project="NEXUS",
+               family="SYN-OTHER", created_at=T0, provenance=[{"kind": "FILE", "ref": "x", "sha256": PKG}])
+    assert id_resolver.resolve(mem, "SYN-MISMATCH", manifests=[]) is None
+    hijack = {"manifest_schema": id_resolver.MANIFEST_SCHEMA, "aliases": [
+        {"alias": "SYN-MISMATCH", "record_id": cells[0]["record_id"]}]}
+    assert id_resolver.resolve(mem, "SYN-MISMATCH", manifests=[("h.json", hijack)],
+                               validate_provenance=False) is None
+    assert id_resolver.resolve(mem, "SYN-SOMETHING-ELSE", manifests=[]) is None
+
+
 def test_missing_target_rejected(mem, cells):
     data = manifest_for(cells)
     data["aliases"][0] = dict(data["aliases"][0], record_id="HYP-SYN-DOES-NOT-EXIST")

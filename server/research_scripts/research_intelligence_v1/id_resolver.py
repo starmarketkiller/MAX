@@ -2,7 +2,12 @@
 
 ResearchMemory stays the only canonical source of hypotheses. This module never
 creates records and never normalizes IDs (no uppercasing). Order:
-1. exact lookup of "HYP-" + hypothesis_id (the historical rule, unchanged);
+1. exact lookup of "HYP-" + hypothesis_id (the historical rule). The record is
+   returned only if it is a HYPOTHESIS whose body.hypothesis_id equals the
+   requested id. If a record with that exact id exists but fails this check the
+   result is None: the alias path is NOT tried (fail closed, an existing exact
+   id is never shadowed by a manifest). The alias path applies only when no
+   record with the exact id exists;
 2. an alias declared in a versioned manifest under manifests/, accepted only if
    it is unambiguous across all manifests, its target exists and is a
    HYPOTHESIS, and (by default) the record hash and provenance declared in the
@@ -30,21 +35,40 @@ def load_manifests(manifest_dir=MANIFEST_DIR):
     return out
 
 
+BINDING_FIELDS = ("record_id", "record_hash", "signature_sha256", "draft_sha256")
+MANIFEST_BINDING_FIELDS = ("manifest_id", "experiment_id")
+
+
+def _binding(entry, manifest):
+    """Every field that constrains what an alias means. Two declarations of the same
+    alias are equivalent only if all of them match."""
+    return (tuple(entry.get(k) for k in BINDING_FIELDS)
+            + tuple(manifest.get(k) for k in MANIFEST_BINDING_FIELDS)
+            + ((manifest.get("package") or {}).get("sha256"),))
+
+
 def alias_table(manifests):
-    """alias -> (entry, manifest). Aliases declared with different targets are dropped
-    (ambiguous) and reported in the second value."""
-    seen, conflicts = {}, set()
-    for name, data in manifests:
+    """alias -> (entry, manifest), plus the sorted list of conflicting aliases.
+
+    Declarations of one alias that differ in any binding field are a conflict and the
+    alias is dropped (fail closed). The result does not depend on the order in which
+    manifests are given: they are sorted by file name and canonical content first."""
+    ordered = sorted(manifests, key=lambda nm: (nm[0], json.dumps(nm[1], sort_keys=True)))
+    groups = {}
+    for _, data in ordered:
         for entry in data.get("aliases", []):
             alias = entry.get("alias")
             if not alias or not entry.get("record_id"):
                 continue
-            prev = seen.get(alias)
-            if prev and prev[0]["record_id"] != entry["record_id"]:
-                conflicts.add(alias)
-            elif not prev:
-                seen[alias] = (entry, data)
-    return {a: v for a, v in seen.items() if a not in conflicts}, sorted(conflicts)
+            groups.setdefault(alias, []).append((entry, data))
+    table, conflicts = {}, []
+    for alias in sorted(groups):
+        decls = groups[alias]
+        if len({_binding(e, m) for e, m in decls}) > 1:
+            conflicts.append(alias)
+        else:
+            table[alias] = decls[0]
+    return table, conflicts
 
 
 def _provenance_ok(record, entry, manifest):
@@ -69,8 +93,11 @@ def resolve(memory, hypothesis_id, *, manifests=None, validate_provenance=True):
     if not isinstance(hypothesis_id, str) or not hypothesis_id:
         return None
     exact = f"HYP-{hypothesis_id}"
-    if memory.get(exact):
-        return exact
+    record = memory.get(exact)
+    if record is not None:
+        ok = (record.get("record_type") == "HYPOTHESIS"
+              and record.get("body", {}).get("hypothesis_id") == hypothesis_id)
+        return exact if ok else None
     table, _ = alias_table(load_manifests(MANIFEST_DIR) if manifests is None else manifests)
     hit = table.get(hypothesis_id)
     if not hit:
