@@ -11,7 +11,9 @@ import copy
 import json
 import os
 import threading
+import time
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -61,22 +63,123 @@ class ReservationConflict(RuntimeError):
     pass
 
 
-class SharedCognitiveState:
-    """Thread-safe JSON materialization with atomic replace and CAS revisions.
+class SharedStateLockTimeout(RuntimeError):
+    """The canonical state could not be locked within the configured budget."""
 
-    V1 deliberately targets the existing single-process deployment.  The
-    revision check prevents lost updates between cooperating callers; a future
-    multi-process deployment must move this store to a transactional database.
+
+class _InterProcessFileLock:
+    """Small cross-platform advisory lock for one canonical state path.
+
+    The operating system releases the lock when a process exits, so a stale
+    ``.lock`` file is harmless and does not need PID-based lock breaking.
     """
 
-    def __init__(self, path: str | Path, *, task_queue=None, ledger=None):
+    def __init__(self, path: Path, *, timeout_seconds: float, poll_seconds: float = 0.05):
+        self.path = path
+        self.timeout_seconds = timeout_seconds
+        self.poll_seconds = poll_seconds
+        self._handle = None
+
+    def __enter__(self):
+        deadline = time.monotonic() + self.timeout_seconds
+        self._handle = self.path.open("a+b")
+        if self._handle.seek(0, os.SEEK_END) == 0:
+            self._handle.write(b"\0")
+            self._handle.flush()
+        while True:
+            try:
+                self._try_lock()
+                return self
+            except BlockingIOError:
+                pass
+            except PermissionError:
+                if os.name != "nt":
+                    self._handle.close()
+                    self._handle = None
+                    raise
+            except OSError:
+                self._handle.close()
+                self._handle = None
+                raise
+            if self._handle is not None:
+                if time.monotonic() >= deadline:
+                    self._handle.close()
+                    self._handle = None
+                    raise SharedStateLockTimeout(
+                        f"timed out locking shared state after {self.timeout_seconds:.3f}s")
+                time.sleep(self.poll_seconds)
+
+    def _try_lock(self) -> None:
+        self._handle.seek(0)
+        if os.name == "nt":
+            import msvcrt
+            msvcrt.locking(self._handle.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(self._handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+    def __exit__(self, exc_type, exc, traceback):
+        if self._handle is None:
+            return
+        try:
+            self._handle.seek(0)
+            if os.name == "nt":
+                import msvcrt
+                msvcrt.locking(self._handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(self._handle.fileno(), fcntl.LOCK_UN)
+        finally:
+            self._handle.close()
+            self._handle = None
+
+
+class SharedCognitiveState:
+    """Cross-process JSON materialization with atomic replace and CAS revisions."""
+
+    def __init__(self, path: str | Path, *, task_queue=None, ledger=None,
+                 lock_timeout_seconds: float = 10.0):
+        if lock_timeout_seconds <= 0:
+            raise ValueError("shared-state lock timeout must be positive")
         self.path = Path(path)
+        self.lock_path = self.path.with_name(f"{self.path.name}.lock")
+        self.lock_timeout_seconds = float(lock_timeout_seconds)
         self.task_queue = task_queue
         self.ledger = ledger
         self._lock = threading.RLock()
+        self._process_lock_depth = 0
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        if not self.path.exists():
-            self._save(_empty_state())
+        with self._locked():
+            if not self.path.exists():
+                self._save(_empty_state())
+
+    @contextmanager
+    def _locked(self):
+        """Serialize this instance and every process using the same state path."""
+        with self._lock:
+            if self._process_lock_depth:
+                self._process_lock_depth += 1
+                try:
+                    yield
+                finally:
+                    self._process_lock_depth -= 1
+                return
+            with _InterProcessFileLock(
+                    self.lock_path, timeout_seconds=self.lock_timeout_seconds):
+                self._process_lock_depth = 1
+                try:
+                    self._cleanup_orphaned_temps()
+                    yield
+                finally:
+                    self._process_lock_depth = 0
+
+    def _cleanup_orphaned_temps(self) -> None:
+        """Remove incomplete writes only while the canonical lock is held."""
+        for candidate in self.path.parent.glob(f"{self.path.name}.*.tmp"):
+            try:
+                candidate.unlink()
+            except FileNotFoundError:
+                pass
 
     def _load(self) -> dict:
         try:
@@ -91,12 +194,22 @@ class SharedCognitiveState:
 
     def _save(self, value: dict) -> None:
         temp = self.path.with_name(
-            f"{self.path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
-        with temp.open("w", encoding="utf-8") as handle:
-            json.dump(value, handle, indent=2, ensure_ascii=False)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temp, self.path)
+            f"{self.path.name}.{os.getpid()}.{threading.get_ident()}.{uuid.uuid4().hex}.tmp")
+        try:
+            with temp.open("w", encoding="utf-8") as handle:
+                json.dump(value, handle, indent=2, ensure_ascii=False)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temp, self.path)
+            if os.name != "nt":
+                directory_fd = os.open(self.path.parent, os.O_RDONLY)
+                try:
+                    os.fsync(directory_fd)
+                finally:
+                    os.close(directory_fd)
+        finally:
+            if temp.exists():
+                temp.unlink()
 
     @staticmethod
     def provenance(source: str, *, confidence: str = "DECLARED", reference: str | None = None,
@@ -107,21 +220,25 @@ class SharedCognitiveState:
                 "observed_at": observed_at or _iso()}
 
     def snapshot(self) -> dict:
-        with self._lock:
+        with self._locked():
             state = self._load()
             self._mark_stale_reservations(state)
             return copy.deepcopy(state)
 
     def _transaction(self, mutator, *, expected_revision: int | None = None,
                      idempotency_key: str | None = None) -> dict:
-        with self._lock:
+        with self._locked():
+            # Always reload after the OS lock is held.  WIP, dependency and CAS
+            # checks therefore observe the latest successfully persisted state.
             state = self._load()
             if expected_revision is not None and state["revision"] != expected_revision:
                 raise RevisionConflict(
                     f"expected revision {expected_revision}, current {state['revision']}")
             if idempotency_key and idempotency_key in state["idempotency_keys"]:
                 return copy.deepcopy(state)
-            mutator(state)
+            changed = mutator(state)
+            if changed is False:
+                return copy.deepcopy(state)
             state["revision"] += 1
             state["updated_at"] = _iso()
             if idempotency_key:
@@ -197,7 +314,7 @@ class SharedCognitiveState:
         ``SharedCognitiveState`` projection.
         """
         def apply(state):
-            mutator(state["work_graph"])
+            return mutator(state["work_graph"])
 
         return self._transaction(apply, expected_revision=expected_revision,
                                  idempotency_key=idempotency_key)

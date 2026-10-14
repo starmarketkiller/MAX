@@ -1,7 +1,8 @@
 """NEXUS Execution Control V1.
 
 Policy and reporting layer over ``SharedCognitiveState.work_graph``. Runtime
-execution remains owned by ``TaskQueue`` and history remains in ``EventLedger``.
+execution remains owned by ``TaskQueue``. V1 transition and handoff history is
+embedded in the canonical work graph; EventLedger integration is future work.
 No GitHub Issue, merge, deploy, or external action is performed here.
 """
 from __future__ import annotations
@@ -44,6 +45,10 @@ class WorkInProgressLimit(ExecutionControlError):
 
 
 class UnmetDependency(ExecutionControlError):
+    pass
+
+
+class SeedCollision(ExecutionControlError):
     pass
 
 
@@ -121,27 +126,63 @@ class ExecutionControl:
             "provenance": copy.deepcopy(record["provenance"]),
         } for dependency in record.get("dependencies", []))
 
+    @staticmethod
+    def _seed_contract(record: dict) -> dict:
+        """Fields a bootstrap owns after mutable workflow state is excluded."""
+        mutable = {
+            "status", "owner", "blockers", "verification", "created_at", "updated_at",
+            "transition_history", "handoffs",
+        }
+        return {key: copy.deepcopy(value) for key, value in record.items()
+                if key not in mutable}
+
+    @staticmethod
+    def _seed_lineage_is_compatible(existing: dict, seed_record: dict) -> bool:
+        """Prove mutable fields evolved from the seed rather than colliding with it."""
+        history = existing.get("transition_history") or []
+        if not history or history[0].get("from") is not None:
+            return False
+        if history[0].get("to") != seed_record["status"]:
+            return False
+        previous = history[0].get("to")
+        for event in history[1:]:
+            if event.get("from") != previous:
+                return False
+            previous = event.get("to")
+        if previous != existing.get("status"):
+            return False
+
+        expected_owner = _owner_id(seed_record["owner"])
+        for handoff in existing.get("handoffs") or []:
+            if handoff.get("from_owner") != expected_owner or not handoff.get("to_owner"):
+                return False
+            expected_owner = handoff["to_owner"]
+        return _owner_id(existing.get("owner")) == expected_owner
+
+    def _register_in_graph(self, graph: dict, value: dict) -> None:
+        if any(item["id"] == value["id"] for item in graph["workstreams"]):
+            raise ValueError("execution item already exists; use transition or handoff")
+        if value["status"] in {"READY", "IN_PROGRESS"}:
+            missing = self._dependencies_satisfied(graph, value)
+            if missing:
+                raise UnmetDependency(f"unmet dependencies: {missing}")
+        self._check_wip(graph, value)
+        now = _iso()
+        value.setdefault("created_at", now)
+        value["updated_at"] = now
+        value.setdefault("transition_history", [{
+            "from": None, "to": value["status"], "reason": "REGISTERED", "at": now,
+        }])
+        value.setdefault("handoffs", [])
+        graph["workstreams"].append(value)
+        self._sync_edges(graph, value)
+
     def register(self, record: dict, *, idempotency_key: str | None = None) -> dict:
         self._validate_record(record)
         value = copy.deepcopy(record)
 
         def apply(graph):
-            if any(item["id"] == value["id"] for item in graph["workstreams"]):
-                raise ValueError("execution item already exists; use transition or handoff")
-            if value["status"] in {"READY", "IN_PROGRESS"}:
-                missing = self._dependencies_satisfied(graph, value)
-                if missing:
-                    raise UnmetDependency(f"unmet dependencies: {missing}")
-            self._check_wip(graph, value)
-            now = _iso()
-            value.setdefault("created_at", now)
-            value["updated_at"] = now
-            value.setdefault("transition_history", [{
-                "from": None, "to": value["status"], "reason": "REGISTERED", "at": now,
-            }])
-            value.setdefault("handoffs", [])
-            graph["workstreams"].append(value)
-            self._sync_edges(graph, value)
+            self._register_in_graph(graph, value)
 
         return self.shared_state.apply_work_graph_transaction(
             apply, idempotency_key=idempotency_key)
@@ -213,8 +254,32 @@ class ExecutionControl:
     def import_seed(self, seed: dict, *, idempotency_prefix: str = "execution-control-seed") -> dict:
         if seed.get("schema_version") != EXECUTION_CONTROL_SCHEMA:
             raise ValueError("unsupported execution-control seed")
-        for record in seed.get("items", []):
-            self.register(record, idempotency_key=f"{idempotency_prefix}:{record['id']}")
+        records = [copy.deepcopy(record) for record in seed.get("items", [])]
+        ids = [record.get("id") for record in records]
+        if len(ids) != len(set(ids)):
+            raise ValueError("execution-control seed contains duplicate item ids")
+        for record in records:
+            self._validate_record(record)
+
+        def apply(graph):
+            existing_by_id = {item["id"]: item for item in graph["workstreams"]}
+            changed = False
+            for record in records:
+                existing = existing_by_id.get(record["id"])
+                if existing is not None:
+                    if (self._seed_contract(existing) != self._seed_contract(record)
+                            or not self._seed_lineage_is_compatible(existing, record)):
+                        raise SeedCollision(
+                            f"seed item {record['id']} conflicts with canonical work graph")
+                    continue
+                self._register_in_graph(graph, record)
+                existing_by_id[record["id"]] = record
+                changed = True
+            return changed
+
+        # One transaction makes the entire seed atomic. The semantic comparison
+        # remains idempotent after the bounded generic idempotency-key window rolls.
+        self.shared_state.apply_work_graph_transaction(apply)
         return self.report()
 
     def report(self) -> dict:
@@ -231,7 +296,7 @@ class ExecutionControl:
             "generated_at": _iso(),
             "canonical_source": "NEXUS_SHARED_COGNITIVE_STATE_V1.work_graph",
             "runtime_source": "TASK_QUEUE_V1",
-            "history_source": "EVENT_LEDGER_V1",
+            "history_source": "NEXUS_SHARED_COGNITIVE_STATE_V1.work_graph.embedded_history",
             "github_sync": "DISABLED_NOT_AUTHORIZED",
             "active_runtime_tasks": runtime_tasks,
             "counts": counts,

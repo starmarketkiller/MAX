@@ -1,14 +1,18 @@
 import json
 import csv
+import multiprocessing
+import os
 import threading
+import time
 from pathlib import Path
 
 import pytest
 
 from orchestrator_v1.core.execution_control import (
-    ExecutionControl, InvalidTransition, UnmetDependency, WorkInProgressLimit, load_seed,
+    ExecutionControl, InvalidTransition, SeedCollision, UnmetDependency, WorkInProgressLimit,
+    load_seed,
 )
-from orchestrator_v1.core.shared_cognitive_state import SharedCognitiveState
+from orchestrator_v1.core.shared_cognitive_state import SharedCognitiveState, SharedStateLockTimeout
 from orchestrator_v1.core.task_queue import TaskQueue
 from orchestrator_v1.nxs_schema_validator import validate
 from orchestrator_v1.run_execution_control_v1 import main
@@ -17,6 +21,49 @@ from orchestrator_v1.run_execution_control_v1 import main
 ROOT = Path(__file__).resolve().parents[2]
 SEED = ROOT / "server" / "orchestrator_v1" / "execution_control_seed_v1.json"
 SCHEMA = ROOT / "contracts" / "execution-control-v1.schema.json"
+
+
+def _process_transition(path, item_id, start, results):
+    try:
+        registry = ExecutionControl(SharedCognitiveState(path, lock_timeout_seconds=5))
+        start.wait(10)
+        registry.transition(item_id, "IN_PROGRESS", reason="multiprocess start")
+        results.put((item_id, "OK"))
+    except Exception as exc:  # pragma: no cover - asserted through child result
+        results.put((item_id, type(exc).__name__))
+
+
+def _process_hold_lock(path, acquired, release):
+    state = SharedCognitiveState(path, lock_timeout_seconds=5)
+
+    def hold(_state):
+        acquired.set()
+        release.wait(10)
+        return False
+
+    state._transaction(hold)
+
+
+def _process_crash_before_persist(path, acquired):
+    state = SharedCognitiveState(path, lock_timeout_seconds=5)
+
+    def crash(_state):
+        acquired.set()
+        os._exit(17)
+
+    state._transaction(crash)
+
+
+def _process_crash_during_persist(path):
+    import orchestrator_v1.core.shared_cognitive_state as shared_module
+    state = SharedCognitiveState(path, lock_timeout_seconds=5)
+
+    def crash_replace(_source, _target):
+        os._exit(18)
+
+    shared_module.os.replace = crash_replace
+    state.update_current_state({"next_priorities": ["not-persisted"]},
+                               provenance=state.provenance("crash-test"))
 
 
 def provenance(source="pytest"):
@@ -46,7 +93,7 @@ def test_seed_contract_and_reuse_policy_are_valid():
     assert seed["policy"] == {
         "canonical_source": "NEXUS_SHARED_COGNITIVE_STATE_V1.work_graph",
         "runtime_source": "TASK_QUEUE_V1",
-        "history_source": "EVENT_LEDGER_V1",
+        "history_source": "NEXUS_SHARED_COGNITIVE_STATE_V1.work_graph.embedded_history",
         "implementation_wip_limit": 2,
         "github_sync": "DISABLED_NOT_AUTHORIZED",
     }
@@ -107,6 +154,144 @@ def test_implementation_wip_limit_is_atomic_under_concurrency(tmp_path):
     assert report["implementation_wip"]["active"] == 2
     assert report["implementation_wip"]["within_limit"] is True
     assert len(errors) == 1
+
+
+def test_implementation_wip_limit_is_atomic_across_processes(tmp_path):
+    registry = control(tmp_path, limit=2)
+    for name in ("A", "B", "C"):
+        registry.register(item(name, status="READY"), idempotency_key=name)
+    ctx = multiprocessing.get_context("spawn")
+    start, results = ctx.Event(), ctx.Queue()
+    processes = [ctx.Process(target=_process_transition,
+                             args=(str(registry.shared_state.path), name, start, results))
+                 for name in ("A", "B", "C")]
+    for process in processes:
+        process.start()
+    start.set()
+    outcomes = [results.get(timeout=15) for _ in processes]
+    for process in processes:
+        process.join(15)
+        assert process.exitcode == 0
+    report = registry.report()
+    assert sorted(status for _, status in outcomes) == ["OK", "OK", "WorkInProgressLimit"]
+    assert report["implementation_wip"]["active"] == 2
+    assert len(report["items"]) == 3
+    assert sum(entry["status"] == "READY" for entry in report["items"]) == 1
+
+
+def test_same_task_process_collision_is_idempotent_without_lost_history(tmp_path):
+    registry = control(tmp_path)
+    registry.register(item("A", status="READY"), idempotency_key="A")
+    ctx = multiprocessing.get_context("spawn")
+    start, results = ctx.Event(), ctx.Queue()
+    processes = [ctx.Process(target=_process_transition,
+                             args=(str(registry.shared_state.path), "A", start, results))
+                 for _ in range(2)]
+    for process in processes:
+        process.start()
+    start.set()
+    outcomes = [results.get(timeout=15) for _ in processes]
+    for process in processes:
+        process.join(15)
+        assert process.exitcode == 0
+    current = registry.report()["items"][0]
+    assert [status for _, status in outcomes] == ["OK", "OK"]
+    assert current["status"] == "IN_PROGRESS"
+    assert [event["to"] for event in current["transition_history"]] == ["READY", "IN_PROGRESS"]
+
+
+def test_abandoned_lock_and_crashes_preserve_canonical_state(tmp_path):
+    state = SharedCognitiveState(tmp_path / "state.json")
+    state.update_current_state({"next_priorities": ["baseline"]},
+                               provenance=state.provenance("test"))
+    baseline = state.snapshot()
+    ctx = multiprocessing.get_context("spawn")
+
+    acquired = ctx.Event()
+    before = ctx.Process(target=_process_crash_before_persist,
+                         args=(str(state.path), acquired))
+    before.start()
+    assert acquired.wait(10)
+    before.join(10)
+    assert before.exitcode == 17
+    assert SharedCognitiveState(state.path).snapshot() == baseline
+
+    during = ctx.Process(target=_process_crash_during_persist, args=(str(state.path),))
+    during.start()
+    during.join(10)
+    assert during.exitcode == 18
+    recovered = SharedCognitiveState(state.path)
+    assert recovered.snapshot() == baseline
+    assert not list(tmp_path.glob("state.json.*.tmp"))
+    recovered.update_current_state({"next_priorities": ["recovered"]},
+                                   provenance=recovered.provenance("test"))
+    assert recovered.snapshot()["current_state"]["next_priorities"] == ["recovered"]
+
+
+def test_lock_timeout_is_observable_and_fail_closed(tmp_path):
+    state = SharedCognitiveState(tmp_path / "state.json")
+    contender = SharedCognitiveState(state.path, lock_timeout_seconds=0.1)
+    baseline = state.snapshot()
+    ctx = multiprocessing.get_context("spawn")
+    acquired, release = ctx.Event(), ctx.Event()
+    holder = ctx.Process(target=_process_hold_lock,
+                         args=(str(state.path), acquired, release))
+    holder.start()
+    assert acquired.wait(10)
+    with pytest.raises(SharedStateLockTimeout, match="timed out"):
+        contender.update_current_state({"next_priorities": ["must-not-write"]},
+                                       provenance=contender.provenance("test"))
+    release.set()
+    holder.join(10)
+    assert holder.exitcode == 0
+    assert state.snapshot() == baseline
+
+
+def test_seed_remains_idempotent_after_key_rotation_and_advanced_state(tmp_path):
+    registry = control(tmp_path)
+    seed = load_seed(SEED)
+    registry.import_seed(seed)
+    registry.transition("M1-EXECUTION-CONTROL-V1", "REVIEW", reason="ready for review")
+    registry.handoff("M1-EXECUTION-CONTROL-V1", from_owner="CODEX",
+                     to_owner={"agent_id": "CLAUDE", "role": "REVIEWER"},
+                     reason="independent review", acceptance=["decision card"])
+    for index in range(1001):
+        registry.shared_state.update_current_state(
+            {"next_priorities": [str(index)]}, provenance=provenance("rotation"),
+            idempotency_key=f"rotation:{index}")
+    before = registry.shared_state.snapshot()
+    restarted = control(tmp_path)
+    restarted.import_seed(seed)
+    after = restarted.shared_state.snapshot()
+    assert after["revision"] == before["revision"]
+    m1 = next(entry for entry in after["work_graph"]["workstreams"]
+              if entry["id"] == "M1-EXECUTION-CONTROL-V1")
+    assert m1["status"] == "REVIEW"
+    assert m1["owner"]["agent_id"] == "CLAUDE"
+    assert len(m1["handoffs"]) == 1
+
+
+def test_seed_semantic_collision_fails_without_partial_import(tmp_path):
+    registry = control(tmp_path)
+    seed = load_seed(SEED)
+    registry.import_seed(seed)
+    before = registry.shared_state.snapshot()
+    incompatible = json.loads(json.dumps(seed))
+    incompatible["items"][0]["title"] = "incompatible replacement"
+    with pytest.raises(SeedCollision, match="conflicts"):
+        registry.import_seed(incompatible)
+    assert registry.shared_state.snapshot() == before
+
+    forged = control(tmp_path)
+    raw = forged.shared_state._load()
+    first = raw["work_graph"]["workstreams"][0]
+    first["owner"] = {"agent_id": "UNTRACED", "role": "IMPLEMENTER"}
+    with forged.shared_state._locked():
+        forged.shared_state._save(raw)
+    forged_before = forged.shared_state.snapshot()
+    with pytest.raises(SeedCollision, match="conflicts"):
+        forged.import_seed(seed)
+    assert forged.shared_state.snapshot() == forged_before
 
 
 def test_blocked_requires_reason_and_handoff_is_owned_idempotent(tmp_path):

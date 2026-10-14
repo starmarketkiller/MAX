@@ -12,7 +12,8 @@ production, GitHub Issues, pull requests, branches, or worktrees.
 |---|---|---|
 | Portfolio/current work | `SharedCognitiveState.work_graph` | Enforce workflow, WIP and handoff policy |
 | Runnable tasks | `TaskQueue` / `TASK_MANIFEST_V1` | No semantic change; referenced as runtime source |
-| History and evidence | `EventLedger` | No semantic change; referenced as history source |
+| M1 workflow history | embedded `transition_history` and `handoffs` in `SharedCognitiveState.work_graph` | Canonical V1 history; no dual write |
+| Global runtime events | existing `EventLedger` | Unchanged; a future integration may project M1 events atomically |
 | Agent capabilities | existing capability registry and router | Owners are labels, never permissions |
 | Artifact coordination | existing reservations in `SharedCognitiveState` | No new lease system |
 | Jarvis context | `CONTEXT_PACKET_V2` | Existing work graph remains visible to Jarvis |
@@ -32,7 +33,11 @@ blocker. Returning from `BLOCKED` is allowed only to `BACKLOG` or `READY`.
 `DELIVERED` is terminal. Moving to `READY` or `IN_PROGRESS` requires every
 dependency to be `VERIFIED` or `DELIVERED`; `VERIFIED` requires evidence.
 
-Implementation WIP is enforced atomically at **2**. Research, review and audit
+Implementation WIP is enforced atomically at **2**, including callers in
+different processes that use the same state path. The cross-platform advisory
+file lock covers reload, policy checks and atomic replace; abandoned OS locks
+are released on process exit, and lock acquisition has an explicit fail-closed
+timeout. Research, review and audit
 work remain visible but do not consume implementation slots. This is a
 portfolio limit; TaskQueue still owns lower-level execution concurrency.
 
@@ -99,7 +104,10 @@ python -m orchestrator_v1.run_execution_control_v1 snapshot --state <shared-stat
 python -m orchestrator_v1.run_execution_control_v1 report --state <shared-state.json> --queue <task-queue.json>
 ```
 
-`bootstrap` is idempotent. `report` gives a compact human view of all work,
+`bootstrap` is permanently idempotent by semantic seed comparison rather than
+the bounded generic idempotency-key window. Existing mutable workflow state
+(status, owner, blockers, verification and handoff history) is preserved;
+incompatible stable seed fields fail closed. `report` gives a compact human view of all work,
 implementation WIP and suspended items. `snapshot` emits the read-only JSON
 projection. None of these commands starts a queued task or contacts GitHub.
 When `--queue` is supplied, the same report also projects active runtime tasks
@@ -119,7 +127,8 @@ Normal operation:
 
 | Risk | Current treatment | Residual limitation |
 |---|---|---|
-| Multi-process writers | Atomic replace, process-local lock, revision CAS | Existing JSON store is not a distributed transaction database |
+| Multi-process writers on one host/filesystem | OS advisory lock, reload-under-lock, fsync and atomic replace | Advisory locking requires every writer to use the public `SharedCognitiveState` transaction API |
+| Network/distributed filesystems | Not claimed | Lock and replace semantics are only guaranteed on supported local Windows/Linux filesystems |
 | Direct `upsert_workstream` callers | M1 code uses policy layer | Legacy internal code could bypass M1 policy; no public mutation API exists today |
 | GitHub drift | Snapshot includes exact SHAs and evidence method | No approved bidirectional sync; Project could not be read with current token |
 | External agent activity | DECLARED provenance and explicit ambiguity | Claude exact current deliverable needs a trusted handoff |
@@ -128,10 +137,12 @@ Normal operation:
 
 ## Acceptance evidence
 
-Deterministic tests cover schema/seed validity, restart persistence,
-idempotency, dependencies, transition gates, verification evidence, concurrent
-WIP enforcement, owned handoff, blocked-work reporting and absence of network
-mutation code. Existing Shared Cognitive State tests protect the reused storage
-and context projection.
+Deterministic tests cover schema/seed validity, restart persistence, permanent
+bootstrap idempotency, semantic seed collisions, dependencies, transition
+gates, verification evidence, real multi-process WIP enforcement, collision on
+one task, abandoned locks, crash before/during persistence, lock timeout,
+owned handoff, blocked-work reporting and absence of network mutation code.
+Existing Shared Cognitive State tests protect the reused storage and context
+projection.
 
 M2 and M3 are intentionally not started by this milestone.

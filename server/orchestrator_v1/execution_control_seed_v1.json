@@ -3,7 +3,7 @@
   "policy": {
     "canonical_source": "NEXUS_SHARED_COGNITIVE_STATE_V1.work_graph",
     "runtime_source": "TASK_QUEUE_V1",
-    "history_source": "EVENT_LEDGER_V1",
+    "history_source": "NEXUS_SHARED_COGNITIVE_STATE_V1.work_graph.embedded_history",
     "implementation_wip_limit": 2,
     "github_sync": "DISABLED_NOT_AUTHORIZED"
   },

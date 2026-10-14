@@ -14,7 +14,7 @@
       "properties": {
         "canonical_source": {"const": "NEXUS_SHARED_COGNITIVE_STATE_V1.work_graph"},
         "runtime_source": {"const": "TASK_QUEUE_V1"},
-        "history_source": {"const": "EVENT_LEDGER_V1"},
+        "history_source": {"const": "NEXUS_SHARED_COGNITIVE_STATE_V1.work_graph.embedded_history"},
         "implementation_wip_limit": {"type": "integer", "const": 2},
         "github_sync": {"enum": ["DISABLED_NOT_AUTHORIZED", "READ_ONLY"]}
       }
