@@ -2786,8 +2786,21 @@ def _session_amd_series_raw(candles):
         pdh_by_date[dates_sorted[idx]] = day_hi[prev]
         pdl_by_date[dates_sorted[idx]] = day_lo[prev]
 
-    asian_hi = [asian_hi_by_date.get(date[i]) for i in range(n)]
-    asian_lo = [asian_lo_by_date.get(date[i]) for i in range(n)]
+    # NXLAB-AUDIT-ASIAN-LOOKAHEAD-001 (contratto causale): asian_hi_by_date/
+    # asian_lo_by_date sono gia' il valore FINALE della sessione (scansione
+    # sull'intero array, non incrementale) - assegnarlo a una barra ancora
+    # dentro la sessione ASIAN (session[i]=="ASIAN") significa dare a quella
+    # barra un massimo/minimo che a quel punto del tempo non si era ancora
+    # formato (barre successive della stessa sessione non ancora accadute).
+    # Fedele a NXS_GetAMD (NXS_AMDModel.mqh:44, "if(asianEnd > TimeCurrent())
+    # return r;"): nessun livello, nemmeno parziale, finche' la sessione del
+    # giorno non e' realmente conclusa. asian_session_complete[i] rende
+    # questo esplicito per qualunque consumatore futuro.
+    asian_session_complete = [session[i] != "ASIAN" for i in range(n)]
+    asian_hi = [(asian_hi_by_date.get(date[i]) if asian_session_complete[i] else None)
+                for i in range(n)]
+    asian_lo = [(asian_lo_by_date.get(date[i]) if asian_session_complete[i] else None)
+                for i in range(n)]
     pdh = [pdh_by_date.get(date[i]) for i in range(n)]
     pdl = [pdl_by_date.get(date[i]) for i in range(n)]
 
@@ -2796,6 +2809,9 @@ def _session_amd_series_raw(candles):
     for i in range(n):
         ah, al = asian_hi[i], asian_lo[i]
         if ah is None or al is None:
+            # Sessione ASIAN della data ancora in corso (o mai osservata):
+            # nessuna fase valutabile per costruzione - amd_phase[i] resta
+            # None, mai calcolato contro un livello che include barre future.
             continue
         if date[i] != cur_day:
             cur_day = date[i]
@@ -2822,7 +2838,7 @@ def _session_amd_series_raw(candles):
 
     return {"hour": hour, "date": date, "session": session,
             "asian_hi": asian_hi, "asian_lo": asian_lo, "pdh": pdh, "pdl": pdl,
-            "amd_phase": amd_phase}
+            "amd_phase": amd_phase, "asian_session_complete": asian_session_complete}
 
 
 def _session_amd_series(candles, intraday_ref=None):
@@ -2874,6 +2890,7 @@ def _session_amd_series(candles, intraday_ref=None):
     asian_hi, asian_lo = [None] * n, [None] * n
     pdh, pdl = [None] * n, [None] * n
     amd_phase = [None] * n
+    asian_session_complete = [False] * n
 
     j = -1
     m = len(intraday_ref)
@@ -2887,10 +2904,11 @@ def _session_amd_series(candles, intraday_ref=None):
         asian_hi[i], asian_lo[i] = fine["asian_hi"][j], fine["asian_lo"][j]
         pdh[i], pdl[i] = fine["pdh"][j], fine["pdl"][j]
         amd_phase[i] = fine["amd_phase"][j]
+        asian_session_complete[i] = fine["asian_session_complete"][j]
 
     return {"hour": hour, "date": date, "session": session,
             "asian_hi": asian_hi, "asian_lo": asian_lo, "pdh": pdh, "pdl": pdl,
-            "amd_phase": amd_phase}
+            "amd_phase": amd_phase, "asian_session_complete": asian_session_complete}
 
 
 def _is_swing_high_at(candles, p, wing):
