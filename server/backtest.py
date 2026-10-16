@@ -21,6 +21,7 @@ import io
 import json
 import math
 import os
+import re
 import time
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -2745,14 +2746,74 @@ def _cisd_true_sl_tp(c, ind, i, direction, entry, atr):
 # / reversal_distribution (chiusura di rientro dopo la manipolazione).
 # CHoCH: stesso proxy failure-swing gia' usato per TURTLE_SOUP/IFVG (non è
 # il vero g_struct fractal-based di MQL5 - approssimazione dichiarata).
+_BAR_TIME_RE = re.compile(
+    r'^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(Z|[+-]\d{2}:?\d{2})?$'
+)
+
+
+def _parse_bar_utc_fields(time_str):
+    """NXLAB-AUDIT-ASIAN-LOOKAHEAD-001 V2 (P1): formato supportato in modo
+    esplicito: "YYYY-MM-DD HH:MM" o "YYYY-MM-DDTHH:MM" (secondi opzionali),
+    con offset opzionale esplicito ("Z", "+HH:MM"/"+HHMM", "-HH:MM"/"-HHMM").
+
+    - Nessun offset ("YYYY-MM-DD HH:MM", il formato storico del motore):
+      trattato come GIA' UTC - comportamento invariato per ogni fixture
+      esistente, nessuna reinterpretazione.
+    - Offset esplicito presente: normalizzato ad UTC per sottrazione
+      aritmetica diretta (l'offset stesso codifica gia' lo stato DST di
+      quell'istante - nessuna regola DST propria, nessuna ambiguita').
+    - Formato non riconosciuto o data/ora non valida (es. "25:70"): fail
+      CLOSED, ritorna (None, None, None) - MAI un'interpretazione silenziosa
+      come UTC. Il chiamante esclude la barra dalla classificazione di
+      sessione invece di proseguire su un valore indovinato.
+
+    Ritorna (epoch_utc_int, date_str_utc, hour_utc) o (None, None, None).
+    """
+    m = _BAR_TIME_RE.match(time_str.strip())
+    if not m:
+        return None, None, None
+    y, mo, da, hh, mi, ss, off = m.groups()
+    try:
+        base = datetime(int(y), int(mo), int(da), int(hh), int(mi), int(ss or 0))
+    except ValueError:
+        return None, None, None
+    if off is None or off == "Z":
+        utc_dt = base
+    else:
+        sign = 1 if off[0] == "+" else -1
+        digits = off[1:].replace(":", "")
+        off_h, off_m = int(digits[:2]), int(digits[2:4])
+        utc_dt = base - sign * timedelta(hours=off_h, minutes=off_m)
+    epoch = int(utc_dt.replace(tzinfo=timezone.utc).timestamp())
+    return epoch, utc_dt.strftime("%Y-%m-%d"), utc_dt.hour
+
+
+def _detect_cadence_seconds(sorted_epochs):
+    """NXLAB-AUDIT-ASIAN-LOOKAHEAD-001 V2 (P0): cadenza = passo piu' comune
+    fra barre consecutive dell'INPUT REALE, non un'ipotesi fissa (es. non
+    si assume H1). None se non determinabile (meno di 2 epoch validi o
+    nessun passo positivo) - il chiamante deve allora trattare OGNI
+    sessione come non verificabile, mai come completa per default."""
+    counts = {}
+    prev = None
+    for e in sorted_epochs:
+        if prev is not None and e > prev:
+            delta = e - prev
+            counts[delta] = counts.get(delta, 0) + 1
+        prev = e
+    if not counts:
+        return None
+    return max(counts, key=counts.get)
+
+
 def _session_amd_series_raw(candles):
     n = len(candles)
     hour = [None] * n
     date = [None] * n
+    epoch = [None] * n
     for i, cd in enumerate(candles):
-        d, hm = cd["time"].split(" ")
-        date[i] = d
-        hour[i] = int(hm.split(":")[0])
+        e, d, h = _parse_bar_utc_fields(cd["time"])
+        epoch[i], date[i], hour[i] = e, d, h
 
     def _sess(h):
         if h is None:
@@ -2770,14 +2831,22 @@ def _session_amd_series_raw(candles):
     session = [_sess(h) for h in hour]
 
     asian_hi_by_date, asian_lo_by_date = {}, {}
+    asian_epochs_by_date = {}
     day_hi, day_lo = {}, {}
     for i in range(n):
         d = date[i]
+        if d is None:
+            # P1: barra non classificabile (formato ignoto o data/ora non
+            # valida) - esclusa da ogni accumulo per data, mai mescolata
+            # con un'altra barra non classificabile di una data diversa
+            # sotto la stessa chiave None.
+            continue
         day_hi[d] = max(day_hi.get(d, -1e18), candles[i]["high"])
         day_lo[d] = min(day_lo.get(d, 1e18), candles[i]["low"])
         if session[i] == "ASIAN":
             asian_hi_by_date[d] = max(asian_hi_by_date.get(d, -1e18), candles[i]["high"])
             asian_lo_by_date[d] = min(asian_lo_by_date.get(d, 1e18), candles[i]["low"])
+            asian_epochs_by_date.setdefault(d, set()).add(epoch[i])
 
     dates_sorted = sorted(day_hi.keys())
     pdh_by_date, pdl_by_date = {}, {}
@@ -2786,17 +2855,40 @@ def _session_amd_series_raw(candles):
         pdh_by_date[dates_sorted[idx]] = day_hi[prev]
         pdl_by_date[dates_sorted[idx]] = day_lo[prev]
 
-    # NXLAB-AUDIT-ASIAN-LOOKAHEAD-001 (contratto causale): asian_hi_by_date/
-    # asian_lo_by_date sono gia' il valore FINALE della sessione (scansione
-    # sull'intero array, non incrementale) - assegnarlo a una barra ancora
-    # dentro la sessione ASIAN (session[i]=="ASIAN") significa dare a quella
-    # barra un massimo/minimo che a quel punto del tempo non si era ancora
-    # formato (barre successive della stessa sessione non ancora accadute).
-    # Fedele a NXS_GetAMD (NXS_AMDModel.mqh:44, "if(asianEnd > TimeCurrent())
-    # return r;"): nessun livello, nemmeno parziale, finche' la sessione del
-    # giorno non e' realmente conclusa. asian_session_complete[i] rende
-    # questo esplicito per qualunque consumatore futuro.
-    asian_session_complete = [session[i] != "ASIAN" for i in range(n)]
+    # NXLAB-AUDIT-ASIAN-LOOKAHEAD-001 V2 (P0): "sessione conclusa" (si e'
+    # passati a una barra non-ASIAN) NON implica "sessione osservata per
+    # intero" - un gap nei dati (es. barre 00:00-02:00 presenti, 03:00-06:59
+    # mancanti, prima barra successiva alle 08:00) farebbe apparire
+    # asian_hi_by_date come se fosse il massimo VERO della sessione, quando
+    # e' solo il massimo delle poche barre arrivate. Si richiede quindi che
+    # l'insieme delle barre ASIAN osservate per quella data coincida
+    # ESATTAMENTE con l'insieme delle barre attese secondo la cadenza reale
+    # dell'input (rilevata dai dati stessi, non assunta) sull'intera
+    # finestra [00:00, fine ASIAN) - nessuna barra artificiale creata, solo
+    # verificato se quelle osservate bastano a coprire la finestra.
+    cadence_s = _detect_cadence_seconds(sorted(e for e in epoch if e is not None))
+    asian_end_hour = 7  # fedele a _sess(): ASIAN = [0, 7) - stessa costante del resto della funzione
+    asian_complete_by_date = {}
+    if cadence_s:
+        for d in asian_epochs_by_date:
+            day_start = int(datetime.strptime(d, "%Y-%m-%d")
+                             .replace(tzinfo=timezone.utc).timestamp())
+            day_end = day_start + asian_end_hour * 3600
+            if (day_end - day_start) % cadence_s != 0:
+                # la cadenza rilevata non divide esattamente la finestra
+                # ASIAN: calendario/cadenza incompatibili, non verificabile
+                asian_complete_by_date[d] = False
+                continue
+            expected = set(range(day_start, day_end, cadence_s))
+            asian_complete_by_date[d] = (asian_epochs_by_date[d] == expected)
+    # cadence_s is None (serie con <2 epoch validi): nessuna data puo'
+    # essere dichiarata completa - asian_complete_by_date resta vuoto,
+    # .get(d, False) sotto risolve correttamente a False ovunque.
+
+    asian_session_complete = [
+        (session[i] != "ASIAN") and bool(asian_complete_by_date.get(date[i], False))
+        for i in range(n)
+    ]
     asian_hi = [(asian_hi_by_date.get(date[i]) if asian_session_complete[i] else None)
                 for i in range(n)]
     asian_lo = [(asian_lo_by_date.get(date[i]) if asian_session_complete[i] else None)
