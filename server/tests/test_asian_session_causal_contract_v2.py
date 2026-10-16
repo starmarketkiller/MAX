@@ -22,6 +22,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import backtest  # noqa: E402
 
+# V3 (P0): cadenza dichiarata esplicitamente (tutte le fixture qui sono
+# orarie per costruzione) - non piu' dedotta dai dati.
+_H1 = 3600
+
 
 def _c(time_str, o, h, l, c):
     return {"time": time_str, "open": o, "high": h, "low": l, "close": c}
@@ -44,7 +48,7 @@ def test_session_complete_with_full_hourly_coverage():
     """Sessione Asian completa: 7/7 barre orarie presenti -> complete=True,
     livello disponibile e corretto alla prima barra post-sessione."""
     candles = _full_asian_day()
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     i_london = 7
     assert sess["session"][i_london] == "LONDON"
     assert sess["asian_session_complete"][i_london] is True
@@ -65,7 +69,7 @@ def test_session_truncated_tail_codex_repro():
         _c("2026-03-02 08:00", 102, 104, 101, 103.5),
         _c("2026-03-02 09:00", 103.5, 105, 103, 104),
     ]
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     i_08 = 3
     assert sess["session"][i_08] == "LONDON"
     assert sess["asian_session_complete"][i_08] is False, (
@@ -102,7 +106,7 @@ def test_session_incomplete_missing_middle_bar():
         _c("2026-03-03 06:00", 104, 106, 103, 105),
         _c("2026-03-03 07:00", 105, 105.5, 104.5, 105.2),
     ]
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     i_07 = 6
     assert sess["asian_session_complete"][i_07] is False
     assert sess["asian_hi"][i_07] is None
@@ -116,7 +120,7 @@ def test_day_without_any_asian_bars():
         _c("2026-03-04 10:00", 100.5, 102, 100, 101),
         _c("2026-03-04 11:00", 101, 103, 100.5, 102),
     ]
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     for i in range(len(candles)):
         assert sess["asian_session_complete"][i] is False
         assert sess["asian_hi"][i] is None
@@ -128,7 +132,7 @@ def test_first_post_session_bar_gets_flag_only_when_truly_complete():
     completa in un caso e tronca nell'altro - solo il primo deve esporre
     il livello."""
     complete = _full_asian_day(date="2026-03-05")
-    sess_complete = backtest._session_amd_series_raw(complete)
+    sess_complete = backtest._session_amd_series_raw(complete, declared_cadence_seconds=_H1)
     assert sess_complete["asian_session_complete"][7] is True
 
     truncated = [
@@ -136,7 +140,7 @@ def test_first_post_session_bar_gets_flag_only_when_truly_complete():
         _c("2026-03-06 01:00", 100.5, 102, 100, 101),
         _c("2026-03-06 08:00", 102, 104, 101, 103.5),
     ]
-    sess_trunc = backtest._session_amd_series_raw(truncated)
+    sess_trunc = backtest._session_amd_series_raw(truncated, declared_cadence_seconds=_H1)
     assert sess_trunc["asian_session_complete"][2] is False
 
 
@@ -151,7 +155,7 @@ def test_weekend_and_day_change_isolated_per_date():
         c["high"] += 50.0  # livello Asian di lunedi' chiaramente diverso da venerdi'
         c["low"] += 50.0
     candles = fri + mon
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
 
     i_fri_london = 7
     i_mon_london = len(fri) + 7
@@ -169,7 +173,7 @@ def test_valid_utc_timestamps_unchanged_behavior():
     """Fixture storiche "YYYY-MM-DD HH:MM" senza offset: comportamento
     bit-a-bit identico a prima del fix V2 (nessuna reinterpretazione)."""
     candles = _full_asian_day(date="2026-03-10")
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     assert sess["hour"][0] == 0
     assert sess["date"][0] == "2026-03-10"
     assert sess["session"][0] == "ASIAN"
@@ -184,7 +188,7 @@ def test_explicit_positive_offset_normalizes_to_true_utc_codex_repro():
     assert date == "2026-03-29"
 
     candles = [_c("2026-03-29 07:00+02:00", 100, 101, 99, 100.5)]
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     assert sess["session"][0] == "ASIAN", "deve classificarsi ASIAN (05:00 UTC), non LONDON (07:00 UTC)"
 
 
@@ -193,7 +197,7 @@ def test_explicit_negative_offset_normalizes_to_true_utc():
     epoch, date, hour = backtest._parse_bar_utc_fields("2026-03-29 07:00-05:00")
     assert hour == 12
     candles = [_c("2026-03-29 07:00-05:00", 100, 101, 99, 100.5)]
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     assert sess["session"][0] == "OVERLAP"
 
 
@@ -221,7 +225,7 @@ def test_unsupported_timestamp_excluded_without_crashing_or_polluting_other_date
         _c("2026-03-11 00:00", 100, 101, 99, 100.5),
         _c("2026-03-11 01:00", 100.5, 102, 100, 101),
     ]
-    sess = backtest._session_amd_series_raw(candles)  # non deve lanciare eccezioni
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)  # non deve lanciare eccezioni
     assert sess["date"][0] is None
     assert sess["session"][0] is None
     assert sess["asian_session_complete"][0] is False
@@ -263,7 +267,7 @@ def test_no_regression_post_session_strategies_under_v2():
             lo = min(o, px) - random.uniform(0, 0.15)
             multi.append(_c(f"2026-04-{day:02d} {h:02d}:00", o, hi, lo, px))
 
-    sess = backtest._session_amd_series_raw(multi)
+    sess = backtest._session_amd_series_raw(multi, declared_cadence_seconds=_H1)
     atr = [0.3] * len(multi)
     ema200 = [None] * len(multi)
     choch_int = ([0] * len(multi), [False] * len(multi), [True] * len(multi))

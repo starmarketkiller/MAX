@@ -14,6 +14,11 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import backtest  # noqa: E402
 
+# V3 (P0): la cadenza non e' piu' dedotta dai dati - va dichiarata. Tutte le
+# fixture di questo file sono orarie per costruzione (lo sa chi le scrive),
+# non un'inferenza: e' esattamente il contratto point-in-time richiesto.
+_H1 = 3600
+
 
 def _c(time_str, o, h, l, c):
     return {"time": time_str, "open": o, "high": h, "low": l, "close": c}
@@ -41,7 +46,7 @@ def test_asian_hi_lo_none_during_session():
     """Nessuna barra ASIAN deve ricevere un livello (nemmeno parziale) finche'
     la sessione non e' conclusa."""
     candles = _synthetic_asian_spike_day()
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     for i in range(0, 7):  # ore 00:00..06:00 = tutte ASIAN
         assert sess["session"][i] == "ASIAN"
         assert sess["asian_hi"][i] is None, f"asian_hi[{i}] doveva essere None durante la sessione"
@@ -52,7 +57,7 @@ def test_asian_hi_lo_none_during_session():
 def test_asian_hi_lo_available_and_correct_after_close():
     """Alla prima barra LONDON, il livello completo e corretto deve apparire."""
     candles = _synthetic_asian_spike_day()
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     i_london = 7
     assert sess["session"][i_london] == "LONDON"
     assert sess["asian_session_complete"][i_london] is True
@@ -68,7 +73,7 @@ def test_lookahead_regression_guard():
     0..2) e' 101.0; il motore non deve MAI restituire un valore superiore
     a quella barra."""
     candles = _synthetic_asian_spike_day()
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     causal_hi_at_2 = max(c["high"] for c in candles[0:3])
     assert causal_hi_at_2 == 101.0
     assert sess["asian_hi"][2] is None, (
@@ -85,7 +90,7 @@ def test_amd_phase_no_classification_during_session_then_correct_after():
     # barra 02:00 rompe il massimo causale-finora (101.0) ma non il vero
     # massimo di sessione (120.0, formato solo alle 06:00)
     candles[2] = _c(candles[2]["time"], 100.4, 101.0, 100.0, 101.5)
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     for i in range(0, 7):
         assert sess["amd_phase"][i] is None, f"amd_phase[{i}] doveva restare None durante la sessione"
     # close=101.5 < vero massimo sessione (120.0) -> ACCUMULATION, non
@@ -98,7 +103,7 @@ def test_session_amd_series_wrapper_propagates_fix():
     intraday_ref) deve propagare gli stessi None/flag, non solo la _raw."""
     candles = _synthetic_asian_spike_day()
     outer = [candles[0], candles[4], candles[8], candles[12], candles[16], candles[20]]
-    sess = backtest._session_amd_series(outer, intraday_ref=candles)
+    sess = backtest._session_amd_series(outer, intraday_ref=candles, declared_cadence_seconds=_H1)
     # outer[0] = ora 00:00, si proietta su una barra intraday ancora ASIAN
     assert sess["asian_hi"][0] is None
     assert sess["asian_session_complete"][0] is False
@@ -112,7 +117,7 @@ def test_confirmed_strategies_degrade_gracefully_during_session():
     non devono mai lanciare eccezioni quando asian_hi/lo sono None - devono
     restituire 0 (nessun segnale), non un segnale basato su un livello futuro."""
     candles = _synthetic_asian_spike_day()
-    sess = backtest._session_amd_series_raw(candles)
+    sess = backtest._session_amd_series_raw(candles, declared_cadence_seconds=_H1)
     atr = [0.3] * len(candles)
     ind = {"sess": sess, "atr": atr, "choch_int": ([0] * len(candles), [True] * len(candles), [True] * len(candles)),
            "weekly_pwh": None, "weekly_pwl": None, "monthly_pmh": None, "monthly_pml": None}
@@ -138,7 +143,7 @@ def test_no_regression_post_session_strategies():
             lo = min(o, px) - random.uniform(0, 0.15)
             multi.append(_c(f"2026-02-{day:02d} {h:02d}:00", o, hi, lo, px))
 
-    sess_fixed = backtest._session_amd_series_raw(multi)
+    sess_fixed = backtest._session_amd_series_raw(multi, declared_cadence_seconds=_H1)
 
     # Replica minima della logica PRE-fix, SOLO per il confronto di
     # non-regressione - non reintrodotta nel motore.
