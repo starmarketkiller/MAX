@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.8C Serious 3Y Blocker Resolution & Run Authorization
 
 **Baseline:** `26be386` (Phase 7.8B, 3 blocker `NOT_YET_JUSTIFIED`). Risolve i 3 blocker senza inventare numeri, corregge il naming fresh-window, definisce lo schema del PRE-RUN MANIFEST/SEAL. Nessun Serious 3Y eseguito, nessun outcome letto, nessuna optimization.
@@ -79,3 +88,6 @@ sincronizzare dati MT5 reali
 ```
 
 Il protocollo e' ora completamente specificato senza un solo numero inventato. Il prossimo passo (creazione del manifest con date/hash reali) richiede accesso dati live, fuori dalla portata di questa sessione di ricerca.
+
+## Collegamenti
+[[MOC - Trading]]

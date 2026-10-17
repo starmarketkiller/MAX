@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-26
+updated: 2026-09-26
+---
+
 # NEXUS - Phase 7.9J — Revisione Metodologica Mirata di Phase 7.9I
 
 **Baseline:** `b9dafda` (Phase 7.9I). Dataset canonico `breakout_acc_intended_d1_v1_dataset.json` (Phase 7.9H) e raw data **preservati e invariati** (verificato via git diff). Nessuna optimization, nessuna modifica all'EA, nessuna promozione live.
@@ -118,3 +127,6 @@ PROSSIMO: TREND_ALIGNMENT_CONDITIONAL_EDGE resta l'unica ipotesi in
           sospeso, richiede un campione con variazione di allineamento
           (non ottenibile da questo dataset) - non implementata
 ```
+
+## Collegamenti
+[[MOC - Trading]]

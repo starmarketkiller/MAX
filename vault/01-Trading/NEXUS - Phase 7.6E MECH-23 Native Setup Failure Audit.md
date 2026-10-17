@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.6E MECH-23 Native Setup Failure Audit
 
 **Baseline:** `67282de` (Phase 7.6D Outcome-Horizon Contract, bloccato su `DESIGN_V2_BLOCKED_ON_OUTCOME_HORIZON_CONTRACT`). Audit **semantico**, non un rescue: nessun outcome letto, nessuna barrier magnitude/horizon scelti, nessuna geometry/preflight eseguita, nessun DESIGN_V2 creato, nessuna modifica ai frozen artifact precedenti.
@@ -93,3 +102,6 @@ prima di testare MECH-23 come meta-filter
 ```
 
 Come scritto dal reviewer: se manca la semantica nativa di strategia non e' un problema, e' una scoperta architetturale - separare nettamente event discovery, strategy construction e meta-filtering rende l'intero impianto di ricerca piu' pulito e piu' difficile da ingannare.
+
+## Collegamenti
+[[MOC - Trading]]

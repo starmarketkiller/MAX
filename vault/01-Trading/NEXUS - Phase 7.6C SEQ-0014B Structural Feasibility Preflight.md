@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.6C SEQ-0014B Structural Feasibility Preflight
 
 **Baseline:** `fb52168` (Phase 7.6B, popolazione di setup a 6 famiglie, architettura pooled stratificata). Concern nuovo del reviewer, aggiunto esplicitamente a questa fase: **cross-family same-bar/near-bar dependence** (es. BREAKOUT+DISPLACEMENT+VOLATILITY_EXPANSION sullo stesso bar 1500 non devono contare come 3 realizzazioni indipendenti).
@@ -133,3 +142,6 @@ preregistration outcome/inference
 ```
 
 Resta al 68%: il preflight pooled con controllo cross-family dependence e' stato eseguito - ha scoperto che il disegno frozen non ha abbastanza informazione (`NOT_TESTABLE_WITH_FROZEN_SETUP_POPULATION`), non che ne ha di piu'. Nessuna nuova evidenza empirica di edge/filter-utility ottenuta - anzi, un esito negativo strutturale, riportato per intero senza nasconderlo.
+
+## Collegamenti
+[[MOC - Trading]]

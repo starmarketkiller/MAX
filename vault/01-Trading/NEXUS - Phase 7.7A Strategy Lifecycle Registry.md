@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.7A Strategy Lifecycle Registry & Candidate Inventory
 
 **Baseline:** `082a456` (Phase 7.6E: RAW EVENT != STRATEGY, dimostrato sulle 6 famiglie SEQ-0014B). Primo inventario canonico delle strategie REALMENTE formalizzate nel progetto, separate dai raw event. Nessuna strategia nuova, nessuna modifica a MECH-23, nessun nuovo outcome letto, nessun backtest rieseguito.
@@ -91,3 +100,6 @@ un regime filter come MECH-23
 ```
 
 Il 68% resta fermo: struttura concettuale enormemente migliorata (mappa completa lifecycle/evidenza, incoerenze di governance reali portate alla luce), ma nessuna nuova evidenza deployable prodotta.
+
+## Collegamenti
+[[MOC - Trading]]

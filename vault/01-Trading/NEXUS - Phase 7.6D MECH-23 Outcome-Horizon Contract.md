@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.6D MECH-23 Outcome-Horizon Contract
 
 **Baseline:** `f6b0859` (Phase 7.6C Outcome-Horizon Ordering Audit). Formalizzazione **puramente concettuale** per un eventuale `SEQ-0014B_DESIGN_V2`: nessuna geometria eseguita, nessun outcome letto, nessun orizzonte alternativo ispezionato sui dati, nessuna configurazione scelta per massimizzare n.
@@ -100,3 +109,6 @@ prima di qualunque DESIGN_V2
 ```
 
 Il blocco su DESIGN_V2 non e' un fallimento del progetto - e' la scoperta che l'ordine "outcome-first" da solo non basta: serve anche la magnitudo esatta dell'outcome (la barriera) prima che l'horizon possa essere derivato, non solo il suo nome. Il metodo si sta autocorreggendo un livello alla volta.
+
+## Collegamenti
+[[MOC - Trading]]

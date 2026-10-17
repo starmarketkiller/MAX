@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-18
+updated: 2026-09-18
+---
+
 # NEXUS - Phase 6: True Holdout Validation of EC-LIQUIDITY_SWEEP_RECLAIM
 
 Obiettivo unico: verificare se EC-LIQUIDITY_SWEEP_RECLAIM passa da **E2 (INTERNAL_VALIDATION / POST_HOC_CANDIDATE)** a **E3 (TRUE_HOLDOUT_VALIDATION)**. Nessun nuovo edge cercato, nessuna modifica al detector, nessuna soglia cambiata, nessun filtro aggiunto, nessuna scelta del periodo dopo aver visto risultati. Questa fase poteva fallire.
@@ -157,3 +166,6 @@ Questa fase ha fatto esattamente quello che dice il proprio titolo: ha VERIFICAT
 - `server/research_scripts/phase6/h006_primary_result.json`
 - `server/research_scripts/phase6/h006_robustness_diagnostics.json`
 - Codice: `phase6_holdout_downloader.py`, `build_h4_bars_holdout.py`, `build_market_state_holdout.py` (copia verbatim), `build_events_holdout.py` (copia verbatim), `build_outcomes_holdout.py` (copia verbatim), `run_h006_test.py`, `robustness_diagnostics.py`, `signal_to_fill_feasibility.py` (pronto, non eseguito)
+
+## Collegamenti
+[[MOC - Trading]]

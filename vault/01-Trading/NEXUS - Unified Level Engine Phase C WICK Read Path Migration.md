@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-13
+updated: 2026-09-13
+---
+
 # Unified Level Engine — Phase C: WICK read-path migration with legacy shadow fallback
 
 Segue [[NEXUS - Unified Level Engine Phase B Causal Non-Interference Validation]] (commit `74bd116`, verdict PASS_TO_PHASE_C). Primo consumer migrato: **solo WICK_SWEEP_REVERSAL (selector 54)**. WICK_SWEEP_RECLAIM (selector 55) resta legacy-only. Il vecchio `SNxsWickSide`/`SNxsWickReclaimState` NON è stato rimosso e continua a scrivere il proprio stato in ogni caso. Nessuna altra strategia toccata. `NXS_Structure.mqh`, `NXS_Reaction.mqh`, execution, SL/TP, strategy registry, Global New-Bar Gate: invariati.

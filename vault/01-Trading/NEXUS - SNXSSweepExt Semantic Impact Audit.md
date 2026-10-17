@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS — SNXSSweepExt Detector Integrity: Semantic Impact Audit
 
 Segue [[NEXUS - SNXSSweepExt Detector Integrity Fix]] (fix locale non committato, verdict `HOLD_DETECTOR_SEMANTICS_CHANGED`). Audit completo dell'impatto per decidere se promuovere il fix.

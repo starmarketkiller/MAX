@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Structural Research — Detector Integrity Fix: SNXSSweepExt Initialization
 
 Segue [[NEXUS - Causal Research Thread 2 Phase A1 Shared Sweep Instrumentation]] (commit `597e9b5`). Root-cause audit richiesto sull'anomalia "confirmed=true con dir/level/levelTag ai default" osservata in ~65% delle osservazioni grezze.

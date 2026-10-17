@@ -218,3 +218,6 @@ Regola generale: questi termini NON sono sinonimi intercambiabili. Ogni report/s
 **Definizione.** Come un Entry teorico diventa un Fill reale: tipo di ordine, prezzo di invio, slippage, latenza, modello di tick (sintetico vs reale) usato in test.
 
 **Rapporto con altri elementi.** Execution Model spiega la differenza Entry-vs-Fill; nella correzione Phase 3 è stato dimostrato che il modello di tick (MT5 Model=1 sintetico vs Model=4 reale) cambia MATERIALMENTE quanto un errore di Entry-reference si propaga nei risultati di parity — l'Execution Model non è un dettaglio tecnico neutro, è parte integrante di cosa un test sta davvero misurando.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

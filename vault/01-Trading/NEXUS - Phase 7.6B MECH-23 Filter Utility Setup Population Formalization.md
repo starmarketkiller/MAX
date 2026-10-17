@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.6B MECH-23 Filter Utility (SEQ-0014B) Setup Population Formalization
 
 **Baseline:** `206938c` (SEQ-0014A/SEQ-0014B separate, SEQ-0014A `FEASIBLE`, SEQ-0014B `NEEDS_DIRECTIONAL_SETUP_POPULATION_SPECIFICATION`). Riguarda **solo** SEQ-0014B - SEQ-0014A resta invariato.
@@ -66,3 +75,6 @@ Nessun structural preflight (n setup totali, n CHOPPY/TRENDING/MED, geometria EV
 **NO NEXUS OUTCOME DATA ACCESSED. NO EDGE DISCOVERY PERFORMED.** SEQ-0015 e SEQ-0009 restano chiuse. Nessun structural preflight/discovery eseguito per nessuno dei due esperimenti SEQ-0014.
 
 **Progresso verso demo (invariato): ~68%.** MECH-23 separato correttamente in state phenomenon vs filter utility; popolazione di setup direzionali ora formalizzata ex-ante per il secondo. Non ancora evidenza di edge/filter utility reale.
+
+## Collegamenti
+[[MOC - Trading]]

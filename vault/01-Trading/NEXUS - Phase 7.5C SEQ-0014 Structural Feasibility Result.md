@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.5C SEQ-0014 (MECH-23 LOW_INFORMATION_STATE) Structural Feasibility Result
 
 **Formalization commit:** `28e3435` (frozen spec, congelato PRIMA di eseguire il gate). **Baseline pre-formalizzazione:** `f7559ee` (SEQ-0015/SEQ-0009 chiuse). **Questo e' il RESULT COMMIT** - eseguito il gate strutturale reale su dati reali (`market_state_dataset_p71.csv`, partition `development_discovery`), separato dal formalization commit.
@@ -84,3 +93,6 @@ Le prime due family (eventi puntuali a rigetto/rottura) collassavano quasi inter
 ---
 
 **SEQ-0014 e' `FEASIBLE`** sulla partition `development_discovery` con il design congelato in `28e3435` - geometria e matching entrambi verificati realmente, non solo dichiarati. Questo **non e'** un'autorizzazione a procedere alla preregistrazione statistica: quel passo, per istruzione esplicita, va autorizzato separatamente. Mi fermo qui.
+
+## Collegamenti
+[[MOC - Trading]]

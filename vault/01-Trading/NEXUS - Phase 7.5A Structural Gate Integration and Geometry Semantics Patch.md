@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.5A Structural Gate Integration and Geometry Semantics Patch
 
 **Baseline:** `fbfab21` (Phase 7.5A Sequence Structural Feasibility Gate). Corregge due problemi architetturali trovati in review nel gate appena introdotto - **nessuna nuova sequence family formalizzata, nessun outcome letto, nessuna edge discovery**.
@@ -93,3 +102,6 @@ DETECTOR COMPLETENESS -> EVENT GEOMETRY -> INDEPENDENT SAMPLE YIELD -> BASELINE 
 ```
 
 Prossimo passo (non iniziato in questa fase): scegliere SEQ-0009 come prima family da formalizzare (piu' vicina strutturalmente ad avere un detector operativo, per completezza, non per profittabilita' attesa) e avviare una Phase 7.5B di formalizzazione detector + episode/horizon/embargo + matching_spec, poi ri-eseguire questo gate su dati reali.
+
+## Collegamenti
+[[MOC - Trading]]

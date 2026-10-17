@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # NEXUS — Test Validity Certificate v2
 
 Roadmap 95/99, QUANTITATIVE INTEGRITY. Obiettivo: ogni run di Research Mode produce automaticamente un certificato che dichiara se il test è affidabile o no.

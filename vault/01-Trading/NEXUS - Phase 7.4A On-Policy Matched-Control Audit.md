@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.4A On-Policy Matched-Control Simulation Audit
 
 **Baseline:** `704ce38` (Phase 7.4A Dependence-Aware Inference Redesign). Audit mirato: il precedente stress test `control_reuse_small_pool` violava la frozen policy reale — questa fase lo corregge usando realmente `ControlReuseLedger` per l'assegnazione. **Nessun nuovo metodo inferenziale progettato, nessun dato NEXUS letto, nessuna Phase 7.4B, nessuna frozen_spec_v5.**
@@ -86,3 +95,6 @@ Nessun file del motore congelato modificato.
 **NO REAL NEXUS OUTCOME DATA ACCESSED. NO SEQUENCE DISCOVERY EXECUTED.**
 
 **Commit/push eseguiti. Verdetto complessivo: PRIMARY INFERENCE METHOD NOT YET VALIDATED (φ=0.7 resta il blocker primario indipendente; il rischio di control-reuse è ora meglio circoscritto: interazione con la sovrapposizione temporale, non riuso isolato). Nessuna Phase 7.4B. Nessuna frozen_spec_v5. Un futuro redesign mirato richiederà una nuova, separata autorizzazione.**
+
+## Collegamenti
+[[MOC - Trading]]

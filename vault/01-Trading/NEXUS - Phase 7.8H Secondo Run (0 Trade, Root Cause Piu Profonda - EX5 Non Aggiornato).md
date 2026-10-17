@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-22
+updated: 2026-09-22
+---
+
 # NEXUS - Phase 7.8H Corrected Serious Validation RUN (0 trade, causa più profonda)
 
 **Baseline:** `7cd7910f323bb54cb2fdcc49ef46a50a53184338` (Phase 7.8G). L'utente ha autorizzato esplicitamente il secondo run, con la condizione che il fix `InpStrat_VolBreakoutConfirmed=true` fosse incorporato in un nuovo config hash + atomic reseal window-aware fresco, immediatamente prima del rilancio.
@@ -64,3 +73,6 @@ ricompilare NEXUS_EA_v2.ex5 dal sorgente corrente
 → conferma esplicita richiesta
 → RUN 3
 ```
+
+## Collegamenti
+[[MOC - Trading]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-09-29
+updated: 2026-09-29
+---
+
 # NEXUS TASK #0002 — Research Safety Net Auto-Backfill
 
 **Baseline:** `0a6abca`. Prima NEXUS TASK a testare esplicitamente il confine fra "l'Orchestrator procede da solo" e "deve fermarsi e chiedere". Claude solo supervisore: inventario/classificazione dei campi e' un'ispezione FATTUALE di TIER0 (vedi `safety_net_classification.py` per il ragionamento completo), il calcolo e' deterministico o via ministral-3:3b, mai deciso/corretto manualmente da Claude.
@@ -54,3 +63,6 @@ Nessun verdict/hypothesis/holdout toccato (verificato dal verificatore indipende
 ## Regressione
 
 `verify_nexus_task_0002.py`: PASSED. 28/28 test (core + bake-off + questo). Suite completa `server/orchestrator_v1/`: nessuna regressione.
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

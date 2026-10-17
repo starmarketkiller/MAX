@@ -242,3 +242,6 @@ Disambiguation notes for future reference:
 - "Gordon" also matches unrelated repos in search (`gonome/gordoncli` is a mirror of the same project; other unrelated "Gordon" tools exist outside trading — none were used here).
 - "AgenticTrading" as a bare name also matches several unrelated/personal forks (`Allan-Feng/AgenticTrading`, `bhardwajRahul/AgenticTrading`, etc.) and an unrelated Google ADK/A2A demo (`kweinmeister/agentic-trading`); the SecureFinAI Lab / Open-Finance-Lab repo is the one matching the "Agentic Trading Lab" research platform described in the task.
 - "OpenAlice" also matches an unrelated/differently-scoped "File-driven AI trading agent engine" fork lineage (e.g. `2233admin/OpenAlice`); `TraderAlice/OpenAlice` is the canonical upstream used here.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

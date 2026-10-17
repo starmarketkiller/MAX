@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.8A Value-of-Information Contract: VOLATILITY_BREAKOUT_CONFIRMED
 
 **Baseline:** `fdab6e7` (Phase 7.7A/7.7B, meta-filter ready 0/7). Contratto decisionale **ex-ante**: stabilisce se il Serious 3Y e' davvero il prossimo esperimento a maggior valore informativo per VOLATILITY_BREAKOUT_CONFIRMED - PRIMA di eseguirlo. Nessun backtest, nessun nuovo outcome, nessuna optimization di parametri, nessuna applicazione di MECH-23.
@@ -108,3 +117,6 @@ piu' economica (holdout recente)
 ```
 
 Nota: la richiesta di deploy su Render nel messaggio precedente non e' stata eseguita in questa sessione - letta come diretta al lavoro Codex/Company Control Plane (deploy infrastrutturale), fuori dalla portata di questo lavoro di ricerca Quant.
+
+## Collegamenti
+[[MOC - Trading]]

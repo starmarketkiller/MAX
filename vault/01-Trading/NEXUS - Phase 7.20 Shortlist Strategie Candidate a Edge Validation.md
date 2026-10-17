@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-27
+updated: 2026-09-27
+---
+
 # NEXUS - Phase 7.20 — Shortlist Strategie Candidate a Edge Validation
 
 **Baseline:** `8dce300` (Phase 7.18/7.19 concluse). Nessun lavoro concorrente rilevato (fetch eseguito prima e dopo). Nessun parameter sweep, nessuna TP/SL optimization, nessun risk sizing, nessun compounding, nessun portfolio testing, nessuna promozione live in questa fase. Nessuna modifica a `MQL5/`.
@@ -91,3 +100,6 @@ PROSSIMO: blocco dichiarato dall'utente - baseline edge -> costi -> OOS
   -> execution -> minimum viable capital -> demo forward, a partire
   da BREAKOUT_ACC (solo BUY nel primo giro)
 ```
+
+## Collegamenti
+[[MOC - Trading]]

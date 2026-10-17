@@ -5,7 +5,7 @@ status: active
 tags: [trading, nexus-ea, strategia]
 strategia: FVG_CONT
 created: 2026-07-12
-updated: 2026-07-15
+updated: 2026-09-08
 ---
 
 # Strategia: FVG_CONT

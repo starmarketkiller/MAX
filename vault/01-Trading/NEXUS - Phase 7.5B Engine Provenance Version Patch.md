@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.5B Engine Provenance Version Patch
 
 **Baseline:** `85cc47a` (Cluster Geometry Consistency Patch - verdetto corretto e coerente). Patch di **sola provenance/versioning** - nessun cambio di logica, detector, spec o verdetto.
@@ -50,3 +59,6 @@ FINAL VERDICT: NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY        (invariato)
 ---
 
 **SEQ-0009 e' ora archiviata definitivamente:** `NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY` su `development_discovery`, con geometria internamente coerente (Cluster Geometry Consistency Patch) e provenance tracciabile senza ambiguita' (questa patch). In questa fase il nuovo processo ha gia' prodotto valore concreto due volte: ha fermato sia SEQ-0015 sia SEQ-0009 prima di costruire inferenza statistica su un campione indipendente insufficiente a sostenerla - esattamente il problema che il preflight era stato progettato per prevenire. Nessuna nuova family avviata, come da istruzione.
+
+## Collegamenti
+[[MOC - Trading]]

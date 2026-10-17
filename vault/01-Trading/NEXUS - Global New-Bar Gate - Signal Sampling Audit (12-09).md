@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # NEXUS — Global New-Bar Gate / Signal Sampling Audit
 
 Scoperto validando RECLAIM_TRIGGER per WICK_SWEEP_REV (vedi [[NEXUS EA - WICK_SWEEP Entry Timing Study - HYPOTHESIS STRONGLY SUPPORTED NOT YET EXECUTION-VALIDATED (11-09)]]): il confronto tick-level shadow vs canonico dava parity FAIL (258 vs 182 sweep). Correlando i timestamp esatti, **tutte e 179 le aperture reali di WICK_SWEEP_REV nel test cadono su un boundary `InpTFEntry` esatto** (:00/:15/:30/:45, mai a meta' barra). Causa isolata nel codice.

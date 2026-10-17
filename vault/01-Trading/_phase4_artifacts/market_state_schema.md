@@ -106,3 +106,6 @@ Rappresentazione causale quantitativa dello stato di mercato. Ogni feature deve 
 | cross_market.futures positioning (COT) | NO | SI ma a bassissima frequenza (settimanale, pubblicato con ritardo) — utile solo come feature di regime lento, mai per trigger di breve periodo | dati esterni gratuiti (CFTC COT report) | settimanale | media (utile per bias di posizionamento, non per timing) | P3 |
 
 **Nota metodologica.** "Disponibile oggi" = calcolabile da dati OHLC/tick già presenti in NEXUS senza nuove fonti esterne. "Causalmente sicura" segnala esplicitamente dove il rischio di look-ahead è concreto (swing confirmation, percentile su finestra, feature stagionali con pochi cicli) — questi casi vanno implementati con lo stesso rigore già richiesto per FROZEN_SIGNAL_SPEC_V1: definire l'observation point ESATTO prima di calcolare qualunque statistica su di esso.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

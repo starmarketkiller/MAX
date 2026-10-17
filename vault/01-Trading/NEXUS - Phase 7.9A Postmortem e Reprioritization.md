@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-22
+updated: 2026-09-22
+---
+
 # NEXUS - Phase 7.9A Postmortem & Candidate Reprioritization
 
 **Baseline:** `f9550050f853c7dd4fefa3ef5c4315aa8ac3fcd7` (Phase 7.8I, `VOLATILITY_BREAKOUT_CONFIRMED` FAIL, `ARCHIVE_CURRENT_DESIGN`). Nessun nuovo backtest, nessuna modifica a strategie, nessun rescue — solo riconciliazione, archiviazione formale, postmortem, checklist permanente, inventario e riprioritizzazione.
@@ -85,3 +94,6 @@ PROSSIMO: FORMALIZE_EXISTING_CANDIDATE -> BREAKOUT_ACC
           (nessun backtest - solo estrazione lifecycle dal codice)
 BACKLOG (non prioritizzato): HISTORICAL_VOLUME_CONTRACT_WALLS
 ```
+
+## Collegamenti
+[[MOC - Trading]]

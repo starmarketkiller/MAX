@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Research Infrastructure — Phase C: Structural Lifecycle Sample Recovery
 
 Segue [[NEXUS - Causal Research Thread 3 True Break Quality]] (verdict `HOLD_INSUFFICIENT_TRUE_BREAK_SAMPLE`, n_risolti=60 < 150). Obiettivo di questa fase: aumentare il campione causale affidabile **senza modificare entry/exit/risk/strategy semantics**.

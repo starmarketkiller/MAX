@@ -4,7 +4,7 @@ domain: system
 status: active
 tags: [jarvis, rag, convenzioni]
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-10-17
 ---
 
 # Convenzioni RAG del vault
@@ -27,6 +27,17 @@ updated: YYYY-MM-DD
 - `type: note` — contenuto normale.
 - `type: log` — cronologia/changelog (es. [[NEXUS EA - Log Versioni]]).
 - `type: template` — schema da riusare, non contenuto vero.
+- `subtype:` (facoltativo) — specializzazione libera quando `type: note` non basta
+  (es. `system-state` per [[CURRENT_STATE]], `master-roadmap`, `reference`).
+  Gli indicizzatori filtrano su `type`, quindi `type` resta sempre uno dei 4 valori sopra.
+
+### Eccezioni
+- `00-Inbox/` — niente frontmatter (zona di passaggio, vedi la sua README).
+- `01-Trading/_phase4_artifacts/` — artifact di ricerca citati per percorso **e
+  numero di riga** da script e manifest in `server/research_scripts/`: non
+  aggiungere frontmatter in testa (sposterebbe le righe citate). Il loro
+  indice è [[NEXUS - Market Intelligence Foundation]]; eventuali link vanno
+  solo in fondo al file.
 
 ## Chunking
 Un file = un'unità di recupero di base. Dentro il file, gli header `##` sono i

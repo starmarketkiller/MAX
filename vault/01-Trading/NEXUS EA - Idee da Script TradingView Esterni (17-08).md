@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, ricerca-esterna]
 created: 2026-08-17
-updated: 2026-08-17
+updated: 2026-08-24
 ---
 
 # NEXUS EA — Idee da Script TradingView Esterni (17/08)

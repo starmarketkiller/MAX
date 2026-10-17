@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-19
+updated: 2026-09-19
+---
+
 # NEXUS - Phase 7.1: First Real Discovery Run
 
 **Baseline:** `5e3f726` (Phase 7.0B, READY_FOR_PHASE_7_1=true). Autorizzata esplicitamente dall'utente con vincoli precisi (vedi sotto). Obiettivo dichiarato: **validare il processo di discovery v2 su dati reali, non massimizzare il numero di edge trovati.**
@@ -114,3 +123,6 @@ Una sola discovery family congelata (RECLAIM); candidate generation policy gia' 
 ## Conclusione
 
 Il Discovery Engine v2 ha funzionato esattamente come progettato: ha testato una famiglia pre-registrata con rigore statistico completo (baseline matched, dipendenza, FDR), ha rilevato un fenomeno metodologicamente interessante (inversione di segno EVENT/EPISODE view) invece di ignorarlo, e si e' fermato correttamente PRIMA di consumare risorse di validazione preziose su un segnale che non le meritava. **NO_SUPPORTED_CANDIDATE** e' il risultato onesto di questa run - non un fallimento del processo, ma la dimostrazione che il processo sa dire "no" quando i dati non sostengono un effetto, invece di trovare sempre qualcosa da promuovere.
+
+## Collegamenti
+[[MOC - Trading]]

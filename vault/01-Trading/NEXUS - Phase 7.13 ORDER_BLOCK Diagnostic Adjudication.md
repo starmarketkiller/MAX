@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-26
+updated: 2026-09-26
+---
+
 # NEXUS - Phase 7.13 — ORDER_BLOCK Diagnostic Adjudication
 
 **Baseline:** `dc1874e` (Phase 7.12). Nessun commit concorrente di Codex rilevato (fetch eseguito prima e dopo il lavoro). **Nessun file MQL5/EA modificato in questa fase** — solo istrumentazione diagnostica Python, in `server/research_scripts/phase7/phase7_13/`. Nessuna optimization, nessun tuning SL/TP, nessun parameter sweep, nessun confronto di redditività, nessuna promozione live. Artifact BREAKOUT_ACC (Phase 7.9H-K) usati solo come lettura, mai modificati.
@@ -111,3 +120,6 @@ FIX: proposto (guardia identica in forma a BREAKOUT_ACC), NON
 PROSSIMO PASSO SUGGERITO (non deciso qui): costruire il trace EA live
   reale mancante prima di autorizzare la patch
 ```
+
+## Collegamenti
+[[MOC - Trading]]

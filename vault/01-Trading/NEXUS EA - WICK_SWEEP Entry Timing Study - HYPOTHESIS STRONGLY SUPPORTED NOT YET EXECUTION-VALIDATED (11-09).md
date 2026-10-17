@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-ea]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # WICK_SWEEP_REV — Entry Timing Study
 
 ## STATO FINALE (12/09, chiusura): FILONE WICK_SWEEP_RECLAIM CHIUSO — IPOTESI REFUTATA

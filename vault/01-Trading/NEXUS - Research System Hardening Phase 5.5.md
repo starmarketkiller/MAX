@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-18
+updated: 2026-09-18
+---
+
 # NEXUS - Research System Hardening Phase 5.5
 
 Fase infrastrutturale: nessun nuovo edge cercato, nessuna strategia costruita, nessuna optimization, **SWEEP+RECLAIM non ri-validato**. Obiettivo: costruire i guardrail metodologici che Phase 5 non aveva ancora, e applicarli retroattivamente a Phase 5 stessa per vedere cosa avrebbero effettivamente catturato.

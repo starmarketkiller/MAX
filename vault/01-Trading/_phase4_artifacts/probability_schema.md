@@ -51,3 +51,6 @@ Con prior Beta(α₀, β₀) e k successi su n prove:
 Prior di default: Beta(1,1) (uniforme, non informativo) per ogni nuovo Setup mai osservato prima. Se un Setup è una variante di uno già validato, il prior PUÒ essere informato dal Setup genitore, ma questo va dichiarato esplicitamente in `prior_rationale` — mai un prior scelto per far apparire il risultato migliore.
 
 `discovery_vs_validation` + `discovery_sample_disjoint_from_validation_sample=true` è un requisito strutturale: una stima "VALIDATION" calcolata sullo stesso campione usato per scoprire/definire il Setup non è una validazione indipendente — è lo stesso overfitting mascherato da parole diverse.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

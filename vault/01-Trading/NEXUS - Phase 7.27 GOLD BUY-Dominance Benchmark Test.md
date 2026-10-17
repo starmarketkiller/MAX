@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-28
+updated: 2026-09-28
+---
+
 # NEXUS - Phase 7.27 — GOLD BUY-Dominance Benchmark Test
 
 **Baseline:** `f4834cb` (Phase 7.26, Research Safety Net V1). Nessuna modifica MQL5/strategie. Nessuna optimization. Nessun nuovo backtest MT5 (tutto calcolato su serie di prezzo già esistenti). Nessun deploy.
@@ -102,3 +111,6 @@ PROSSIMO (Research Priority Queue): backfill temporal_concentration
   gia' esistenti) - poi tornare a testare strategie singole
   (LIQ_SWEEP forward passivo, FVG_CONT integrity audit)
 ```
+
+## Collegamenti
+[[MOC - Trading]]

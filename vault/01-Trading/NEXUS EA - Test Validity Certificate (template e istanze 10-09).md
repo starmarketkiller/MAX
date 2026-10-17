@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-ea]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # Test Validity Certificate - template
 
 Da compilare per OGNI test Research Mode d'ora in poi (richiesto dall'utente 10/09, dopo la scoperta del troncamento silenzioso da EQUITY_BREAKER su WICK_SWEEP_REV). Copiare il blocco e riempirlo.
@@ -166,3 +175,6 @@ NOTE:                 PF0.78, net -$151.39, WR 16.85% (30/178), avg win $17.54, 
 ## Nota generale sulla leva 1:100 vs 1:500
 
 Verificato sui log di tutti e 4 i test ufficiali eseguiti a leva 1:100: **zero blocchi margin/volume/preflight riconducibili alla leva** (lotti fissi 0.01, margine richiesto trascurabile rispetto al deposito $1000 a qualunque leva realistica). **Non invalidati, non rilanciati** - i risultati restano validi. Standardizzazione a 1:500 applicata solo ai template per test futuri (`nxs_research_*.ini` in `tmp/strategy_validation`), non retroattiva.
+
+## Collegamenti
+[[MOC - Trading]]

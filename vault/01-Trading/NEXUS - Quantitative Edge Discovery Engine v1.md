@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-17
+updated: 2026-09-17
+---
+
 # NEXUS - Quantitative Edge Discovery Engine v1
 
 Prima vera pipeline quantitativa della nuova ontologia: `MARKET STATE + EVENT → CONDITIONAL OUTCOME → EDGE`. Nessuna strategia nominata usata come punto di partenza, nessun nuovo EA, nessuna optimization, nessuna ricerca combinatoria esaustiva. Base approvata: Phase 4 (`ad14e97`), preflight registry fix (`1ebae49`).

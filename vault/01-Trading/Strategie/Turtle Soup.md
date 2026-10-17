@@ -5,7 +5,7 @@ status: active
 tags: [trading, nexus-ea, strategia]
 strategia: TURTLE_SOUP
 created: 2026-07-12
-updated: 2026-07-15
+updated: 2026-08-11
 ---
 
 # Strategia: TURTLE_SOUP

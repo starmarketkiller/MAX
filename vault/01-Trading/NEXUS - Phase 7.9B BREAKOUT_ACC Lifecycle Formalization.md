@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-22
+updated: 2026-09-22
+---
+
 # NEXUS - Phase 7.9B BREAKOUT_ACC Lifecycle Formalization
 
 **Baseline:** `ea0013e090ae2776fe61565392d19991c6dbecc4` (Phase 7.9A, `FORMALIZE_EXISTING_CANDIDATE` → `BREAKOUT_ACC`). Solo audit statico — nessun backtest, nessuna ottimizzazione, nessun nuovo outcome, nessuna modifica alla strategia.
@@ -73,3 +82,6 @@ SCOPERTA: la fonte "+4.3R/101 trade" citata in 7.7A e' inaffidabile -
 PROSSIMO: REANALYZE_EXISTING_RAW_RESULTS (dataset Python n=27 gia' pronto,
           nessun nuovo esperimento MT5)
 ```
+
+## Collegamenti
+[[MOC - Trading]]

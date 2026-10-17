@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-28
+updated: 2026-09-28
+---
+
 # NEXUS - Phase 7.25 — LIQ_SWEEP EDGE_VALIDATION_V1
 
 **Baseline:** `c9e429f` (Phase 7.24, Canonical Dataset Adjudication). BREAKOUT_ACC (7.21), ORDER_BLOCK (7.22), il Run Isolation Harness (7.23) e l'adjudication (7.24) restano **congelati** (diff zero verificato dal verificatore). Nessuna optimization, nessun tuning, nessun deploy.
@@ -133,3 +142,6 @@ PROSSIMO: nessuna promozione. Serve accumulo forward ulteriore prima
   di qualunque conclusione - il segnale OOS negativo consiglia
   cautela maggiore rispetto a BREAKOUT_ACC/ORDER_BLOCK, non minore
 ```
+
+## Collegamenti
+[[MOC - Trading]]

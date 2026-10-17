@@ -67,3 +67,6 @@ Ogni futuro `EDGE_COMPONENT` deve avere due sezioni separate — nessun fenomeno
 ```
 
 **Nessuna nuova validazione di esecuzione è stata eseguita in questa fase** (vietato dal perimetro di Phase 5.5, sec. "NON deve rivalutare SWEEP+RECLAIM") — questo record esiste per rendere ESPLICITO che il fenomeno non ha ancora attraversato la sezione EXECUTION, non per colmare quel vuoto ora.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

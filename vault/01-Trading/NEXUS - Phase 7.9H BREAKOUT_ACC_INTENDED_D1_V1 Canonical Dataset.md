@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-26
+updated: 2026-09-26
+---
+
 # NEXUS - Phase 7.9H BREAKOUT_ACC_INTENDED_D1_V1 — Canonical Dataset
 
 **Baseline:** `8fab0dd` (Phase 7.11 - Complete Strategy Census). Nessuna optimization, nessuna ricerca di edge, nessun P&L usato per decidere la metodologia. Nessuna nuova modifica alla logica di trading dell'EA in questa fase (verificato: 0 diff su `MQL5/` e `server/backtest.py`).
@@ -108,3 +117,6 @@ DECISIONE FINALE: CANONICAL_DATASET_READY_FOR_MECHANISM_RESEARCH
 PROSSIMO: Edge Decomposition -> Path Anatomy -> Natural Horizon ->
           Mechanism Discovery (nuova istruzione richiesta)
 ```
+
+## Collegamenti
+[[MOC - Trading]]

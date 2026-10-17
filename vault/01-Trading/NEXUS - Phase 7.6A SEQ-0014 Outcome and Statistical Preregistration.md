@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.6A SEQ-0014 Outcome & Statistical Preregistration
 
 **Baseline:** `844f852` (SEQ-0014 `FEASIBLE` sul gate strutturale). **Questo e' il PREREGISTRATION COMMIT - nessun outcome calcolato, nessuna discovery eseguita.**
@@ -66,3 +75,6 @@ Autorizzata per un futuro run: **solo** `development_discovery`. `internal_valid
 **NO NEXUS OUTCOME DATA ACCESSED. NO EDGE DISCOVERY PERFORMED.** SEQ-0015 e SEQ-0009 restano chiuse, non riesaminate. **Discovery NON eseguita.**
 
 **Prossimo passo (non autorizzato qui):** formalizzare una nuova structural spec con `control_pool_construction_policy` corretta per escludere controlli essi stessi in `LOW_INFORMATION_STATE` (estimand B), ri-eseguire il Sequence Structural Feasibility Gate su quella spec, e solo allora sbloccare questa preregistrazione.
+
+## Collegamenti
+[[MOC - Trading]]

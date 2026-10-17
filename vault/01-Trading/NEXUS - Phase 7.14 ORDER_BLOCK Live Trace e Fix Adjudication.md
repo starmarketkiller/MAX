@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-27
+updated: 2026-09-27
+---
+
 # NEXUS - Phase 7.14 — ORDER_BLOCK Live Trace e Fix Adjudication
 
 **Baseline:** `7b823b9` (Phase 7.13). **Prima applicazione di un fix reale al sorgente EA in questo intero progetto** — autorizzata esplicitamente e solo per la riga `if(tf != NXS_Profile_TF("ORDER_BLOCK")) return s;`, dopo dimostrazione causale sul trace EA reale. Nessuna ricerca economica: nessuna optimization, SL/TP tuning, parameter sweep, confronto di redditività, rescue o promozione live.
@@ -79,3 +88,6 @@ SECONDO CASO COMPLETO dopo BREAKOUT_ACC: difetto -> prova causale ->
 PROSSIMO: nessuna promozione live, nessuna valutazione di
   redditivita' in questa fase - decisione separata e futura
 ```
+
+## Collegamenti
+[[MOC - Trading]]

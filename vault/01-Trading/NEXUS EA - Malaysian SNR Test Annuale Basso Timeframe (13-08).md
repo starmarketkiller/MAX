@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, malaysian-snr, escluse, basso-timeframe]
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-17
 ---
 
 # Malaysian SNR su Gold — test annuale basso timeframe (13/08)

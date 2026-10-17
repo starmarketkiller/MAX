@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.5B SEQ-0009 (MECH-18 SWEEP) Structural Feasibility Result
 
 **Formalization commit:** `b1f982b` (frozen spec, congelato PRIMA di eseguire il gate). **Baseline pre-formalizzazione:** `8593f9c` (Phase 7.5A chiusa). **Questo e' il RESULT COMMIT** - eseguito il gate strutturale reale su dati reali (`xauusd_h4_bars_p71.csv`/`market_state_dataset_p71.csv`, partition `development_discovery`), separato dal formalization commit come richiesto.
@@ -85,3 +94,6 @@ Questo e' esattamente il cambio di processo cercato: la stessa classe di scopert
 **SEQ-0009 e' `NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY`** sulla partition `development_discovery` con il design congelato in `b1f982b` - scoped a quella partition, mai un'affermazione di impossibilita' universale (stessa semantica gia' corretta per SEQ-0015/FAIL-009). Una futura variante (nuova finestra dati, nuovo episode_gap/embargo, nuovo livello di riferimento) richiederebbe una nuova identita' e una nuova preregistrazione - non un secondo tentativo su `SEQFAM-SEQ0009-SWEEP-STRUCTURAL-V1`.
 
 Questo si ferma qui, come da istruzione: nessuna lettura di outcome, nessuna nuova family formalizzata, nessuna ulteriore espansione dell'infrastruttura oltre al bug concreto corretto sopra.
+
+## Collegamenti
+[[MOC - Trading]]

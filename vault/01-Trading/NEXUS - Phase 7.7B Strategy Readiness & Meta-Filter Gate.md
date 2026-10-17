@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.7B Strategy Readiness & Meta-Filter Gate
 
 **Baseline:** `6ac26cc` (Phase 7.7A + Company Control Plane, merge senza conflitti). Separa formalmente **STRUCTURAL ELIGIBILITY** da **RESEARCH READINESS** per l'uso futuro di strategie in META_FILTER_RESEARCH. Nessun nuovo backtest, nessuna applicazione di MECH-23, nessuna modifica ai risultati storici.
@@ -73,3 +82,6 @@ di piu' del suo costo?
 ```
 
 Nota: la parte di questo messaggio rivolta a Codex (integrazione del Company Control Plane) non e' stata eseguita in questa sessione - va inoltrata separatamente alla sessione Codex, che non e' raggiungibile da qui.
+
+## Collegamenti
+[[MOC - Trading]]

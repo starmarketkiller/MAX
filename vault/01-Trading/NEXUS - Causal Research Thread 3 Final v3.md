@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-15
+updated: 2026-09-15
+---
+
 # NEXUS Causal Research Thread 3 — FINAL RE-RUN on v3 Causal Population
 
 Segue [[NEXUS - Phase C1 Orphan TRUE_BREAK Audit]] (commit `f6315e3`): il verdict precedente di Thread 3 (`NO_PROMISING_HYPOTHESIS`, ottenuto durante la validazione di Phase C su population v2, 159 risolti) era dichiarato **provvisorio** perché la population cambiava materialmente dopo la chiusura dei 288 orphan TRUE_BREAK. Questo report rilancia la **stessa identica metodologia pre-registrata** (nessuna soglia, feature, o target cambiato) sulla population v3, costruita esclusivamente tramite `episode_sweep_link` (fonte causale).

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Causal Research Thread 2 — Structural Causal Experiment 2: Confirmatory Test
 
 Segue [[NEXUS - Structural Causal Experiment 1]] (commit `853b1a4`, verdict `NO_PROMISING_HYPOTHESIS`, 3 `WEAK_HINT`). Test confermativo, non discovery: nessuna nuova feature, nessuna combinazione, nessuna soglia ricalcolata. Testati **solo** i 3 hint congelati.

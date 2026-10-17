@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-15
+updated: 2026-09-15
+---
+
 # NEXUS — Serious Backtest Candidate Triage & Python↔MQL5 Parity
 
 Segue [[NEXUS - 37 Strategy Cost-Calibrated Re-Evaluation]] (commit `ff9f0e5`). Obiettivo: ridurre i 18 `SERIOUS_BACKTEST_CANDIDATE` a pochi candidati **verificati semanticamente** prima del primo backtest serio su MT5. Nessun full MT5 backtest eseguito, nessuna ottimizzazione, nessuna combinazione di strategie.

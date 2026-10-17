@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-09-29
+updated: 2026-09-29
+---
+
 # NEXUS TASK #0001 — prima task reale attraverso l'Orchestrator
 
 **Baseline:** `7c79052` (Orchestrator V1 Core, `ORCHESTRATOR_V1_OPERATIONAL`). Prima task "vera" (non un acceptance test) inserita nella queue - Claude solo supervisore, mai esecutore del contenuto.
@@ -21,3 +30,6 @@ Durante il primo tentativo, 2 sotto-task erano stati sottomessi PRIMA che la lor
 ## Nota
 
 Prima dimostrazione che il flusso `NEXUS TASK → Orchestrator → Ministral/deterministic → verifier → risultato` funziona per un lavoro reale a basso rischio senza intervento manuale di Claude sul contenuto. I dati (`temporal_concentration`/`exit_efficiency` per BREAKOUT_ACC/ORDER_BLOCK) restano un risultato quantitativo grezzo - non ancora integrato nella Cross-Strategy Synthesis/Research Priority Queue di Phase 7.26 (fuori perimetro di questa task, che riguardava la meccanica dell'Orchestrator, non l'aggiornamento dei registry scientifici).
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

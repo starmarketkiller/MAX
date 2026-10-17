@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-19
+updated: 2026-09-19
+---
+
 # NEXUS - Phase 7.2: External Hypothesis Mining & Market Sequence Ontology
 
 **Baseline:** `7737cb9` (Phase 7.1 Integrity & Provenance Patch, chiusa con `NO_SUPPORTED_CANDIDATE`, RECLAIM BOTH/BUY/SELL correttamente REFUTED_AT_DISCOVERY). Questa fase **non e' una discovery run**: nessun ΔP, nessun backtest, nessuna optimization, nessun accesso a development/validation/holdout NEXUS per confrontare idee.
@@ -86,3 +95,6 @@ Se un qualunque mechanism/sequence di questo registro produca un effetto reale s
 ## Vincoli rispettati
 
 Nessun edge calcolato sui dati NEXUS; nessun uso di development/validation/holdout per confrontare idee; nessun candidato creato per essere promosso; nessun backtest; nessuna parameter optimization; RECLAIM non riciclato senza motivazione indipendente; anti-selection rule rispettata (scoring congelato prima della shortlist); failure memory integrata; nessun Render deploy; commit/push su main.
+
+## Collegamenti
+[[MOC - Trading]]

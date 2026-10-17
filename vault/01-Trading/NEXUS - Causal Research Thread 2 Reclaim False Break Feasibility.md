@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Causal Research — Thread 2: Reclaim / False Break / Level Reaction (Feasibility)
 
 Segue la chiusura del filone WICK Sweep v1 (commit `2abe922`, `LEVEL_AGE_REJECTED`). **Solo audit + design in questa nota — nessuna riga di codice modificata, nessun nuovo hook, nessun backtest completo, nessuna strategia.** Friday e Level Age non riaperti.
@@ -134,3 +143,6 @@ Nessuno di questi è stato implementato in questa fase, come richiesto.
 ### **HOLD_NEEDS_CAUSAL_HOOKS**
 
 Motivazione: la population "generale, non legata ai filtri della vecchia strategia" richiesta dal task (sweep/false-break/true-break/retest attraverso più fonti strutturali) **non è oggi interamente disponibile senza nuovi hook** — solo la sotto-fetta WICK_RECLAIM lo è. Le famiglie concettualmente più ricche e allineate all'obiettivo del thread (SH_BMS_RTO, SilverBullet, SNXSSweepExt) mancano di identità di livello persistente, snapshot di penetrazione/età, ed eventi TRUE_BREAK/RETEST espliciti — tutti classificati `REQUIRES_NEW_CAUSAL_HOOK` in questo audit, non implementati come da istruzione. Un esperimento limitato al solo WICK_RECLAIM sarebbe eseguibile subito (Percorso A) ma non soddisferebbe l'ambizione dichiarata di "eventi di livello più ricchi strutturalmente" — la raccomandazione è di autorizzare l'instrumentazione minima del Percorso B prima di procedere con un esperimento su questo thread.
+
+## Collegamenti
+[[MOC - Trading]]

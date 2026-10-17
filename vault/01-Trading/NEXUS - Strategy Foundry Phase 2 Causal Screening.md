@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-17
+updated: 2026-09-17
+---
+
 # NEXUS — Strategy Foundry Phase 2: Causal Edge Screening
 
 Base: commit `23db29c` (Phase 1, approvato). Nessun EA completo scritto, nessuna ottimizzazione, nessuna grid search, nessuna combinazione di strategie. Dati: XAUUSD, motore Python esistente (`server/backtest.py`), H4 per le ipotesi 1/2/4/F/G2, M15 (cache locale Dukascopy) per l'ipotesi 3/G1/G3. Finestra dati disponibile: 2019-02 → 2026-08.
@@ -186,3 +195,6 @@ Tutte le detection usano solo barre strettamente precedenti alla barra di valuta
 ## Commit
 
 `b05d6c4`
+
+## Collegamenti
+[[MOC - Trading]]

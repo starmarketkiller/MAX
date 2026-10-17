@@ -1,3 +1,12 @@
+---
+type: note
+domain: business
+status: active
+tags: [business, nexus-task]
+created: 2026-09-29
+updated: 2026-09-29
+---
+
 # NEXUS TASK #0005 — Funding Priority & Opportunity Framework V1
 
 **Baseline:** `942720e`. Prima NEXUS TASK di natura **architetturale/design** (non backfill di dati esistenti) dopo che il modello operativo base è stato validato su 4 cicli reali (#0001-#0004).
@@ -42,3 +51,6 @@ Transizione `ESCALATION_REQUIRED → WAITING_APPROVAL` mancante nella macchina a
 ## Regressione
 
 `verify_nexus_task_0005.py`: PASSED (ricalcolo indipendente di ogni punteggio, schemi validati, assi confermati indipendenti). 47/47 test su tutta la suite Orchestrator+NEXUS TASK.
+
+## Collegamenti
+[[MOC - Opportunity and Funding]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-27
+updated: 2026-09-27
+---
+
 # NEXUS - Phase 7.21 — BREAKOUT_ACC EDGE_VALIDATION_V1
 
 **Baseline:** `7e2c764` (Phase 7.20, shortlist). Nessun lavoro concorrente rilevato (fetch eseguito prima e dopo). Nessuna optimization/TP-SL sweep/risk sizing/compounding/martingala/regime filter/eliminazione SELL/promozione live in questa fase. Un solo run MT5 nuovo (finestra forward OOS, vedi punto 2), lanciato SOLO dopo aver congelato baseline/costi/execution/temporale/statistica.
@@ -106,3 +115,6 @@ PROSSIMO: nessuna promozione live. Accumulare campione forward (mesi,
   ri-valutare il gate - CONDITIONAL_EDGE + EXIT/RISK OPTIMIZATION solo
   se e quando il gate passa
 ```
+
+## Collegamenti
+[[MOC - Trading]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-17
+updated: 2026-09-17
+---
+
 # NEXUS — Strategy Foundry Phase 1: Build Our Own Edge + Mine Open-Source EAs
 
 Nessuna ottimizzazione, nessuna combinazione massiva, nessuna implementazione completa in questa fase — solo specifiche formalizzate e audit del codice open-source, come richiesto.
@@ -272,3 +281,6 @@ Classificazione di ogni logica trovata contro le 67 strategie research-implement
 ## F. No implementation
 
 Confermato: nessuna strategia scritta in questa fase, solo specifiche e audit.
+
+## Collegamenti
+[[MOC - Trading]]

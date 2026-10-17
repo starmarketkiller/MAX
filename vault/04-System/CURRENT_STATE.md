@@ -1,5 +1,6 @@
 ---
-type: system-state
+type: note
+subtype: system-state
 domain: system
 status: active
 tags: [jarvis, nexus, stato]

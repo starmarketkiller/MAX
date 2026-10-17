@@ -1,5 +1,6 @@
 ---
-type: system-ledger
+type: note
+subtype: system-ledger
 domain: system
 status: active
 tags: [jarvis, nexus, sessioni, audit]
@@ -101,3 +102,6 @@ aggiornata — non va più usata, non è stata cancellata.
 Nessuna cancellazione. Se in futuro si vuole chiudere il cerchio su
 `249dc5ba`, va fatto lo stesso spot-check di contenuto (3 milestone,
 soglia 8/9) prima di marcarla `safe_to_delete_candidate=true`.
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

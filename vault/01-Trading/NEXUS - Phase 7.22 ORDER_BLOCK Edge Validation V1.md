@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-27
+updated: 2026-09-27
+---
+
 # NEXUS - Phase 7.22 — ORDER_BLOCK EDGE_VALIDATION_V1
 
 **Baseline:** `d8f365e` (Phase 7.21, BREAKOUT_ACC). Nessun lavoro concorrente rilevato. **BREAKOUT_ACC resta congelata** nella sua configurazione forward (Phase 7.21, non toccata). **TSI non toccata.** Nessuna optimization/TP-SL sweep/risk sizing/compounding/martingala/eliminazione BUY-SELL post-hoc/modifica della geometria della zona in questa fase.
@@ -131,3 +140,6 @@ PROSSIMO: nessuna promozione live. BREAKOUT_ACC e ORDER_BLOCK restano
   (LIQ_SWEEP/FVG_CONT, Phase 7.20) nel frattempo, come suggerito
   dall'utente
 ```
+
+## Collegamenti
+[[MOC - Trading]]

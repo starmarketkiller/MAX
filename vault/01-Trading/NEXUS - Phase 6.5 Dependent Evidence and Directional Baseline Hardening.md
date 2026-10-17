@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-18
+updated: 2026-09-18
+---
+
 # NEXUS - Phase 6.5: Dependent Evidence & Directional Baseline Hardening
 
 Fase infrastrutturale: corregge due limiti metodologici emersi in Phase 6 (dipendenza temporale/clustering degli eventi; baseline non direction-aware) **prima** di qualunque nuova edge discovery. Nessun nuovo edge, nessun test H007, nessuna promozione/ri-validazione di H006, nessuna strategia, nessuna optimization. H006 è usato **esclusivamente come caso di test infrastrutturale** — ogni risultato qui prodotto è `METHODOLOGICAL_AUDIT_ONLY`.
@@ -126,3 +135,6 @@ Decidere se un'asimmetria BUY/SELL osservata post-hoc merita l'investimento di u
 - `server/research_scripts/phase6_5/directional_diagnostics_policy.json`
 - `server/research_scripts/phase6_5/evidence_engine_v2_schema.json`
 - `server/research_scripts/phase6_5/dependence_audit_gate.py` + `dependence_audit_gate_result_H006.json`
+
+## Collegamenti
+[[MOC - Trading]]

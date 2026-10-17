@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-17
+updated: 2026-09-17
+---
+
 # NEXUS — Strategy Foundry Phase 3: Volatility_Breakout Implementation & Parity
 
 Base: commit `e6fa392` (Phase 2, approvato). Unico candidato: **Volatility_Breakout — confirmed breakout arm** (discovery +0.037R, validation +0.133R, n≈927). Nessun altro candidato implementato. Nessuna modifica al segnale per migliorare i risultati, nessuna optimization/grid search, nessun trailing/BE/session/regime filter aggiunto.
@@ -149,3 +158,6 @@ Nessun blocker residuo per Volatility_Breakout stesso. Blocker tecnico documenta
 ## Commit
 
 `f035d30`
+
+## Collegamenti
+[[MOC - Trading]]

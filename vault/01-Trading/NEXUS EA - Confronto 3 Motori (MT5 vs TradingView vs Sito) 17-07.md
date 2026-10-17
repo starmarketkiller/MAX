@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-ea]
+created: 2026-07-17
+updated: 2026-08-17
+---
+
 #nexus #trading #multi-agent #pinescript #confronto
 
 # Confronto SAR/MACD/ADX_RSI/RSI_DIV su 3 motori indipendenti (17/07 notte)

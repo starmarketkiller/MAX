@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-18
+updated: 2026-09-18
+---
+
 # NEXUS - Phase 7.0: Discovery Engine v2 - Architecture & Preflight
 
 **Tipo di fase:** ARCHITETTURA + PREFLIGHT + RESEARCH CONTRACT. Non e' stata eseguita alcuna discovery run reale, nessun H007, nessun nuovo edge, nessun backtest su dati di mercato. Tutti i controlli sono stati verificati su dati sintetici (`synthetic_fixtures.py`), esplicitamente etichettati `SYNTHETIC_FIXTURE_ONLY` in ogni artifact prodotto.
@@ -138,3 +147,6 @@ Una revisione diretta di `d0e4de5` (commit della stesura originale di Phase 7.0)
 ## Nota di chiusura
 
 Ogni gate descritta in questo documento e' stata dimostrata su dati sintetici, non solo dichiarata: `preflight_simulation.py` produce 23 controlli PASS/FAIL veri (14 originali + 9 aggiunti dall'Integrity Patch), inclusi almeno un caso deliberatamente rotto per ciascun meccanismo critico (split isolation, leakage guard, deduplicazione, quarantena post-hoc, FDR, baseline cross-split, dipendenza, lifecycle, normalizzazione signature, coerenza terminale, path assoluti). Questo e' il punto centrale della richiesta originale: trasformare gli errori scoperti in Phase 5/6/6.5/6.6 - e ora anche nella prima stesura di Phase 7.0 stessa - in vincoli strutturali verificabili meccanicamente, non in promemoria da ricordare a mano nella prossima run.
+
+## Collegamenti
+[[MOC - Trading]]

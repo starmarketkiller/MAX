@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-23
+updated: 2026-09-23
+---
+
 # NEXUS - Phase 7.9F BREAKOUT_ACC Strategy Identity Adjudication
 
 **Baseline:** `e78a17e4c738586c4c16805ae8915c6e29874354` (Phase 7.9E). Nessuna modifica all'EA live, nessuna modifica a Python, nessun backtest di performance, nessuna optimization — verificato (hash `NEXUS_EA_v2.mq5`/`NXS_Strategies.mqh`/`server/backtest.py` invariati rispetto a HEAD).
@@ -87,3 +96,6 @@ PROSSIMO: FIX_LIVE_IMPLEMENTATION_THEN_REESTABLISH_PARITY - scoping per-TF
           di g_breakoutAccState, poi parity, poi (solo allora) un nuovo
           dataset - richiede autorizzazione esplicita, non eseguito
 ```
+
+## Collegamenti
+[[MOC - Trading]]

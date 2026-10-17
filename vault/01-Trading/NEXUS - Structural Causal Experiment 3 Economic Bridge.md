@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Causal Research Thread 2 — Structural Causal Experiment 3: Economic Bridge
 
 Segue [[NEXUS - Structural Causal Experiment 2 Confirmatory]] (commit `321fe1f`, verdict `STRUCTURAL_HYPOTHESIS_CONFIRMED` su `penetration_per_atr > 0.058713928652578955`). Terzo periodo indipendente: prima re-verifica la replicazione strutturale (senza modificare nulla), poi valuta se il predittore ha valore economico via `AT_TRUE_BREAK`.

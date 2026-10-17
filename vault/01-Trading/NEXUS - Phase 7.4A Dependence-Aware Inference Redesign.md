@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.4A Dependence-Aware Inference Redesign
 
 **Baseline:** `44ff5a2` (Phase 7.4A End-to-End Inference Validation, verdetto BLOCKED accettato). Elimina l'architettura "diagnostica sugli stessi d_i → selezione → test sugli stessi d_i" (dimostrata soggetta a selection bias avverso) e valuta 3 metodi che incorporano la dipendenza **nel test stesso**, senza gating selettivo. **Nessuna discovery eseguita, nessun dato NEXUS letto, nessuna modifica** a detector/P90/252/direction/episode/embargo/matched baseline/control reuse/outcome definitions (verificato).
@@ -105,3 +114,6 @@ Nessun file del motore congelato (detector, frozen spec v1-v4, moduli del Depend
 **NO REAL NEXUS OUTCOME DATA ACCESSED. NO SEQUENCE DISCOVERY EXECUTED.**
 
 **Commit/push eseguiti. Verdetto: PRIMARY INFERENCE METHOD NOT YET VALIDATED. Nessuna Phase 7.4B. Nessuna frozen_spec_v5. Un futuro tentativo di redesign (es. correzione cluster-robust per identità del controllo condiviso, combinata con block bootstrap temporale) richiederà una nuova, separata autorizzazione.**
+
+## Collegamenti
+[[MOC - Trading]]

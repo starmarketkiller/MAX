@@ -5,7 +5,7 @@ status: active
 tags: [trading, nexus-ea, strategia]
 strategia: NY_REVERSAL
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-08-11
 ---
 
 # Strategia: NY_REVERSAL

@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, stop-loss, m5, walk-forward]
 created: 2026-08-16
-updated: 2026-08-16
+updated: 2026-08-24
 ---
 
 # NEXUS EA — Stop Strutturale M5 su Segnali H1 (16/08)

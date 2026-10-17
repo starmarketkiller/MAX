@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-09-28
+updated: 2026-09-28
+---
+
 # NEXUS - Orchestrator V1 Core Implementation
 
 **Baseline:** `e9ccff7` (Local Model Bake-Off V1, `LOCAL_MODEL_SELECTION_VALIDATED`). Codex indisponibile per quota - non atteso, per esplicita decisione dell'utente: "il punto dell'architettura che abbiamo appena costruito e' proprio evitare che un provider blocchi tutto il progetto". Nessuna modifica a strategie, nessun deploy, nessun trading.
@@ -119,3 +128,6 @@ PROSSIMO PASSO (dichiarato dall'utente): molte task inizieranno a
   Claude per implementazione dovrebbe ridursi drasticamente da qui in
   avanti
 ```
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

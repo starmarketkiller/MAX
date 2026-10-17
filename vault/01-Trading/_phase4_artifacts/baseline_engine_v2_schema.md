@@ -44,3 +44,6 @@ AUC-proxy (Mann-Whitney) = **0.745** — la separazione fra barra-di-conferma-RE
 ## Miglioramento rispetto a v1 (risponde alla domanda finale 5)
 
 v1: un evento sapeva solo "la sua cella aveva N barre di controllo", nessuna misura di quanto quelle barre fossero davvero simili nello spazio delle feature continue. v2: ogni evento ha una distanza di match esplicita e una classificazione di qualità — permette di **escludere o pesare** in futuro i match POOR, e di verificare (come qui) che il segnale RECLAIM non dipenda da un baseline mal costruito: il miglioramento è di **osservabilità/auditabilità del matching**, non un cambio del risultato numerico di Phase 5 (che resta quello riportato, non ri-validato qui — vedi vincolo esplicito di questa fase).
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

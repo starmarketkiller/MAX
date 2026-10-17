@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-10-05
+updated: 2026-10-05
+---
+
 # NEXUS — Ministral Task Compiler V1
 
 **Commit:** `682c276` (compiler + bounded handler + persistenza). Riusa `core/router.py` (già esistente, catena TIER0_DETERMINISTIC → TIER1/2_LOCAL → ESCALATION_REQUIRED → MANUAL_REVIEW) e la Dynamic Specialist Review già esistente — nessuna nuova infrastruttura di escalation creata.
@@ -34,3 +43,6 @@ Nessuno attivo.
 ## Prossimo passo
 
 In pausa deliberata — priorità passata a FIRST_REVENUE. Da riprendere solo se emerge un uso interno concreto per un secondo template.
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

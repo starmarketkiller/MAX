@@ -35,3 +35,6 @@ Per dati macro/positioning, il record DEVE usare il timestamp in cui il dato era
 ## Priorità (ereditata da Phase 4, non rivista qui)
 
 XAGUSD (silver/gold ratio) resta il candidato a costo/complessità più basso (stessa pipeline Dukascopy già validata). DXY è il più economicamente plausibile ma richiede una fonte FX aggiuntiva. COT è l'unico per cui la regola "timestamp di disponibilità reale" è assolutamente vincolante fin dal primo giorno di integrazione, per evitare un leakage temporale strutturale fin dalla progettazione.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

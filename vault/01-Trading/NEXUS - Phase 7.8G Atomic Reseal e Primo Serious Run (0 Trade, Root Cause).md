@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-22
+updated: 2026-09-22
+---
+
 # NEXUS - Phase 7.8G Atomic Reseal + Primo Serious Run (0 trade, root cause)
 
 **Baseline:** `3528f495c86af1f1ba140073a13cbad31f84b481` (Phase 7.8F, `EXECUTION_CONFIG_VERIFIED_READY_FOR_RUN`). L'utente ha identificato che l'hash dell'intero `history/GOLD/2026.hcc` non è window-aware (contiene barre ben oltre `PRIMARY_FRESH_VERDICT_WINDOW`, che crescono ogni giorno indipendentemente dal periodo testato) e ha chiesto un reseal window-aware seguito, se verificato, dall'esecuzione immediata del Serious validation.
@@ -58,3 +67,6 @@ mancante nel tester config, mai incluso in 7.8B-7.8F)
 PROSSIMO:
 conferma esplicita per il secondo run con il fix a un solo campo
 ```
+
+## Collegamenti
+[[MOC - Trading]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-13
+updated: 2026-09-13
+---
+
 # Unified Level Engine — Phase D: WICK authority parity gate + migration readiness
 
 Segue [[NEXUS - Unified Level Engine Phase C WICK Read Path Migration]] (commit `8c8e643`, PASS_TO_PHASE_D). Selector 55 non toccato. `SNxsWickSide`/`SNxsWickReclaimState` non rimossi. `NXS_Structure.mqh`, `NXS_Reaction.mqh`, execution, SL/TP, risk, strategy registry, Global New-Bar Gate: invariati.

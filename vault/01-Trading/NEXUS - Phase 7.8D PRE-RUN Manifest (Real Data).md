@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.8D PRE-RUN MANIFEST (dati reali)
 
 **Baseline:** `92ec007` (Phase 7.8D, conclusione precedente `PRE_RUN_SEAL_BLOCKED_NO_DATA_ACCESS`). L'utente ha confermato l'accesso reale al terminale MT5 - verificato concretamente e corretto: quella conclusione controllava i sotto-account broker sbagliati. Questa fase produce il **PRE-RUN MANIFEST reale** con date/hash/copertura dati verificati, non fabbricati.
@@ -94,3 +103,6 @@ autorizzazione esplicita del RUN
 ```
 
 Il manifest e' su GitHub, verificabile riga per riga. La catena e' completa: hypothesis frozen -> VoI -> decision rules -> execution rules -> data identity -> temporal partitions -> outcomes ancora non visti. Manca solo l'autorizzazione esplicita a eseguire.
+
+## Collegamenti
+[[MOC - Trading]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.4A Dependence Validity Gate
 
 **Baseline:** `14911a6` (Phase 7.4A Final Statistical Integrity Patch). Patch circoscritta: trasforma la null-calibration simulation in una **guardia automatica del motore** - nessuna discovery eseguita, nessun dato NEXUS letto, detector/P90/252/direction/episode gap/embargo 39/matched baseline/control reuse cap/outcome definitions **tutti invariati** (verificato programmaticamente).
@@ -75,3 +84,6 @@ Modificati: `null_calibration_simulation.py` + `phase7_4_null_calibration_v1.jso
 **NO REAL NEXUS OUTCOME DATA ACCESSED. NO SEQUENCE DISCOVERY EXECUTED.**
 
 **Commit/push eseguiti. Il commit di questa patch (frozen spec v4) diventa il vero `preregistration_commit_sha` per Phase 7.4B. Nessuna Phase 7.4B senza nuova autorizzazione.**
+
+## Collegamenti
+[[MOC - Trading]]

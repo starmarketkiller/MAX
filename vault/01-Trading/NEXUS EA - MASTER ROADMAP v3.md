@@ -1,11 +1,12 @@
 ---
-type: master-roadmap
+type: note
+subtype: master-roadmap
 domain: trading
 status: active
 version: 3.0
 tags: [nexus-ea, roadmap, engineering, validation, agents, mt5, mql5, backtest]
 created: 2026-07-17
-updated: 2026-07-17
+updated: 2026-08-17
 recommended_path: vault/01-Trading/NEXUS EA - MASTER ROADMAP v3.md
 ---
 

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-ea]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # Audit Structure Engine / Reaction Engine / LEVEL_REACTION + WICK_SWEEP_REVERSAL bloccato dal "terzo cancello silenzioso"
 
 Richiesto dall'utente il 10/09 dopo il baseline pulito ADX_RSI RAW ESL OFF (22 trade, PF1.67, 22/22 exit authority corrette). Scopo: capire l'architettura di Structure Engine / Reaction Engine / LEVEL_REACTION PRIMA di continuare a evolvere WICK_SWEEP_REVERSAL, e spiegare perché il Fast Smoke corretto (fix multi-TF one-shot) continua a produrre zero trade.

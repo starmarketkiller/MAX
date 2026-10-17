@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Causal Research Thread 2 — Fase A.1: Shared Sweep Instrumentation
 
 Segue [[NEXUS - Causal Research Thread 2 Phase A Structural Instrumentation]] (commit `777b3d0`, instrumentazione SH_BMS_RTO approvata). Gap chiuso in questa fase: lo SWEEP diventa una **fonte strutturale condivisa** (`SNXSSweepExt`), osservabile allo stesso modo indipendentemente da quale strategia consumer lo osserva — non più un sotto-prodotto della sola state machine SH_BMS_RTO.

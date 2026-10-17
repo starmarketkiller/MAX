@@ -1,5 +1,6 @@
 ---
-type: reference
+type: note
+subtype: reference
 domain: trading
 status: active
 tags: [trading, nexus-ea, architettura, strategie, riferimento]
@@ -2259,4 +2260,5 @@ NY_REVERSAL, WEEKLY_EXP, PO3, LIQ_VOID, DISP_REBAL, RANGE_FADE (10, da
   (legacy e NXR) per IFVG, ma la logica di trigger dei due percorsi resta
   comunque completamente diversa quando entrambi sono attivi.
 
-
+## Collegamenti
+[[MOC - Trading]]

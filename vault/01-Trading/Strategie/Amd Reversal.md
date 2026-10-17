@@ -5,7 +5,7 @@ status: active
 tags: [trading, nexus-ea, strategia]
 strategia: AMD_REVERSAL
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-16
 ---
 
 # Strategia: AMD_REVERSAL

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # NEXUS — Quantitative Integrity Web Bridge v1
 
 Obiettivo: rendere i dati di [[NEXUS - Decision-Gate-Execution Trace v1 (12-09)]] e [[NEXUS - Test Validity Certificate v2 (12-09)]] leggibili dal backend web NEXUS, senza toccare logica di trading/classificatore/strategie.

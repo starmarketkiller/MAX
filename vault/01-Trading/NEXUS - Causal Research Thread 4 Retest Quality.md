@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-15
+updated: 2026-09-15
+---
+
 # NEXUS Causal Research Thread 4 — Retest Quality: HOLD vs FAIL
 
 Segue [[NEXUS - Causal Research Thread 3 Final v3]] (commit `aa8c637`, `NO_PROMISING_HYPOTHESIS` su TRUE_BREAK quality). Non riaperti: TRUE_BREAK quality feature search, penetration/ATR sweep hypothesis, age<1h, source_tf=D1.

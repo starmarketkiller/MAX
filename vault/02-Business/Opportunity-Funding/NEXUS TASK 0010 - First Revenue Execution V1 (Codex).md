@@ -1,3 +1,12 @@
+---
+type: note
+domain: business
+status: active
+tags: [business, nexus-task]
+created: 2026-10-05
+updated: 2026-10-05
+---
+
 # NEXUS TASK #0010 — First Revenue Execution V1 (bookkeeping, lavoro Codex)
 
 **Commit:** `01e6180` (`feat: add first revenue execution v1`, autore `codex-local`). **Dettaglio tecnico completo:** `docs/NEXUS_FIRST_REVENUE_EXECUTION_V1.md` (repo, fuori vault) — questa nota è solo il ponte vault, non duplica il contenuto.

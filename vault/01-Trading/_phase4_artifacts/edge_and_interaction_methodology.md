@@ -62,3 +62,6 @@ Un TIME_STOP va introdotto SOLO se emerge da questa analisi (hazard/expectancy d
 8. **No pathological outlier dependence**: rimuovendo il singolo trade migliore (o i 2 migliori), edge e significatività non devono collassare — se collassano, il risultato dipende da un outlier, non da un pattern robusto.
 
 Il solo win rate NON è mai sufficiente da solo per nessuno di questi requisiti.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

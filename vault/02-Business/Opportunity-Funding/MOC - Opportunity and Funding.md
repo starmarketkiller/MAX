@@ -1,7 +1,7 @@
 ---
 type: moc
-domain: opportunity-funding
-status: adopted
+domain: business
+status: active
 tags: [business, funding, opportunity, nexus]
 created: 2026-09-29
 updated: 2026-10-05

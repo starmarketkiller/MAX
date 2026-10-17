@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.6C Outcome-Horizon Ordering Audit
 
 **Baseline:** `80e7cbc124e40c61a9f0d28a31dd3c6d2e1a5fc3`. Audit di **sequencing metodologico**, non un rescue di SEQ-0014B: nessun outcome letto, nessun orizzonte alternativo ispezionato/calcolato, nessuna modifica ai frozen artifact (`6c0d3f6` spec, `80e7cbc` result - verificati byte-identici via hash).
@@ -80,3 +89,6 @@ outcome ↔ horizon ↔ structural geometry
 ```
 
 Non siamo avanzati percentualmente, ma il risultato di questo audit e' esso stesso un progresso di rigore: il verdetto NOT_TESTABLE resta corretto, ma ora e' correttamente delimitato a DESIGN_V1 invece di essere letto come una condanna universale del claim MECH-23.
+
+## Collegamenti
+[[MOC - Trading]]

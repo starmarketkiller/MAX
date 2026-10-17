@@ -1,5 +1,6 @@
 ---
-type: reference
+type: note
+subtype: reference
 domain: trading
 status: active
 tags: [trading, nexus-ea, piano-test, master-queue, riferimento]

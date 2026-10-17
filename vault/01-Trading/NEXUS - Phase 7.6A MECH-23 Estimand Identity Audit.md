@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.6A MECH-23 Estimand Identity Audit
 
 **Baseline:** `6b0c916` (preregistrazione SEQ-0014, bloccata sulla variante di control pool). Audit **concettuale** - nessun outcome letto, nessuna discovery, nessun control pool modificato, nessuna nuova structural spec creata.
@@ -75,3 +84,6 @@ La preregistrazione precedente (`6b0c916`) usava "estimand A/B" per due **varian
 **NO NEXUS OUTCOME DATA ACCESSED. NO EDGE DISCOVERY PERFORMED.** SEQ-0015 e SEQ-0009 restano chiuse. Discovery non autorizzata per nessuno dei due esperimenti.
 
 **Progresso verso demo (invariato, come richiesto): ~68%.** Prima candidate strutturalmente FEASIBLE, ma identita' dell'estimand ora esplicitamente chiarita - non alzato finche' non esiste una candidate che superi sia la struttura sia la coerenza scientifica del claim.
+
+## Collegamenti
+[[MOC - Trading]]

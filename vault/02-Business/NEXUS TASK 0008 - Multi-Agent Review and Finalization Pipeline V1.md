@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-09-29
+updated: 2026-09-29
+---
+
 # NEXUS TASK #0008 — Multi-Agent Review & Finalization Pipeline V1
 
 **Baseline:** `f928f4e3ae6a2d578fe3c97c4ecf8e526cd4b7c3` (Jarvis Access Layer V1 di Codex, `WAITING_DEPLOY_APPROVAL`). Sottomessa insieme a un'azione diretta separata ("TASK PER CLAUDE" — Render/Telegram, vedi nota in fondo).
@@ -60,3 +69,6 @@ User → Jarvis → Orchestrator → Producer → Verifier → Reviewer (se rich
 ## Nota sulla parte "TASK PER CLAUDE" (Render/Telegram) ricevuta nello stesso messaggio
 
 Preflight eseguito e confermato: `HEAD == origin/main == f928f4e3ae6a2d578fe3c97c4ecf8e526cd4b7c3` (fast-forward locale eseguito, nessun commit incompatibile). `scripts/check_production_alignment.py` confermato funzionante: produzione attuale = `PRODUCTION_UNKNOWN` (nessun `/api/version` nella build live, come atteso — non ancora deployata la baseline con Jarvis Access Layer V1). Oltre il preflight, questa parte richiede accesso reale a Render (dashboard/API) e al bot Telegram che questa sessione **non possiede** (nessuna credenziale in ambiente, nessuna sessione browser attiva) — riportato separatamente all'utente in chat con l'elenco preciso di cosa serve da parte sua, coerente con la regola esplicita "nessun secret in chiaro in chat".
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

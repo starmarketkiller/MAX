@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-27
+updated: 2026-09-27
+---
+
 # NEXUS - Phase 7.18 — TSI Minimal Fix + Short Live Validation
 
 **Baseline:** `8590f63` (Phase 7.17, `DEFECT_CONFIRMED_MATERIAL_IMPACT`). Nessun lavoro concorrente rilevato (fetch eseguito prima del commit). Nessuna optimization, nessun confronto PF/WR economico, nessuna ricerca di edge, nessun backtest pluriennale in questa fase — solo due run diagnostici **corti** (2026.01.01-2026.08.25, ~8 mesi) pre/post fix.
@@ -87,3 +96,6 @@ PROSSIMO: nessuna promozione live. Come da richiesta utente, pausa del
   strategie candidate a edge validation (BREAKOUT_ACC/ORDER_BLOCK/TSI
   ora sufficientemente ripulite)
 ```
+
+## Collegamenti
+[[MOC - Trading]]

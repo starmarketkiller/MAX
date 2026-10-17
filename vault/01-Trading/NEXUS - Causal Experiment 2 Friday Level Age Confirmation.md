@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Causal Research — Experiment 2: Confirmatory Test of Friday + Level Age
 
 Segue [[NEXUS - Causal Experiment 1 WICK Sweep 1R Outcome]] (commit `d9df94a`). Esperimento **confermativo**, non esplorativo: nessuna nuova feature, nessuna nuova combinazione, nessuna soglia ricalcolata sui nuovi dati, nessuna ottimizzazione di WICK.

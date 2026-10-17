@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-27
+updated: 2026-09-27
+---
+
 # NEXUS - Phase 7.17 — TSI Integrity Audit + Minimal Diagnostic
 
 **Baseline:** `9d674e6` (Phase 7.16). Nessun lavoro concorrente rilevato. **Nessun nuovo run Tester pluriennale né breve lanciato** — la quantificazione riusa dati M15 reali già scaricati e disponibili localmente (Phase 7.13). Nessuna optimization, nessun confronto PF/WR, nessuna modifica a `MQL5/`, nessuna promozione live.
@@ -72,3 +81,6 @@ FIX: proposto (stessa forma di BREAKOUT_ACC/ORDER_BLOCK), NON applicato
 PROSSIMO: decisione dell'utente - autorizzare trace EA live reale
   (schema Phase 7.14) prima del fix, oppure procedere direttamente
 ```
+
+## Collegamenti
+[[MOC - Trading]]

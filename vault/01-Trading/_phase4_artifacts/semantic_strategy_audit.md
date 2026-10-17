@@ -919,3 +919,6 @@ SL-TP path, its `NXS_Profile_TF`/`NXS_Profile_Risk`/`NXS_Profile_Get` profile ro
 `NEXUS_EA_v2.mq5:NXS_CollectRaw`. `knowledge/strategy_database.json` was not required to
 corroborate any finding above — all findings trace directly to MQL5 source line references
 cited inline. No code, config, or any file other than this one was modified.*
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

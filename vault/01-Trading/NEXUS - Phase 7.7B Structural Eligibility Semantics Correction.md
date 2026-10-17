@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.7B Structural Eligibility Semantics Correction
 
 **Baseline:** `72bcbf2` (Phase 7.7B gate). Corregge una conflazione semantica trovata dal reviewer: `NOT_ELIGIBLE` era usato sia per "assenza strutturale verificata" sia per "audit non abbastanza approfondito" - due cose diverse. Nessun nuovo deep-dive del codice, nessun backtest, nessuna applicazione di MECH-23 - solo rilettura del testo gia' scritto in Phase 7.7A.
@@ -79,3 +88,6 @@ blocker pulito: Serious 3Y)
 ```
 
 Nota: la parte del messaggio precedente rivolta a Codex resta fuori dalla portata di questa sessione.
+
+## Collegamenti
+[[MOC - Trading]]

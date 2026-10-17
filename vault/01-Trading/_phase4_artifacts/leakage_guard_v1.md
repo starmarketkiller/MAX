@@ -20,3 +20,6 @@ Implementazione: `server/research_scripts/phase5_5/leakage_guard.py`. Controlli 
 ## Perché conta
 
 Questo è esattamente il tipo di problema che la Phase 5.5 doveva rendere rilevabile automaticamente invece che scoprire per caso: una forma sottile di normalizzazione-sull'intero-dataset che non cambia il risultato headline ma indebolisce la separazione discovery/validation dichiarata come rigorosa. Il fatto che il guardrail l'abbia trovato guardando il proprio codice appena scritto (non un errore di terzi) è la dimostrazione più diretta possibile che il guardrail funziona.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

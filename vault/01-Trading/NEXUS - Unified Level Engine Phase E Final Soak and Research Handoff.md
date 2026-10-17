@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # Unified Level Engine — Phase E: Final Soak + Research Handoff
 
 Segue [[NEXUS - Unified Level Engine Phase D WICK Authority Parity Gate]] (commit `4de431f`, MIGRATION_READY). Ultima fase infrastrutturale prima della ricerca causale. **Nessuna modifica di codice in questa fase**: solo test aggiuntivi e documentazione (verificabile da `git diff` — nessun file `.mqh`/`.mq5` toccato). Legacy non rimosso, selector 55 non toccato, nessuna nuova logica di trading, nessuna ottimizzazione di parametri.

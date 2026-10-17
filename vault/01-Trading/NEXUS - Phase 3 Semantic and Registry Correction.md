@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-17
+updated: 2026-09-17
+---
+
 # NEXUS - Phase 3 Semantic and Registry Correction
 
 Correzione bloccante richiesta dopo verifica diretta del commit Phase 3 (VOLATILITY_BREAKOUT_CONFIRMED). Tre problemi analizzati, due corretti nel codice, uno verificato-e-scartato come non-problema.
@@ -92,3 +101,6 @@ L'unica modifica ai valori economici della strategia è la sostituzione del prez
 ## Commit SHA
 
 `8c24cd4`
+
+## Collegamenti
+[[MOC - Trading]]

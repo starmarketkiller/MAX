@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Causal Research Thread 3 — True Break Quality: Continuation vs Failure
 
 Segue la chiusura del Thread 2 ([[NEXUS - Structural Causal Experiment 3 Economic Bridge]], verdict `STRUCTURAL_HYPOTHESIS_REFUTED_FINAL`). Nuovo filone: dato un TRUE_BREAK già avvenuto, esistono feature causali note in quel momento che predicono CONTINUATION vs FAILURE? **Non riaperte** le ipotesi del Thread 2 (`penetration_per_atr > 0.058713928652578955`, `age_seconds<1h`, `source_tf=D1`) — usate eventualmente solo come feature candidate fra molte altre su un target diverso, mai come ipotesi da salvare.

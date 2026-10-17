@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-23
+updated: 2026-09-23
+---
+
 # NEXUS - Phase 7.9E BREAKOUT_ACC Offline-vs-Live Signal Semantics Decomposition
 
 **Baseline:** `ee469d4fa62a6c6aba8b228c16a422540e05c189` (Phase 7.9D). Nessun cambio strategia, nessuna optimization, nessuna analisi di performance, nessun rescue, **nessuna modifica all'EA live** (verificato: hash `NEXUS_EA_v2.mq5`/`NXS_Strategies.mqh` invariati rispetto a HEAD).
@@ -80,3 +89,6 @@ PROSSIMO: BLOCK_RESEARCH_UNTIL_RECONSTRUCTION_PARITY - correggere la
           replica Python per condividere lo stato cross-TF, poi
           verificare parity esatta 4/4 - non eseguito
 ```
+
+## Collegamenti
+[[MOC - Trading]]

@@ -1,7 +1,10 @@
 ---
+type: note
+domain: trading
 status: active
 tags: [trading, nexus, frontend, backend, audit, personal-quant-control-center, research-lab, data-provenance]
-date: 2026-09-12
+created: 2026-09-12
+updated: 2026-09-12
 scope: web-only
 baseline_commit: 0a7f94cc7383a4813fa54e748b7a7625a26f156f
 ---

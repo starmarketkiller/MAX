@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-ea]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # WICK_SWEEP_REV registrato nel contract, primo Fast Smoke con trade reali - e due bug nuovi trovati eseguendo il test come richiesto
 
 Contesto: dopo l'audit di Structure/Reaction/LEVEL_REACTION (vedi [[NEXUS EA - Audit Structure-Reaction-LEVEL_REACTION e WICK_SWEEP Bloccato dal Terzo Cancello (10-09)]]), l'utente ha autorizzato: (1) identita' canonica WICK_SWEEP_REV ovunque, (2) registrazione nel contract via source of truth (non a mano), (3) fix del consumo one-shot con funnel telemetria separato, (4) rilancio identico del Fast Smoke, (5) funnel completo, (6) metriche solo descrittive, (7) nessuna modifica ai parametri bloccati.

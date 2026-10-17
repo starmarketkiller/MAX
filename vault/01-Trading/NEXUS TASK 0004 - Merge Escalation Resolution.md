@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-09-29
+updated: 2026-09-29
+---
+
 # NEXUS TASK #0004 — Merge Escalation Resolution (ORDER_BLOCK.exit_efficiency)
 
 **Baseline:** `4b9de1f`. Chiude il ciclo aperto da NEXUS TASK #0002: l'unica escalation genuina (`ORDER_BLOCK.exit_efficiency`) risolta da Claude e rimessa in coda a NEXUS per merge — esattamente il flusso proposto dall'utente:
@@ -37,3 +46,6 @@ Tutti e 7 i campi originariamente classificati `DERIVABLE_NOW` in NEXUS TASK #00
 ## Regressione
 
 `verify_nexus_task_0004.py`: PASSED (ricalcolo indipendente dal dataset grezzo, confronto con NEXUS TASK #0001, suite Phase 7.26 completa senza esclusioni). 5/5 test nuovi.
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

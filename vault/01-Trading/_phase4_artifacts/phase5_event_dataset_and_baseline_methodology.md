@@ -32,3 +32,6 @@ Per ogni evento/interazione: si individua la cella `(terzile_volatilità, terzil
 **Valuta comune di confronto**: tutti i confronti evento-vs-baseline (anche per le 4 famiglie R-based: BREAKOUT/SWEEP/RECLAIM/RETEST) usano outcome ATR-normalizzati (non gli R-outcome nativi di `outcomes_v1.csv`), perché una barra di baseline non ha un "livello" naturale di rischio con cui costruire R — dichiarato esplicitamente per evitare di confrontare mele con pere.
 
 **Caveat di indipendenza**: le osservazioni di baseline non sono pienamente indipendenti fra loro (barre adiacenti condividono percorsi di prezzo sovrapposti; una barra può comparire sia nel pool BUY sia nel pool SELL se rientra nelle celle richieste per entrambe le direzioni) — gli intervalli di confidenza Wilson/Beta-Binomial vanno quindi letti come indicativi, non come stima esatta di un campione i.i.d.; il segnale principale (RECLAIM, sezione K) è comunque così ampio (51% vs 75-81%, mai sovrapposto) da restare solido anche con questa cautela.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

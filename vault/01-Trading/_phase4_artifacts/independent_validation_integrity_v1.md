@@ -27,3 +27,6 @@ Ogni conclusione futura DEVE dichiarare quale di queste 6 categorie usa. Nessuna
 ## Regola operativa per il futuro
 
 Prima di scrivere qualunque `Research Decision Card` (sec.16), rispondere esplicitamente: **"la decisione di riportare/promuovere questa ipotesi è stata presa PRIMA o DOPO aver visto i numeri di validazione di TUTTI i candidati del batch?"** Se DOPO → la categoria massima ammissibile è `CONTAMINATED_VALIDATION`, mai `TRUE_HOLDOUT` né una validazione "pulita", indipendentemente da quanto rigoroso fosse lo split originale. L'unico modo per ottenere un vero `TRUE_HOLDOUT` in futuro è congelare l'ipotesi SINGOLA (non un batch) e il criterio di successo PRIMA di calcolare qualunque statistica sul periodo di validazione, poi calcolare la validazione una sola volta, per quella sola ipotesi.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

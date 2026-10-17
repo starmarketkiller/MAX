@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.8D PRE-RUN DATA SEAL
 
 **Baseline:** `a0fe99e` (Phase 7.8C, `READY_FOR_PRE_RUN_SEAL`). Corregge la segmentazione temporale di 7.8C e verifica **onestamente** l'accesso ai dati storici reali richiesti dal PRE-RUN MANIFEST. Nessun Serious validation eseguito, nessun outcome letto, nessun trade result generato.
@@ -65,3 +74,6 @@ con accesso MT5 reale
 ```
 
 Il protocollo scientifico e' completo e privo di gradi di liberta' inventati. Cio' che manca ora e' puramente un accesso ambientale, non una decisione di metodo.
+
+## Collegamenti
+[[MOC - Trading]]

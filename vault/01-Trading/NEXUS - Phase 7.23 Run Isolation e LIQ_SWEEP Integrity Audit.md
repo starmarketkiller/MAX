@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-28
+updated: 2026-09-28
+---
+
 # NEXUS - Phase 7.23 — Run Isolation Harness + LIQ_SWEEP Integrity Audit
 
 **Baseline:** `7aba39a` (Phase 7.22, ORDER_BLOCK EDGE_VALIDATION_V1). HEAD e working tree verificati puliti all'avvio, nessun processo residuo. **BREAKOUT_ACC e ORDER_BLOCK non toccate** (diff zero verificato). Nessuna edge validation, nessun tuning, nessun deploy in questa fase — audit di integrità puro, in due fasi sequenziali (A poi B).
@@ -137,3 +146,6 @@ PROSSIMO: nessuna edge validation LIQ_SWEEP iniziata qui - se si
   procede, prima run economico completo poi EDGE_VALIDATION_V1
   (stesso protocollo di BREAKOUT_ACC/ORDER_BLOCK)
 ```
+
+## Collegamenti
+[[MOC - Trading]]

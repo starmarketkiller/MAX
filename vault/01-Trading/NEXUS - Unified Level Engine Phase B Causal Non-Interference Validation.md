@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-13
+updated: 2026-09-13
+---
+
 # Unified Level Engine — Phase B: Causal Non-Interference + Extended Shadow Validation
 
 Segue [[NEXUS - Unified Level Engine Phase A WICK Telemetry Shadow]] (commit `6d4382b`, approvato). Nessuna strategia migrata al nuovo engine. Il nuovo registry non viene letto da nessuna decisione. Nessuna modifica a Structure/Reaction legacy, execution, registry strategie, Global New-Bar Gate, SL/TP.

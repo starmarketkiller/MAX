@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-16
+updated: 2026-09-16
+---
+
 # NEXUS — First Serious 3-Year Validation: SAR + MACD
 
 Base: commit `f3272b5` (Phase E, approvato). Nessun segnale, parametro, TF, SL/TP, filtro, risk logic o gate modificato. Nessuna ottimizzazione, nessun tuning, nessuna scelta di sottoperiodo dopo aver visto i risultati.
@@ -197,3 +206,6 @@ SAR ha un campione più ampio (240 vs 115 trade), un PF più alto, una DD più c
 ## Commit
 
 `e557b22`
+
+## Collegamenti
+[[MOC - Trading]]

@@ -30,3 +30,6 @@ La priorità (vol estrema prima, poi freschezza del trend, poi efficienza direzi
 | NaN (warmup) | 75 | 75 | 0 |
 
 TRENDING è raro (2.5%) — atteso: richiede contemporaneamente vol non estrema, alta efficienza direzionale E trend non recentemente rovesciato, una congiunzione stretta. Le proporzioni discovery/validation sono simili (nessun regime scomparso o esploso fra le due finestre), un primo controllo di sanità sulla stabilità della definizione nel tempo.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

@@ -33,3 +33,6 @@ Dati reali (non un design teorico): `server/research_scripts/phase5/data/market_
 **Warmup**: NaN concentrato nelle prime ~75 barre (atr_percentile, la finestra più lunga a 252) — non droppato, lasciato esplicito.
 
 **Versione/provenance**: `schema_version:1`, parametri congelati in `P` dentro `build_market_state.py`, mai modificati dopo aver visto risultati di edge (nessun parametro qui è stato scelto guardando gli outcome di Phase 5.F-J).
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

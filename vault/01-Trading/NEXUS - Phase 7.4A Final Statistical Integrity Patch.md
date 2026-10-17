@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.4A Final Statistical Integrity Patch
 
 > **CORREZIONE (Phase 7.4A Dependence Validity Gate, 2026-09-20)**: la sezione "4. Struttura matched preservata" sotto interpretava erroneamente il risultato `rejection_rate=0%` dello scenario shared-regime come possibile effetto di "varianza sottostimata" che "può rendere il test anti-conservativo". È l'opposto: 0% di rigetto è **fortemente conservativo/powerless**, non anti-conservativo. Il meccanismo corretto (il bootstrap ricampiona evento e baseline separatamente, trattando come "incertezza" una componente di varianza che nel dato osservato si cancella per condivisione del regime) è documentato in dettaglio in `vault/01-Trading/NEXUS - Phase 7.4A Dependence Validity Gate.md` e nel campo `interpretation` di `phase7_4_null_calibration_v1.json` (rigenerato). **La conclusione finale resta valida**: appiattire la struttura matched produce un'inferenza mal calibrata - a volte in una direzione, a volte nell'altra, mai in modo prevedibile. Questo file è lasciato intatto per il resto (nessuna riscrittura silenziosa) - solo questa nota è stata aggiunta.
@@ -91,3 +100,6 @@ Modificati: `policies/statistical_methods_policy.json` (metodo precedente marcat
 **NO REAL NEXUS OUTCOME DATA ACCESSED. NO SEQUENCE DISCOVERY EXECUTED.**
 
 **Commit/push eseguiti. Il commit di questa patch (frozen spec v3) diventa il vero `preregistration_commit_sha` per Phase 7.4B. Nessuna Phase 7.4B senza nuova autorizzazione.**
+
+## Collegamenti
+[[MOC - Trading]]

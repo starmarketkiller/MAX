@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-23
+updated: 2026-09-23
+---
+
 # NEXUS - Phase 7.11 Complete Strategy Census
 
 **Baseline:** `cddf8a929f3bfc259fd1a56ee454d9c8f6508798` (Phase 7.10). Nessuna correzione, nessun ri-test, nessuna modifica a strategie in questa fase — solo censimento strutturale. Nessun dataset economico costruito. Il lavoro su `BREAKOUT_ACC_INTENDED_D1_V1` resta sospeso fino al completamento di questa fase.
@@ -132,3 +141,6 @@ NUOVO CANDIDATO: CROSS_STRATEGY_STATE_SHARING (ORDER_BLOCK/OB_MIT
         condividono g_obBuy/g_obSell) - NOT_ENOUGH_EVIDENCE
 PROSSIMO: BUILD_CANONICAL_BREAKOUT_ACC_DATASET (Phase 7.9H) - ripresa
 ```
+
+## Collegamenti
+[[MOC - Trading]]

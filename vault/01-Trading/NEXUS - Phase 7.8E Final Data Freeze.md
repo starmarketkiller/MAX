@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-22
+updated: 2026-09-22
+---
+
 # NEXUS - Phase 7.8E Final Data Freeze
 
 **Baseline:** `a5a79723bd13543e179b506abbd91d04fa4a356c` (Phase 7.8D, `PRE_RUN_SEAL_VERIFIED_READY_TO_RUN`). L'utente ha ispezionato direttamente gli artifact 7.8D e ha trovato due problemi tecnici concreti prima di autorizzare il RUN: il timezone dichiarato non era mai stato misurato, e l'hash "dataset" hashava solo il report di coverage, non i dati reali che il Tester userà.
@@ -91,3 +100,6 @@ autorizzazione esplicita del RUN
 ```
 
 Il seal è su GitHub, verificabile riga per riga. La catena è ora completa fino all'ultimo dettaglio tecnico sollevato: hypothesis frozen → VoI → decision rules → execution rules → data identity (misurata, non assunta) → temporal partitions (ricontrollate, non ricalcolate) → tester config (congelata, mai lanciata) → doppio seal verificato → outcomes ancora non visti. Manca solo l'autorizzazione esplicita a eseguire.
+
+## Collegamenti
+[[MOC - Trading]]

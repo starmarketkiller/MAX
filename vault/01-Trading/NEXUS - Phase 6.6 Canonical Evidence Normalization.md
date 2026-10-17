@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-18
+updated: 2026-09-18
+---
+
 # NEXUS - Phase 6.6: Canonical Evidence Normalization & Research Ledger v2
 
 Fase di normalizzazione pura: trasforma le informazioni metodologiche già prodotte in Phase 6/6.5 in artifact JSON canonici, versionati, machine-readable — **senza cambiare alcuna conclusione su H006**. Nessun nuovo edge, nessun H007, nessuna optimization, nessun nuovo backtest, nessuna modifica a frontend/backend applicativo (lavoro riservato a Codex sul Market workspace). Tutto il lavoro vive in `server/research_scripts/phase6_6/`.
@@ -107,3 +116,6 @@ Revisione degli artifact ha trovato una violazione reale della separazione dichi
 - Le informazioni BUY-vs-BUY / SELL-vs-SELL / Baseline Engine v3 restano **esclusivamente** sotto `retroactive_methodological_audit.baseline` (`direction_aware=true`, invariato).
 
 **2 nuovi test di integrità aggiunti** (`validate_integrity.py`, ora 14/14 PASS): `primary_evidence_direction_aware_must_be_false` e `retroactive_audit_direction_aware_must_be_true` — dimostrati funzionanti anche in negativo (forzando `primary_evidence.baseline.direction_aware=true` su una copia, il primo check fallisce correttamente). Determinismo ri-verificato: rigenerazione doppia di ogni generatore produce lo stesso `canonical_sha256`. `artifact_manifest.json` rigenerato con gli hash aggiornati.
+
+## Collegamenti
+[[MOC - Trading]]

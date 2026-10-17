@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-ea]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # WICK_SWEEP_RECLAIM_TICK — Design Candidate (NON implementato)
 
 ## Stato: SOLO DESIGN, nessuna riga di logica scritta, nessun test

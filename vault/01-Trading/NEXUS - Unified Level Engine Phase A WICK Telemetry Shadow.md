@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-13
+updated: 2026-09-13
+---
+
 # Unified Level Engine — Phase A: WICK telemetry-only registry
 
 Segue [[NEXUS - Unified Structure Level Reaction Engine Migration Plan v1]] (audit approvato con correzione metodologica sulla baseline WICK, applicata anche in quella nota, vedi §4 "First migration candidate" lì).

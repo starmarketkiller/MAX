@@ -54,3 +54,6 @@ Questa card è l'output sintetico che ogni futura conclusione deve produrre — 
 ## Aggiornamento (Phase 6 — True Holdout Test eseguito)
 
 Il vero holdout richiesto sopra è stato eseguito (Dukascopy 2022-02-04→2023-02-03, mai visto prima, detector/baseline congelati). **Risultato: BORDERLINE, non PASS** — ΔP holdout +0.057 (vs +0.24/+0.30 in Phase 5), CI95 sovrapposte, effetto interamente concentrato sul lato SELL (BUY ΔP=-0.010, SELL ΔP=+0.139). **EC-LIQUIDITY_SWEEP_RECLAIM resta E2** — nessuna promozione a E3. Dettaglio completo: `vault/01-Trading/NEXUS - Phase 6 True Holdout Validation Sweep Reclaim.md`.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

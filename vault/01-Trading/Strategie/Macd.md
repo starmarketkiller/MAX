@@ -5,7 +5,7 @@ status: active
 tags: [trading, nexus-ea, strategia]
 strategia: MACD
 created: 2026-07-12
-updated: 2026-07-15
+updated: 2026-07-25
 ---
 
 # Strategia: MACD

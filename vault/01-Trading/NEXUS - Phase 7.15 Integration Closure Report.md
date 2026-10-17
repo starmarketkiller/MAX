@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-27
+updated: 2026-09-27
+---
+
 # NEXUS - Phase 7.15 — Integration Closure Report (chiusura Phase 7.14)
 
 **Baseline:** `4e29fd5` (Phase 7.14 + fix verificatore). Nessun lavoro concorrente rilevato (fetch eseguito prima e dopo). Nessuna ricerca economica, nessuna nuova campagna di backtest completa, nessun run Tester lanciato in questa fase.
@@ -81,3 +90,6 @@ PROSSIMO: nessuna azione decisa qui - tre piste proposte (interazione
   dinamica OB/OB_MIT dal vivo, isolamento path-dependence B/C, gap
   InpScalpTFOverride su OB_MIT)
 ```
+
+## Collegamenti
+[[MOC - Trading]]

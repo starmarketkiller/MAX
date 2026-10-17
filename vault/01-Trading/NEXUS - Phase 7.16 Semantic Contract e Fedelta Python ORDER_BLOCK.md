@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-27
+updated: 2026-09-27
+---
+
 # NEXUS - Phase 7.16 — Semantic Contract EA/Python e Fedeltà della Ricostruzione ORDER_BLOCK
 
 **Baseline:** `906db57` (Phase 7.15). Nessun lavoro concorrente rilevato. Nessun nuovo run Tester pluriennale, nessuna optimization, nessun confronto PF/WR, nessuna ricerca economica, nessuna modifica a ORDER_BLOCK/OB_MIT o attivazione di nuove strategie.
@@ -69,3 +78,6 @@ VALIDAZIONE ORDER_BLOCK (A/B, stessi tick reali): INTATTA, MAI RIMESSA
 PROSSIMO: nessuna caccia ulteriore alla parity Python - si passa a
   TSI / shortlist successiva per validazione edge
 ```
+
+## Collegamenti
+[[MOC - Trading]]

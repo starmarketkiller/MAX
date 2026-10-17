@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-ea]
+created: 2026-07-17
+updated: 2026-08-17
+---
+
 #nexus #trading #multi-agent #audit #todo
 
 # Audit Livello A — coerenza logica strategie (agente logico) — verifica e prossimi passi

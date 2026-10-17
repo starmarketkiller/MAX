@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-09-29
+updated: 2026-09-29
+---
+
 # NEXUS TASK #0003 — Approve Safety Net Backfill
 
 **Baseline:** `e9611b6`. Applica al Vault canonico i 6 campi già derivati e verificati da NEXUS TASK #0002, approvati esplicitamente dall'utente in chat — **mai** `ORDER_BLOCK.exit_efficiency` (escalation genuina ancora aperta).
@@ -30,3 +39,6 @@ Nuova azione deterministica `apply_approved_backfill`: rigenera builder + downst
 ## Regressione
 
 `verify_nexus_task_0003.py`: PASSED (ricalcolo indipendente del builder, diff contro il commit precedente, suite Phase 7.26 completa senza esclusioni, nessun file MQL5/Product-Platform toccato). 6/6 test nuovi + 42/42 suite Orchestrator invariata.
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

@@ -5,7 +5,7 @@ status: active
 tags: [trading, nexus-ea, strategia]
 strategia: SH_BMS_RTO
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-08-12
 ---
 
 # Strategia: SH_BMS_RTO

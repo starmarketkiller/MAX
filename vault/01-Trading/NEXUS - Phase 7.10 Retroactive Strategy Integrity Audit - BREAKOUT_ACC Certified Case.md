@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-23
+updated: 2026-09-23
+---
+
 # NEXUS - Phase 7.10 Retroactive Strategy Integrity Audit — BREAKOUT_ACC Certified Case
 
 **Baseline:** `651d3a2a10e5c58acfc22ba820f518810356a73c` (Phase 7.9G). Nessuna optimization, nessuna ricerca di edge, nessun nuovo Serious backtest, nessun parameter tuning, nessuna modifica a strategie oltre a quanto già fatto in 7.9G, nessun dataset economico costruito.
@@ -90,3 +99,6 @@ PROSSIMO: BUILD_CANONICAL_BREAKOUT_ACC_DATASET (Phase 7.9H) - poi
           Edge Decomposition -> Path Anatomy -> Natural Horizon ->
           Mechanism Discovery
 ```
+
+## Collegamenti
+[[MOC - Trading]]

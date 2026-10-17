@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-ea]
+created: 2026-07-17
+updated: 2026-08-17
+---
+
 #nexus #trading #roadmap #live #moc
 
 # NEXUS EA — Roadmap verso il Live

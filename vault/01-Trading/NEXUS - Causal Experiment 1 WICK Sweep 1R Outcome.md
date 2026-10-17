@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Causal Research — Experiment 1: WICK Sweep +1R-before−1R
 
 Segue [[NEXUS - Unified Level Engine Phase E Final Soak and Research Handoff]] (commit `5c40233`, READY_FOR_CAUSAL_RESEARCH). Primo esperimento di **discovery**, non di ottimizzazione. `WICK_SWEEP_REV` resta una negative research baseline: nessun parametro della strategia è stato toccato, nessuna nuova strategia creata, execution/risk invariati.

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-26
+updated: 2026-09-26
+---
+
 # NEXUS - Phase 7.9I BREAKOUT_ACC Mechanism Research
 
 **Baseline:** `4870248` (Phase 7.9H - dataset canonico). Dataset `breakout_acc_intended_d1_v1_dataset.json` trattato come **input frozen** — nessuna modifica a trigger, cooldown, HTF filter, SL/TP, selector, MQL5, o al dataset canonico stesso (verificato: 0 diff). Ogni trasformazione derivata in artifact separati (`server/research_scripts/phase7/phase7_9i/`). Nessuna optimization eseguita.
@@ -110,3 +119,6 @@ NATURAL HORIZON: nessun plateau entro 60 barre D1 - crescita quasi
 DECISIONE FINALE: MECHANISM_PARTIALLY_SUPPORTED
 PROSSIMA IPOTESI (non implementata): TREND_ALIGNMENT_CONDITIONAL_EDGE
 ```
+
+## Collegamenti
+[[MOC - Trading]]

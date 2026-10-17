@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-15
+updated: 2026-09-15
+---
+
 # NEXUS — Broker Cost Model Audit
 
 Prima di qualsiasi nuovo backtest strategico o research thread: verifica se il motore Python (`server/backtest.py`) ha usato spread/commissioni superiori a quelli reali del broker, facendo fallire strategie ai gate di robustezza per costi artificialmente elevati. Nessuna strategia modificata, nessun parametro ottimizzato, nessun gate abbassato.
@@ -147,3 +156,6 @@ Nessun bug di scaling, nessun double-counting (§3, dimostrato con verifica indi
 **Nessuna delle 37 strategie è stata ri-eseguita automaticamente** oltre ai 3 casi rappresentativi richiesti.
 
 **Commit**: `7547bde` (pushato su `origin/main`) — modifiche: `server/backtest.py` (campi diagnostici additivi), `server/research_scripts/cost_model_audit_impact.py` (nuovo), `results/cost_model_audit/impact_test_results.json` (nuovo), questo report.
+
+## Collegamenti
+[[MOC - Trading]]

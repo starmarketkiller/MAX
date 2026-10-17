@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, decision]
+created: 2026-07-18
+updated: 2026-08-17
+---
+
 #nexus #trading #decision #baseline #p0
 
 # DEC — Baseline tecnica corrente (INFRA-001 / P0.1)

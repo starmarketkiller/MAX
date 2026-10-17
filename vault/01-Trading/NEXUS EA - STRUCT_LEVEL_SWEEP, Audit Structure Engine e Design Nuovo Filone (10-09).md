@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-ea]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # STRUCT_LEVEL_SWEEP - audit del percorso reale e design (nessun codice toccato)
 
 Richiesto dall'utente il 10/09 come **nuovo filone separato su Terminal3**, senza interferire con i 4 RAW ufficiali (ADX_RSI ESL off/on gia' fatti, EMA_PULLBACK/FVG_CONT in corso su Terminal1/2). Solo audit + design in questa nota: **nessun codice modificato, nessun test lanciato**.
@@ -162,3 +171,6 @@ Controllati tutti i file .ini usati in sessione:
 - `nxs_research_adxrsi_esl.ini`, `nxs_research_adxrsi_noesl.ini`, `nxs_research_emapullback.ini`, `nxs_research_fvgcont.ini` (i 4 RAW ufficiali, Terminal1/2): **Leverage=100** - NON 1:500.
 
 **Non ho toccato i 2 processi in corso** (EMA_PULLBACK su Terminal2, FVG_CONT su Terminal1) - modificare il loro .ini ora non avrebbe comunque effetto retroattivo (il Tester carica le impostazioni una sola volta all'avvio). A leva 100:1 vs 500:1, con lotti fissi 0.01-0.02 su un conto $1000, il margine richiesto resta comunque trascurabile in entrambi i casi (GOLD 0.01 lotto ~ pochi $ di margine anche a 100:1) - **e' molto improbabile che questo abbia alterato PF/trade/exit dei 4 RAW gia' fatti o in corso**, ma resta una configurazione incoerente rispetto a quanto richiesto ora. Ho aggiornato SOLO i template .ini in `tmp/strategy_validation` (non i processi live) a Leverage=500 per qualunque futuro rilancio - dimmi se vuoi che li lasci cosi' o se preferisci un valore diverso per i test ufficiali futuri.
+
+## Collegamenti
+[[MOC - Trading]]

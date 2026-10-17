@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-09-28
+updated: 2026-09-28
+---
+
 # NEXUS - Orchestrator + Local Agent Architecture & Environment Discovery V1
 
 **Baseline:** `227965b` (Phase 7.27, GOLD BUY-Dominance Benchmark Test). Nessuna modifica MQL5/logiche di trading. Nessuna optimization. Nessun deploy. Nessun nuovo backtest. Nessuna installazione pesante eseguita.
@@ -122,3 +131,6 @@ PROSSIMO: revisione umana della raccomandazione -> installazione
   Ollama+Qwen2.5 -> primo pilota locale -> se supera verifier/test,
   V1 del worker deterministico
 ```
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

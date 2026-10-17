@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.4A Structural Closure + Baseline Matching Integrity Patch
 
 > **CORREZIONE (Phase 7.4A Structural Verdict Semantics Patch, 2026-09-20)**: il verdetto `STRUCTURALLY_NON_VIABLE_UNDER_FROZEN_SPEC` sotto, e la definizione dello stato `STRUCTURALLY_NON_VIABLE`, formulavano un claim più forte di quanto i dati dimostrino: affermavano che il design "non può MAI produrre un numero sufficiente di osservazioni indipendenti, indipendentemente dalla quantità di dati disponibili". **I dati dimostrano solo che il test pre-registrato non è eseguibile sulla partition `development_discovery` già congelata** - una finestra di dati diversa o più lunga, con un intervallo senza eventi più ampio dell'embargo (39 barre), potrebbe produrre più di un'osservazione indipendente. Il verdetto corretto (`FROZEN_EXPERIMENT_NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY_PARTITION`) e la spiegazione completa sono in `vault/01-Trading/NEXUS - Phase 7.4A Structural Verdict Semantics Patch.md`. **Il fix del matching engine (BaselineEngineV4/ControlReuseLedger, sezioni sottostanti) resta valido e invariato** - questa correzione riguarda solo la formulazione del verdetto su SEQ-0015. Questo file è lasciato intatto per il resto (nessuna riscrittura silenziosa) - solo questa nota è stata aggiunta.
@@ -92,3 +101,6 @@ Nessuna modifica a: detector SEQ-0015, frozen spec v1-v4, P90/252/episode/embarg
 **NO NEXUS OUTCOME DATA ACCESSED. NO EDGE DISCOVERY PERFORMED.**
 
 **Commit/push eseguiti. SEQ0015_STATUS=STRUCTURALLY_NON_VIABLE_UNDER_FROZEN_SPEC. BASELINE_ENGINE_STATUS=FIXED. PRIMARY_INFERENCE_METHOD=NOT_YET_VALIDATED. Nessuna Phase 7.4B. La prossima famiglia sequence potrà usare un matching engine corretto, senza portarsi dietro questo bug.**
+
+## Collegamenti
+[[MOC - Trading]]

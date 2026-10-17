@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.4A Structural Verdict Semantics Patch
 
 **Baseline:** `f883c17` (Phase 7.4A Structural Closure + Baseline Matching Integrity Patch, fix del matching engine **accettato e invariato**). Corregge due formulazioni scientifiche troppo forti/ambigue nel record - **nessuna modifica al matcher, nessun outcome letto, nessuna Phase 7.4B**.
@@ -61,3 +70,6 @@ Nessuna modifica a: `BaselineEngineV4`, `ControlReuseLedger`, `SequenceBaselineA
 **NO NEXUS OUTCOME DATA ACCESSED. NO EDGE DISCOVERY PERFORMED.**
 
 **Commit/push eseguiti. BASELINE_ENGINE_STATUS=FIXED. SEQ0015_STATUS=FROZEN_EXPERIMENT_NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY_PARTITION. PRIMARY_INFERENCE_METHOD=NOT_YET_VALIDATED. Nessuna Phase 7.4B. Con questa correzione, Phase 7.4A è considerata chiusa - nessun ulteriore lavoro su SEQ-0015. Il prossimo passo naturale è una nuova sequence family, usando fin dall'inizio il matcher corretto e un firing-rate/independent-unit feasibility check prima di investire nel contratto inferenziale.**
+
+## Collegamenti
+[[MOC - Trading]]

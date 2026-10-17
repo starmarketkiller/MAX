@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.7B Missing-Field Semantics Refinement (two-axis)
 
 **Baseline:** `4743ce0` (Phase 7.7B, correzione a 3 stati). Micro-audit: separa `FIELD_KNOWLEDGE` (perche' un campo e' vuoto) da `REQUIREMENT_ROLE` (se quel campo era necessario) - la correzione precedente aveva gia' distinto audit-depth da assenza verificata, ma mescolava ancora "assenza verificata" con "quindi ineligible". Nessun backtest, nessuna modifica retroattiva.
@@ -62,3 +71,6 @@ Value of Information
 ```
 
 Il registro di strategia e' ora, per la prima volta, semanticamente completo su tutti e tre gli assi che contano: cosa sappiamo, perche' non lo sappiamo (quando non lo sappiamo), e se conta davvero.
+
+## Collegamenti
+[[MOC - Trading]]

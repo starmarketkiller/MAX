@@ -28,3 +28,6 @@ Calcolato direttamente dal dataset (4809 barre H4, 2019-02-03→2022-02-03):
 ## Requisito di reporting per ogni dataset futuro
 
 Ogni dataset deve riportare, come parte del proprio `dataset_id` (sec.14): missingness rate per colonna, periodi affetti (date), e la policy scelta — esattamente nel formato di questo documento, non come nota sparsa nel codice.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

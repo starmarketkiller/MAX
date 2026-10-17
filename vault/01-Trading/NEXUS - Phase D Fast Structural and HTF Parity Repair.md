@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-16
+updated: 2026-09-16
+---
+
 # NEXUS — Phase D: SAR Fast Structural + HTF Parity Repair
 
 Base: commit `ca73e48` (Serious Backtest Candidate Triage, approvato). NON eseguito full 3-year. NON ottimizzato alcun parametro. NON cambiato alcun gate.
@@ -183,3 +192,6 @@ Non corretto in questa fase, come richiesto. Documentato:
 ## Commit
 
 `c3b0bf3`
+
+## Collegamenti
+[[MOC - Trading]]

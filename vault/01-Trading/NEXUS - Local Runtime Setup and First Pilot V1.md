@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-09-28
+updated: 2026-09-28
+---
+
 # NEXUS - Local Runtime Setup + First NEXUS Pilot V1
 
 **Baseline:** `453f2ff` (Orchestrator V1 Architecture + Environment Discovery, `ORCHESTRATOR_ARCHITECTURE_READY` + `LOCAL_RUNTIME_NEEDS_SETUP`). Nessuna modifica MQL5/logiche di trading. Nessun deploy. Nessuna optimization. Nessun nuovo backtest.
@@ -142,3 +151,6 @@ DECISIONE: LOCAL_WORKER_OPERATIONAL_WITH_LIMITATIONS - operativo per
   (coding) - task di coding di questo tipo restano da escalare a
   Claude/Codex
 ```
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-10-05
+updated: 2026-10-05
+---
+
 # NEXUS — Jarvis Ministral Router V1
 
 **Commit:** `75b5110` (router + gateway), `ced3d59` (fix prompt enum esplicito). Dipendenze: Jarvis V1 core, Local Agent Bridge V1.
@@ -37,3 +46,6 @@ Nessuno attivo. La decisione esplicita è stata: non investire altro tempo nel r
 ## Prossimo passo
 
 Nessuno pianificato immediatamente — pausa deliberata a favore di `MINISTRAL_TASK_COMPILER_V1` (delega bounded, più preziosa nel breve) e poi FIRST_REVENUE.
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

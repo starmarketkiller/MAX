@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.5A Directional Matching Fidelity Final Patch
 
 **Baseline:** `21dba60` (Phase 7.5A Structural Gate Integration & Geometry Semantics Patch). Patch finale e strettamente circoscritta - corregge una fedelta' direzionale mancante fra il matching preflight e la pipeline reale, piu' un bug minore di stato. **Nessuna nuova sequence family formalizzata, nessun outcome letto, nessuna edge discovery.**
@@ -77,3 +86,6 @@ DETECTOR COMPLETENESS -> EVENT GEOMETRY -> INDEPENDENT SAMPLE YIELD -> BASELINE 
 ```
 
 **Punto fermo su Phase 7.5A.** Prossimo passo: formalizzare **SEQ-0009** (detector SWEEP gia' esistente in Phase 5 - la piu' vicina strutturalmente ad avere un detector operativo, non per profittabilita' attesa) - episode_gap_rule/natural_horizon/outcome_overlap_embargo/direction_derivation/matching_spec - poi ri-eseguire questo gate su dati reali. Nessun'altra espansione del framework prevista salvo un bug concreto trovato durante l'uso.
+
+## Collegamenti
+[[MOC - Trading]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.3: Sequence Discovery Engine v1
 
 **Baseline:** `5b9c928` (Phase 7.2B, chiusa, READY_FOR_PHASE_7_3=true). Questa fase costruisce la MACCHINA di discovery per sequence (STATE→EVENT_A→TRANSITION→EVENT_B opzionale→OUTCOME_FAMILY) - **non esegue nessuna discovery reale**.
@@ -101,3 +110,6 @@ Come nella fase precedente: essere pronti per la prima discovery reale con il Se
 ---
 
 **Commit/push eseguiti. Nessuna discovery reale senza nuova autorizzazione.**
+
+## Collegamenti
+[[MOC - Trading]]

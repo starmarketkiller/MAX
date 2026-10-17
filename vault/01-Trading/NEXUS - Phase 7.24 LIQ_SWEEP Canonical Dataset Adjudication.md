@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-28
+updated: 2026-09-28
+---
+
 # NEXUS - Phase 7.24 — LIQ_SWEEP Canonical Dataset Adjudication
 
 **Baseline:** `ae94901` (Phase 7.23, Run Isolation + LIQ_SWEEP Integrity Audit). Nessuna edge validation, nessun tuning in questa fase — solo adjudication del residuo 42 vs 43 e costruzione del dataset canonico MT5. MT5 trattato come ground truth per costruzione, mai forzata la parità con Python.
@@ -118,3 +127,6 @@ PROSSIMO: autorizzata LIQ_SWEEP EDGE_VALIDATION_V1 (stesso protocollo
   dataset canonico di questa fase come input primario, nessun nuovo
   run MT5 salvo necessita' dimostrata (es. OOS forward)
 ```
+
+## Collegamenti
+[[MOC - Trading]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # NEXUS — Decision/Gate/Execution Trace v1
 
 Roadmap 95/99, QUANTITATIVE INTEGRITY. Obiettivo: ogni segnale deve poter essere seguito causalmente da generazione ad apertura o blocco.
@@ -73,3 +82,6 @@ Test: 2 passate Research Mode isolate (Fast Smoke 2026.06.01-06.15, GOLD H4, lev
 - Pre-check propri di Institutional (`NXS_Institutional_Decide`) e Legacy (`NXS_TryExecuteRC`'s own MTF/velocity/HTF/news/protections/score prima di chiamare NXS_OpenTrade) — mai esercitati da Research Mode in questa sessione, ma path realmente esistenti in Live se `InpUseStrategyProfiles=false`.
 - I 5 call site secondari di `NXS_CommonExposurePreflight` (grid/pyramid/profit-reclaim/SLReclaim/inst-manage) — non sono segnali primari, fuori dai 4 path principali mappati.
 - Institutional aggrega più segnali in una decisione sola: non ha un `signal_id` 1:1 naturale con l'attuale schema — richiederebbe un design a parte (`decision_id` di gruppo + lista di `signal_id` contribuenti), non implementato.
+
+## Collegamenti
+[[MOC - Trading]]

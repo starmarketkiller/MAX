@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-22
+updated: 2026-09-22
+---
+
 # NEXUS - Phase 7.8I Recompile + Research-Mode Corrected Serious Validation
 
 **Baseline:** `b28416793fd03f33978507d467ee9e28141ec427` (Phase 7.8H). L'utente ha autorizzato esplicitamente ricompilazione + terzo run, ma solo con un config tecnicamente completo — identificando un secondo gap prima di spendere altre 2 ore: `InpResearchMode=true` mai attivato, e il fatto che `NXS_ResearchSelectorName()` non mappa ancora il selector 56 (quindi il sanity gate non doveva dipendere dal nome testuale).
@@ -88,3 +97,6 @@ PROSSIMO:
 ARCHIVE_CURRENT_DESIGN
 (nessun rescue - il design testato e' chiuso)
 ```
+
+## Collegamenti
+[[MOC - Trading]]

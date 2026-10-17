@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-16
+updated: 2026-09-16
+---
+
 # NEXUS — Phase G: SAR Independent Historical Confirmation
 
 Base: commit `e557b22` (First Serious 3Y Validation, approvato). MACD chiuso, nessun rescue. Nessun BUY/SELL cambiato, nessun SL/TP cambiato, nessuna ottimizzazione, nessuna sessione/TF/filtro modificato.

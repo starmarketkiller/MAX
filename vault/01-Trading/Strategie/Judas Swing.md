@@ -5,7 +5,7 @@ status: active
 tags: [trading, nexus-ea, strategia]
 strategia: JUDAS_SWING
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-16
 ---
 
 # Strategia: JUDAS_SWING

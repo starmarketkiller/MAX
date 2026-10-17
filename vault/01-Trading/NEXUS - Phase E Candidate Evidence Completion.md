@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-16
+updated: 2026-09-16
+---
+
 # NEXUS — Phase E: Candidate Evidence Completion before First Serious 3-Year Backtest
 
 Base: commit `c3b0bf3` (Phase D, approvato con correzione metodologica). NON eseguito il 3-year test in questa fase. NON ottimizzato alcun parametro. NON aperti nuovi thread di ricerca causale.
@@ -200,3 +209,6 @@ BREAKOUT_ACC resta in `HOLD` fino a quando non sarà disponibile più storico MT
 ## Commit
 
 `d6b067c`
+
+## Collegamenti
+[[MOC - Trading]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-09-28
+updated: 2026-09-28
+---
+
 # NEXUS - Push Recovery + Local Model Bake-Off V1
 
 **Baseline:** `dd6f5a5` (Local Runtime Setup + First NEXUS Pilot, `LOCAL_WORKER_OPERATIONAL_WITH_LIMITATIONS`). Nessuna modifica MQL5/logiche di trading. Nessun deploy. Nessun backtest. Nessuna installazione indiscriminata (max 3 nuovi modelli, rispettato).
@@ -123,3 +132,6 @@ STORAGE CLEANUP: raccomandato rimuovere qwen2.5:7b-instruct e
 
 DECISIONE: LOCAL_MODEL_SELECTION_VALIDATED
 ```
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

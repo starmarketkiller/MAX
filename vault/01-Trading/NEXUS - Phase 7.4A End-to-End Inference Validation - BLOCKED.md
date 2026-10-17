@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.4A Final Gate Calibration / End-to-End Inference Validation
 
 **Baseline:** `b825012` (Phase 7.4A Dependence Validity Gate). Validazione sintetica end-to-end della pipeline **già congelata** - nessuna discovery eseguita, nessun dato NEXUS letto, **nessuna modifica** a detector/soglia/episode rule/matched baseline/gate thresholds/BH policy.
@@ -94,3 +103,6 @@ Nessun file del motore o delle frozen spec (v1-v4) è stato modificato.
 **NO REAL NEXUS OUTCOME DATA ACCESSED. NO SEQUENCE DISCOVERY EXECUTED.**
 
 **Commit/push eseguiti. Verdetto: BLOCKED — GATE REQUIRES REDESIGN. Nessuna Phase 7.4B. Il redesign del gate (probabilmente: un approccio che non condizioni la selezione sulla stessa statistica usata per il test, es. un correttore di varianza non-selettivo, o un criterio di validità basato su informazione strutturale del run invece che su un test post-hoc sullo stesso campione) richiederà una nuova, separata autorizzazione.**
+
+## Collegamenti
+[[MOC - Trading]]

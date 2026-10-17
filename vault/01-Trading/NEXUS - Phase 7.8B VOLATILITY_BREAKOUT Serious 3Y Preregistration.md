@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.8B VOLATILITY_BREAKOUT_CONFIRMED Serious 3Y Preregistration
 
 **Baseline:** `b8c598f` (Phase 7.8A, verdetto `SERIOUS_3Y_IS_NEXT_BEST_EXPERIMENT`). Pre-registra il protocollo ESATTO del Serious 3Y prima di autorizzarne l'esecuzione. Nessun backtest eseguito, nessun nuovo outcome letto, nessun parametro della strategia modificato, nessuna optimization, nessuna applicazione di MECH-23.
@@ -98,3 +107,6 @@ same-bar SL/TP) → poi RUN
 ```
 
 Il protocollo e' pronto per l'esecuzione tranne per tre soglie che richiedono un giudizio di dominio non ancora dichiarato altrove nel progetto - fissarle ORA, prima del risultato, e' esattamente il punto di questa fase.
+
+## Collegamenti
+[[MOC - Trading]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.5B SEQ-0009 (MECH-18 SWEEP) Minimal Detector Formalization
 
 **Baseline:** `8593f9c` (Phase 7.5A closed - infrastructure complete). Prima applicazione reale del Sequence Structural Feasibility Gate a una nuova family. **Questo e' il FORMALIZATION COMMIT - congela detector/direction/episode/horizon/embargo/matching_spec PRIMA di eseguire il gate.** Nessun risultato del gate e' stato ancora osservato al momento di questo commit.
@@ -70,3 +79,6 @@ Nessuno di questi parametri sara' modificato dopo aver visto il risultato del ga
 **NO NEXUS OUTCOME DATA ACCESSED. NO EDGE DISCOVERY PERFORMED. NO STATISTICAL CONTRACT BUILT.** SEQ-0015 resta chiusa, non riesaminata.
 
 **Prossimo passo (commit separato):** eseguire il Sequence Structural Feasibility Gate (Phase 7.5A) su questo spec congelato, outcome-blind, sulla sola partition `development_discovery`.
+
+## Collegamenti
+[[MOC - Trading]]

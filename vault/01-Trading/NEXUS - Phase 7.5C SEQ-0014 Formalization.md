@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.5C SEQ-0014 (MECH-23 LOW_INFORMATION_STATE) Minimal State-to-Event Formalization
 
 **Baseline:** `f7559ee` (SEQ-0015 e SEQ-0009 chiuse). Primo test del gate su una family che e' uno **STATO**, non un evento puntuale. **Questo e' il FORMALIZATION COMMIT** - congela la trasformazione STATE→EVENT, direction, episode/horizon/embargo/matching_spec PRIMA di eseguire il gate.
@@ -62,3 +71,6 @@ Nessuno di questi parametri sara' modificato dopo aver visto il risultato del ga
 **NO NEXUS OUTCOME DATA ACCESSED. NO EDGE DISCOVERY PERFORMED. NO STATISTICAL CONTRACT BUILT.** SEQ-0015 e SEQ-0009 restano chiuse, non riesaminate.
 
 **Prossimo passo (commit separato):** eseguire il Sequence Structural Feasibility Gate su questo spec congelato, outcome-blind, sulla sola partition `development_discovery`.
+
+## Collegamenti
+[[MOC - Trading]]

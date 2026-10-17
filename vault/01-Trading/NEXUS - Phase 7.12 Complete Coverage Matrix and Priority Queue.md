@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-26
+updated: 2026-09-26
+---
+
 # NEXUS - Phase 7.12 — Coverage Matrix, Lacune e Coda delle Priorità
 
 **Baseline:** `8e405e5` (Phase 7.9K). Phase 7.10, 7.11 e tutti i raw data **preservati e invariati** (verificato via git diff). Lavoro concorrente di Codex su Product Platform/census/freshness **non toccato** — questa fase opera esclusivamente in `server/research_scripts/phase7/phase7_12/` e in un nuovo vault report. Nessuna correzione a EA/registry/strategie, nessuna campagna di backtest, nessuna optimization o promozione live.
@@ -72,3 +81,6 @@ PRIORITA': ORDER_BLOCK in testa (default enabled, propaga a OB_MIT,
 PROSSIMO: protocollo diagnostico ORDER_BLOCK pronto, NON eseguito -
           richiede autorizzazione dedicata per qualunque test EA
 ```
+
+## Collegamenti
+[[MOC - Trading]]

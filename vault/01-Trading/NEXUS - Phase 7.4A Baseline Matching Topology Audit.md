@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.4A Baseline Matching Topology Audit
 
 **Baseline:** `f684813` (Phase 7.4A On-Policy Matched-Control Audit). Verifica se il rischio *sintetico* (control reuse × sovrapposizione temporale) esiste realmente nella topologia prodotta da `BaselineEngineV4` sul detector/soglia congelati (v1, invariati) applicati alla sola partition `development_discovery`. **Audit-only**: nessuna modifica al motore, nessun outcome letto/calcolato, nessuna Phase 7.4B, nessuna frozen_spec_v5.
@@ -104,3 +113,6 @@ Nessun file del motore congelato (BaselineEngineV4, SequenceBaselineAdapter, Con
 **NO NEXUS OUTCOME DATA ACCESSED. NO EDGE DISCOVERY PERFORMED.**
 
 **Commit/push eseguiti. Verdetto topologico: MATERIAL_MATCH_TO_HIGH_RISK_SYNTHETIC_GEOMETRY (confermato e amplificato). Verdetto generale: PRIMARY INFERENCE METHOD NOT YET VALIDATED (φ=0.7 resta il blocker statistico primario indipendente). Nessuna Phase 7.4B. Nessuna frozen_spec_v5.**
+
+## Collegamenti
+[[MOC - Trading]]

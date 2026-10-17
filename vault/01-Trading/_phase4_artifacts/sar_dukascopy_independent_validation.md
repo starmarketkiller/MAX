@@ -1,7 +1,7 @@
 ---
 type: note
 domain: trading
-status: complete
+status: archived
 tags: [trading, nexus-ea, phase5, dukascopy, sar, mt5, custom-symbol, validation]
 created: 2026-09-17
 updated: 2026-09-17
@@ -212,3 +212,6 @@ Nessun rescue applicato: nessun filtro o parametro e stato aggiunto dopo aver vi
 - This report.
 
 No existing strategy logic file was modified.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

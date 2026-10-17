@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-ea]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # Dataset Python offline STRUCT_LEVEL_SWEEP - risultati e un bias metodologico trovato eseguendolo
 
 Script: `server/research_scripts/struct_level_sweep_dataset.py`. Fonte dati: `nxs_m15_gold_extended.csv`
@@ -127,3 +136,6 @@ Prossimo passo (non ancora fatto, in attesa di indicazioni): raffinare i bin olt
 normalizzare per ATR, poi eventualmente ridefinire il dataset con un filtro eta' incorporato
 direttamente nello script (non solo come analisi post-hoc) prima di considerare lo schema definitivo
 e passare alla telemetria MQL5 tick-level.
+
+## Collegamenti
+[[MOC - Trading]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Causal Research Thread 2 — Structural Causal Experiment 1: Discovery
 
 Segue [[NEXUS - Structural Dataset v1 Causal Linkage Integrity Audit]]. Prima analisi predittiva sul dataset strutturale: alcune feature note AL MOMENTO dello SWEEP predicono `TRUE_BREAK_OBSERVED` vs `INVALIDATED_NO_BREAK`? Discovery, non ottimizzazione — nessuna strategia implementata.

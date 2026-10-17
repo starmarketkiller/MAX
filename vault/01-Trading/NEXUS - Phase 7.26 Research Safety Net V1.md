@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-28
+updated: 2026-09-28
+---
+
 # NEXUS - Phase 7.26 — Research Safety Net V1
 
 **Baseline:** `38e0e22` (Phase 7.25, LIQ_SWEEP EDGE_VALIDATION_V1). Nessuna modifica a MQL5/strategie. Nessuna optimization. Nessun nuovo backtest lungo (tutto backfillato da artifact già esistenti). Nessun deploy.
@@ -121,3 +130,6 @@ PROSSIMO: 1) benchmark BUY vs buy-and-hold (Research Priority Queue,
   priorita' 1), poi tornare a testare strategie una per una - ogni
   test futuro alimenta questi registry automaticamente
 ```
+
+## Collegamenti
+[[MOC - Trading]]

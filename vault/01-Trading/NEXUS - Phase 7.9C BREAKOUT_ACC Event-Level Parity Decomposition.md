@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-22
+updated: 2026-09-22
+---
+
 # NEXUS - Phase 7.9C BREAKOUT_ACC Event-Level Parity Decomposition
 
 **Baseline:** `2e991fcf2cf315312e6c6951ce0137fa417d4ce6` (Phase 7.9B). Nessun nuovo Serious backtest, nessuna optimization, nessun cambio strategia, nessun P&L usato per la diagnosi.
@@ -77,3 +86,6 @@ SCOPERTA CENTRALE: NON e' un problema di definizione del segnale (scala comparab
 PROSSIMO: FIX_PARITY_BEFORE_STATISTICS (non eseguito - richiede strumentazione
           del vero Tester per isolare la causa del gap di esecuzione)
 ```
+
+## Collegamenti
+[[MOC - Trading]]

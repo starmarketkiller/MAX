@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-21
+updated: 2026-09-21
+---
+
 # NEXUS - Phase 7.5B SEQ-0009 Cluster Geometry Consistency Patch
 
 **Baseline:** `3498606` (SEQ-0009 structural feasibility RESULT - verdetto accettato). Corregge un'incoerenza concreta nel report di geometria trovata in review - **il verdetto di SEQ-0009 non cambia**.
@@ -64,3 +73,6 @@ Il vecchio valore **8** non e' stato cancellato silenziosamente - resta visibile
 ---
 
 **SEQ-0009 e' ora davvero archiviabile:** `NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY` su `development_discovery`, con un report di geometria internamente coerente e meccanicamente verificato. Il nuovo processo ha funzionato due volte in questa fase - prima nello scoprire in un solo run che il design non e' testabile su questa partition, poi nel far emergere e correggere un bug di reporting concreto prima di archiviare il risultato. Nessun'altra family avviata, come da istruzione.
+
+## Collegamenti
+[[MOC - Trading]]

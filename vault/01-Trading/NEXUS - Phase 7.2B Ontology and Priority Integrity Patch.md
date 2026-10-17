@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.2B: Ontology & Priority Integrity Patch
 
 **Baseline:** `327af16` (Phase 7.2, chiusa). Nessuna discovery, nessun outcome NEXUS letto, nessun accesso a development/validation/holdout, nessun backtest - solo correzione metodologica del corpus/ontologia/scoring gia' prodotti.
@@ -84,3 +93,6 @@ Applicato a tutte e **20 le sequence** (`sequence_semantic_leakage_guard_v1.json
 ## Vincoli rispettati
 
 Nessuna discovery eseguita; nessun outcome NEXUS letto; nessun accesso a development/validation/holdout; nessun backtest su alcuna sequence; nessun punteggio aggiustato manualmente per ottenere un ranking desiderato; commit/push su main; nessuna Phase 7.3 avviata.
+
+## Collegamenti
+[[MOC - Trading]]

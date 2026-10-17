@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-15
+updated: 2026-09-15
+---
+
 # NEXUS — Cost Calibration Final + Strategy Re-Evaluation
 
 Segue [[NEXUS - Broker Cost Model Audit]] (commit `7547bde`/`cbd5c6c`, verdict `COST_MODEL_TOO_CONSERVATIVE`). Questo report calibra il broker baseline su base statistica solida e riesegue **tutte** le strategie con implementazione research, senza modificare segnali, parametri o gate.

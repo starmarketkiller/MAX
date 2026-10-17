@@ -459,3 +459,6 @@ Cost model: `NEXUS - Broker Cost Model Audit`, `NEXUS - 37 Strategy Cost-Calibra
 Dated NEXUS EA reports: Audit Structure-Reaction-LEVEL_REACTION e WICK_SWEEP (10-09); LEVEL_REACTION Merge (06-09); LEVEL_REACTION Primo Risultato / 3 Anni (07-09); WICK_SWEEP_REV Registrato (10-09); WICK_SWEEP Entry Timing Study (11-09); WICK_SWEEP_RECLAIM_TICK Design Candidate (12-09); PIVOT_WICK step2 (03-09); Dataset Python STRUCT_LEVEL_SWEEP (10-09); STRUCT_LEVEL_SWEEP Audit (10-09); Scoperta ESL / ESL Corretto (06-09); ADX_RSI D1 Confermata (04-09); MACD H4 Confermata (04-09); SAR Confermata Positiva Invalidata / SAR Verdetto Definitivo (08-09).
 
 **Total: 34 source reports reviewed and re-classified.**
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

@@ -39,3 +39,6 @@ Regole:
 - `n_censored` deve essere tracciato esplicitamente — un'occorrenza ancora aperta a fine finestra non è né "vinta" né "persa", è censurata (rilevante anche per il modello Beta-Binomial, sezione probability).
 - Ogni soglia R riporta il proprio `n` — soglie più alte hanno tipicamente `n` effettivo minore (non tutte le occorrenze raggiungono +3R prima di -1R nel periodo osservato), quindi ogni soglia porta la propria incertezza indipendente.
 - Questo schema NON contiene alcun campo "recommended_tp" — deliberatamente, per evitare che diventi un veicolo per scegliere il target a posteriori.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

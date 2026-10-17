@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-15
+updated: 2026-09-15
+---
+
 # NEXUS Phase C.1 — Orphan TRUE_BREAK Root-Cause Audit
 
 Segue [[NEXUS - Structural Lifecycle Sample Recovery]] (commit `3c1c296`, episodeSeq additivo, sample recovery 60→159, 288 orphan TRUE_BREAK riportati e correttamente esclusi ma non spiegati in dettaglio). Questa fase chiude definitivamente la causa degli orphan **prima** di aprire nuovi thread di ricerca. Nessuna feature discovery, nessuna analisi dei 6 WEAK_HINT, nessuna modifica alla trading logic.

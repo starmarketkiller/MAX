@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Causal Research Thread 2 — Fase A: Instrumentazione del Lifecycle Strutturale
 
 Segue [[NEXUS - Causal Research Thread 2 Reclaim False Break Feasibility]] (commit `abde2a5`, verdict `HOLD_NEEDS_CAUSAL_HOOKS`). Percorso scelto: **B — instrumentare il codice**. Target esplicitamente approvati: **SNXSSweepExt** (detector) e **SH_BMS_RTO** (V1, lifecycle consumer). Nessun'altra strategia toccata. Nessuna logica di trading modificata: solo osservazione read-only aggiuntiva.

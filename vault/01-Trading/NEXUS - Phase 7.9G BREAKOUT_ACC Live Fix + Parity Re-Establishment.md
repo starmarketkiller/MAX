@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-23
+updated: 2026-09-23
+---
+
 # NEXUS - Phase 7.9G BREAKOUT_ACC Live Fix + Parity Re-Establishment
 
 > **Correzione (23/09, Phase 7.10)**: l'audit di integrità retroattivo ha trovato un'inversione di **etichette** (non di sostanza) nei campi `only_a`/`only_b` degli artifact di pairing di questa fase — la funzione `pair_dates()` è posizionale e le chiamate originali passavano lo stream offline come primo argomento e quello live come secondo, quindi `only_a` conteneva in realtà il residuo di B e `only_b` il residuo di A. I NUMERI e il VERDETTO qui sotto erano già corretti nella sostanza (il codice di decisione compensava correttamente lo scambio) — solo i nomi dei campi nell'artifact JSON erano fuorvianti. Corretto alla fonte, artifact rigenerati con gli stessi conteggi. Vedi `server/research_scripts/phase7/phase7_10/breakout_acc_7_9g_label_correction_v1.json` per l'audit completo before/after.
@@ -102,3 +111,6 @@ BREAKOUT_ACC: fix live applicato (guard TF-scoped, minimale)
 PROSSIMO: BUILD_CANONICAL_BREAKOUT_ACC_DATASET - non eseguito
           poi: EDGE DECOMPOSITION -> PATH ANATOMY -> NATURAL HORIZON -> MECHANISM DISCOVERY
 ```
+
+## Collegamenti
+[[MOC - Trading]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-13
+updated: 2026-09-13
+---
+
 # Unified Structure / Level / Reaction Engine — Audit operativo + Migration Plan v1
 
 Richiesto dall'utente dopo la chiusura di Quantitative Integrity v1/v2, Web Bridge v1 e Backend Test Debt. Torna alla roadmap principale NEXUS: Market Structure Core / Level Engine / Reaction Engine.

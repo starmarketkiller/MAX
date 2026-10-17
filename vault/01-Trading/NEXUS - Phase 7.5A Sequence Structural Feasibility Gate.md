@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.5A Sequence Structural Feasibility Gate
 
 **Baseline:** `7b9d64b` (Phase 7.4A Structural Verdict Semantics Patch - **SEQ-0015 CHIUSA**, non riesaminata come candidato in questa fase). Introduce un gate strutturale GENERALE, applicabile a qualunque futura sequence family, da eseguire subito dopo la formalizzazione minima del detector e PRIMA di outcome contract/statistical test selection/BH family/validation access.
@@ -104,3 +113,6 @@ Tutti i raw feature dipendenti (`directional_efficiency`, `atr_percentile`, `ema
 ---
 
 **Confermato: SEQ-0015 resta CHIUSA e non e' stata riesaminata come candidato. NESSUN dato outcome NEXUS e' stato letto. NESSUNA edge discovery e' stata eseguita.** Prossimo passo (non iniziato in questa fase, per istruzione esplicita): scegliere quale delle 5 family formalizzare per prima e avviare una Phase 7.5B di formalizzazione detector + ri-esecuzione del gate su dati reali.
+
+## Collegamenti
+[[MOC - Trading]]

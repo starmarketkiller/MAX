@@ -1,3 +1,12 @@
+---
+type: note
+domain: business
+status: active
+tags: [business, nexus-task]
+created: 2026-09-29
+updated: 2026-09-29
+---
+
 # NEXUS TASK #0007 — Adopt Funding Framework V1 + Vault Namespace Cleanup
 
 **Baseline:** `7dafeae`. Dipendenze: #0005, #0006. Task di **governance/housekeeping**, non di design: promuove lo stato del framework e riorganizza il namespace Vault, senza toccare scoring/gate/dataset.
@@ -32,3 +41,6 @@ L'utente aveva proposto anche `vault/Businesses/Opportunity/` o `vault/Projects/
 ## Prossimo passo (non ancora una NEXUS TASK)
 
 Uso reale del framework su un'opportunity concreta, a partire da quelle con miglior rapporto time-to-cash/capitale/capability coverage — sempre partendo dal `next_cheapest_validation_step` dichiarato, mai un'azione commerciale reale senza approval esplicita.
+
+## Collegamenti
+[[MOC - Opportunity and Funding]]

@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-22
+updated: 2026-09-22
+---
+
 # NEXUS - Phase 7.8F Final Execution Config Audit
 
 **Baseline:** `9b75ceeee1e49ef1e3efd2e5127bdc5bc50e7f1a` (Phase 7.8E, `FINAL_PRE_RUN_SEAL_VERIFIED_READY_TO_EXECUTE`). L'utente ha ispezionato l'`.ini` congelato e trovato due dettagli tecnici concreti prima di autorizzare il RUN: `Leverage=100` contro un protocollo che ricordava a 1:500, e `FromDate`/`ToDate` a granularità giorno contro un confine frozen con un'ora precisa (`12:06:50`).
@@ -98,3 +107,6 @@ reseal manifest dati richiesto subito prima del RUN
 PROSSIMO:
 reverify data hashes -> execute -> raccogliere risultato immutabile
 ```
+
+## Collegamenti
+[[MOC - Trading]]

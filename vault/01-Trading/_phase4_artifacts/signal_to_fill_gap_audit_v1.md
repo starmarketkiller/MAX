@@ -28,3 +28,6 @@ Con `SIGNAL_TO_FILL_GAP` calcolata in modo uniforme, questi due casi sarebbero s
 ## Applicazione a EC-LIQUIDITY_SWEEP_RECLAIM (Phase 6, non eseguita qui)
 
 Nessun numero calcolato in questa fase (richiederebbe testare l'esecuzione reale, vietato dal perimetro di Phase 5.5). Il record execution di EC-LIQUIDITY_SWEEP_RECLAIM (sec.11) dichiara esplicitamente `execution_status: NOT_TESTED` — `SIGNAL_TO_FILL_GAP` è la metrica che un futuro test di Phase 6 dovrà produrre prima di poter cambiare quello status.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

@@ -29,3 +29,6 @@ Le due REDUNDANT "per formula" (ema_slope_atr_norm, mean_reversion_score) sono t
 Il gruppo HIGHLY_CORRELATED più interessante (ema_slope, dist_from_rolling_high/low, position_in_rolling_range, tutti correlati fra 0.79 e 0.95) rivela che **"trend" e "location nel range" non sono due assi indipendenti in questo dataset** — sono in gran parte la stessa informazione osservata da due formule diverse. Questo è rilevante retroattivamente per Phase 5: l'interazione predefinita `SWEEP_RECLAIM_x_LOCATION` (sec.F di Phase 5) usava `position_in_rolling_range` come condizione "indipendente" dal trend, ma la correlazione qui trovata suggerisce che quella condizione catturava in parte informazione di trend già implicitamente presente altrove — non invalida il risultato (che era comunque NO_EDGE), ma va tenuto a mente se in futuro si vorrà scomporre "location" e "trend" come due condizioni davvero distinte.
 
 Nessuna feature è risultata LOW_INFORMATION (quasi costante) in questo dataset.
+
+## Collegamenti
+[[NEXUS - Market Intelligence Foundation]] · [[MOC - Trading]]

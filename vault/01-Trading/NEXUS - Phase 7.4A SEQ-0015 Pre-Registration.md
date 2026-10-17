@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.4A: First Sequence Discovery Pre-Registration (SEQ-0015)
 
 **Baseline:** `ddbf2d5` (Phase 7.3, verificata, READY_FOR_FIRST_SEQUENCE_DISCOVERY=true). Questa fase congela il detector e la frozen spec per la PRIMA sequence family che attraverserà il Sequence Discovery Engine v1 - **nessuna discovery viene eseguita**.
@@ -87,3 +96,6 @@ Corretti/rigenerati (data quality, non nuova logica):
 **NO OUTCOME DATA ACCESSED. NO SEQUENCE DISCOVERY EXECUTED IN PHASE 7.4A.**
 
 **Commit/push eseguiti. Il commit di questa frozen spec diventa il `preregistration_commit_sha` della futura Phase 7.4B. Nessuna Phase 7.4B senza nuova autorizzazione, dopo verifica di spec/hash/detector da parte dell'utente.**
+
+## Collegamenti
+[[MOC - Trading]]

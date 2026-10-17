@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-17
+updated: 2026-09-17
+---
+
 # NEXUS - Market Intelligence Foundation
 
 Cambio di paradigma della ricerca NEXUS: da `STRATEGY -> BACKTEST -> PF` a `MARKET STATE -> EVENT -> SETUP -> TRIGGER -> ENTRY -> INVALIDATION -> OUTCOME -> PROBABILITY -> EDGE -> STRATEGY`. Questo documento è l'indice e la sintesi; il dettaglio completo di ogni sezione vive negli artifact collegati in `vault/01-Trading/_phase4_artifacts/`. Nessun nuovo EA implementato, nessuna strategia ottimizzata, nessun trading live/demo autonomo avviato — coerente con il vincolo esplicito di questa fase (ricerca infrastrutturale).

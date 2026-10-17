@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-20
+updated: 2026-09-20
+---
+
 # NEXUS - Phase 7.4A Integrity Patch (before real discovery)
 
 **Baseline:** `bd02268` (Phase 7.4A, pre-registrazione SEQ-0015 v1). Chiude i 3 problemi identificati nella frozen spec **prima** di qualunque run reale - **nessuna discovery eseguita, nessun dato NEXUS letto, nessuna soglia ricalibrata sui dati**.
@@ -65,3 +74,6 @@ Modificati: `seq0015_momentum_burst_detector.py` (solo commenti/docstring), `pol
 **NO REAL NEXUS OUTCOME DATA ACCESSED. NO SEQUENCE DISCOVERY EXECUTED.**
 
 **Commit/push eseguiti. Il commit di questa patch (frozen spec v2) diventa il vero `preregistration_commit_sha` per Phase 7.4B. Nessuna Phase 7.4B senza nuova autorizzazione.**
+
+## Collegamenti
+[[MOC - Trading]]

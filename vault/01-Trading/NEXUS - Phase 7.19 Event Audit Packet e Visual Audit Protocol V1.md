@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-27
+updated: 2026-09-27
+---
+
 # NEXUS - Phase 7.19 — Event Audit Packet + Visual Audit Protocol V1
 
 **Baseline:** HEAD disponibile all'esecuzione (successivo a `8590f63`, Phase 7.17/7.18). **Task esplicitamente ortogonale al lavoro TSI concorrente (Phase 7.18)**, ancora in corso al momento di questa fase (istrumentazione diagnostica temporanea presente ma non committata in `MQL5/Include/NEXUS_v1/NXS_Strategies.mqh`). Nessuna modifica a EA, sito, logging runtime, registry, Product Platform o artifact TSI. Nessun deploy, nessun backtest lungo. Questa fase è di **sola specifica e validazione metodologica** — non giudica se una qualunque strategia NEXUS abbia edge.
@@ -91,3 +100,6 @@ DECISIONE: AUDIT_STANDARD_READY (no_edge_claim_made: true)
 PROSSIMO: chiusura Phase 7.18 (TSI fix), poi implementazione (Codex),
   poi checkpoint shortlist strategie candidate a edge validation
 ```
+
+## Collegamenti
+[[MOC - Trading]]

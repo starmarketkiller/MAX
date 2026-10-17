@@ -1,3 +1,12 @@
+---
+type: note
+domain: business
+status: active
+tags: [business, nexus-task]
+created: 2026-10-05
+updated: 2026-10-05
+---
+
 # NEXUS TASK #0011 — First Revenue Manual Experiment: Lead Research Service
 
 **Baseline:** nessun commit di codice — esperimento di ricerca/outreach manuale, tracciato in questa conversazione e in `NOTES.md` (file locale non canonico, da considerare superato da questa nota una volta committata).

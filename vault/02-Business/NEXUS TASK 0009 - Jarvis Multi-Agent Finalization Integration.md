@@ -1,3 +1,12 @@
+---
+type: note
+domain: system
+status: active
+tags: [jarvis, orchestrator]
+created: 2026-09-29
+updated: 2026-09-29
+---
+
 # NEXUS TASK #0009 — Jarvis Multi-Agent Finalization Integration
 
 **Baseline:** `0fddc9b` (#0008 approvata come framework, integrazione ancora aperta). Dipendenze: #0007, #0008.
@@ -41,3 +50,6 @@ Girando per la prima volta l'intera `server/tests/` (non solo il sottoinsieme co
 ## Prossimo passo indicato dall'utente
 
 Provider connectors (incluso ChatGPT) — perché `ESCALATION_READY_FOR_MANUAL_DELIVERY` diventi l'eccezione e non il default corrente, e perché NEXUS possa consultare Claude/Codex/ChatGPT direttamente invece che tramite copia-incolla manuale. Cambio di paradigma dichiarato: da "tu → Claude → NEXUS" a "tu → Telegram/Jarvis → NEXUS → agenti → Jarvis → tu".
+
+## Collegamenti
+[[MOC - Sistema JARVIS]]

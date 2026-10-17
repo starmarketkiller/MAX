@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-22
+updated: 2026-09-22
+---
+
 # NEXUS - Phase 7.9D BREAKOUT_ACC Execution-Gate Decomposition
 
 **Baseline:** `6b16c09c9bc8d5184cef35e2e2d100161a6d4c00` (Phase 7.9C). Nessun nuovo Serious backtest, nessuna optimization, nessun cambio strategia/parametri, mai il P&L usato per la diagnosi.
@@ -89,3 +98,6 @@ PROSSIMO: FIX_EXECUTION_IMPLEMENTATION_BEFORE_RESEARCH - va corretto lo
           strumento di ricostruzione segnale offline (non l'EA, verificato
           corretto) prima di qualunque dataset statistico - non eseguito
 ```
+
+## Collegamenti
+[[MOC - Trading]]

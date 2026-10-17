@@ -1,3 +1,12 @@
+---
+type: note
+domain: business
+status: active
+tags: [business, nexus-task]
+created: 2026-09-29
+updated: 2026-09-29
+---
+
 # NEXUS TASK #0006 — Funding Framework Completion & Hardening
 
 **Baseline:** `5e8bb48`. Dipendenza: #0005. Non una riprogettazione: hardening additivo del framework già consegnato in #0005, che resta `FRAMEWORK_READY_AWAITING_ADOPTION` fino a questo completamento.
@@ -52,3 +61,6 @@ Tutte le 18 opportunity: `input_type=ASSUMPTION`, `priority_status` in `{PROVISI
 ## Decisione finale
 
 **`FUNDING_FRAMEWORK_V1_READY_FOR_ADOPTION`** — stato `WAITING_APPROVAL`, confidence HIGH. Nessuna azione commerciale, nessuna spesa, nessun deploy, nessuna chiamata premium automatica in tutta l'esecuzione. Resta in attesa di conferma esplicita dell'utente prima di diventare canone per Jarvis/futuri task NEXUS.
+
+## Collegamenti
+[[MOC - Opportunity and Funding]]

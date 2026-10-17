@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-26
+updated: 2026-09-26
+---
+
 # NEXUS - Phase 7.9K — Forward Path Correction e Dataset V2
 
 **Baseline:** `38ee2c4` (Phase 7.9J). Phase 7.9H (V1) e tutti i raw data **preservati e invariati** (verificato via git diff su phase7_9h/7.9i/7.9j). Nessuna optimization, nessuna modifica all'EA, nessuna promozione live.
@@ -114,3 +123,6 @@ PROSSIMO: nessuna nuova ipotesi proposta in questa fase - resta
           TREND_ALIGNMENT_CONDITIONAL_EDGE (7.9I/7.9J), non testabile
           con questo dataset
 ```
+
+## Collegamenti
+[[MOC - Trading]]

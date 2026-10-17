@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Causal Research — Experiment 3: Final Confirmation of Level Age
 
 Segue [[NEXUS - Causal Experiment 2 Friday Level Age Confirmation]] (commit `baa9fc2`). Ultimo test sul Level Age prima della decisione finale. Friday **non rianalizzato** (REFUTED, archiviato definitivamente in Experiment 2). Nessuna nuova feature, nessuna nuova combinazione, nessuna soglia modificata.

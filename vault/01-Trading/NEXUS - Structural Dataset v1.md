@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-14
+updated: 2026-09-14
+---
+
 # NEXUS Causal Research Thread 2 — Fase B: Structural Dataset v1
 
 > ⚠️ **SUPERATO da [[NEXUS - Structural Dataset v1 Causal Linkage Integrity Audit]]**. Il verdict `READY_FOR_STRUCTURAL_CAUSAL_EXPERIMENT` di questo report **non è stato approvato** in revisione: il linkage lifecycle era scope-livello (non scope-episodio), causando leakage fra episodi diversi dello stesso `structural_level_id` — in particolare `label_reclaim_or_false_break`/`TRUE_BREAK` era sovrastimato (789, 19.5%) rispetto al valore corretto (47, 1.16%, vedi audit), ed esistevano righe `at_true_break.csv` con `sweep_event_id` vuoto. I CSV in `results/structural_dataset_v1/` sono stati RISCRITTI dall'audit con linkage per episodio (`structural_episode_id`), label rinominato (`label_lifecycle_outcome`), e `time_to_true_break_sec` rimosso. Usare l'audit come riferimento autorevole; questo report resta solo per cronologia.

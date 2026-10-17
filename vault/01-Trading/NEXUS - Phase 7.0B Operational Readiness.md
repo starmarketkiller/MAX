@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-19
+updated: 2026-09-19
+---
+
 # NEXUS - Phase 7.0B: Operational Readiness for Discovery Engine v2
 
 **Baseline:** `a2eb10e` (Phase 7.0 Architecture + Integrity Patch, chiusa). Questa fase trasforma il design in un motore operativamente pronto - **non** ha eseguito alcuna discovery run, nessun H007, nessun nuovo edge, nessun backtest strategico, nessuna parameter optimization. Il nuovo dataset (2023-02-04 → 2026-09-16) e' stato trattato SOLO come infrastruttura da acquisire e validare, mai come occasione per guardare risultati di edge (sec.19).
@@ -96,3 +105,6 @@ Tutti i segmenti hanno giorni disponibili (nessuno split vuoto forzato) - `parti
 ## Vincoli rispettati
 
 Nessun H007, nessuna ricerca di edge, nessuna analisi della SELL asymmetry, nessun ranking di setup, nessuna ottimizzazione di parametri, FINAL_HOLDOUT mai usato per esplorazione, nessun risultato storico modificato, nessun file frontend/backend applicativo Codex toccato.
+
+## Collegamenti
+[[MOC - Trading]]

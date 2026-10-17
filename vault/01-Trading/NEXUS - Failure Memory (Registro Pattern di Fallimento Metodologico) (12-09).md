@@ -1,3 +1,12 @@
+---
+type: note
+domain: trading
+status: active
+tags: [trading, nexus-research]
+created: 2026-09-12
+updated: 2026-09-12
+---
+
 # NEXUS — Failure Memory (Registro Pattern di Fallimento Metodologico)
 
 Registro cumulativo di pattern di errore metodologico scoperti durante la ricerca su NEXUS — non specifico di una singola strategia. Obiettivo: prima di fidarsi di un nuovo risultato di ricerca (shadow, replay, backtest esterno), controllare se ricade in uno di questi pattern già noti.
