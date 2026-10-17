@@ -42,6 +42,20 @@ def _hourly_asian_day(date, spike_hour=6, spike_high=120.0):
     return candles
 
 
+def _m15_asian_day(date, spike_high=120.0):
+    """Cadenza M15 - fedele al vero intraday_ref di produzione
+    (_load_dukascopy_m15), mai orario come la serie esterna."""
+    candles = []
+    for q in range(28):  # 00:00..06:45, 28 x 15min = 7h = finestra ASIAN
+        hh, mm = divmod(q * 15, 60)
+        hi = spike_high if q == 27 else (101.0 + q * 0.02)
+        candles.append(_c(f"{date} {hh:02d}:{mm:02d}", 100.0, hi, 99.0, 100.5))
+    for q in range(28, 96):
+        hh, mm = divmod(q * 15, 60)
+        candles.append(_c(f"{date} {hh:02d}:{mm:02d}", 110.0, 110.5, 109.5, 110.2))
+    return candles
+
+
 # --------------------------------------------------------- P0: prefix invariance ----
 
 def test_prefix_invariance_future_bars_do_not_change_past_completeness():
@@ -183,15 +197,19 @@ def test_raw_and_wrapper_agree_on_same_input():
 def test_raw_and_wrapper_agree_with_real_intraday_projection():
     """Con una vera proiezione intraday->esterno (il percorso di produzione
     reale), il wrapper deve produrre valori coerenti con cio' che la raw
-    calcola sulla serie intraday stessa - stessa logica di parsing, stessa
-    regola di completezza, solo progettata su un indice diverso."""
-    intraday = _hourly_asian_day("2026-05-21")
-    sess_raw_fine = backtest._session_amd_series_raw(intraday, declared_cadence_seconds=_H1)
-    outer = [intraday[0], intraday[4], intraday[8], intraday[12], intraday[16], intraday[20]]
+    calcola sulla serie intraday M15 stessa - stessa logica di parsing,
+    stessa regola di completezza, solo progettata su un indice diverso.
+    `outer` (esterna, oraria) e `intraday` (M15) hanno cadenze DISTINTE,
+    come nel vero percorso produttivo dopo il fix V4 (P0-1)."""
+    date = "2026-05-21"
+    intraday = _m15_asian_day(date)
+    sess_raw_fine = backtest._session_amd_series_raw(intraday, declared_cadence_seconds=_M15)
+    outer = [_c(f"{date} {h:02d}:00", 100, 101, 99, 100.5) for h in (0, 4, 8, 12, 16, 20)]
     sess_wrap = backtest._session_amd_series(outer, intraday_ref=intraday, declared_cadence_seconds=_H1)
-    # outer[2] = ora 08:00 (indice intraday 8, post-sessione) - stesso esito della raw a quell'indice
-    assert sess_wrap["asian_session_complete"][2] == sess_raw_fine["asian_session_complete"][8]
-    assert sess_wrap["asian_hi"][2] == sess_raw_fine["asian_hi"][8]
+    # outer[2] = ora 08:00 (indice intraday 32 = 08:00 in passi di 15min, post-sessione)
+    i_intraday_08 = 32
+    assert sess_wrap["asian_session_complete"][2] == sess_raw_fine["asian_session_complete"][i_intraday_08]
+    assert sess_wrap["asian_hi"][2] == sess_raw_fine["asian_hi"][i_intraday_08]
 
 
 # --------------------------------------------------------- non-regressione ----

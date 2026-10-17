@@ -2975,7 +2975,8 @@ def _session_amd_series_raw(candles, declared_cadence_seconds=None):
             "amd_phase": amd_phase, "asian_session_complete": asian_session_complete}
 
 
-def _session_amd_series(candles, intraday_ref=None, declared_cadence_seconds=None):
+def _session_amd_series(candles, intraday_ref=None, declared_cadence_seconds=None,
+                         reference_cadence_seconds=None):
     """Contesto di sessione/Asian-range/AMD per ogni barra di `candles`.
 
     09/08 - bug trovato confrontando col vero MQL5 (NXS_AMDModel.mqh,
@@ -3011,20 +3012,27 @@ def _session_amd_series(candles, intraday_ref=None, declared_cadence_seconds=Non
     periodo testato).
 
     declared_cadence_seconds: contratto di cadenza point-in-time (V3, P0) -
-    si applica alla serie su cui _session_amd_series_raw viene realmente
-    chiamata. Quando intraday_ref e' presente, quella serie e' SEMPRE M15
-    Dukascopy per costruzione del percorso produttivo (vedi _load_dukascopy_
-    m15: non e' un'ipotesi, e' il contratto dichiarato della funzione che
-    la produce) - usato come default se non sovrascritto esplicitamente.
-    Senza intraday_ref, si applica a `candles` e va dichiarato dal
-    chiamante (run_backtest conosce il proprio timeframe validato); se
-    omesso, la cadenza resta non attestabile e nessuna sessione risultera'
-    completa (fail-closed, mai un default indovinato dai dati)."""
+    cadenza di `candles` (la serie ESTERNA: H1/H4/D1, qualunque sia). Va
+    dichiarato dal chiamante (run_backtest conosce il proprio timeframe
+    validato); se omesso, la cadenza di `candles` resta non attestabile.
+
+    reference_cadence_seconds: cadenza di `intraday_ref` (V4, P0-1 - Codex
+    ha dimostrato che riusare declared_cadence_seconds anche per
+    intraday_ref trasmetteva erroneamente il timeframe ESTERNO, es. H1,
+    alla serie di RIFERIMENTO, che e' SEMPRE M15 Dukascopy per costruzione
+    del percorso produttivo (_load_dukascopy_m15 non restituisce mai
+    nient'altro) - le due cadenze sono concetti indipendenti, non la
+    stessa quantita' con due nomi). Default: M15 quando intraday_ref e'
+    presente e questo parametro non e' sovrascritto esplicitamente."""
     if not intraday_ref or intraday_ref is candles:
         return _session_amd_series_raw(candles, declared_cadence_seconds=declared_cadence_seconds)
 
-    intraday_cadence = declared_cadence_seconds if declared_cadence_seconds is not None else _TF_SECONDS["15m"]
-    fine = _session_amd_series_raw(intraday_ref, declared_cadence_seconds=intraday_cadence)
+    # V4 (P0-1): MAI derivare la cadenza di intraday_ref da declared_cadence_
+    # seconds (quella e' la cadenza di `candles`, una serie diversa). Il
+    # default M15 e' il contratto dichiarato di _load_dukascopy_m15, non
+    # un'assunzione nuova introdotta qui.
+    ref_cadence = reference_cadence_seconds if reference_cadence_seconds is not None else _TF_SECONDS["15m"]
+    fine = _session_amd_series_raw(intraday_ref, declared_cadence_seconds=ref_cadence)
     # V3 (P1, Codex): stessa logica di parsing della funzione raw (prima
     # _epoch_utc, rigido: crash su timestamp timezone-aware come
     # "2026-03-02 00:00+00:00", e incoerente con quanto _parse_bar_utc_
@@ -3033,8 +3041,28 @@ def _session_amd_series(candles, intraday_ref=None, declared_cadence_seconds=Non
 
     n = len(candles)
     cand_epochs = [_bar_epoch_utc(c["time"]) for c in candles]
-    bar_width = (cand_epochs[-1] - cand_epochs[0]) / (n - 1) if n > 1 else 86400
-    boundaries = cand_epochs[1:] + [cand_epochs[-1] + bar_width]
+    # V4 (P0-2): Codex ha dimostrato che stimare la larghezza di barra come
+    # MEDIA dei timestamp dell'intero array ("bar_width = (ultimo-primo)/
+    # (n-1)") NON e' causale: quella media cambia quando si aggiungono
+    # barre future, e il confine della barra ALLORA corrente (prima
+    # calcolato con l'estrapolazione, "cand_epochs[-1]+bar_width") cambiava
+    # con essa - violando la prefix invariance anche quando il livello
+    # Asian stesso era gia' corretto. Fix: il confine di OGNI barra i e'
+    # ora funzione ESCLUSIVA dell'inizio di quella barra e della cadenza
+    # DICHIARATA (mai della media osservata, mai del timestamp della barra
+    # i+1, che e' "il futuro" rispetto a i) - nessuna barra successiva,
+    # presente o futura, puo' piu' influenzare il confine di una barra gia'
+    # determinabile.
+    if declared_cadence_seconds is None:
+        # Fail-closed esplicito (P0-2 punto 5): senza una cadenza dichiarata
+        # per `candles` non si puo' calcolare NESSUN confine in modo
+        # causale - meglio non fornire nulla che indovinare una larghezza
+        # dai dati (tornerebbe a essere non causale).
+        return {"hour": [None] * n, "date": [None] * n, "session": [None] * n,
+                "asian_hi": [None] * n, "asian_lo": [None] * n,
+                "pdh": [None] * n, "pdl": [None] * n,
+                "amd_phase": [None] * n, "asian_session_complete": [False] * n}
+    boundaries = [e + declared_cadence_seconds for e in cand_epochs]
 
     hour, date, session = [None] * n, [None] * n, [None] * n
     asian_hi, asian_lo = [None] * n, [None] * n

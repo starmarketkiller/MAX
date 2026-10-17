@@ -98,12 +98,32 @@ def test_amd_phase_no_classification_during_session_then_correct_after():
     assert sess["amd_phase"][7] == ("ACCUMULATION", 0)
 
 
+def _m15_asian_spike_day(date="2026-01-05"):
+    """Come _synthetic_asian_spike_day ma a cadenza M15 (28 barre nella
+    finestra ASIAN 00:00-06:45) - fedele al vero intraday_ref di
+    produzione (_load_dukascopy_m15), mai orario come `candles` esterne."""
+    candles = []
+    for q in range(28):  # 00:00, 00:15, ..., 06:45 (28 x 15min = 7h)
+        hh, mm = divmod(q * 15, 60)
+        spike = (q == 27)
+        hi = 120.0 if spike else (101.0 + q * 0.02)
+        candles.append(_c(f"{date} {hh:02d}:{mm:02d}", 100.0, hi, 99.0, 100.5))
+    for q in range(28, 96):  # resto della giornata, ogni 15 min fino a 23:45
+        hh, mm = divmod(q * 15, 60)
+        candles.append(_c(f"{date} {hh:02d}:{mm:02d}", 110.0, 110.5, 109.5, 110.2))
+    return candles
+
+
 def test_session_amd_series_wrapper_propagates_fix():
     """Il percorso di produzione reale (riga ~605, _session_amd_series con
-    intraday_ref) deve propagare gli stessi None/flag, non solo la _raw."""
-    candles = _synthetic_asian_spike_day()
-    outer = [candles[0], candles[4], candles[8], candles[12], candles[16], candles[20]]
-    sess = backtest._session_amd_series(outer, intraday_ref=candles, declared_cadence_seconds=_H1)
+    intraday_ref) deve propagare gli stessi None/flag, non solo la _raw.
+    intraday_ref e' a cadenza M15 (fedele al vero percorso produttivo),
+    `outer` e' la serie ESTERNA oraria - due cadenze distinte, come dopo
+    il fix V4 (P0-1)."""
+    intraday = _m15_asian_spike_day()
+    date = "2026-01-05"
+    outer = [_c(f"{date} {h:02d}:00", 100, 101, 99, 100.5) for h in (0, 4, 8, 12, 16, 20)]
+    sess = backtest._session_amd_series(outer, intraday_ref=intraday, declared_cadence_seconds=_H1)
     # outer[0] = ora 00:00, si proietta su una barra intraday ancora ASIAN
     assert sess["asian_hi"][0] is None
     assert sess["asian_session_complete"][0] is False
