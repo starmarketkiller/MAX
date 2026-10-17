@@ -131,7 +131,7 @@ misurare il trigger nudo).
 Nessuna modifica al codice MQL5 fatta in questa sessione (solo lettura
 del codice terzo) — implementare le nuove strategie richiede accordo
 esplicito prima di toccare `NXS_Strategies*.mqh` (vedi
-[[feedback_no_live_mql5_without_asking]]).
+regola `feedback_no_live_mql5_without_asking` (memoria Claude, fuori vault)).
 
 ## Collegamenti
 [[NEXUS EA - Piano d'Azione Post-Maratona, Stato Reale e Prossimi Passi (03-09)]] ·

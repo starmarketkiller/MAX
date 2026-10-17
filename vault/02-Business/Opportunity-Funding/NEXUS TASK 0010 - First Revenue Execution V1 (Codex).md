@@ -1,6 +1,6 @@
 # NEXUS TASK #0010 — First Revenue Execution V1 (bookkeeping, lavoro Codex)
 
-**Commit:** `01e6180` (`feat: add first revenue execution v1`, autore `codex-local`). **Dettaglio tecnico completo:** [[docs/NEXUS_FIRST_REVENUE_EXECUTION_V1]] — questa nota è solo il ponte vault, non duplica il contenuto.
+**Commit:** `01e6180` (`feat: add first revenue execution v1`, autore `codex-local`). **Dettaglio tecnico completo:** `docs/NEXUS_FIRST_REVENUE_EXECUTION_V1.md` (repo, fuori vault) — questa nota è solo il ponte vault, non duplica il contenuto.
 
 ## Decisione
 

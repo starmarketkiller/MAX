@@ -245,8 +245,7 @@ su ogni fronte misurabile, incluso questo ultimo filtro.
 Vedi anche [[NEXUS EA - Rischio a Livelli e Moltiplicatore da Streak (12-08)]]
 (i tier di rischio ora vanno aggiornati per riflettere queste disattivazioni),
 [[NEXUS EA - Fase C Recovery Baseline e Rischio Flottante (11-08)]] (origine
-del floating DD 107% di CRT), [[NEXUS EA - 50 Maestri del Trading, Sintesi e
-Confronto col Nucleo (14-08)]].
+del floating DD 107% di CRT), [[NEXUS EA - 50 Maestri del Trading, Sintesi e Confronto col Nucleo (14-08)]].
 
 ## Collegamenti
 [[MOC - Trading]]

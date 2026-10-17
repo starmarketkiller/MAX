@@ -12,8 +12,7 @@ updated: 2026-08-24
 ## Perché
 
 Terza ottimizzazione individuale. OTE_CONT (diversificatrice genuina,
-correlazione media 0.028 - vedi [[NEXUS EA - Correlazione tra le 20
-Strategie (24-08)]]), già solida (SL1.0/TP6.0, retail PF1.61,
+correlazione media 0.028 - vedi [[NEXUS EA - Correlazione tra le 20 Strategie (24-08)]]), già solida (SL1.0/TP6.0, retail PF1.61,
 m1=1.69/m2=1.52) ma con due finestre deboli (F1/F2 = 0.89) e respinta
 su D1 (morta pre-2024). `ote_cont_optimization_24-08.py`.
 

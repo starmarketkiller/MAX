@@ -32,7 +32,7 @@ parametri veniva ignorato**, sostituito dai valori BALANCED.
 ## Come è stato trovato
 
 Il test `step4` (FVG_CONT, `InpMinEntryScore=75.0`, regime multi-TF
-corretto — [[NEXUS EA - Bug Regime Multi-TF nel Voto Finale (07-09)]])
+corretto — nota dedicata mai creata, vedi [[NEXUS EA - Step5 Ancora Bacato, InpRiskProfile Non e' un Vero Input MQL5 (07-09)]])
 ha prodotto un risultato **identico al centesimo** a `step2`
 (`InpMinEntryScore` non impostato = default codice 50, ma protetto a
 DD 5%): stesso net ($2635.26), stesso PF (1.92), stessi 168 trade,
@@ -91,4 +91,4 @@ identico setup di step4, con `InpRiskProfile=0` aggiunto) — questo è
 il VERO primo test del voto-75 + regime corretto.
 
 ## Collegamenti
-[[NEXUS EA - FVG_CONT Prop-Compliant, Protezione Giornaliera Non Basta e Bug SLReclaim (07-09)]] · [[NEXUS EA - Bug Regime Multi-TF nel Voto Finale (07-09)]] · [[NEXUS EA - Piano di Test Master, Stato per Ogni Strategia e Coda Prioritaria (03-09)]] · [[MOC - Trading]]
+[[NEXUS EA - FVG_CONT Prop-Compliant, Protezione Giornaliera Non Basta e Bug SLReclaim (07-09)]] · [[NEXUS EA - Piano di Test Master, Stato per Ogni Strategia e Coda Prioritaria (03-09)]] · [[MOC - Trading]]

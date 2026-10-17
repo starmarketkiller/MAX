@@ -4,7 +4,7 @@ domain: system
 status: active
 tags: [jarvis, home]
 created: 2026-07-12
-updated: 2026-10-05
+updated: 2026-10-17
 ---
 
 # 🤖 JARVIS — punto d'ingresso
@@ -19,8 +19,9 @@ Task Queue/Router/Ledger, Dynamic Specialist Review e un router cognitivo
 locale opzionale (Ministral). Architettura corrente: **[[MOC - Sistema JARVIS]]**.
 
 ## Domini
-- **[[MOC - Trading]]** — NEXUS EA, backtest, MT5. Live; VOLBRK Serious 3Y
-  preregistrato ma `PARTIALLY_BLOCKED` su 3 soglie decisionali umane.
+- **[[MOC - Trading]]** — NEXUS EA, backtest, MT5. VOLBRK Serious 3Y eseguito
+  con verdetto FAIL (22/09); ricerca ora su architettura RRA-02 e pilot
+  NXL2-CP2 preregistrato (vedi [[CURRENT_STATE]]).
 - **[[MOC - Business]]** — Funding Priority & Opportunity Framework
   ([[MOC - Opportunity and Funding]]) + primo esperimento reale di revenue
   (`OPP_LEAD_RESEARCH_SERVICE`, outreach manuale in corso).

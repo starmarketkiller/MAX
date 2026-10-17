@@ -4,7 +4,7 @@ domain: system
 status: active
 tags: [jarvis, sistema, architettura]
 created: 2026-07-12
-updated: 2026-10-05
+updated: 2026-10-17
 ---
 
 # ⚙️ Sistema JARVIS — come si parlano i pezzi
@@ -55,6 +55,20 @@ vault sono rilevanti e quali azioni sono permesse.
    attrito per partire.
 4. **Creazione contenuti** — resta manuale finché 1-3 non sono stabili; automatizzarla
    per ultima evita di costruire un flusso sofisticato su una base ancora instabile.
+
+## Note di implementazione Orchestrator / Jarvis (aggiunto 2026-10-17)
+Note esistenti ma prima non collegate da nessuna MOC (audit link 2026-10-17):
+- [[NEXUS - First Production NEXUS TASK (0001)]]
+- [[NEXUS - Local Model Bake-Off V1]]
+- [[NEXUS - Local Runtime Setup and First Pilot V1]]
+- [[NEXUS - Orchestrator V1 Architecture and Environment Discovery]]
+- [[NEXUS - Orchestrator V1 Core Implementation]]
+- [[NEXUS TASK 0002 - Research Safety Net Auto-Backfill]]
+- [[NEXUS TASK 0003 - Approve Safety Net Backfill]]
+- [[NEXUS TASK 0004 - Merge Escalation Resolution]]
+- [[NEXUS - Jarvis Access Layer V1]]
+- [[NEXUS TASK 0008 - Multi-Agent Review and Finalization Pipeline V1]]
+- [[NEXUS TASK 0009 - Jarvis Multi-Agent Finalization Integration]]
 
 ## Collegamenti
 [[Home]] · [[RAG - Convenzioni]] · [[Automazioni - Idee n8n]]

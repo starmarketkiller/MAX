@@ -137,7 +137,7 @@ per sé, è sano quando i numeri gli permettono di scattare.
   anche a lotto minimo (es. chiudere l'intera posizione invece di una
   frazione quando la frazione arrotonderebbe a zero) richiede
   discussione esplicita prima di toccare `NXS_SplitTrade.mqh` (vedi
-  [[feedback_no_live_mql5_without_asking]]).
+  regola `feedback_no_live_mql5_without_asking` (memoria Claude, fuori vault)).
 
 ## Collegamenti
 [[NEXUS EA - PIVOT_WICK step2 e OneShotLevel Analizzati, Nessun Fix (03-09)]] ·

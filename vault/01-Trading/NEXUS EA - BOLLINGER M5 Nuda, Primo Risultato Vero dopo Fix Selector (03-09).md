@@ -58,7 +58,7 @@ per aspettarsi che un filtro di qualità funzioni.
   step 3 del piano, richiede scrivere nuova logica in
   `NXS_Strat_Bollinger()` (non solo un flag/config, un'aggiunta di
   codice reale) — **non fatto senza conferma esplicita dell'utente**,
-  vedi [[feedback_no_live_mql5_without_asking]].
+  vedi regola `feedback_no_live_mql5_without_asking` (memoria Claude, fuori vault).
 - Gate a chiusura barra (`lastBarTime`) — step 5 del piano, per evitare
   il bug di inseguimento già trovato su BAR_UPDN/BREAKOUT_ACC. Non
   verificato se `NXS_Strat_Bollinger()` ce l'ha già o va aggiunto prima

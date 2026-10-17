@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea]
 created: 2026-07-12
-updated: 2026-07-25
+updated: 2026-10-17
 ---
 
 # 📈 Trading — NEXUS EA
@@ -12,6 +12,123 @@ updated: 2026-07-25
 EA MQL5 per gold/BTC su conto piccolo (~€200-1000), pensato per rispecchiare 1:1 il
 motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo:
 profitto reale, non solo curve di backtest.
+
+## 🗂️ Indice note di ricerca non ancora collegate (aggiunto 2026-10-17)
+
+> Aggiunto dall'audit link del vault del 2026-10-17: queste note esistevano ma
+> nessuna altra nota le collegava (orfane). Elenco ordinato, senza riassunti —
+> il contenuto resta nelle note stesse. Lo stato corrente del progetto è in
+> [[CURRENT_STATE]].
+
+### Fondazione ricerca e Strategy Foundry
+- [[NEXUS - First Serious 3Y Validation SAR MACD]]
+- [[NEXUS - Market Intelligence Foundation]]
+- [[NEXUS - Personal Quant Control Center Full Audit (12-09)]]
+- [[NEXUS - Quantitative Edge Discovery Engine v1]]
+- [[NEXUS - Quantitative Integrity Web Bridge v1 (12-09)]]
+- [[NEXUS - SAR Independent Historical Confirmation]]
+- [[NEXUS - Serious Backtest Candidate Triage]]
+- [[NEXUS - Causal Experiment 3 Level Age Final Confirmation]]
+- [[NEXUS - Causal Research Thread 4 Retest Quality]]
+- [[NEXUS - Strategy Foundry Phase 1]]
+- [[NEXUS - Strategy Foundry Phase 2 Causal Screening]]
+- [[NEXUS - Strategy Foundry Phase 3 Volatility Breakout Implementation]]
+
+### Phase 3 → 6.6 e Phase D/E (hardening ricerca)
+- [[NEXUS - Phase D Fast Structural and HTF Parity Repair]]
+- [[NEXUS - Phase E Candidate Evidence Completion]]
+- [[NEXUS - Phase 3 Semantic and Registry Correction]]
+- [[NEXUS - Research System Hardening Phase 5.5]]
+- [[NEXUS - Phase 6 True Holdout Validation Sweep Reclaim]]
+- [[NEXUS - Phase 6.5 Dependent Evidence and Directional Baseline Hardening]]
+- [[NEXUS - Phase 6.6 Canonical Evidence Normalization]]
+
+### Phase 7 — Discovery Engine v2 → Research Safety Net (7.0 → 7.27)
+- [[NEXUS - Phase 7 Discovery Engine v2 Architecture]]
+- [[NEXUS - Phase 7.0B Operational Readiness]]
+- [[NEXUS - Phase 7.1 First Real Discovery Run]]
+- [[NEXUS - Phase 7.2 External Hypothesis Mining and Market Sequence Ontology]]
+- [[NEXUS - Phase 7.2B Ontology and Priority Integrity Patch]]
+- [[NEXUS - Phase 7.3 Sequence Discovery Engine v1]]
+- [[NEXUS - Phase 7.4A Baseline Matching Topology Audit]]
+- [[NEXUS - Phase 7.4A Dependence Validity Gate]]
+- [[NEXUS - Phase 7.4A Dependence-Aware Inference Redesign]]
+- [[NEXUS - Phase 7.4A End-to-End Inference Validation - BLOCKED]]
+- [[NEXUS - Phase 7.4A Final Statistical Integrity Patch]]
+- [[NEXUS - Phase 7.4A Integrity Patch]]
+- [[NEXUS - Phase 7.4A On-Policy Matched-Control Audit]]
+- [[NEXUS - Phase 7.4A SEQ-0015 Pre-Registration]]
+- [[NEXUS - Phase 7.4A Structural Closure and Baseline Matching Integrity Patch]]
+- [[NEXUS - Phase 7.4A Structural Verdict Semantics Patch]]
+- [[NEXUS - Phase 7.5A Directional Matching Fidelity Final Patch]]
+- [[NEXUS - Phase 7.5A Sequence Structural Feasibility Gate]]
+- [[NEXUS - Phase 7.5A Structural Gate Integration and Geometry Semantics Patch]]
+- [[NEXUS - Phase 7.5B Cluster Geometry Consistency Patch]]
+- [[NEXUS - Phase 7.5B Engine Provenance Version Patch]]
+- [[NEXUS - Phase 7.5B SEQ-0009 Formalization]]
+- [[NEXUS - Phase 7.5B SEQ-0009 Structural Feasibility Result]]
+- [[NEXUS - Phase 7.5C SEQ-0014 Formalization]]
+- [[NEXUS - Phase 7.5C SEQ-0014 Structural Feasibility Result]]
+- [[NEXUS - Phase 7.6A MECH-23 Estimand Identity Audit]]
+- [[NEXUS - Phase 7.6A SEQ-0014 Outcome and Statistical Preregistration]]
+- [[NEXUS - Phase 7.6B MECH-23 Filter Utility Setup Population Formalization]]
+- [[NEXUS - Phase 7.6C Outcome-Horizon Ordering Audit]]
+- [[NEXUS - Phase 7.6C SEQ-0014B Structural Feasibility Preflight]]
+- [[NEXUS - Phase 7.6D MECH-23 Outcome-Horizon Contract]]
+- [[NEXUS - Phase 7.6E MECH-23 Native Setup Failure Audit]]
+- [[NEXUS - Phase 7.7A Strategy Lifecycle Registry]]
+- [[NEXUS - Phase 7.7B Missing-Field Semantics Refinement]]
+- [[NEXUS - Phase 7.7B Strategy Readiness & Meta-Filter Gate]]
+- [[NEXUS - Phase 7.7B Structural Eligibility Semantics Correction]]
+- [[NEXUS - Phase 7.8A Value-of-Information Contract VOLATILITY_BREAKOUT_CONFIRMED]]
+- [[NEXUS - Phase 7.8C Serious 3Y Blocker Resolution & Run Authorization]]
+- [[NEXUS - Phase 7.8D PRE-RUN Data Seal]]
+- [[NEXUS - Phase 7.8D PRE-RUN Manifest (Real Data)]]
+- [[NEXUS - Phase 7.8E Final Data Freeze]]
+- [[NEXUS - Phase 7.8F Final Execution Config Audit]]
+- [[NEXUS - Phase 7.8G Atomic Reseal e Primo Serious Run (0 Trade, Root Cause)]]
+- [[NEXUS - Phase 7.8H Secondo Run (0 Trade, Root Cause Piu Profonda - EX5 Non Aggiornato)]]
+- [[NEXUS - Phase 7.8I Recompile + Research Mode - Primo Risultato Scientifico (FAIL)]]
+- [[NEXUS - Phase 7.9A Postmortem e Reprioritization]]
+- [[NEXUS - Phase 7.9B BREAKOUT_ACC Lifecycle Formalization]]
+- [[NEXUS - Phase 7.9C BREAKOUT_ACC Event-Level Parity Decomposition]]
+- [[NEXUS - Phase 7.9D BREAKOUT_ACC Execution-Gate Decomposition]]
+- [[NEXUS - Phase 7.9E BREAKOUT_ACC Offline-vs-Live Signal Semantics Decomposition]]
+- [[NEXUS - Phase 7.9F BREAKOUT_ACC Strategy Identity Adjudication]]
+- [[NEXUS - Phase 7.9G BREAKOUT_ACC Live Fix + Parity Re-Establishment]]
+- [[NEXUS - Phase 7.9H BREAKOUT_ACC_INTENDED_D1_V1 Canonical Dataset]]
+- [[NEXUS - Phase 7.9I BREAKOUT_ACC Mechanism Research]]
+- [[NEXUS - Phase 7.9J Methodological Review of Phase 7.9I]]
+- [[NEXUS - Phase 7.9K Forward Path Correction and Dataset V2]]
+- [[NEXUS - Phase 7.10 Retroactive Strategy Integrity Audit - BREAKOUT_ACC Certified Case]]
+- [[NEXUS - Phase 7.11 Complete Strategy Census]]
+- [[NEXUS - Phase 7.12 Complete Coverage Matrix and Priority Queue]]
+- [[NEXUS - Phase 7.13 ORDER_BLOCK Diagnostic Adjudication]]
+- [[NEXUS - Phase 7.14 ORDER_BLOCK Live Trace e Fix Adjudication]]
+- [[NEXUS - Phase 7.15 Integration Closure Report]]
+- [[NEXUS - Phase 7.16 Semantic Contract e Fedelta Python ORDER_BLOCK]]
+- [[NEXUS - Phase 7.17 TSI Integrity Audit e Minimal Diagnostic]]
+- [[NEXUS - Phase 7.18 TSI Minimal Fix e Short Live Validation]]
+- [[NEXUS - Phase 7.19 Event Audit Packet e Visual Audit Protocol V1]]
+- [[NEXUS - Phase 7.20 Shortlist Strategie Candidate a Edge Validation]]
+- [[NEXUS - Phase 7.21 BREAKOUT_ACC Edge Validation V1]]
+- [[NEXUS - Phase 7.22 ORDER_BLOCK Edge Validation V1]]
+- [[NEXUS - Phase 7.23 Run Isolation e LIQ_SWEEP Integrity Audit]]
+- [[NEXUS - Phase 7.24 LIQ_SWEEP Canonical Dataset Adjudication]]
+- [[NEXUS - Phase 7.25 LIQ_SWEEP Edge Validation V1]]
+- [[NEXUS - Phase 7.26 Research Safety Net V1]]
+- [[NEXUS - Phase 7.27 GOLD BUY-Dominance Benchmark Test]]
+
+### NEXUS EA — note puntuali
+- [[NEXUS EA - Audit Livello A (Agente Logico) - Verifica e Prossimi Passi]]
+- [[NEXUS EA - Confronto 3 Motori (MT5 vs TradingView vs Sito) 17-07]]
+- [[NEXUS EA - Contratto Autorita di Uscita RAW e Scoperta AutoClose (10-09)]]
+- [[NEXUS EA - Dataset Python STRUCT_LEVEL_SWEEP, Risultati e Scoperta Bias Livelli Stantii (10-09)]]
+- [[NEXUS EA - Fibonacci sui Grandi Movimenti e Elliott su M5, Stessa Storia (04-09)]]
+- [[NEXUS EA - Guida Completa Architettura e Tutte le Strategie]]
+- [[NEXUS EA - MALAYSIAN_SNR Corretta a M30 (PF1.75, 5-5), Liquidity-Grab D-W-M Bocciata (25-08)]]
+- [[NEXUS EA - Piano Agente Desktop (TradingView Pine Script)]]
+- [[NEXUS EA - WICK_SWEEP_REV Registrato, 50 Trade Reali, e Due Bug Nuovi (Hook Telemetria, Invariant ESL) (10-09)]]
 
 - 🐛 **[[NEXUS EA - FVG_CONT Piramidale Isolato, Bug di Re-Innesco Senza Freno (09-09)]]** —
   primo test isolato della coda FVG_CONT: piramidale attivato sopra la

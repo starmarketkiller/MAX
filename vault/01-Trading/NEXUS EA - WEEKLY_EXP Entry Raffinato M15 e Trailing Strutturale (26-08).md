@@ -21,8 +21,7 @@ supera il tetto e l'ordine viene rifiutato del tutto, non solo ridotto.
 Con l'obiettivo esplicito dell'utente di poter partire anche con
 €500, il problema si aggrava ulteriormente.
 
-Recuperata una ricerca precedente ([[NEXUS EA - Stop Strutturale M5 su
-Segnali H1 (16-08)]]) che aveva già escluso due varianti: stop stretto
+Recuperata una ricerca precedente ([[NEXUS EA - Stop Strutturale M5 su Segnali H1 (16-08)]]) che aveva già escluso due varianti: stop stretto
 + target fisso largo (R:R esplode, streak di perdite 150+) e stop
 stretto + target fisso proporzionalmente scalato (PF crolla 0.71-1.18,
 stessi costi-dominanti di CRT). **Variabile mai testata**: stop stretto

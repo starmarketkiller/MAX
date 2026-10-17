@@ -310,7 +310,7 @@ l'archiviazione della strategia come `Rejected` (§10 Master Roadmap) se
 anche quello fallisce. Richiede l'agente desktop (MetaEditor/MT5) per
 lanciare il prossimo Tester run — questa sessione (background) ha solo
 analizzato i report già prodotti, nessuna modifica al codice MQL5 fatta
-qui (per [[feedback_no_live_mql5_without_asking]]).
+qui (per regola `feedback_no_live_mql5_without_asking` (memoria Claude, fuori vault)).
 
 ## Collegamenti
 [[NEXUS EA - Piano d'Azione Post-Maratona, Stato Reale e Prossimi Passi (03-09)]] ·

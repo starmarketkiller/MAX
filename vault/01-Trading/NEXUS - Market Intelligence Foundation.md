@@ -167,3 +167,35 @@ STRUCT_LEVEL_SWEEP come strategia live (solo design + Python esplorativo); WICK_
 ## Raccomandazione di follow-up (non eseguita in questa fase)
 
 Il mismatch sistemico `default_enabled` confermato per 10 strategie (AMD_CONT, BJORGUM, FVG_MIT, IFVG, LDN_REVERSAL, LIQ_VOID, OB_MIT, RANGE_FADE, THREE_BAR_DELIVERY_BREAK, TURTLE_SOUP — sezione 0/1) merita una passata dedicata di correzione della source-of-truth, strategia per strategia — stessa classe di fix già applicata a VOLATILITY_BREAKOUT_CONFIRMED, ma richiede verifica individuale (alcune potrebbero avere ragioni storiche diverse per `stato: attiva` nonostante il default OFF) prima di modificare `knowledge/strategy_database.json` in blocco. Non eseguito qui per restare dentro il perimetro "ricerca infrastrutturale, non ottimizzazione".
+
+## Artifact collegati (indice aggiunto 2026-10-17)
+- [[agentic_architecture_research]]
+- [[baseline_engine_v2_schema]]
+- [[cross_market_data_interface_v1]]
+- [[edge_and_interaction_methodology]]
+- [[edge_component_records_v1]]
+- [[edge_component_schema]]
+- [[event_registry_schema]]
+- [[evidence_grading_and_decision_card_v1]]
+- [[execution_feasibility_schema_v1]]
+- [[failure_memory]]
+- [[feature_redundancy_audit_v1]]
+- [[independent_validation_integrity_v1]]
+- [[leakage_guard_v1]]
+- [[market_ontology]]
+- [[market_regime_layer_v1]]
+- [[market_state_schema]]
+- [[missing_data_policy_v1]]
+- [[outcome_schema]]
+- [[phase5_event_dataset_and_baseline_methodology]]
+- [[phase5_market_state_dataset_schema]]
+- [[phase5_probability_engine_output]]
+- [[probability_schema]]
+- [[reinterpreted_research]]
+- [[sar_dukascopy_independent_validation]]
+- [[semantic_strategy_audit]]
+- [[setup_registry_schema]]
+- [[signal_to_fill_gap_audit_v1]]
+- `_phase4_artifacts/dukascopy_integrity_audit.json` (dati, non nota)
+
+[[MOC - Trading]]
