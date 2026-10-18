@@ -77,5 +77,32 @@
  "not_modified": "original data, statistical engine, EA code, historical protocols, ResearchMemory",
  "corrections": [
   "DECISION_CARD_P0_EDGE_DETECTION_V1.md (frozen evidence, unchanged) states M2/M3 type I '0.03-0.08' under clustering and 'calibrated in all configurations'; exact: M2 max 0.0825, M3 max 0.0725, both below 0.025 in some cells."
- ]
+ ],
+ "d1_csv_provenance": {
+  "path": "server/research_scripts/phase7/phase7_9h/raw_data/nxs_d1_gold_phase79h.csv",
+  "sha256": "ac3533a639ada63f850f402b3c03a976ce69d0600b4f05bdb6376b86769244ea",
+  "added_in": "commit 4870248 (2026-09-26), Phase 7.9H BREAKOUT_ACC_INTENDED_D1_V1",
+  "source": "XMGlobal-MT5 broker feed, D1 bars via CopyRates from the terminal history cache (phase7_9k/breakout_acc_temporal_contract_v1.json)",
+  "coverage": "2019.01.02 - 2026.08.19, 1970 bars, columns time/open/high/low/close/tick_volume",
+  "prior_exposure": "read in full by Phase 7.9H/7.9K (BREAKOUT_ACC dataset) and Phase 7.27 (registered in phase7_26 GLOBAL_DATA_EXPOSURE_REGISTRY as BUY_DOMINANCE_BENCHMARK_V1_2019-2026, holdout_status DERIVED_FROM_DISCOVERY_DATASETS)",
+  "modified_by_this_experiment": false
+ },
+ "holdout_seal_relationship": [
+  {
+   "seal": "server/research_scripts/phase7/final_holdout_seal_v1.json",
+   "scope": "Phase 7 partitioned Dukascopy XAUUSD TICK dataset (dataset_version_registry_v2, 2023-02-04..2026-09-16), final holdout 2026-02-04..2026-09-16, status SEALED, access only via ValidationAccessLedger",
+   "relationship": "Different source (Dukascopy ticks vs XM broker D1 bars) and different files. Not read; no ValidationAccessLedger call. Calendar overlap: 2026-02-04..2026-08-19 of the D1 CSV."
+  },
+  {
+   "seal": "server/research_scripts/phase6/true_holdout_declaration.json",
+   "scope": "Dukascopy XAUUSD ticks 2022-02-04..2023-02-03, temporal holdout already consumed by Phase 6 (vault: NEXUS - Phase 6 True Holdout Validation Sweep Reclaim)",
+   "relationship": "Different source and files; not read. Calendar overlap: the whole period lies inside the D1 CSV range."
+  },
+  {
+   "seal": "server/research_scripts/phase7/phase7_8d, 7_8g, 7_8h, 7_8i (VOLATILITY_BREAKOUT pre-run seals/reseals)",
+   "scope": "candidate-specific integrity seals of the VOLBRK Serious 3Y MT5 runs (candidate archived after FAIL)",
+   "relationship": "Not read; unrelated to the files used."
+  }
+ ],
+ "holdout_overlap_assessment": "No sealed file was read and no ledger was touched. The D1 CSV is an independent broker feed, but it describes the same market over calendar windows that overlap the Phase 6 (consumed) and Phase 7 (SEALED) holdout periods. That price path had already been exposed by Phases 7.9H/7.21/7.25/7.27. This experiment evaluated no real strategy or candidate (synthetic events and injected effects only), so it adds no selection information about any candidate. Any future confirmatory use of the Phase 7 holdout should still treat its calendar window's price path as already seen through broker D1 data."
 }

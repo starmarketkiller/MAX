@@ -70,6 +70,12 @@ Phase 7.27 ("none beats the regime-matched benchmark", n=10–39) had power ≤ 
 
 This is a proposal; adopting it is a separate human decision.
 
+## Data provenance and holdout seals
+
+- D1 series: `phase7_9h/raw_data/nxs_d1_gold_phase79h.csv`, XMGlobal broker feed via CopyRates, 2019-01-02..2026-08-19, added in Phase 7.9H (commit `4870248`), already read in full by 7.9H/7.9K and 7.27 (registered in the Phase 7.26 exposure registry as discovery-derived).
+- No sealed file was read and no `ValidationAccessLedger` path was used. The sealed and consumed holdouts are Dukascopy tick datasets: Phase 7 `final_holdout_seal_v1` (2026-02-04..2026-09-16, SEALED) and Phase 6 `true_holdout_declaration` (2022-02-04..2023-02-03, consumed). The VOLBRK pre-run seals are candidate-specific and unrelated.
+- The D1 CSV overlaps both holdout windows in calendar time. No real strategy was evaluated here, so no candidate gains selection information; a future confirmatory use of the Phase 7 window should still treat its price path as already seen through broker D1 data. Details in `manifest_v1.json` (`holdout_seal_relationship`).
+
 ## Reproduction
 
 ```
