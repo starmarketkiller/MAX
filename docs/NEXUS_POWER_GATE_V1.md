@@ -1,39 +1,53 @@
-# NEXUS Power Gate V1 (rules V1.1)
+# NEXUS Power Gate V1 (rules V1.2)
 
 Date: 2026-10-18. Pre-experiment power assessment for trading experiments. No backtest, no screening, no holdout, no market data read.
 
 - Module: `server/research_scripts/research_intelligence_v1/power_gate.py` (`assess(plan) -> Power Decision Card`).
 - Tests: `server/tests/test_power_gate_v1.py`, with two synthetic fixtures in `server/tests/fixtures/power_gate/`.
 - Calibration source: `server/research_scripts/edge_detection_capability_v1/results_v1.json` (PR #59, verdict `PIPELINE_UNDERPOWERED`), read only.
-- V1.1 addresses the Codex review of PR #60 (1 P0, 5 P1, confirmatory multiplicity); see the table at the end.
+- V1.1 addresses the first Codex review of PR #60 (1 P0, 5 P1, confirmatory multiplicity). V1.2 addresses the second review (base `6a42669`: provenance P0, preregistration, calibrated range, statistical uncertainty). Both tables are at the end.
 
 ## Principle
 
-**Only a simulated PR #59 cell can certify power.** A plan is `POWER_READY` only when a PR #59 cell dominates it and reached the target power. Dominating means all of the following:
-- same estimand, benchmark, number of controls, inference method and dependence model;
-- simulated n ≤ the plan's n;
-- simulated effect ≤ the plan's effect;
-- simulated dispersion ≥ the plan's;
-- simulated alpha ≤ the plan's alpha per test.
+**Only a simulated PR #59 cell, read with its Monte Carlo uncertainty, can certify power.** A plan is `POWER_READY` only when four conditions hold:
 
-Analytic numbers from `power.py` are reported as indicative only. In the PR #59 cells they overstate block-method power by up to 0.275.
+1. **Inside the qualified box.** The plan matches the simulated design (estimand, benchmark, number of controls, method, dependence model; α per test ≥ the simulated 0.05). Its n, effect and paired-difference σ also lie inside the simulated ranges for that dependence model. For independent events: n 12–400, effect 0.1–1.0 ATR, σ 3.10–3.33 ATR.
+2. **Level control.** At every simulated n from the method's minimum up to the plan's n, the two-sided 95% Wilson interval of the null rejection rate (400 replications) reaches the nominal 0.05. The 0.075 ceiling is not used as evidence of calibration at 0.05.
+3. **Power with uncertainty.** A dominating cell exists: cell n and effect ≤ plan, cell σ ≥ plan. Its **one-sided 95% Wilson lower bound** on power must reach the target; a point estimate above 0.80 is not enough. The card reports the point power, its Monte Carlo standard error and the lower bound.
+4. **Verified independent data**, for confirmations (see rule 1 below).
 
-Anything PR #59 did not simulate is `NOT_ASSESSABLE` (`POWER_NOT_CALIBRATED_FOR_DESIGN`), never extrapolated.
+Anything outside the box is `NOT_ASSESSABLE`, and the card lists the evidence that would be needed (`evidence_needed`). Analytic numbers from `power.py` are indicative only.
 
 `POWER_READY` means "ready for protocol review". It is not `EDGE_VALIDATED` and authorizes nothing. For screening, the evidence ceiling stays `DISCOVERY_ONLY`.
 
-## What PR #59 calibrates today
+## What can still be POWER_READY
 
-| Design | Calibrated? |
+Only **independent events** on the simulated design:
+- paired ATR difference vs one regime-matched control, 10-bar outcome, no control reuse, α 0.05 per test;
+- σ_d between 3.10 and 3.33 ATR.
+
+| Method | Smallest qualifying cell (n, effect) | Point power | Lower 95% bound |
+|---|---|---|---|
+| Studentized block bootstrap | 200, 1.0 ATR | 0.970 | 0.953 |
+| Block sign-flip | 200, 1.0 ATR | 0.975 | 0.959 |
+| HAC Newey-West | 200, 1.0 ATR | 0.990 | 0.978 |
+| IID bootstrap (independent, n ≥ 47) | 100, 1.0 ATR; 400, 0.5 ATR | 0.858; 0.863 | 0.826; 0.832 |
+
+**Clustered or overlapping events are never `POWER_READY` today.** In the PR #59 cluster model no method has null rejections compatible with 0.05 at every simulated n. For example, the studentized block bootstrap at n=200 rejects at 0.0725, with a Wilson 95% interval of [0.051, 0.102].
+
+**Confirmations also need a dataset that the canonical registry shows as never touched.** No such record exists in the committed ledger today, so no confirmation is `POWER_READY` until a forward dataset is registered.
+
+## What PR #59 does not calibrate (→ NOT_ASSESSABLE) and the evidence needed
+
+| Design | Evidence needed |
 |---|---|
-| Paired difference in ATR vs **one** regime-matched control, 10-bar outcome, no control reuse, α = 0.05 per test; independent events, or the PR #59 cluster model (4 events, 2 bars apart) | **Yes**: power by dominance, type I by method |
-| Paired difference in **R** (any benchmark) | No: PR #59 simulated R only against zero, which the gate blocks |
-| Random-timestamp benchmark, > 1 control per event, control reuse | No |
-| α per test < 0.05 (screening families, Bonferroni/Holm confirmation families) | No: PR #59 recorded rejections at 0.05 only |
-| Plan-specific dependence (measured or simulated design effect) | Hash-verified, but not certified |
-| Winner's curse | Only R units, family 67, BH q=0.10, screening n = 47 or 200 |
-
-So in practice the gate can certify, for example, a confirmation in ATR units with a net effect ≥ 1.0 ATR and ≥ 200 independent events, using the studentized block bootstrap. The dominating cell has power 0.97. Every R-unit plan is currently `NOT_ASSESSABLE` until a calibration study for that estimand exists.
+| Paired difference in **R** (any benchmark) | PR #59-style synthetic study of the paired difference in R with the chosen benchmark |
+| Random-timestamp benchmark; > 1 control per event; control reuse | Synthetic study with that matched-control construction |
+| α per test < 0.05 (screening families; Bonferroni/Holm confirmation families) | Simulated rejection counts at that α |
+| n > 400, effect outside 0.1–1.0 ATR, σ outside the simulated range | Simulations at the plan's n / effect / σ |
+| Plan-specific dependence (measured or simulated design effect) | Synthetic study reproducing that dependence |
+| Clustered events (PR #59 cluster model) | More replications, or a method whose null rejections are compatible with 0.05 at every n |
+| Winner's curse outside R / 67 / BH q=0.10 / n 47 or 200 | Screening simulation with the plan's family and selection rule |
 
 ## Plan inputs (all required; missing, non-finite or incoherent → `NOT_ASSESSABLE`)
 
@@ -48,17 +62,19 @@ So in practice the gate can certify, for example, a confirmation in ATR units wi
 - `dependence`: `structure` (INDEPENDENT / CLUSTERED / OVERLAPPING), `horizon_bars`, `min_spacing_bars`. Non-independent plans also need `design_effect` + `design_effect_basis`.
 - `costs`: base ≤ stress, `unit` equal to the effect unit.
 - `benchmark`, `inference_method`.
-- `datasets`: registry id, or explicit `exposure: EXPOSED`, or a verifiable `provenance` block.
+- `datasets`: registry id with `symbol`, `timeframe`, `date_range` (for unseen data), or explicit `exposure: EXPOSED`. A `provenance` block is refused.
+- `protocol_version` (confirmation).
 - `family_size` (screening) or `confirmation_family` (confirmation).
 - `alpha` in (0, 0.5], default 0.05; `power_target` in [0.5, 0.99], default 0.8.
 
 ## Rules
 
-1. **Dataset provenance (P0).** A caller's "unseen" declaration is not accepted. A dataset counts as unseen only if one of these holds:
-   - its Phase 7.26 registry record has every exposure flag false;
-   - its `provenance` block points to a repo-relative manifest whose SHA-256 matches, with `declared_at < data_start ≤ data_end` and `declared_before_collection: true`.
+1. **Dataset provenance (P0).** Independence is never self-attested, so no provenance manifest is accepted, not even one with a valid hash and pertinent content. A dataset counts as unseen only if the canonical Phase 7.26 exposure registry (a reviewed, committed ledger) has a record that meets all of these:
+   - every exposure flag is explicitly `False`;
+   - `holdout_status` is `NOT_USED` (via the registry's own `is_genuinely_untouched`, made stricter: `UNVERIFIED` does not count);
+   - the same `symbol`, `timeframe` and `date_range` as declared by the plan.
 
-   The gate never opens data. Manifest paths under `data_cache/`, `raw_data/`, anything containing `holdout`, data file extensions and absolute paths are refused, as are files over 1 MB. Unverifiable → `NOT_ASSESSABLE`. A confirmation on exposed data → `DATA_REQUIRED`. A protected split → `METHOD_BLOCKED` (checked with `gates.assert_no_automatic_protected_access`, without reading anything).
+   A record with all flags false whose status is `NO_EVENTS` was traversed by a run, so it counts as exposed. Anything else → `NOT_ASSESSABLE`. A confirmation on exposed data → `DATA_REQUIRED`. A protected split → `METHOD_BLOCKED`. The gate never opens datasets or holdouts. The repo-file verifier refuses data and holdout paths.
 2. **Estimand and benchmark (P1).** Power refers to the paired difference vs the benchmark: σ must be the SD of the matched differences. Control reuse is not modelled → `METHOD_BLOCKED`. A missing benchmark, a zero benchmark, or an unconditional benchmark for confirmation → `METHOD_BLOCKED`.
 3. **Design effect (P1).** There is no universal minimum. `INDEPENDENT` is rejected when `min_spacing_bars < horizon_bars`. Non-independent plans need one of two bases:
    - `PR59_CLUSTER_MODEL_MATCH` (same cluster geometry as PR #59): uses the simulated clustered cells;
@@ -72,12 +88,11 @@ So in practice the gate can certify, for example, a confirmation in ATR units wi
    - the indicative MDE of the screening estimate.
 
    Sizing uses the smaller of economic minimum and corrected effect, minus the stress costs.
-6. **Inputs and domains (P1).** NaN, ±∞, booleans, out-of-domain alpha, power target, effect, σ or costs, an expected n below 1, incoherent units and missing fields all give `NOT_ASSESSABLE`, without exceptions. Below the method minimum n (≥ 30): `DATA_REQUIRED` (confirmation) or `EXPLORATORY_ONLY` (screening). Above the simulated range (400 events), power is argued only by dominance of a smaller simulated sample, with a warning. σ larger than any simulated cell gives no dominating cell, hence not ready.
-7. **Confirmatory multiplicity.** A confirmation needs `confirmation_family`: {size, alpha_allocation (BONFERRONI / HOLM / FIXED_SEQUENCE), preregistration_path + sha256 (verified)}.
-   - Bonferroni/Holm test at α / size.
-   - In a fixed sequence, only position 1 is assessable; later positions depend on the earlier tests.
-
-   No candidate gets full alpha by default.
+6. **Inputs and domains (P1).** NaN, ±∞, booleans, out-of-domain alpha, power target, effect, σ or costs, an expected n below 1, incoherent units and missing fields all give `NOT_ASSESSABLE`, without exceptions. Below the method minimum n (≥ 30): `DATA_REQUIRED` (confirmation) or `EXPLORATORY_ONLY` (screening). n, effect or σ outside the simulated ranges → `NOT_ASSESSABLE` with `evidence_needed` (V1.2; the V1.1 dominance above n=400 was removed).
+7. **Confirmatory multiplicity.** A confirmation needs `confirmation_family` (size, alpha_allocation, preregistration path + SHA-256). The plan must also declare `protocol_version`.
+   - The preregistration (a small repo JSON) is checked **semantically**: the plan's experiment id is in `experiment_ids`, the list length equals the family size with no duplicates, and `alpha_allocation`, `alpha` and `protocol_version` all match the plan. For a fixed sequence, the plan's position must match its place in `experiment_ids`.
+   - A document with a valid hash but incompatible content → `METHOD_BLOCKED`.
+   - Bonferroni/Holm test at α / size. In a fixed sequence only position 1 is assessable.
 
 ## Power Decision Card — published case
 
@@ -96,10 +111,11 @@ With new, verified data the same plan would be `NOT_ASSESSABLE`, because R-unit 
 
 ## Remaining scientific limits
 
-- Certification covers a single design, one instrument (GOLD D1, 2019–2026) and the distributions PR #59 drew. Dominance assumes the plan's paired differences behave like the simulated ones apart from σ.
+- Certification covers a single design, one instrument (GOLD D1, 2019–2026) and the distributions PR #59 drew. Dominance inside the box assumes the plan's paired differences behave like the simulated ones.
+- The level check uses each simulated null cell separately (400 replications each). With several cells, at least one incompatible-looking cell can appear by chance, so the check is deliberately conservative. Rejections are counted two-sided, so the power figures include a negligible share of wrong-sign rejections.
 - The fixed-sequence assessment covers only the first test. Holm is planned at its most stringent step.
 - A wrong σ declared by the plan cannot be detected. A prior σ is flagged.
-- A provenance manifest proves that the declaration came before collection and that the content hash matches. It cannot prove the data were never looked at by other means.
+- The registry is the only proof of independence. Its correctness depends on the review of the code that builds it.
 
 ## Next step (proposal, not authorized here)
 
@@ -114,10 +130,19 @@ It would use synthetic data only and follow the same protocol rules. This needs 
 
 | Finding | Change | Regression tests |
 |---|---|---|
-| P0 provenance | Registry or hash-verified manifest only; refused data/holdout paths; dates and `declared_before_collection` | `test_p0_*` (V1 fixture no longer ready, 7 unverifiable variants, exposed → DATA_REQUIRED, protected split) |
+| P0 provenance | (V1.1) Registry or hash-verified manifest; superseded in V1.2: registry only | `test_p0_*` (V1 fixture no longer ready, 7 unverifiable variants, exposed → DATA_REQUIRED, protected split) |
 | P1 estimand / benchmark variance | Paired-difference σ required; certification only on the simulated design; control reuse blocked | `test_p1_raw_outcome_sigma_*`, `test_p1_uncalibrated_designs_*`, `test_p1_control_reuse_blocks`, `test_p1_missing_or_inadequate_benchmark` |
 | P1 design effect | No universal floor; geometry check; PR #59 model match or verified plan source | `test_p1_clustered_without_*`, `test_p1_pr59_cluster_model_*`, `test_p1_plan_specific_deff_*`, `test_p1_independence_contradicted_*`, `test_p1_iid_bootstrap_*` |
 | P1 calibration margin | Analytic numbers indicative only; dominance by simulated cells | `test_p1_analytic_power_does_not_certify`, `test_ready_only_by_a_dominating_simulated_cell` |
 | P1 winner's curse / MDE | n, family and rule required; no transfer across families; three effects reported | `test_p1_screening_estimate_*`, `test_p1_curse_factor_not_transferred_*`, `test_p1_three_effects_*` |
-| P1 inputs / domains | Finite-number and domain checks, unit coherence, n < 1, n < 25, n > 400, σ outside the simulated cells | `test_p1_invalid_inputs_*` (25 cases), `test_p1_not_a_mapping`, `test_p1_small_sample_*`, `test_p1_large_sample_*`, `test_p1_dispersion_above_*` |
+| P1 inputs / domains | Finite-number and domain checks, unit coherence, n < 1, n < 25; (V1.2) n, effect, σ outside simulated ranges | `test_p1_invalid_inputs_*` (25 cases), `test_p1_not_a_mapping`, `test_p1_small_sample_*`, `test_r2_p1_effect_and_dispersion_*` |
 | Confirmatory multiplicity | Preregistered, hash-verified family; α split; fixed sequence position 1 only | `test_conf_*` |
+
+## Second Codex review (base 6a42669) → changes → tests
+
+| Finding | Reproduced on 6a42669 | Change | Regression tests |
+|---|---|---|---|
+| P0 unrelated manifest with valid hash | `POWER_READY` | Manifests not accepted; registry record with explicit-False flags, `NOT_USED` status and matching identity only; traversed `NO_EVENTS` window = exposed | `test_r2_p0_*` (unrelated and pertinent manifests, identity mismatches, traversed window, UNVERIFIED / unknown flags), `test_production_registry_has_no_unseen_dataset_today` |
+| P1 unrelated preregistration | `POWER_READY` | Semantic check of experiment id, family size, allocation, α, protocol version, sequence position | `test_r2_p1_unrelated_preregistration_*`, `test_r2_p1_preregistration_must_match_the_plan` (6 cases), `test_conf_fixed_sequence_*` |
+| P1 dominance beyond n=400 | `POWER_READY` at n=10,000 | Qualified box on n, effect and σ; `evidence_needed` reported | `test_r2_p1_no_promotion_above_simulated_n`, `test_r2_p1_effect_and_dispersion_*` |
+| P1 statistical uncertainty | `POWER_READY` on point power 0.8225 with null rejections 0.0725 | Wilson lower bound on power ≥ target; Wilson-based level check at nominal 0.05 for every simulated n in range; MC SE reported | `test_r2_p1_point_power_above_target_is_not_enough`, `test_r2_p1_clustered_level_*`, `test_r2_p1_level_uses_wilson_*` |

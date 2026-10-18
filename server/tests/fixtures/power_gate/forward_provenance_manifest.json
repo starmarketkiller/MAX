@@ -1,5 +1,5 @@
 {
- "fixture": "synthetic provenance manifest for test_power_gate_v1 (not a real dataset)",
+ "fixture": "synthetic self-attested provenance manifest for test_power_gate_v1 (must NOT be accepted as proof)",
  "dataset_id": "SYNTH_FORWARD_2026Q4",
  "source": "synthetic",
  "declared_at": "2026-10-18",

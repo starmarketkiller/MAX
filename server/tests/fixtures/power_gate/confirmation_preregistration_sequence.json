@@ -1,0 +1,7 @@
+{
+ "fixture": "synthetic fixed-sequence confirmation-family preregistration for test_power_gate_v1",
+ "protocol_version": "SYNTH_CONFIRMATION_PROTOCOL_V1",
+ "experiment_ids": ["SYNTH_READY", "SYNTH_SECOND", "SYNTH_THIRD"],
+ "alpha_allocation": "FIXED_SEQUENCE",
+ "alpha": 0.05
+}

@@ -11,9 +11,15 @@ It composes what already exists:
 - phase7_26 data_exposure_registry_v1.json for dataset exposure;
 - edge_detection_capability_v1 (PR #59) frozen results as the ONLY source that can
   certify power: POWER_READY requires a simulated PR #59 cell that dominates the
-  plan (same estimand, benchmark, method and dependence model; smaller or equal n
-  and effect; larger or equal dispersion; same or larger alpha) and reached the
-  target power. Anything PR #59 did not study is NOT_ASSESSABLE, never extrapolated.
+  plan inside the qualified box (same estimand, benchmark, method and dependence
+  model; plan n, effect and dispersion inside the simulated ranges; cell n and
+  effect <= plan, cell dispersion >= plan; alpha per test >= simulated alpha), whose
+  one-sided 95% Wilson lower bound on power reaches the target, for a method whose
+  simulated null rejections are compatible with the nominal 0.05 at every simulated
+  n of the plan's range. Anything else is NOT_ASSESSABLE, never extrapolated.
+- unseen data only through the canonical phase7_26 exposure registry (record with
+  every exposure flag false and the same symbol, timeframe and date range): no
+  self-attested manifest is accepted as proof of independence.
 
 POWER_READY means "enough evidence to go to protocol review"; it never means
 EDGE_VALIDATED and never authorizes execution. Nothing here writes to
@@ -31,7 +37,10 @@ from . import gates, power
 from .memory import canonical, sha256_text
 from .review import MIN_CLOSED_FOR_FIRST_READ
 
-RULES_VERSION = "POWER_GATE_RULES_V1.1"
+RULES_VERSION = "POWER_GATE_RULES_V1.2"
+Z_ONE_SIDED_95 = 1.6448536
+Z_TWO_SIDED_95 = 1.959964
+NOMINAL_ALPHA = 0.05
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 CALIBRATION_PATH = os.path.join(HERE, "..", "edge_detection_capability_v1", "results_v1.json")
@@ -83,6 +92,14 @@ def _num(x, *, lo=None, hi=None, lo_open=False):
     return float(x)
 
 
+def wilson(successes, n, z):
+    """Wilson score interval (lo, hi) for a binomial proportion."""
+    p = successes / n
+    centre = (p + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / (1 + z * z / n)
+    return max(0.0, centre - half), min(1.0, centre + half)
+
+
 def calibration():
     """PR #59 frozen results reduced to what the gate may use (read only)."""
     with open(CALIBRATION_PATH, encoding="utf-8") as handle:
@@ -93,13 +110,19 @@ def calibration():
     for c in sig:
         if c["delta_atr"] > 0:
             for method, spec in METHODS.items():
+                p, reps = c["rejection_rate"][spec["col"]], c["reps"]
                 cells.append({"gen": c["gen"], "n": c["n"], "delta": c["delta_atr"], "method": method,
-                              "power": c["rejection_rate"][spec["col"]], "sigma_d": round(sigma_d[(c["gen"], c["n"])], 4)})
+                              "power": p, "reps": reps, "power_mc_se": round(math.sqrt(p * (1 - p) / reps), 4),
+                              "power_lower_95_one_sided": round(wilson(round(p * reps), reps, Z_ONE_SIDED_95)[0], 4),
+                              "sigma_d": round(sigma_d[(c["gen"], c["n"])], 4)})
     type1 = {}
     for c in sig:
         if c["delta_atr"] == 0:
             for method, spec in METHODS.items():
-                type1[(c["gen"], method)] = max(type1.get((c["gen"], method), 0), c["rejection_rate"][spec["col"]])
+                p, reps = c["rejection_rate"][spec["col"]], c["reps"]
+                lo, hi = wilson(round(p * reps), reps, Z_TWO_SIDED_95)
+                type1[f"{c['gen']}|{method}|{c['n']}"] = {"rate": p, "reps": reps, "wilson95": [round(lo, 4), round(hi, 4)],
+                                                          "compatible_with_nominal": lo <= NOMINAL_ALPHA}
     sd = res["meta"]["trade_dist_sd"]
     over = {}
     for c in res["trade"]:
@@ -114,10 +137,32 @@ def calibration():
              if c["m_true"] and c["winners_curse_inflation_true_edges"]}
     return {"source": "server/research_scripts/edge_detection_capability_v1/results_v1.json",
             "source_sha256": _sha_file(CALIBRATION_PATH), "design": CALIBRATED_DESIGN, "cells": cells,
-            "type1_max": {f"{g}|{m}": v for (g, m), v in sorted(type1.items())},
+            "type1": dict(sorted(type1.items())),
+            "qualified_ranges": {g: {"n": [min(c["n"] for c in cells if c["gen"] == g),
+                                           max(c["n"] for c in cells if c["gen"] == g)],
+                                     "delta": [min(c["delta"] for c in cells if c["gen"] == g),
+                                               max(c["delta"] for c in cells if c["gen"] == g)],
+                                     "sigma_d": [round(min(v for (gg, _), v in sigma_d.items() if gg == g), 4),
+                                                 round(max(v for (gg, _), v in sigma_d.items() if gg == g), 4)]}
+                                 for g in ("G_U", "G_C")},
             "analytic_minus_simulated_power_max": {k: round(v, 4) for k, v in sorted(over.items())},
             "analytic_note": "empirical maxima over the studied cells only; not a bound and never used to certify",
             "winners_curse": {"config": CURSE_CONFIG, "inflation_by_screening_n": dict(sorted(curse.items()))}}
+
+
+_REGISTRY_MODULE = None
+
+
+def _registry_module():
+    """phase7_26 build_data_exposure_registry, loaded by path for is_genuinely_untouched (no build at import)."""
+    global _REGISTRY_MODULE
+    if _REGISTRY_MODULE is None:
+        import importlib.util
+        path = os.path.join(os.path.dirname(EXPOSURE_REGISTRY_PATH), "build_data_exposure_registry.py")
+        spec = importlib.util.spec_from_file_location("phase7_26_build_data_exposure_registry", path)
+        _REGISTRY_MODULE = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(_REGISTRY_MODULE)
+    return _REGISTRY_MODULE
 
 
 def exposure_registry():
@@ -142,31 +187,71 @@ def verify_repo_file(rel_path, declared_sha256):
     return (_sha_file(full) == declared_sha256.lower()), "SHA256_MISMATCH"
 
 
-def _dataset_status(ds, registry, purpose):
-    """Return (status, reason). status: EXPOSED, VERIFIED_UNSEEN, or None (cannot be verified)."""
-    rec = registry.get(ds.get("dataset_id"))
-    if rec is not None:
-        return ("EXPOSED", "") if any(rec.get(f) for f in EXPOSURE_FLAGS) else ("VERIFIED_UNSEEN", "")
-    if ds.get("exposure") == "EXPOSED":
+def _dataset_status(ds, registry):
+    """Return (status, reason). status: EXPOSED, VERIFIED_UNSEEN, or None (cannot be verified).
+
+    Independence is never self-attested: the only proof of an unseen dataset is a record in
+    the canonical phase7_26 exposure registry (a reviewed, committed ledger) with every
+    exposure flag false and the same symbol, timeframe and date range the plan declares.
+    """
+    did = ds.get("dataset_id")
+    if "provenance" in ds:
+        return None, f"PROVENANCE_MANIFEST_SELF_ATTESTED_NOT_ACCEPTED:{did}"
+    rec = registry.get(did)
+    if rec is None:
+        if ds.get("exposure") == "EXPOSED":
+            return "EXPOSED", ""
+        return None, f"DATASET_NOT_IN_EXPOSURE_REGISTRY:{did}"
+    if any(rec.get(f) for f in EXPOSURE_FLAGS):
         return "EXPOSED", ""
-    prov = ds.get("provenance")
-    if not isinstance(prov, dict):
-        return None, f"DATASET_PROVENANCE_UNVERIFIED:{ds.get('dataset_id')}"
-    ok, why = verify_repo_file(prov.get("manifest_path"), prov.get("manifest_sha256"))
-    if not ok:
-        return None, f"DATASET_PROVENANCE_UNVERIFIED:{ds.get('dataset_id')}:{why}"
-    dates = [prov.get(k) for k in ("declared_at", "data_start", "data_end")]
-    if not all(isinstance(d, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", d) for d in dates) or \
-            not (dates[0] < dates[1] <= dates[2]) or prov.get("declared_before_collection") is not True:
-        return None, f"DATASET_INDEPENDENCE_UNPROVEN:{ds.get('dataset_id')}"
+    # The registry's own query: only NOT_USED / UNVERIFIED windows were never traversed. For a
+    # confirmation the gate is stricter: UNVERIFIED (availability/quality unknown) does not count,
+    # and every exposure flag must be an explicit False (None / "SCONOSCIUTO" is unknown).
+    if not _registry_module().is_genuinely_untouched(did, registry):
+        return "EXPOSED", ""
+    if rec.get("holdout_status", "").split(" - ")[0] != "NOT_USED":
+        return None, f"DATASET_UNTOUCHED_STATUS_NOT_PROVEN:{did}"
+    if any(rec.get(f) is not False for f in EXPOSURE_FLAGS):
+        return None, f"DATASET_EXPOSURE_FLAGS_UNKNOWN:{did}"
+    for key in ("symbol", "timeframe", "date_range"):
+        if ds.get(key) in (None, "", []) or ds.get(key) != rec.get(key):
+            return None, f"DATASET_IDENTITY_MISMATCH_WITH_REGISTRY:{did}:{key}"
     return "VERIFIED_UNSEEN", ""
 
 
+def _preregistration_mismatches(plan, cfam):
+    """Semantic check of the confirmation-family preregistration (hash already verified)."""
+    with open(os.path.join(REPO_ROOT, os.path.normpath(cfam["preregistration_path"])), encoding="utf-8") as fh:
+        try:
+            doc = json.load(fh)
+        except ValueError:
+            return ["UNPARSEABLE"]
+    if not isinstance(doc, dict):
+        return ["NOT_A_MAPPING"]
+    bad = []
+    ids = doc.get("experiment_ids")
+    if not isinstance(ids, list) or plan.get("experiment_id") not in ids:
+        bad.append("experiment_id")
+    if not isinstance(ids, list) or len(ids) != cfam.get("size") or len(set(map(str, ids))) != len(ids):
+        bad.append("family_size")
+    if doc.get("alpha_allocation") != cfam.get("alpha_allocation"):
+        bad.append("alpha_allocation")
+    if _num(doc.get("alpha")) is None or doc.get("alpha") != plan.get("alpha", NOMINAL_ALPHA):
+        bad.append("alpha")
+    if not plan.get("protocol_version") or doc.get("protocol_version") != plan.get("protocol_version"):
+        bad.append("protocol_version")
+    if cfam.get("alpha_allocation") == "FIXED_SEQUENCE" and isinstance(ids, list) and \
+            plan.get("experiment_id") in ids and ids.index(plan.get("experiment_id")) + 1 != cfam.get("position"):
+        bad.append("sequence_position")
+    return bad
+
+
 def _dominating_cell(cal, gen, method, n, effect, sigma, target):
+    """Simulated cell inside the plan's qualified box whose lower power bound reaches the target."""
     best = None
     for c in cal["cells"]:
         if c["gen"] == gen and c["method"] == method and c["n"] <= n and c["delta"] <= effect \
-                and c["sigma_d"] >= sigma and c["power"] >= target:
+                and c["sigma_d"] >= sigma and c["power_lower_95_one_sided"] >= target:
             if best is None or (c["n"], c["delta"]) > (best["n"], best["delta"]):
                 best = c
     return best
@@ -225,7 +310,7 @@ def assess(plan, *, cal=None, registry=None):
             reasons.append("N_EXPECTED_BELOW_ONE")
     statuses = []
     for ds in datasets:
-        st, why = _dataset_status(ds if isinstance(ds, dict) else {}, registry, purpose)
+        st, why = _dataset_status(ds if isinstance(ds, dict) else {}, registry)
         statuses.append(st)
         if st is None:
             reasons.append(why)
@@ -233,6 +318,7 @@ def assess(plan, *, cal=None, registry=None):
     if purpose == "SCREENING":
         need((isinstance(family, int) and not isinstance(family, bool) and family >= 1) or None, "FAMILY_SIZE_INVALID")
     cfam = plan.get("confirmation_family") if isinstance(plan.get("confirmation_family"), dict) else None
+    prereg_mismatch = []
     if purpose == "CONFIRMATION":
         if cfam is None:
             reasons.append("CONFIRMATION_FAMILY_UNDECLARED")
@@ -244,6 +330,7 @@ def assess(plan, *, cal=None, registry=None):
             ok, why = verify_repo_file(cfam.get("preregistration_path"), cfam.get("preregistration_sha256"))
             if not ok:
                 reasons.append(f"CONFIRMATION_PREREGISTRATION_UNVERIFIED:{why}")
+            prereg_mismatch = _preregistration_mismatches(plan, cfam) if ok else []
     scr = eff.get("screening")
     if scr is not None:
         if not isinstance(scr, dict) or _num(scr.get("estimate"), lo=0, lo_open=True) is None \
@@ -271,6 +358,8 @@ def assess(plan, *, cal=None, registry=None):
         reasons.append("IID_INFERENCE_UNDER_DEPENDENCE")
     if disp["control_reuse"]:
         reasons.append("CONTROL_REUSE_NOT_MODELLED")
+    if purpose == "CONFIRMATION":
+        reasons.extend(f"PREREGISTRATION_INCOMPATIBLE:{m}" for m in prereg_mismatch)
     for ds in datasets:
         try:
             gates.assert_no_automatic_protected_access(ds.get("split"))
@@ -371,27 +460,60 @@ def assess(plan, *, cal=None, registry=None):
             uncalibrated.append("PLAN_SPECIFIC_DEPENDENCE_NOT_SIMULATED_IN_PR59")
         else:
             reasons.append("DESIGN_EFFECT_UNJUSTIFIED")
+    if gen is not None:
+        box = cal["qualified_ranges"][gen]
+        if not box["n"][0] <= n_expected <= box["n"][1]:
+            uncalibrated.append(f"N_{n_expected:g}_OUTSIDE_SIMULATED_{box['n'][0]}_{box['n'][1]}")
+        if not box["delta"][0] <= effect_sizing <= box["delta"][1]:
+            uncalibrated.append(f"EFFECT_{effect_sizing:g}_OUTSIDE_SIMULATED_{box['delta'][0]}_{box['delta'][1]}")
+        if not box["sigma_d"][0] <= sigma <= box["sigma_d"][1]:
+            uncalibrated.append(f"SIGMA_{sigma:g}_OUTSIDE_SIMULATED_{box['sigma_d'][0]}_{box['sigma_d'][1]}")
     if reasons:
         return _card(plan, "NOT_ASSESSABLE", reasons, warnings, numbers, cal)
     if uncalibrated:
+        numbers["evidence_needed"] = _evidence_needed(uncalibrated)
         return _card(plan, "NOT_ASSESSABLE", ["POWER_NOT_CALIBRATED_FOR_DESIGN", *uncalibrated], warnings,
                      numbers, cal)
+
+    # 7. Level control: every simulated null cell of this method and dependence model, at the
+    # simulated sample sizes from the method minimum up to the plan's n, must be compatible with
+    # the nominal 0.05 (two-sided 95% Wilson interval reaches 0.05). The 0.075 ceiling is not used.
+    grid = sorted({int(k.rsplit("|", 1)[1]) for k in cal["type1"] if k.startswith(f"{gen}|{method}|")})
+    upper = min(g for g in grid if g >= n_expected)  # n_expected <= max(grid) after the box check
+    level = {k: v for k, v in cal["type1"].items()
+             if k.startswith(f"{gen}|{method}|") and min_n <= int(k.rsplit("|", 1)[1]) <= upper}
+    numbers["simulated_null_rejections"] = level
+    failing = sorted(k for k, v in level.items() if not v["compatible_with_nominal"])
+    if not level or failing:
+        return _card(plan, "METHOD_BLOCKED", ["LEVEL_NOT_DEMONSTRATED_AT_NOMINAL_0.05", *failing], warnings,
+                     numbers, cal)
+
+    # 8. Power: a dominating simulated cell whose one-sided 95% Wilson lower bound reaches the target.
     cell = _dominating_cell(cal, gen, method, n_expected, effect_sizing, sigma, target)
     numbers["dominating_pr59_cell"] = cell
     if cell is None:
-        reasons.append("NO_SIMULATED_PR59_CELL_REACHES_TARGET_FOR_THIS_PLAN")
+        reasons.append("NO_SIMULATED_PR59_CELL_LOWER_POWER_BOUND_REACHES_TARGET")
         status = "DATA_REQUIRED" if purpose == "CONFIRMATION" else "EXPLORATORY_ONLY"
         return _card(plan, status, reasons, warnings, numbers, cal)
-    if n_expected > max(c["n"] for c in cal["cells"]):
-        warnings.append("N_ABOVE_SIMULATED_RANGE: power argued by dominance of a smaller simulated sample")
     if disp["source"] != "OBSERVED":
         warnings.append("DISPERSION_IS_A_PRIOR: re-assess when the paired differences are observed")
-    t1 = cal["type1_max"][f"{gen}|{method}"]
-    numbers["simulated_type1_max_for_method"] = t1
-    if t1 > 0.075:
-        return _card(plan, "METHOD_BLOCKED", [f"METHOD_TYPE1_{t1}_ABOVE_0.075_FOR_THIS_DEPENDENCE"], warnings,
-                     numbers, cal)
     return _card(plan, "POWER_READY", [], warnings, numbers, cal)
+
+
+EVIDENCE_FOR = {
+    "UNIT_": "PR #59-style synthetic study of the paired difference in this unit, with this benchmark",
+    "BENCHMARK_": "synthetic study with this benchmark's matched-control construction",
+    "CONTROLS_PER_EVENT": "synthetic study with this number of controls per event",
+    "ALPHA_PER_TEST_": "simulated rejection counts at this alpha per test (PR #59 recorded 0.05 only)",
+    "PLAN_SPECIFIC_DEPENDENCE": "synthetic study reproducing this plan's dependence structure",
+    "N_": "simulations at the plan's sample size (PR #59 simulated n up to 400)",
+    "EFFECT_": "simulations at the plan's effect size (PR #59 simulated 0.1-1.0 ATR)",
+    "SIGMA_": "simulations with the plan's paired-difference dispersion",
+}
+
+
+def _evidence_needed(uncalibrated):
+    return sorted({text for code in uncalibrated for prefix, text in EVIDENCE_FOR.items() if code.startswith(prefix)})
 
 
 def _card(plan, status, reasons, warnings, numbers, cal):

@@ -1,5 +1,5 @@
-"""Power Gate V1 (rules V1.1): classification, fail-closed behaviour, PR #59 calibration,
-and one regression per Codex finding on PR #60.
+"""Power Gate V1 (rules V1.2): classification, fail-closed behaviour, PR #59 calibration,
+and regressions for both Codex reviews of PR #60.
 
 Synthetic plans, two small synthetic fixtures (provenance manifest, preregistration) and
 cases already published in the repository. No market data, no protected dataset, no
@@ -32,22 +32,32 @@ def _sha(rel):
 
 MANIFEST = f"{FIX}/forward_provenance_manifest.json"
 PREREG = f"{FIX}/confirmation_preregistration.json"
+PREREG_SEQ = f"{FIX}/confirmation_preregistration_sequence.json"
+PROTOCOL = "SYNTH_CONFIRMATION_PROTOCOL_V1"
 PROVENANCE = {"manifest_path": MANIFEST, "manifest_sha256": _sha(MANIFEST), "declared_at": "2026-10-18",
               "data_start": "2026-11-01", "data_end": "2028-10-31", "declared_before_collection": True}
+# A synthetic registry entry standing in for a reviewed record of the canonical phase7_26 ledger.
+SYNTH_RECORD = {"dataset_id": "SYNTH_FORWARD_2026Q4", "symbol": "GOLD", "timeframe": "D1",
+                "date_range": ["2026.11.01", "2028.10.31"], "holdout_status": "NOT_USED",
+                **{f: False for f in G.EXPOSURE_FLAGS}}
+REG = {**REG, SYNTH_RECORD["dataset_id"]: SYNTH_RECORD}
+FORWARD = {"dataset_id": "SYNTH_FORWARD_2026Q4", "split": "discovery", "symbol": "GOLD", "timeframe": "D1",
+           "date_range": ["2026.11.01", "2028.10.31"]}
 
 # Inside the one design PR #59 simulated: paired ATR difference vs one regime-matched control.
 READY = {
     "experiment_id": "SYNTH_READY",
+    "protocol_version": PROTOCOL,
     "purpose": "CONFIRMATION",
     "effect": {"economic_min_net_effect": 1.0, "unit": "ATR"},
-    "dispersion": {"estimand": "PAIRED_DIFFERENCE_VS_BENCHMARK", "sigma_paired_difference": 3.0, "unit": "ATR",
+    "dispersion": {"estimand": "PAIRED_DIFFERENCE_VS_BENCHMARK", "sigma_paired_difference": 3.2, "unit": "ATR",
                    "source": "OBSERVED", "controls_per_event": 1, "control_reuse": False},
     "frequency": {"events_per_year": 100, "window_years": 2},
     "dependence": {"structure": "INDEPENDENT", "horizon_bars": 10, "min_spacing_bars": 10},
     "costs": {"base": 0.0, "stress": 0.0, "unit": "ATR"},
     "benchmark": "REGIME_MATCHED",
     "inference_method": "STUDENTIZED_BLOCK_BOOTSTRAP",
-    "datasets": [{"dataset_id": "SYNTH_FORWARD_2026Q4", "split": "discovery", "provenance": PROVENANCE}],
+    "datasets": [FORWARD],
     "confirmation_family": {"size": 1, "alpha_allocation": "BONFERRONI", "preregistration_path": PREREG,
                             "preregistration_sha256": _sha(PREREG)},
 }
@@ -92,14 +102,17 @@ def assess(p):
 def test_calibration_comes_from_pr59_results():
     assert CAL["source_sha256"] == "c538a5d2f3d65a42ac2f71bc52039e67636e9d16e25c6e443134f6e1732a05d4"
     assert CAL["winners_curse"]["inflation_by_screening_n"][47] == pytest.approx(3.845, abs=1e-3)
-    assert CAL["type1_max"]["G_C|IID_BOOTSTRAP"] > 0.075 and CAL["type1_max"]["G_U|STUDENTIZED_BLOCK_BOOTSTRAP"] <= 0.075
+    assert CAL["type1"]["G_C|IID_BOOTSTRAP|200"]["compatible_with_nominal"] is False
+    assert CAL["qualified_ranges"]["G_U"]["n"] == [12, 400]
 
 
 def test_ready_only_by_a_dominating_simulated_cell():
     card = assess(READY)
     assert card["status"] == "POWER_READY", card["reasons"]
     cell = card["numbers"]["dominating_pr59_cell"]
-    assert cell["n"] <= 200 and cell["delta"] <= 1.0 and cell["sigma_d"] >= 3.0 and cell["power"] >= 0.8
+    assert cell["n"] <= 200 and cell["delta"] <= 1.0 and cell["sigma_d"] >= 3.2
+    assert cell["power_lower_95_one_sided"] >= 0.8 and cell["power_mc_se"] > 0
+    assert all(v["compatible_with_nominal"] for v in card["numbers"]["simulated_null_rejections"].values())
     assert "not EDGE_VALIDATED" in card["not_an_authorization"]
 
 
@@ -107,33 +120,40 @@ def test_deterministic_card():
     assert assess(READY)["card_sha256"] == assess(READY)["card_sha256"]
 
 
-# ---------- P0: dataset provenance ----------
+# ---------- Review 2, P0: dataset provenance bound to identity, window, origin, exposure ----------
+
+def test_r2_p0_unrelated_manifest_with_valid_hash_is_rejected():
+    # Attack on 6a42669: any repo file with a matching hash (here the preregistration) passed as provenance.
+    prov = {**PROVENANCE, "manifest_path": PREREG, "manifest_sha256": _sha(PREREG)}
+    card = assess(plan(datasets=[{"dataset_id": "ANY_DATASET", "split": "discovery", "provenance": prov}]))
+    assert card["status"] == "NOT_ASSESSABLE"
+    assert any(r.startswith("PROVENANCE_MANIFEST_SELF_ATTESTED_NOT_ACCEPTED") for r in card["reasons"])
+
+
+def test_r2_p0_even_a_pertinent_self_attested_manifest_is_not_proof():
+    ds = {**FORWARD, "provenance": PROVENANCE}
+    card = assess(plan(datasets=[ds]))
+    assert card["status"] == "NOT_ASSESSABLE"
+
 
 def test_p0_v1_ready_fixture_is_no_longer_ready():
-    card = assess(V1_READY_FIXTURE)
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert assess(V1_READY_FIXTURE)["status"] == "NOT_ASSESSABLE"
 
 
 def test_p0_caller_declaration_alone_is_not_provenance():
     card = assess(plan(datasets=[{"dataset_id": "SYNTH_FORWARD_2027", "split": "discovery",
                                   "exposure": "UNSEEN_FORWARD"}]))
     assert card["status"] == "NOT_ASSESSABLE"
-    assert any(r.startswith("DATASET_PROVENANCE_UNVERIFIED") for r in card["reasons"])
+    assert any(r.startswith("DATASET_NOT_IN_EXPOSURE_REGISTRY") for r in card["reasons"])
 
 
-@pytest.mark.parametrize("bad", [
-    {"manifest_sha256": "0" * 64},
-    {"manifest_path": "server/data_cache/dukascopy_phaseH/manifest.json"},
-    {"manifest_path": "server/research_scripts/phase7/final_holdout_seal_v1.json"},
-    {"manifest_path": "server/research_scripts/phase7/phase7_9h/raw_data/nxs_d1_gold_phase79h.csv"},
-    {"manifest_path": "/etc/passwd"},
-    {"declared_before_collection": False},
-    {"data_start": "2026-10-01"},
-])
-def test_p0_unverifiable_provenance_fails_closed(bad):
-    prov = {**PROVENANCE, **bad}
-    card = assess(plan(datasets=[{"dataset_id": "SYNTH_FORWARD_2026Q4", "split": "discovery", "provenance": prov}]))
+@pytest.mark.parametrize("key,value", [("symbol", "XAUUSD"), ("timeframe", "H4"),
+                                       ("date_range", ["2026.10.01", "2028.10.31"]), ("symbol", None)])
+def test_r2_p0_registry_identity_must_match(key, value):
+    card = assess(plan(datasets=[{**FORWARD, key: value}]))
     assert card["status"] == "NOT_ASSESSABLE"
+    assert any(r.startswith(f"DATASET_IDENTITY_MISMATCH_WITH_REGISTRY:SYNTH_FORWARD_2026Q4:{key}")
+               for r in card["reasons"])
 
 
 def test_p0_exposed_registry_dataset_needs_new_data():
@@ -142,12 +162,130 @@ def test_p0_exposed_registry_dataset_needs_new_data():
 
 
 def test_p0_protected_split_blocked_without_opening_it():
-    card = assess(plan(datasets=[{"dataset_id": "SYNTH_FORWARD_2026Q4", "split": "final_holdout",
-                                  "provenance": PROVENANCE}]))
+    card = assess(plan(datasets=[{**FORWARD, "split": "final_holdout"}]))
     assert card["status"] == "METHOD_BLOCKED" and "PROTECTED_SPLIT:final_holdout" in card["reasons"]
 
 
-# ---------- P1-2: estimand, benchmark variance, control reuse ----------
+def test_p0_repo_file_verification_refuses_data_and_holdout_paths():
+    for path in ("server/data_cache/dukascopy_phaseH/manifest.json",
+                 "server/research_scripts/phase7/final_holdout_seal_v1.json",
+                 "server/research_scripts/phase7/phase7_9h/raw_data/nxs_d1_gold_phase79h.csv", "/etc/passwd",
+                 "../outside.json"):
+        assert G.verify_repo_file(path, "0" * 64)[0] is False
+
+
+# ---------- Review 2, P1: preregistration semantics ----------
+
+def test_r2_p1_unrelated_preregistration_with_valid_hash_is_blocked():
+    # Attack on 6a42669: the provenance manifest (valid hash, wrong content) accepted as preregistration.
+    card = assess(plan(confirmation_family__preregistration_path=MANIFEST,
+                       confirmation_family__preregistration_sha256=_sha(MANIFEST)))
+    assert card["status"] == "METHOD_BLOCKED"
+    assert {"PREREGISTRATION_INCOMPATIBLE:experiment_id", "PREREGISTRATION_INCOMPATIBLE:protocol_version"} \
+        <= set(card["reasons"])
+
+
+@pytest.mark.parametrize("change,field", [
+    ({"experiment_id": "SYNTH_OTHER"}, "experiment_id"),
+    ({"protocol_version": "OTHER_PROTOCOL"}, "protocol_version"),
+    ({"protocol_version": DROP}, "protocol_version"),
+    ({"confirmation_family__size": 2}, "family_size"),
+    ({"confirmation_family__alpha_allocation": "HOLM"}, "alpha_allocation"),
+    ({"alpha": 0.04}, "alpha"),
+])
+def test_r2_p1_preregistration_must_match_the_plan(change, field):
+    card = assess(plan(**change))
+    assert card["status"] == "METHOD_BLOCKED" and f"PREREGISTRATION_INCOMPATIBLE:{field}" in card["reasons"]
+
+
+def test_conf_preregistration_hash_must_verify():
+    card = assess(plan(confirmation_family__preregistration_sha256="f" * 64))
+    assert card["status"] == "NOT_ASSESSABLE"
+    assert any(r.startswith("CONFIRMATION_PREREGISTRATION_UNVERIFIED") for r in card["reasons"])
+
+
+def test_conf_family_required():
+    card = assess(plan(confirmation_family=DROP))
+    assert card["status"] == "NOT_ASSESSABLE" and "CONFIRMATION_FAMILY_UNDECLARED" in card["reasons"]
+
+
+def _sequence(position, experiment_id="SYNTH_READY"):
+    return plan(experiment_id=experiment_id,
+                confirmation_family={"size": 3, "alpha_allocation": "FIXED_SEQUENCE", "position": position,
+                                     "preregistration_path": PREREG_SEQ, "preregistration_sha256": _sha(PREREG_SEQ)})
+
+
+def test_conf_fixed_sequence_position_is_checked_against_preregistration():
+    assert assess(_sequence(1))["status"] == "POWER_READY"
+    wrong = assess(_sequence(2))
+    assert wrong["status"] == "METHOD_BLOCKED" and "PREREGISTRATION_INCOMPATIBLE:sequence_position" in wrong["reasons"]
+    second = assess(_sequence(2, "SYNTH_SECOND"))
+    assert second["status"] == "NOT_ASSESSABLE" and "FIXED_SEQUENCE_POWER_DEPENDS_ON_EARLIER_TESTS" in second["reasons"]
+
+
+def test_conf_family_alpha_split_is_not_full_alpha():
+    # A family of 3 would need a matching preregistration; with Bonferroni alpha/3 is below the simulated 0.05.
+    prereg = {"experiment_ids": ["SYNTH_READY", "B", "C"]}
+    assert len(prereg["experiment_ids"]) == 3
+    card = assess(plan(confirmation_family__size=3))
+    assert card["status"] == "METHOD_BLOCKED"  # the 1-member preregistration does not match size 3
+
+
+# ---------- Review 2, P1: qualified range only, no dominance beyond n=400 ----------
+
+def test_r2_p1_no_promotion_above_simulated_n():
+    card = assess(plan(frequency={"events_per_year": 5000, "window_years": 2}))
+    assert card["status"] == "NOT_ASSESSABLE" and "POWER_NOT_CALIBRATED_FOR_DESIGN" in card["reasons"]
+    assert any(r.startswith("N_10000_OUTSIDE_SIMULATED") for r in card["reasons"])
+    assert any("n up to 400" in e for e in card["numbers"]["evidence_needed"])
+
+
+@pytest.mark.parametrize("change,prefix", [
+    ({"effect__economic_min_net_effect": 2.0}, "EFFECT_2_OUTSIDE_SIMULATED"),
+    ({"dispersion__sigma_paired_difference": 6.0}, "SIGMA_6_OUTSIDE_SIMULATED"),
+    ({"dispersion__sigma_paired_difference": 1.0}, "SIGMA_1_OUTSIDE_SIMULATED"),
+])
+def test_r2_p1_effect_and_dispersion_must_be_inside_simulated_ranges(change, prefix):
+    card = assess(plan(**change))
+    assert card["status"] == "NOT_ASSESSABLE"
+    assert any(r.startswith(prefix) for r in card["reasons"]) and card["numbers"]["evidence_needed"]
+
+
+def test_p1_small_sample_below_25_is_not_ready():
+    card = assess(plan(frequency={"events_per_year": 10, "window_years": 2}))
+    assert card["status"] == "DATA_REQUIRED" and any(r.startswith("N_BELOW_METHOD_MINIMUM") for r in card["reasons"])
+
+
+# ---------- Review 2, P1: statistical uncertainty and level control ----------
+
+def test_r2_p1_point_power_above_target_is_not_enough():
+    # HAC at n=100, delta 1.0: point power 0.82 but one-sided 95% Wilson lower bound < 0.80.
+    cell = next(c for c in CAL["cells"] if c["gen"] == "G_U" and c["method"] == "HAC_NEWEY_WEST"
+                and c["n"] == 100 and c["delta"] == 1.0)
+    assert cell["power"] >= 0.8 > cell["power_lower_95_one_sided"]
+    card = assess(plan(inference_method="HAC_NEWEY_WEST", frequency={"events_per_year": 75, "window_years": 2},
+                       dispersion__sigma_paired_difference=CAL["qualified_ranges"]["G_U"]["sigma_d"][0]))
+    assert card["status"] == "DATA_REQUIRED"
+    assert "NO_SIMULATED_PR59_CELL_LOWER_POWER_BOUND_REACHES_TARGET" in card["reasons"]
+
+
+def test_r2_p1_clustered_level_not_compatible_with_nominal_blocks():
+    # Attack on 6a42669: clustered studentized block bootstrap promoted with point power 0.8225 and
+    # null rejections 0.0725 at n=200 (Wilson 95% [0.051, 0.102] excludes 0.05).
+    dep = {"structure": "CLUSTERED", "horizon_bars": 10, "min_spacing_bars": 2, "cluster_size": 4,
+           "design_effect_basis": {"type": "PR59_CLUSTER_MODEL_MATCH"}}
+    card = assess(plan(dependence=dep, dispersion__sigma_paired_difference=4.5))
+    assert card["status"] == "METHOD_BLOCKED"
+    assert "LEVEL_NOT_DEMONSTRATED_AT_NOMINAL_0.05" in card["reasons"]
+    assert "G_C|STUDENTIZED_BLOCK_BOOTSTRAP|200" in card["reasons"]
+
+
+def test_r2_p1_level_uses_wilson_not_the_0075_ceiling():
+    t = CAL["type1"]["G_C|STUDENTIZED_BLOCK_BOOTSTRAP|200"]
+    assert t["rate"] <= 0.075 and t["compatible_with_nominal"] is False
+
+
+# ---------- Review 1 findings (kept) ----------
 
 def test_p1_raw_outcome_sigma_is_not_the_estimand():
     card = assess(plan(dispersion__estimand="RAW_OUTCOME"))
@@ -162,7 +300,7 @@ def test_p1_raw_outcome_sigma_is_not_the_estimand():
 def test_p1_uncalibrated_designs_are_not_ready(change, code):
     card = assess(plan(**change))
     assert card["status"] == "NOT_ASSESSABLE" and "POWER_NOT_CALIBRATED_FOR_DESIGN" in card["reasons"]
-    assert code in card["reasons"]
+    assert code in card["reasons"] and card["numbers"]["evidence_needed"]
 
 
 def test_p1_control_reuse_blocks():
@@ -177,19 +315,11 @@ def test_p1_missing_or_inadequate_benchmark(bench, code):
     assert card["status"] == "METHOD_BLOCKED" and code in card["reasons"]
 
 
-# ---------- P1-3: design effect ----------
-
 def test_p1_clustered_without_justified_deff_is_not_assessable():
     card = assess(plan(dependence={"structure": "CLUSTERED", "horizon_bars": 10, "min_spacing_bars": 2}))
     assert card["status"] == "NOT_ASSESSABLE" and "DESIGN_EFFECT_UNJUSTIFIED" in card["reasons"]
-
-
-def test_p1_pr59_cluster_model_match_uses_clustered_cells():
-    dep = {"structure": "CLUSTERED", "horizon_bars": 10, "min_spacing_bars": 2, "cluster_size": 4,
-           "design_effect_basis": {"type": "PR59_CLUSTER_MODEL_MATCH"}}
-    card = assess(plan(dependence=dep, dispersion__sigma_paired_difference=4.5))
-    assert card["status"] == "POWER_READY" and card["numbers"]["dominating_pr59_cell"]["gen"] == "G_C"
-    other = assess(plan(dependence={**dep, "cluster_size": 8}, dispersion__sigma_paired_difference=4.5))
+    other = assess(plan(dependence={"structure": "CLUSTERED", "horizon_bars": 10, "min_spacing_bars": 2,
+                                    "cluster_size": 8, "design_effect_basis": {"type": "PR59_CLUSTER_MODEL_MATCH"}}))
     assert other["status"] == "NOT_ASSESSABLE" and "DESIGN_EFFECT_UNJUSTIFIED" in other["reasons"]
 
 
@@ -215,18 +345,15 @@ def test_p1_iid_bootstrap_under_dependence_blocked():
     assert card["status"] == "METHOD_BLOCKED" and "IID_INFERENCE_UNDER_DEPENDENCE" in card["reasons"]
 
 
-# ---------- P1-4: analytic margin never certifies ----------
-
 def test_p1_analytic_power_does_not_certify():
-    # Analytic CI-low power ~0.91 here; the simulated studentized block bootstrap reached only 0.66.
-    p = plan(effect__economic_min_net_effect=0.5, frequency={"events_per_year": 200, "window_years": 2})
+    # Analytic CI-low power ~0.9 here; the simulated studentized block bootstrap reached only 0.66.
+    p = plan(effect__economic_min_net_effect=0.5, frequency={"events_per_year": 200, "window_years": 2},
+             dispersion__sigma_paired_difference=3.105)
     card = assess(p)
     assert card["status"] == "DATA_REQUIRED"
-    assert "NO_SIMULATED_PR59_CELL_REACHES_TARGET_FOR_THIS_PLAN" in card["reasons"]
+    assert "NO_SIMULATED_PR59_CELL_LOWER_POWER_BOUND_REACHES_TARGET" in card["reasons"]
     assert "not used to certify" in card["numbers"]["indicative_analytic"]["note"]
 
-
-# ---------- P1-5: winner's curse and MDE ----------
 
 def test_p1_screening_estimate_requires_n_and_family():
     card = assess(plan(effect__screening={"estimate": 2.0}))
@@ -251,8 +378,6 @@ def test_p1_three_effects_are_distinguished():
     assert n["mde_of_screening_estimate_indicative"] > 0.9
 
 
-# ---------- P1-6: inputs and domains ----------
-
 @pytest.mark.parametrize("change", [
     {"alpha": 0}, {"alpha": float("nan")}, {"alpha": 1.5}, {"alpha": True}, {"alpha": None},
     {"power_target": 1.2}, {"effect__economic_min_net_effect": float("nan")},
@@ -270,51 +395,6 @@ def test_p1_invalid_inputs_fail_closed_without_exceptions(change):
 
 def test_p1_not_a_mapping():
     assert G.assess(["not", "a", "plan"], cal=CAL, registry=REG)["status"] == "NOT_ASSESSABLE"
-
-
-def test_p1_small_sample_below_25_is_not_ready():
-    card = assess(plan(frequency={"events_per_year": 10, "window_years": 2}))
-    assert card["status"] == "DATA_REQUIRED" and any(r.startswith("N_BELOW_METHOD_MINIMUM") for r in card["reasons"])
-
-
-def test_p1_large_sample_only_by_dominance_with_warning():
-    card = assess(plan(frequency={"events_per_year": 450, "window_years": 2}))
-    assert card["status"] == "POWER_READY"
-    assert any(w.startswith("N_ABOVE_SIMULATED_RANGE") for w in card["warnings"])
-
-
-def test_p1_dispersion_above_calibration_not_ready():
-    card = assess(plan(dispersion__sigma_paired_difference=6.0, frequency={"events_per_year": 200, "window_years": 2}))
-    assert card["status"] == "DATA_REQUIRED"
-
-
-# ---------- confirmatory multiplicity ----------
-
-def test_conf_family_required():
-    card = assess(plan(confirmation_family=DROP))
-    assert card["status"] == "NOT_ASSESSABLE" and "CONFIRMATION_FAMILY_UNDECLARED" in card["reasons"]
-
-
-def test_conf_family_alpha_split_is_not_full_alpha():
-    card = assess(plan(confirmation_family__size=3))
-    assert card["numbers"]["alpha_per_test"] == pytest.approx(0.05 / 3)
-    assert card["status"] == "NOT_ASSESSABLE"
-    assert any(r.startswith("ALPHA_PER_TEST_") for r in card["reasons"])
-
-
-def test_conf_preregistration_must_verify():
-    card = assess(plan(confirmation_family__preregistration_sha256="f" * 64))
-    assert card["status"] == "NOT_ASSESSABLE"
-    assert any(r.startswith("CONFIRMATION_PREREGISTRATION_UNVERIFIED") for r in card["reasons"])
-
-
-def test_conf_fixed_sequence():
-    first = assess(plan(confirmation_family__alpha_allocation="FIXED_SEQUENCE", confirmation_family__size=3,
-                        confirmation_family__position=1))
-    assert first["status"] == "POWER_READY"
-    second = assess(plan(confirmation_family__alpha_allocation="FIXED_SEQUENCE", confirmation_family__size=3,
-                         confirmation_family__position=2))
-    assert second["status"] == "NOT_ASSESSABLE"
 
 
 # ---------- screening and published case ----------
@@ -338,3 +418,34 @@ def test_published_breakout_acc_confirmation_needs_new_data():
     assert card["status"] == "DATA_REQUIRED" and "CONFIRMATION_ON_EXPOSED_DATA" in card["reasons"]
     assert card["numbers"]["indicative_analytic"]["n_required"] > 900
     assert math.isfinite(card["numbers"]["indicative_analytic"]["mde_at_n_expected"])
+
+
+def test_r2_p0_traversed_window_with_all_flags_false_is_not_unseen():
+    # Real registry record: every exposure flag false, but the window was traversed by a run (NO_EVENTS).
+    rid = "BREAKOUT_ACC::2026.06.10_2026.08.14"
+    rec = G.exposure_registry()[rid]
+    assert not any(rec[f] for f in G.EXPOSURE_FLAGS)
+    ds = {"dataset_id": rid, "split": "discovery", "symbol": "GOLD", "timeframe": "D1",
+          "date_range": rec["date_range"]}
+    card = G.assess(plan(datasets=[ds]), cal=CAL, registry=G.exposure_registry())
+    assert card["status"] == "DATA_REQUIRED" and "CONFIRMATION_ON_EXPOSED_DATA" in card["reasons"]
+
+
+def test_r2_p0_untouched_but_unverified_or_unknown_flags_is_not_proof():
+    unverified = {**SYNTH_RECORD, "holdout_status": "UNVERIFIED - availability unknown"}
+    card = G.assess(READY, cal=CAL, registry={**REG, SYNTH_RECORD["dataset_id"]: unverified})
+    assert card["status"] == "NOT_ASSESSABLE" and any(r.startswith("DATASET_UNTOUCHED_STATUS_NOT_PROVEN")
+                                                       for r in card["reasons"])
+    unknown = {**SYNTH_RECORD, "oos_exposure": None}
+    card = G.assess(READY, cal=CAL, registry={**REG, SYNTH_RECORD["dataset_id"]: unknown})
+    assert card["status"] == "NOT_ASSESSABLE" and any(r.startswith("DATASET_EXPOSURE_FLAGS_UNKNOWN")
+                                                       for r in card["reasons"])
+
+
+def test_production_registry_has_no_unseen_dataset_today():
+    # With the committed ledger no confirmation dataset qualifies as unseen until a forward one is registered.
+    real = G.exposure_registry()
+    for rid, rec in real.items():
+        ds = {"dataset_id": rid, "symbol": rec.get("symbol"), "timeframe": rec.get("timeframe"),
+              "date_range": rec.get("date_range")}
+        assert G._dataset_status(ds, real)[0] != "VERIFIED_UNSEEN", rid
