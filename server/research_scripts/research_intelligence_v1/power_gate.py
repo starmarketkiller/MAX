@@ -39,7 +39,11 @@ from . import gates, power
 from .memory import canonical, sha256_text
 from .review import MIN_CLOSED_FOR_FIRST_READ
 
-RULES_VERSION = "POWER_GATE_RULES_V1.3"
+RULES_VERSION = "POWER_GATE_RULES_V1.4"
+# Frozen PR #59 identities (canonical Git-blob SHA-256), pinned in code so that a substitute file or an
+# edited manifest cannot pass: changing them requires a reviewed code change.
+PR59_RESULTS_SHA256 = "c538a5d2f3d65a42ac2f71bc52039e67636e9d16e25c6e443134f6e1732a05d4"
+PR59_PROTOCOL_SHA256 = "8dd988251b280e390162c979cf446eb782e3b35371c732f9215bb6624359a698"
 Z_ONE_SIDED_95 = 1.6448536
 Z_TWO_SIDED_95 = 1.959964
 NOMINAL_ALPHA = 0.05
@@ -169,17 +173,26 @@ def wilson(successes, n, z):
 def calibration():
     """PR #59 frozen results reduced to what the gate may use (read only).
 
-    source_integrity is "VERIFIED" only when the canonical Git-blob SHA-256 of results_v1.json equals
-    the hash recorded in the PR #59 manifest. level_qualification is the pre-registered level
-    criterion of the calibration protocol, if any (PR #59's protocol has none: see assess()).
+    source_integrity is "VERIFIED" only when the canonical Git-blob SHA-256 of results_v1.json and of
+    protocol_v1.json equal the pinned PR #59 identities, the manifest records the same hashes and
+    the results name the same protocol. No level qualification is ever read from a file: PR #59 froze
+    none, and an independent, time-proven qualification does not exist (see _evaluate()).
     """
-    source_sha, representation = artifact_sha256(CALIBRATION_PATH)
+    source_sha, rep = artifact_sha256(CALIBRATION_PATH)
+    protocol_sha, protocol_rep = artifact_sha256(CALIBRATION_PROTOCOL_PATH)
     with open(CALIBRATION_MANIFEST_PATH, encoding="utf-8") as handle:
-        recorded = json.load(handle)["artifacts_sha256"]["results_v1.json"]
-    integrity = "VERIFIED" if representation in CANONICAL_REPRESENTATIONS and source_sha == recorded \
-        else f"FAILED:{representation}:{'MATCH' if source_sha == recorded else 'SHA256_MISMATCH'}"
-    with open(CALIBRATION_PROTOCOL_PATH, encoding="utf-8") as handle:
-        level_qualification = json.load(handle).get("level_qualification")
+        manifest_hashes = json.load(handle)["artifacts_sha256"]
+    with open(CALIBRATION_PATH, encoding="utf-8") as handle:
+        results_protocol_sha = json.load(handle)["meta"]["protocol_sha256"]
+    problems = []
+    if rep not in CANONICAL_REPRESENTATIONS or source_sha != PR59_RESULTS_SHA256 \
+            or manifest_hashes.get("results_v1.json") != PR59_RESULTS_SHA256:
+        problems.append("RESULTS_IDENTITY")
+    if protocol_rep not in CANONICAL_REPRESENTATIONS or protocol_sha != PR59_PROTOCOL_SHA256 \
+            or manifest_hashes.get("protocol_v1.json") != PR59_PROTOCOL_SHA256 \
+            or results_protocol_sha != PR59_PROTOCOL_SHA256:
+        problems.append("PROTOCOL_IDENTITY")
+    integrity = "VERIFIED" if not problems else "FAILED:" + "+".join(problems)
     with open(CALIBRATION_PATH, encoding="utf-8") as handle:
         res = json.load(handle)
     sig = [c for c in res["signal"] if c["cost_atr"] == 0 and c["gen"] in ("G_U", "G_C")]
@@ -215,7 +228,8 @@ def calibration():
              if c["m_true"] and c["winners_curse_inflation_true_edges"]}
     return {"source": "server/research_scripts/edge_detection_capability_v1/results_v1.json",
             "source_sha256": source_sha, "source_integrity": integrity,
-            "level_qualification": level_qualification, "design": CALIBRATED_DESIGN, "cells": cells,
+            "protocol_sha256": protocol_sha, "level_qualification": None,
+            "design": CALIBRATED_DESIGN, "cells": cells,
             "type1": dict(sorted(type1.items())),
             "qualified_ranges": {g: {"n": [min(c["n"] for c in cells if c["gen"] == g),
                                            max(c["n"] for c in cells if c["gen"] == g)],
@@ -339,13 +353,22 @@ def _dominating_cell(cal, gen, method, n, effect, sigma, target):
     return best
 
 
-def assess(plan, *, cal=None, registry=None):
-    """Return a Power Decision Card. Pure function of (plan, calibration, registry, declared repo files)."""
-    cal = cal or calibration()
-    registry = registry if registry is not None else exposure_registry()
+def assess(plan):
+    """Production interface: a Power Decision Card computed only from the pinned PR #59 calibration
+    and the committed exposure registry. There is no way to inject another calibration or registry."""
+    return _evaluate(plan, calibration(), exposure_registry(), test_only=False)
+
+
+def assess_test_only(plan, *, cal, registry):
+    """Isolated logic tests with synthetic calibrations/registries. The card is marked TEST_ONLY:
+    its status is prefixed "TEST_ONLY:", it is never authorizing and can never read POWER_READY."""
+    return _evaluate(plan, cal, registry, test_only=True)
+
+
+def _evaluate(plan, cal, registry, *, test_only):
     reasons, warnings = [], []
     if not isinstance(plan, dict):
-        return _card({}, "NOT_ASSESSABLE", ["PLAN_NOT_A_MAPPING"], [], {}, cal)
+        return _card(test_only, {}, "NOT_ASSESSABLE", ["PLAN_NOT_A_MAPPING"], [], {}, cal)
 
     def need(value, code):
         if value is None or value is False:
@@ -422,7 +445,7 @@ def assess(plan, *, cal=None, registry=None):
                 or scr.get("family_size", 0) < 1 or not scr.get("selection_rule"):
             reasons.append("SCREENING_ESTIMATE_INCOMPLETE")
     if reasons:
-        return _card(plan, "NOT_ASSESSABLE", reasons, warnings, {}, cal)
+        return _card(test_only, plan, "NOT_ASSESSABLE", reasons, warnings, {}, cal)
 
     # 2. Method: benchmark, inference vs dependence, declared structure vs geometry, protected splits.
     bench, method = plan.get("benchmark"), plan.get("inference_method")
@@ -449,7 +472,7 @@ def assess(plan, *, cal=None, registry=None):
         except gates.GateViolation:
             reasons.append(f"PROTECTED_SPLIT:{ds.get('split')}")
     if reasons:
-        return _card(plan, "METHOD_BLOCKED", reasons, warnings, {}, cal)
+        return _card(test_only, plan, "METHOD_BLOCKED", reasons, warnings, {}, cal)
 
     # 3. Effects: economic minimum, selection-corrected screening estimate, MDE of the screening.
     stress_extra = stress - base
@@ -515,11 +538,11 @@ def assess(plan, *, cal=None, registry=None):
             not any(r.startswith(("WINNERS_CURSE", "FIXED_SEQUENCE")) for r in reasons) else "EXPLORATORY_ONLY"
         if any(r.startswith(("WINNERS_CURSE", "FIXED_SEQUENCE")) for r in reasons):
             status = "NOT_ASSESSABLE"
-        return _card(plan, status, reasons, warnings, numbers, cal)
+        return _card(test_only, plan, status, reasons, warnings, numbers, cal)
 
     # 6. Certification: only a dominating simulated PR #59 cell can make the plan POWER_READY.
     if cal.get("source_integrity") != "VERIFIED":
-        return _card(plan, "NOT_ASSESSABLE", [f"CALIBRATION_SOURCE_INTEGRITY_{cal.get('source_integrity')}"],
+        return _card(test_only, plan, "NOT_ASSESSABLE", [f"CALIBRATION_SOURCE_INTEGRITY_{cal.get('source_integrity')}"],
                      warnings, numbers, cal)
     d = cal["design"]
     gen, uncalibrated = None, []
@@ -557,10 +580,10 @@ def assess(plan, *, cal=None, registry=None):
         if not box["sigma_d"][0] <= sigma <= box["sigma_d"][1]:
             uncalibrated.append(f"SIGMA_{sigma:g}_OUTSIDE_SIMULATED_{box['sigma_d'][0]}_{box['sigma_d'][1]}")
     if reasons:
-        return _card(plan, "NOT_ASSESSABLE", reasons, warnings, numbers, cal)
+        return _card(test_only, plan, "NOT_ASSESSABLE", reasons, warnings, numbers, cal)
     if uncalibrated:
         numbers["evidence_needed"] = _evidence_needed(uncalibrated)
-        return _card(plan, "NOT_ASSESSABLE", ["POWER_NOT_CALIBRATED_FOR_DESIGN", *uncalibrated], warnings,
+        return _card(test_only, plan, "NOT_ASSESSABLE", ["POWER_NOT_CALIBRATED_FOR_DESIGN", *uncalibrated], warnings,
                      numbers, cal)
 
     # 7. Level control. A pre-registered level qualification of the calibration study is required:
@@ -573,14 +596,16 @@ def assess(plan, *, cal=None, registry=None):
     level = {k: v for k, v in cal["type1"].items()
              if k.startswith(f"{gen}|{method}|") and min_n <= int(k.rsplit("|", 1)[1]) <= upper}
     numbers["simulated_null_rejections_descriptive"] = level
-    lq = cal.get("level_qualification")
+    # Production never accepts a level qualification: none is bound to an independent protocol whose
+    # freezing before the results can be demonstrated. Only isolated TEST_ONLY runs exercise the check.
+    lq = cal.get("level_qualification") if test_only else None
     problem = _level_qualification_problem(lq)
     if problem:
         numbers["evidence_needed"] = [LEVEL_EVIDENCE]
-        return _card(plan, "NOT_ASSESSABLE", ["LEVEL_CALIBRATION_NOT_PREREGISTERED", problem], warnings,
+        return _card(test_only, plan, "NOT_ASSESSABLE", ["LEVEL_CALIBRATION_NOT_PREREGISTERED", problem], warnings,
                      numbers, cal)
     if not level:
-        return _card(plan, "NOT_ASSESSABLE", ["NO_SIMULATED_NULL_CELLS_IN_RANGE"], warnings, numbers, cal)
+        return _card(test_only, plan, "NOT_ASSESSABLE", ["NO_SIMULATED_NULL_CELLS_IN_RANGE"], warnings, numbers, cal)
     z = statistics.NormalDist().inv_cdf(1 - (1 - lq["confidence"]) / len(level))
     failing = []
     for key, v in sorted(level.items()):
@@ -589,7 +614,7 @@ def assess(plan, *, cal=None, registry=None):
         if v["reps"] < lq["min_reps_per_cell"] or bound > lq["nominal_alpha"]:
             failing.append(key)
     if failing:
-        return _card(plan, "METHOD_BLOCKED", ["LEVEL_NOT_DEMONSTRATED_AT_NOMINAL", *failing], warnings, numbers, cal)
+        return _card(test_only, plan, "METHOD_BLOCKED", ["LEVEL_NOT_DEMONSTRATED_AT_NOMINAL", *failing], warnings, numbers, cal)
 
     # 8. Power: a dominating simulated cell whose one-sided 95% Wilson lower bound reaches the target.
     cell = _dominating_cell(cal, gen, method, n_expected, effect_sizing, sigma, target)
@@ -597,10 +622,10 @@ def assess(plan, *, cal=None, registry=None):
     if cell is None:
         reasons.append("NO_SIMULATED_PR59_CELL_LOWER_POWER_BOUND_REACHES_TARGET")
         status = "DATA_REQUIRED" if purpose == "CONFIRMATION" else "EXPLORATORY_ONLY"
-        return _card(plan, status, reasons, warnings, numbers, cal)
+        return _card(test_only, plan, status, reasons, warnings, numbers, cal)
     if disp["source"] != "OBSERVED":
         warnings.append("DISPERSION_IS_A_PRIOR: re-assess when the paired differences are observed")
-    return _card(plan, "POWER_READY", [], warnings, numbers, cal)
+    return _card(test_only, plan, "POWER_READY", [], warnings, numbers, cal)
 
 
 LEVEL_EVIDENCE = ("independent level-calibration study with a pre-registered criterion: Wilson upper bound "
@@ -642,17 +667,22 @@ def _evidence_needed(uncalibrated):
     return sorted({text for code in uncalibrated for prefix, text in EVIDENCE_FOR.items() if code.startswith(prefix)})
 
 
-def _card(plan, status, reasons, warnings, numbers, cal):
+def _card(test_only, plan, status, reasons, warnings, numbers, cal):
     evidence_ceiling = {"POWER_READY": "DISCOVERY_ONLY" if plan.get("purpose") == "SCREENING"
                         else "INTERNAL_VALIDATION (after protocol review)",
                         "EXPLORATORY_ONLY": "EXPLORATORY", "DATA_REQUIRED": "EXPLORATORY",
                         "METHOD_BLOCKED": "NONE", "NOT_ASSESSABLE": "NONE"}[status]
+    if test_only:
+        status, evidence_ceiling = f"TEST_ONLY:{status}", "NONE (TEST_ONLY)"
     card = {"rules_version": RULES_VERSION, "experiment_id": plan.get("experiment_id"),
-            "purpose": plan.get("purpose"), "status": status, "reasons": reasons, "warnings": warnings,
+            "purpose": plan.get("purpose"), "status": status, "test_only": test_only,
+            "authorizing": False, "reasons": reasons, "warnings": warnings,
             "numbers": numbers, "evidence_ceiling": evidence_ceiling,
             "not_an_authorization": "POWER_READY is not EDGE_VALIDATED and does not authorize execution, "
-                                    "holdout access, deploy or trading.",
-            "calibration_source_sha256": cal["source_sha256"],
+                                    "holdout access, deploy or trading."
+                                    + (" TEST_ONLY cards come from synthetic fixtures and certify nothing."
+                                       if test_only else ""),
+            "calibration_source_sha256": cal.get("source_sha256"),
             "calibration_source_integrity": cal.get("source_integrity"),
             "hash_representation": "Git canonical blob bytes (CRLF->LF for text, as-is for binary attributes); "
                                    "independent of CRLF/LF checkout",

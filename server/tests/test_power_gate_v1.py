@@ -119,7 +119,7 @@ QCAL = _qualified(CAL)
 
 
 def assess(p, cal=None):
-    return G.assess(p, cal=cal or QCAL, registry=REG)
+    return G.assess_test_only(p, cal=cal or QCAL, registry=REG)
 
 
 # ---------- baseline and calibration ----------
@@ -133,7 +133,7 @@ def test_calibration_comes_from_pr59_results():
 
 def test_ready_only_by_a_dominating_simulated_cell():
     card = assess(READY)
-    assert card["status"] == "POWER_READY", card["reasons"]
+    assert card["status"] == "TEST_ONLY:POWER_READY", card["reasons"]
     cell = card["numbers"]["dominating_pr59_cell"]
     assert cell["n"] <= 200 and cell["delta"] <= 1.0 and cell["sigma_d"] >= 3.2
     assert cell["power_lower_95_one_sided"] >= 0.8 and cell["power_mc_se"] > 0
@@ -152,24 +152,24 @@ def test_r2_p0_unrelated_manifest_with_valid_hash_is_rejected():
     # Attack on 6a42669: any repo file with a matching hash (here the preregistration) passed as provenance.
     prov = {**PROVENANCE, "manifest_path": PREREG, "manifest_sha256": _sha(PREREG)}
     card = assess(plan(datasets=[{"dataset_id": "ANY_DATASET", "split": "discovery", "provenance": prov}]))
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
     assert any(r.startswith("PROVENANCE_MANIFEST_SELF_ATTESTED_NOT_ACCEPTED") for r in card["reasons"])
 
 
 def test_r2_p0_even_a_pertinent_self_attested_manifest_is_not_proof():
     ds = {**FORWARD, "provenance": PROVENANCE}
     card = assess(plan(datasets=[ds]))
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
 
 
 def test_p0_v1_ready_fixture_is_no_longer_ready():
-    assert assess(V1_READY_FIXTURE)["status"] == "NOT_ASSESSABLE"
+    assert assess(V1_READY_FIXTURE)["status"] == "TEST_ONLY:NOT_ASSESSABLE"
 
 
 def test_p0_caller_declaration_alone_is_not_provenance():
     card = assess(plan(datasets=[{"dataset_id": "SYNTH_FORWARD_2027", "split": "discovery",
                                   "exposure": "UNSEEN_FORWARD"}]))
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
     assert any(r.startswith("DATASET_NOT_IN_EXPOSURE_REGISTRY") for r in card["reasons"])
 
 
@@ -177,19 +177,19 @@ def test_p0_caller_declaration_alone_is_not_provenance():
                                        ("date_range", ["2026.10.01", "2028.10.31"]), ("symbol", None)])
 def test_r2_p0_registry_identity_must_match(key, value):
     card = assess(plan(datasets=[{**FORWARD, key: value}]))
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
     assert any(r.startswith(f"DATASET_IDENTITY_MISMATCH_WITH_REGISTRY:SYNTH_FORWARD_2026Q4:{key}")
                for r in card["reasons"])
 
 
 def test_p0_exposed_registry_dataset_needs_new_data():
     card = assess(plan(datasets=[{"dataset_id": "BREAKOUT_ACC::2019.02.21_2026.06.09", "split": "discovery"}]))
-    assert card["status"] == "DATA_REQUIRED" and "CONFIRMATION_ON_EXPOSED_DATA" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:DATA_REQUIRED" and "CONFIRMATION_ON_EXPOSED_DATA" in card["reasons"]
 
 
 def test_p0_protected_split_blocked_without_opening_it():
     card = assess(plan(datasets=[{**FORWARD, "split": "final_holdout"}]))
-    assert card["status"] == "METHOD_BLOCKED" and "PROTECTED_SPLIT:final_holdout" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:METHOD_BLOCKED" and "PROTECTED_SPLIT:final_holdout" in card["reasons"]
 
 
 def test_p0_repo_file_verification_refuses_data_and_holdout_paths():
@@ -206,7 +206,7 @@ def test_r2_p1_unrelated_preregistration_with_valid_hash_is_blocked():
     # Attack on 6a42669: the provenance manifest (valid hash, wrong content) accepted as preregistration.
     card = assess(plan(confirmation_family__preregistration_path=MANIFEST,
                        confirmation_family__preregistration_sha256=_sha(MANIFEST)))
-    assert card["status"] == "METHOD_BLOCKED"
+    assert card["status"] == "TEST_ONLY:METHOD_BLOCKED"
     assert {"PREREGISTRATION_INCOMPATIBLE:experiment_id", "PREREGISTRATION_INCOMPATIBLE:protocol_version"} \
         <= set(card["reasons"])
 
@@ -221,18 +221,18 @@ def test_r2_p1_unrelated_preregistration_with_valid_hash_is_blocked():
 ])
 def test_r2_p1_preregistration_must_match_the_plan(change, field):
     card = assess(plan(**change))
-    assert card["status"] == "METHOD_BLOCKED" and f"PREREGISTRATION_INCOMPATIBLE:{field}" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:METHOD_BLOCKED" and f"PREREGISTRATION_INCOMPATIBLE:{field}" in card["reasons"]
 
 
 def test_conf_preregistration_hash_must_verify():
     card = assess(plan(confirmation_family__preregistration_sha256="f" * 64))
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
     assert any(r.startswith("CONFIRMATION_PREREGISTRATION_UNVERIFIED") for r in card["reasons"])
 
 
 def test_conf_family_required():
     card = assess(plan(confirmation_family=DROP))
-    assert card["status"] == "NOT_ASSESSABLE" and "CONFIRMATION_FAMILY_UNDECLARED" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE" and "CONFIRMATION_FAMILY_UNDECLARED" in card["reasons"]
 
 
 def _sequence(position, experiment_id="SYNTH_READY"):
@@ -242,11 +242,11 @@ def _sequence(position, experiment_id="SYNTH_READY"):
 
 
 def test_conf_fixed_sequence_position_is_checked_against_preregistration():
-    assert assess(_sequence(1))["status"] == "POWER_READY"
+    assert assess(_sequence(1))["status"] == "TEST_ONLY:POWER_READY"
     wrong = assess(_sequence(2))
-    assert wrong["status"] == "METHOD_BLOCKED" and "PREREGISTRATION_INCOMPATIBLE:sequence_position" in wrong["reasons"]
+    assert wrong["status"] == "TEST_ONLY:METHOD_BLOCKED" and "PREREGISTRATION_INCOMPATIBLE:sequence_position" in wrong["reasons"]
     second = assess(_sequence(2, "SYNTH_SECOND"))
-    assert second["status"] == "NOT_ASSESSABLE" and "FIXED_SEQUENCE_POWER_DEPENDS_ON_EARLIER_TESTS" in second["reasons"]
+    assert second["status"] == "TEST_ONLY:NOT_ASSESSABLE" and "FIXED_SEQUENCE_POWER_DEPENDS_ON_EARLIER_TESTS" in second["reasons"]
 
 
 def test_conf_family_alpha_split_is_not_full_alpha():
@@ -254,14 +254,14 @@ def test_conf_family_alpha_split_is_not_full_alpha():
     prereg = {"experiment_ids": ["SYNTH_READY", "B", "C"]}
     assert len(prereg["experiment_ids"]) == 3
     card = assess(plan(confirmation_family__size=3))
-    assert card["status"] == "METHOD_BLOCKED"  # the 1-member preregistration does not match size 3
+    assert card["status"] == "TEST_ONLY:METHOD_BLOCKED"  # the 1-member preregistration does not match size 3
 
 
 # ---------- Review 2, P1: qualified range only, no dominance beyond n=400 ----------
 
 def test_r2_p1_no_promotion_above_simulated_n():
     card = assess(plan(frequency={"events_per_year": 5000, "window_years": 2}))
-    assert card["status"] == "NOT_ASSESSABLE" and "POWER_NOT_CALIBRATED_FOR_DESIGN" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE" and "POWER_NOT_CALIBRATED_FOR_DESIGN" in card["reasons"]
     assert any(r.startswith("N_10000_OUTSIDE_SIMULATED") for r in card["reasons"])
     assert any("n up to 400" in e for e in card["numbers"]["evidence_needed"])
 
@@ -273,13 +273,13 @@ def test_r2_p1_no_promotion_above_simulated_n():
 ])
 def test_r2_p1_effect_and_dispersion_must_be_inside_simulated_ranges(change, prefix):
     card = assess(plan(**change))
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
     assert any(r.startswith(prefix) for r in card["reasons"]) and card["numbers"]["evidence_needed"]
 
 
 def test_p1_small_sample_below_25_is_not_ready():
     card = assess(plan(frequency={"events_per_year": 10, "window_years": 2}))
-    assert card["status"] == "DATA_REQUIRED" and any(r.startswith("N_BELOW_METHOD_MINIMUM") for r in card["reasons"])
+    assert card["status"] == "TEST_ONLY:DATA_REQUIRED" and any(r.startswith("N_BELOW_METHOD_MINIMUM") for r in card["reasons"])
 
 
 # ---------- Review 2, P1: statistical uncertainty and level control ----------
@@ -297,7 +297,7 @@ def test_r2_p1_point_power_above_target_is_not_enough():
     # Through assess() HAC is stopped even earlier: its null rejections fail the level criterion.
     card = assess(plan(inference_method="HAC_NEWEY_WEST", frequency={"events_per_year": 75, "window_years": 2},
                        dispersion__sigma_paired_difference=sigma))
-    assert card["status"] in ("METHOD_BLOCKED", "DATA_REQUIRED")
+    assert card["status"] in ("TEST_ONLY:METHOD_BLOCKED", "TEST_ONLY:DATA_REQUIRED")
 
 
 def test_r2_p1_clustered_level_not_compatible_with_nominal_blocks():
@@ -306,18 +306,18 @@ def test_r2_p1_clustered_level_not_compatible_with_nominal_blocks():
     dep = {"structure": "CLUSTERED", "horizon_bars": 10, "min_spacing_bars": 2, "cluster_size": 4,
            "design_effect_basis": {"type": "PR59_CLUSTER_MODEL_MATCH"}}
     card = assess(plan(dependence=dep, dispersion__sigma_paired_difference=4.5))
-    assert card["status"] == "METHOD_BLOCKED"
+    assert card["status"] == "TEST_ONLY:METHOD_BLOCKED"
     assert "LEVEL_NOT_DEMONSTRATED_AT_NOMINAL" in card["reasons"]
     assert "G_C|STUDENTIZED_BLOCK_BOOTSTRAP|200" in card["reasons"]
     real = assess(plan(dependence=dep, dispersion__sigma_paired_difference=4.5), cal=CAL)
-    assert real["status"] == "NOT_ASSESSABLE"
+    assert real["status"] == "TEST_ONLY:NOT_ASSESSABLE"
 
 
 # ---------- Review 1 findings (kept) ----------
 
 def test_p1_raw_outcome_sigma_is_not_the_estimand():
     card = assess(plan(dispersion__estimand="RAW_OUTCOME"))
-    assert card["status"] == "NOT_ASSESSABLE" and "ESTIMAND_NOT_PAIRED_DIFFERENCE_VS_BENCHMARK" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE" and "ESTIMAND_NOT_PAIRED_DIFFERENCE_VS_BENCHMARK" in card["reasons"]
 
 
 @pytest.mark.parametrize("change,code", [
@@ -327,28 +327,28 @@ def test_p1_raw_outcome_sigma_is_not_the_estimand():
 ])
 def test_p1_uncalibrated_designs_are_not_ready(change, code):
     card = assess(plan(**change))
-    assert card["status"] == "NOT_ASSESSABLE" and "POWER_NOT_CALIBRATED_FOR_DESIGN" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE" and "POWER_NOT_CALIBRATED_FOR_DESIGN" in card["reasons"]
     assert code in card["reasons"] and card["numbers"]["evidence_needed"]
 
 
 def test_p1_control_reuse_blocks():
     card = assess(plan(dispersion__control_reuse=True))
-    assert card["status"] == "METHOD_BLOCKED" and "CONTROL_REUSE_NOT_MODELLED" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:METHOD_BLOCKED" and "CONTROL_REUSE_NOT_MODELLED" in card["reasons"]
 
 
 @pytest.mark.parametrize("bench,code", [(DROP, "BENCHMARK_MISSING"), ("ZERO", "BENCHMARK_ZERO_COUNTS_DRIFT_AS_EDGE"),
                                         ("UNCONDITIONAL", "BENCHMARK_CANNOT_SEPARATE_ALPHA_FROM_EXPOSURE")])
 def test_p1_missing_or_inadequate_benchmark(bench, code):
     card = assess(plan(benchmark=bench))
-    assert card["status"] == "METHOD_BLOCKED" and code in card["reasons"]
+    assert card["status"] == "TEST_ONLY:METHOD_BLOCKED" and code in card["reasons"]
 
 
 def test_p1_clustered_without_justified_deff_is_not_assessable():
     card = assess(plan(dependence={"structure": "CLUSTERED", "horizon_bars": 10, "min_spacing_bars": 2}))
-    assert card["status"] == "NOT_ASSESSABLE" and "DESIGN_EFFECT_UNJUSTIFIED" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE" and "DESIGN_EFFECT_UNJUSTIFIED" in card["reasons"]
     other = assess(plan(dependence={"structure": "CLUSTERED", "horizon_bars": 10, "min_spacing_bars": 2,
                                     "cluster_size": 8, "design_effect_basis": {"type": "PR59_CLUSTER_MODEL_MATCH"}}))
-    assert other["status"] == "NOT_ASSESSABLE" and "DESIGN_EFFECT_UNJUSTIFIED" in other["reasons"]
+    assert other["status"] == "TEST_ONLY:NOT_ASSESSABLE" and "DESIGN_EFFECT_UNJUSTIFIED" in other["reasons"]
 
 
 def test_p1_plan_specific_deff_is_verified_but_not_certified():
@@ -356,13 +356,13 @@ def test_p1_plan_specific_deff_is_verified_but_not_certified():
            "design_effect_basis": {"type": "MEASURED_ON_PLAN_DATA", "source_path": MANIFEST,
                                    "source_sha256": _sha(MANIFEST)}}
     card = assess(plan(dependence=dep))
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
     assert "PLAN_SPECIFIC_DEPENDENCE_NOT_SIMULATED_IN_PR59" in card["reasons"]
 
 
 def test_p1_independence_contradicted_by_geometry():
     card = assess(plan(dependence={"structure": "INDEPENDENT", "horizon_bars": 10, "min_spacing_bars": 3}))
-    assert card["status"] == "METHOD_BLOCKED"
+    assert card["status"] == "TEST_ONLY:METHOD_BLOCKED"
     assert "DECLARED_INDEPENDENT_BUT_OUTCOME_WINDOWS_OVERLAP" in card["reasons"]
 
 
@@ -370,7 +370,7 @@ def test_p1_iid_bootstrap_under_dependence_blocked():
     dep = {"structure": "CLUSTERED", "horizon_bars": 10, "min_spacing_bars": 2, "cluster_size": 4,
            "design_effect_basis": {"type": "PR59_CLUSTER_MODEL_MATCH"}}
     card = assess(plan(dependence=dep, inference_method="IID_BOOTSTRAP"))
-    assert card["status"] == "METHOD_BLOCKED" and "IID_INFERENCE_UNDER_DEPENDENCE" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:METHOD_BLOCKED" and "IID_INFERENCE_UNDER_DEPENDENCE" in card["reasons"]
 
 
 def test_p1_analytic_power_does_not_certify():
@@ -378,20 +378,20 @@ def test_p1_analytic_power_does_not_certify():
     p = plan(effect__economic_min_net_effect=0.5, frequency={"events_per_year": 200, "window_years": 2},
              dispersion__sigma_paired_difference=3.105)
     card = assess(p)
-    assert card["status"] == "DATA_REQUIRED"
+    assert card["status"] == "TEST_ONLY:DATA_REQUIRED"
     assert "NO_SIMULATED_PR59_CELL_LOWER_POWER_BOUND_REACHES_TARGET" in card["reasons"]
     assert "not used to certify" in card["numbers"]["indicative_analytic"]["note"]
 
 
 def test_p1_screening_estimate_requires_n_and_family():
     card = assess(plan(effect__screening={"estimate": 2.0}))
-    assert card["status"] == "NOT_ASSESSABLE" and "SCREENING_ESTIMATE_INCOMPLETE" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE" and "SCREENING_ESTIMATE_INCOMPLETE" in card["reasons"]
 
 
 def test_p1_curse_factor_not_transferred_to_other_family():
     scr = {"estimate": 2.0, "n": 47, "family_size": 21, "selection_rule": "BH_Q0.10"}
     card = assess(plan(effect__screening=scr))
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
     assert "WINNERS_CURSE_NOT_CALIBRATED_FOR_SCREENING_CONFIG" in card["reasons"]
 
 
@@ -418,23 +418,23 @@ def test_p1_three_effects_are_distinguished():
 ])
 def test_p1_invalid_inputs_fail_closed_without_exceptions(change):
     card = assess(plan(**change))
-    assert card["status"] == "NOT_ASSESSABLE" and card["reasons"]
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE" and card["reasons"]
 
 
 def test_p1_not_a_mapping():
-    assert G.assess(["not", "a", "plan"], cal=CAL, registry=REG)["status"] == "NOT_ASSESSABLE"
+    assert G.assess_test_only(["not", "a", "plan"], cal=CAL, registry=REG)["status"] == "TEST_ONLY:NOT_ASSESSABLE"
 
 
 # ---------- screening and published case ----------
 
 def test_screening_ceiling_and_family_alpha():
     base = plan(purpose="SCREENING", confirmation_family=DROP)
-    assert assess(base)["status"] == "NOT_ASSESSABLE"
+    assert assess(base)["status"] == "TEST_ONLY:NOT_ASSESSABLE"
     one = copy.deepcopy(base); one["family_size"] = 1
     card = assess(one)
-    assert card["status"] == "POWER_READY" and card["evidence_ceiling"] == "DISCOVERY_ONLY"
+    assert card["status"] == "TEST_ONLY:POWER_READY" and card["evidence_ceiling"] == "NONE (TEST_ONLY)"
     many = copy.deepcopy(base); many["family_size"] = 21
-    assert assess(many)["status"] == "NOT_ASSESSABLE"
+    assert assess(many)["status"] == "TEST_ONLY:NOT_ASSESSABLE"
 
 
 def test_published_breakout_acc_confirmation_needs_new_data():
@@ -443,7 +443,7 @@ def test_published_breakout_acc_confirmation_needs_new_data():
              frequency={"events_per_year": 6.7, "window_years": 7.3},
              datasets=[{"dataset_id": "BREAKOUT_ACC::2019.02.21_2026.06.09", "split": "discovery"}])
     card = assess(p)
-    assert card["status"] == "DATA_REQUIRED" and "CONFIRMATION_ON_EXPOSED_DATA" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:DATA_REQUIRED" and "CONFIRMATION_ON_EXPOSED_DATA" in card["reasons"]
     assert card["numbers"]["indicative_analytic"]["n_required"] > 900
     assert math.isfinite(card["numbers"]["indicative_analytic"]["mde_at_n_expected"])
 
@@ -455,18 +455,18 @@ def test_r2_p0_traversed_window_with_all_flags_false_is_not_unseen():
     assert not any(rec[f] for f in G.EXPOSURE_FLAGS)
     ds = {"dataset_id": rid, "split": "discovery", "symbol": "GOLD", "timeframe": "D1",
           "date_range": rec["date_range"]}
-    card = G.assess(plan(datasets=[ds]), cal=CAL, registry=G.exposure_registry())
-    assert card["status"] == "DATA_REQUIRED" and "CONFIRMATION_ON_EXPOSED_DATA" in card["reasons"]
+    card = G.assess_test_only(plan(datasets=[ds]), cal=CAL, registry=G.exposure_registry())
+    assert card["status"] == "TEST_ONLY:DATA_REQUIRED" and "CONFIRMATION_ON_EXPOSED_DATA" in card["reasons"]
 
 
 def test_r2_p0_untouched_but_unverified_or_unknown_flags_is_not_proof():
     unverified = {**SYNTH_RECORD, "holdout_status": "UNVERIFIED - availability unknown"}
-    card = G.assess(READY, cal=CAL, registry={**REG, SYNTH_RECORD["dataset_id"]: unverified})
-    assert card["status"] == "NOT_ASSESSABLE" and any(r.startswith("DATASET_UNTOUCHED_STATUS_NOT_PROVEN")
+    card = G.assess_test_only(READY, cal=CAL, registry={**REG, SYNTH_RECORD["dataset_id"]: unverified})
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE" and any(r.startswith("DATASET_UNTOUCHED_STATUS_NOT_PROVEN")
                                                        for r in card["reasons"])
     unknown = {**SYNTH_RECORD, "oos_exposure": None}
-    card = G.assess(READY, cal=CAL, registry={**REG, SYNTH_RECORD["dataset_id"]: unknown})
-    assert card["status"] == "NOT_ASSESSABLE" and any(r.startswith("DATASET_EXPOSURE_FLAGS_UNKNOWN")
+    card = G.assess_test_only(READY, cal=CAL, registry={**REG, SYNTH_RECORD["dataset_id"]: unknown})
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE" and any(r.startswith("DATASET_EXPOSURE_FLAGS_UNKNOWN")
                                                        for r in card["reasons"])
 
 
@@ -486,7 +486,7 @@ def test_r3_alpha_010_family_of_one_is_not_ready():
     p = plan(purpose="SCREENING", confirmation_family=DROP, alpha=0.10)
     p["family_size"] = 1
     card = assess(p)
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
     assert "ALPHA_PER_TEST_0.1_NOT_SIMULATED_0.05" in card["reasons"]
     assert any("exactly this alpha" in e for e in card["numbers"]["evidence_needed"])
 
@@ -494,8 +494,8 @@ def test_r3_alpha_010_family_of_one_is_not_ready():
 def test_r3_alpha_005_family_of_one_reaches_level_stage():
     p = plan(purpose="SCREENING", confirmation_family=DROP)
     p["family_size"] = 1
-    assert assess(p)["status"] == "POWER_READY"                      # hypothetical qualified level
-    assert assess(p, cal=CAL)["status"] == "NOT_ASSESSABLE"           # real PR #59 calibration
+    assert assess(p)["status"] == "TEST_ONLY:POWER_READY"                      # hypothetical qualified level
+    assert assess(p, cal=CAL)["status"] == "TEST_ONLY:NOT_ASSESSABLE"           # real PR #59 calibration
 
 
 @pytest.mark.parametrize("family,code", [(3, "ALPHA_PER_TEST_0.01667_NOT_SIMULATED_0.05"),
@@ -504,10 +504,10 @@ def test_r3_multiplicity_corrected_alpha_is_not_simulated(family, code):
     p = plan(purpose="SCREENING", confirmation_family=DROP)
     p["family_size"] = family
     card = assess(p)
-    assert card["status"] == "NOT_ASSESSABLE" and code in card["reasons"]
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE" and code in card["reasons"]
 
 
-@pytest.mark.parametrize("value,status", [("ONE_SIDED", "NOT_ASSESSABLE"), (DROP, "NOT_ASSESSABLE")])
+@pytest.mark.parametrize("value,status", [("ONE_SIDED", "TEST_ONLY:NOT_ASSESSABLE"), (DROP, "TEST_ONLY:NOT_ASSESSABLE")])
 def test_r3_test_sidedness_must_match(value, status):
     assert assess(plan(test_sidedness=value))["status"] == status
 
@@ -524,7 +524,7 @@ def test_r3_contains_005_rule_is_gone():
 
 def test_r3_real_pr59_calibration_cannot_qualify_the_level():
     card = assess(READY, cal=CAL)
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
     assert card["reasons"] == ["LEVEL_CALIBRATION_NOT_PREREGISTERED", "CALIBRATION_PROTOCOL_HAS_NO_LEVEL_QUALIFICATION"]
     assert "pre-registered criterion" in card["numbers"]["evidence_needed"][0]
 
@@ -532,7 +532,7 @@ def test_r3_real_pr59_calibration_cannot_qualify_the_level():
 def test_r3_pr59_replications_fail_even_a_preregistered_criterion():
     # Applying the strict criterion to the real 400-replication counts (not a tolerance): it fails.
     card = assess(READY, cal=_qualified(CAL, reps=400, lq={**LEVEL_QUALIFICATION, "min_reps_per_cell": 400}))
-    assert card["status"] == "METHOD_BLOCKED" and "LEVEL_NOT_DEMONSTRATED_AT_NOMINAL" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:METHOD_BLOCKED" and "LEVEL_NOT_DEMONSTRATED_AT_NOMINAL" in card["reasons"]
 
 
 @pytest.mark.parametrize("lq", [
@@ -545,12 +545,12 @@ def test_r3_pr59_replications_fail_even_a_preregistered_criterion():
 ])
 def test_r3_invalid_level_qualification_is_not_assessable(lq):
     card = assess(READY, cal=_qualified(CAL, lq=lq))
-    assert card["status"] == "NOT_ASSESSABLE" and "LEVEL_CALIBRATION_NOT_PREREGISTERED" in card["reasons"]
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE" and "LEVEL_CALIBRATION_NOT_PREREGISTERED" in card["reasons"]
 
 
 def test_r3_cells_below_min_reps_fail():
     card = assess(READY, cal=_qualified(CAL, reps=1000))
-    assert card["status"] == "METHOD_BLOCKED"
+    assert card["status"] == "TEST_ONLY:METHOD_BLOCKED"
 
 
 # ---------- Review 3, finding 3: integrity on canonical Git blob bytes ----------
@@ -614,17 +614,103 @@ def test_r3_no_repository_is_not_a_versioned_attestation(tmp_path):
 def test_r3_calibration_integrity_failure_is_not_assessable():
     broken = {**QCAL, "source_integrity": "FAILED:WORKTREE_DIFFERS_FROM_GIT_BLOB"}
     card = assess(READY, cal=broken)
-    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
     assert card["reasons"] == ["CALIBRATION_SOURCE_INTEGRITY_FAILED:WORKTREE_DIFFERS_FROM_GIT_BLOB"]
 
 
-def test_r3_windows_crlf_copy_of_frozen_results_keeps_recorded_hash(tmp_path):
-    # Windows checkout with core.autocrlf=true: same blob, CRLF working bytes, same attested hash.
-    lf = Path(G.CALIBRATION_PATH).read_bytes()
-    assert b"\r\n" not in lf
+def _canonical_lf_bytes(path):
+    """LF bytes of a frozen text artifact, independent of the checkout's line endings."""
+    lf = Path(path).read_bytes().replace(b"\r\n", b"\n")
+    assert hashlib.sha256(lf).hexdigest() == G.PR59_RESULTS_SHA256
+    return lf
+
+
+@pytest.mark.parametrize("variant", ["LF", "CRLF"])
+def test_r4_frozen_results_copy_keeps_recorded_hash_for_any_line_ending(tmp_path, variant):
+    lf = _canonical_lf_bytes(G.CALIBRATION_PATH)
+    data = lf if variant == "LF" else lf.replace(b"\n", b"\r\n")
     (tmp_path / ".git").mkdir()
-    (tmp_path / "results_v1.json").write_bytes(lf.replace(b"\n", b"\r\n"))
+    (tmp_path / "results_v1.json").write_bytes(data)
     sha, rep = G.artifact_sha256(str(tmp_path / "results_v1.json"))
-    assert rep == "GIT_CANONICAL_EOL_NORMALIZED"
-    assert sha == "c538a5d2f3d65a42ac2f71bc52039e67636e9d16e25c6e443134f6e1732a05d4"
-    assert hashlib.sha256(lf.replace(b"\n", b"\r\n")).hexdigest() != sha
+    assert rep == "GIT_CANONICAL_EOL_NORMALIZED" and sha == G.PR59_RESULTS_SHA256
+    if variant == "CRLF":
+        assert hashlib.sha256(data).hexdigest() != sha
+
+
+def test_r4_modified_frozen_results_copy_fails(tmp_path):
+    lf = _canonical_lf_bytes(G.CALIBRATION_PATH)
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "results_v1.json").write_bytes(lf.replace(b'"reps": 400', b'"reps": 401', 1).replace(b"\n", b"\r\n"))
+    assert G.artifact_sha256(str(tmp_path / "results_v1.json"))[0] != G.PR59_RESULTS_SHA256
+
+
+def test_r4_binary_frozen_artifact_hashed_as_is_in_repo():
+    path = ROOT / "server/research_scripts/contextual_edge_phase1/macd_selection_manifest_v1.json"
+    sha, rep = G.artifact_sha256(str(path))
+    assert rep == "GIT_CANONICAL_BINARY_AS_IS" and sha == hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+# ---------- Review 4, finding 1: protocol provenance ----------
+
+def test_r4_calibration_pins_results_and_protocol_identities():
+    assert CAL["source_integrity"] == "VERIFIED"
+    assert CAL["protocol_sha256"] == G.PR59_PROTOCOL_SHA256 and CAL["source_sha256"] == G.PR59_RESULTS_SHA256
+    assert CAL["level_qualification"] is None
+
+
+def test_r4_substitute_protocol_with_level_qualification_is_rejected(tmp_path, monkeypatch):
+    # Attack on 5bb7303: a substitute protocol carrying a level qualification was read unchecked.
+    import json
+    doc = json.loads(Path(G.CALIBRATION_PROTOCOL_PATH).read_text(encoding="utf-8"))
+    doc["level_qualification"] = LEVEL_QUALIFICATION
+    (tmp_path / ".git").mkdir()
+    fake = tmp_path / "protocol_v1.json"
+    fake.write_text(json.dumps(doc), encoding="utf-8")
+    monkeypatch.setattr(G, "CALIBRATION_PROTOCOL_PATH", str(fake))
+    cal = G.calibration()
+    assert cal["source_integrity"] == "FAILED:PROTOCOL_IDENTITY" and cal["level_qualification"] is None
+    card = G.assess_test_only(READY, cal=cal, registry=REG)
+    assert card["status"] == "TEST_ONLY:NOT_ASSESSABLE"
+    assert card["reasons"] == ["CALIBRATION_SOURCE_INTEGRITY_FAILED:PROTOCOL_IDENTITY"]
+
+
+def test_r4_edited_manifest_cannot_vouch_for_a_substitute(tmp_path, monkeypatch):
+    import json
+    manifest = json.loads(Path(G.CALIBRATION_MANIFEST_PATH).read_text(encoding="utf-8"))
+    manifest["artifacts_sha256"]["protocol_v1.json"] = "0" * 64
+    fake = tmp_path / "manifest_v1.json"
+    fake.write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setattr(G, "CALIBRATION_MANIFEST_PATH", str(fake))
+    assert G.calibration()["source_integrity"] == "FAILED:PROTOCOL_IDENTITY"
+
+
+# ---------- Review 4, finding 2: no calibration override in production ----------
+
+def test_r4_production_interface_has_no_override():
+    import inspect
+    assert list(inspect.signature(G.assess).parameters) == ["plan"]
+    with pytest.raises(TypeError):
+        G.assess(READY, cal=QCAL)
+    with pytest.raises(TypeError):
+        G.assess(READY, registry=REG)
+
+
+def test_r4_qcal_only_yields_test_only_cards():
+    card = G.assess_test_only(READY, cal=QCAL, registry=REG)
+    assert card["status"] == "TEST_ONLY:POWER_READY" and card["test_only"] is True
+    assert card["authorizing"] is False and card["evidence_ceiling"] == "NONE (TEST_ONLY)"
+    assert "certify nothing" in card["not_an_authorization"]
+
+
+def test_r4_production_never_uses_a_level_qualification(monkeypatch):
+    # Even if a calibration object carried one, the production path ignores it.
+    monkeypatch.setattr(G, "calibration", lambda: QCAL)
+    monkeypatch.setattr(G, "exposure_registry", lambda: REG)
+    card = G.assess(READY)
+    assert card["status"] == "NOT_ASSESSABLE" and card["test_only"] is False
+    assert "LEVEL_CALIBRATION_NOT_PREREGISTERED" in card["reasons"]
+
+
+def test_r4_production_status_vocabulary_has_no_test_prefix():
+    card = G.assess(READY)
+    assert card["status"] in G.STATUSES and card["status"] != "POWER_READY"

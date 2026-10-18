@@ -1,11 +1,13 @@
-# NEXUS Power Gate V1 (rules V1.3)
+# NEXUS Power Gate V1 (rules V1.4)
 
 Date: 2026-10-18. Pre-experiment power assessment for trading experiments. No backtest, no screening, no holdout, no market data read.
 
-- Module: `server/research_scripts/research_intelligence_v1/power_gate.py` (`assess(plan) -> Power Decision Card`).
+- Module: `server/research_scripts/research_intelligence_v1/power_gate.py`.
+  - Production interface: `assess(plan)`, which takes **no** calibration or registry argument.
+  - Isolated logic tests: `assess_test_only(plan, cal=..., registry=...)`. Its cards are marked `test_only: true`, carry a status prefixed `TEST_ONLY:`, are never authorizing, and can never read `POWER_READY`.
 - Tests: `server/tests/test_power_gate_v1.py`, with two synthetic fixtures in `server/tests/fixtures/power_gate/`.
 - Calibration source: `server/research_scripts/edge_detection_capability_v1/results_v1.json` (PR #59, verdict `PIPELINE_UNDERPOWERED`), read only.
-- V1.1 addresses the first Codex review of PR #60 (1 P0, 5 P1, confirmatory multiplicity). V1.2 addresses the second review (base `6a42669`: provenance P0, preregistration, calibrated range, statistical uncertainty). V1.3 addresses the third review (base `6d49b6a`: exact alpha/procedure, pre-registered level calibration, Windows-safe integrity). All tables are at the end.
+- V1.1 addresses the first Codex review of PR #60 (1 P0, 5 P1, confirmatory multiplicity). V1.2 addresses the second review (base `6a42669`: provenance P0, preregistration, calibrated range, statistical uncertainty). V1.3 addresses the third review (base `6d49b6a`: exact alpha/procedure, pre-registered level calibration, Windows-safe integrity). V1.4 closes the fourth review (base `5bb7303`: protocol provenance, synthetic-calibration override, CRLF test). All tables are at the end.
 
 ## Principle
 
@@ -29,9 +31,11 @@ Anything outside the box is `NOT_ASSESSABLE`, and the card lists the evidence th
 
 **Nothing, with the current evidence.** PR #59 froze only a point-estimate band for type I, [0.025, 0.075] (`protocol_v1.json`, `success_criteria.calibration`). It has no pre-registered level qualification, so the gate returns `NOT_ASSESSABLE` (`LEVEL_CALIBRATION_NOT_PREREGISTERED`) for every plan that reaches the level stage. Writing such a criterion now, after seeing the results, would be a retroactive tolerance.
 
+The production path never reads a level qualification from any file and ignores one carried by a calibration object. A future qualification would have to be bound to an independent, identifiable protocol whose freezing before the results is demonstrable. That is not implemented now: there is nothing to verify, and adding it would be a speculative path to `POWER_READY`.
+
 For reference only: applied to the 400-replication counts, the strict criterion fails anyway (`test_r3_pr59_replications_fail_even_a_preregistered_criterion`). For example, 19/400 = 0.0475 gives Wilson 95% [0.0306, 0.0730], and 12/400 = 0.03 has an upper bound above 0.05 after Bonferroni.
 
-**Evidence needed:** an independent level-calibration study whose protocol is frozen before results. It needs the criterion above, a confidence level, Bonferroni over the cells used, and enough replications per cell for the bound to be reachable (e.g. ≥ 2,000; 4,000 in the test fixture). Once such a study exists, the design that could become ready is the independent-events paired ATR difference vs one regime-matched control, two-sided α 0.05, inside the simulated n / effect / σ box, with a method whose null cells pass. The tests exercise this path with a **hypothetical** qualified calibration (`QCAL`) that never reaches production code.
+**Evidence needed:** an independent level-calibration study whose protocol is frozen before results. It needs the criterion above, a confidence level, Bonferroni over the cells used, and enough replications per cell for the bound to be reachable (e.g. ≥ 2,000; 4,000 in the test fixture). Once such a study exists, the design that could become ready is the independent-events paired ATR difference vs one regime-matched control, two-sided α 0.05, inside the simulated n / effect / σ box, with a method whose null cells pass. The tests exercise this path with a **hypothetical** qualified calibration (`QCAL`), only through `assess_test_only`. Those cards read `TEST_ONLY:…` and cannot be promoted.
 
 Confirmations also need a dataset that the canonical registry shows as never touched. None exists today.
 
@@ -116,7 +120,12 @@ With new, verified data the same plan would be `NOT_ASSESSABLE`, because R-unit 
 
 A Windows checkout with `core.autocrlf=true` and a Linux checkout of the same blob therefore attest the same hash. Outside a repository the representation is `PHYSICAL_BYTES_NO_GIT_REPO`, which the gate does not accept for versioned artifacts. A text blob that really contains CRLF would mismatch and fail closed.
 
-The calibration source is accepted only when its canonical hash equals the one recorded in the PR #59 manifest. The PR #59 integrity test uses the same function. No frozen file was modified.
+The calibration source is accepted (`source_integrity: VERIFIED`) only when all of the following hold:
+- the canonical hashes of `results_v1.json` **and** `protocol_v1.json` equal the PR #59 identities pinned in code (`PR59_RESULTS_SHA256`, `PR59_PROTOCOL_SHA256`);
+- the manifest records the same two hashes;
+- the results name the same protocol.
+
+A substitute file or an edited manifest therefore fails (`FAILED:RESULTS_IDENTITY` / `FAILED:PROTOCOL_IDENTITY`). The PR #59 integrity test uses the same function. No frozen file was modified.
 
 ## Remaining scientific limits
 
@@ -163,3 +172,11 @@ It would use synthetic data only and follow the same protocol rules. This needs 
 | Alpha | `POWER_READY` with α=0.10, family of one | α per test must equal the simulated 0.05 exactly, and the test must be two-sided, as simulated. Anything else → `NOT_ASSESSABLE` with `evidence_needed`. | `test_r3_alpha_010_family_of_one_is_not_ready`, `test_r3_alpha_005_family_of_one_reaches_level_stage`, `test_r3_multiplicity_corrected_alpha_is_not_simulated` (families 3 and 21), `test_r3_test_sidedness_must_match` |
 | Type I error | M3 19/400 = 0.0475, Wilson [0.0306, 0.0730] accepted by "interval contains 0.05" | Rule removed. A pre-registered level qualification is required (Wilson upper bound ≤ nominal, Bonferroni over cells, min replications, frozen before results). PR #59 has none → `NOT_ASSESSABLE`. | `test_r3_contains_005_rule_is_gone`, `test_r3_real_pr59_calibration_cannot_qualify_the_level`, `test_r3_pr59_replications_fail_even_a_preregistered_criterion`, `test_r3_invalid_level_qualification_is_not_assessable` (6 cases), `test_r3_cells_below_min_reps_fail` |
 | SHA-256 on Windows | Physical-byte hashing breaks on a CRLF checkout | Canonical Git-blob representation (CRLF→LF for text, as-is for binary attributes), stdlib only. Calibration integrity is checked against the PR #59 manifest. The PR #59 integrity test uses the same function. | `test_r3_pr59_artifact_hash_is_the_git_blob_hash`, `test_r3_crlf_checkout_keeps_the_canonical_hash` (real git, `eol=crlf`), `test_r3_windows_crlf_copy_of_frozen_results_keeps_recorded_hash`, `test_r3_binary_attributed_files_*`, `test_r3_no_repository_*`, `test_r3_calibration_integrity_failure_is_not_assessable` |
+
+## Fourth Codex review (base 5bb7303) → changes → tests
+
+| Finding | Reproduced on 5bb7303 | Change | Regression tests |
+|---|---|---|---|
+| Protocol provenance | A substitute `protocol_v1.json` carrying a level qualification was read unchecked (integrity still `VERIFIED`) | Results and protocol identities pinned in code and cross-checked against the manifest and `results.meta`. No level qualification is read from files; production ignores any. | `test_r4_calibration_pins_*`, `test_r4_substitute_protocol_*`, `test_r4_edited_manifest_*` |
+| QCAL override | `assess(READY, cal=QCAL)` → `POWER_READY`, `VERIFIED` | `assess(plan)` takes no override. Synthetic runs go only through `assess_test_only`, whose cards are `TEST_ONLY:`, non-authorizing and never `POWER_READY`. No other call site exists outside the tests. | `test_r4_production_interface_has_no_override`, `test_r4_qcal_only_yields_test_only_cards`, `test_r4_production_never_uses_a_level_qualification`, `test_r4_production_status_vocabulary_*` |
+| CRLF test | The test assumed LF physical bytes, so it failed on a Windows checkout | The LF fixture is derived from canonical bytes (CRLF→LF) and checked against the pinned hash. LF, CRLF, modified and binary cases are covered. No PR #59 artifact changed. | `test_r4_frozen_results_copy_*` (LF, CRLF), `test_r4_modified_frozen_results_copy_fails`, `test_r4_binary_frozen_artifact_*` |
