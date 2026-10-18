@@ -28,11 +28,13 @@ Known effects were added only to in-memory copies of outcomes; prices and datase
 | Method | Independent events | Clustered events |
 |---|---|---|
 | M1 IID bootstrap | 0.03–0.06 at n≥47; 0.08–0.10 at n≤25 | **0.17–0.29**, CI coverage 0.71–0.85 |
-| M2 block sign-flip | 0.00–0.05 | 0.03–0.08 (no power at n=12) |
-| M3 studentized block bootstrap | 0.00–0.05 | 0.03–0.07 |
+| M2 block sign-flip | 0.00–0.05 | 0.00–**0.0825** (one cell above 0.075; no power at n=12) |
+| M3 studentized block bootstrap | 0.00–0.05 | 0.03–0.0725 |
 | M4 HAC Newey-West | 0.13 at n=12 | 0.22 at n=12 |
 
-Effect estimates are unbiased. The block methods in the engine are calibrated and should be the primary test whenever outcome windows overlap or events cluster.
+Effect estimates are unbiased. M3 is the only method never above the 0.075 ceiling; M2 exceeds it once (0.0825, clustered n=200, about half a Monte Carlo standard error). Both are conservative (< 0.025) in some cells. M3 should be the primary test whenever outcome windows overlap or events cluster.
+
+> Correction: the original Decision Card (kept unchanged as evidence) rounded the block methods to "≤ 0.08, calibrated in all configurations". The exact figures above prevail; the verdict does not change.
 
 ### Power (80% target)
 
@@ -63,7 +65,7 @@ Phase 7.27 ("none beats the regime-matched benchmark", n=10–39) had power ≤ 
 1. Declare the smallest net edge worth trading, after costs.
 2. Required trades: n = DEFF × (2.8 × σ / edge)², σ from the strategy's own outcomes (prior 1.4–2.4R), DEFF = 1 if independent, ≥ 2 if clustered.
 3. If the data window cannot reach n: EXPLORATORY_ONLY — no confirmatory claim, no promotion.
-4. Dependence-aware tests (M2/M3) are primary when windows overlap; M1 only with demonstrated independence and n ≥ 47.
+4. Dependence-aware tests (M3, or M2 at n ≥ 25) are primary when windows overlap; M1 only with demonstrated independence and n ≥ 47.
 5. Size confirmations on a shrunken screening estimate (at least halved at n ≤ 200).
 
 This is a proposal; adopting it is a separate human decision.

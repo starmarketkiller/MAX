@@ -46,10 +46,11 @@ def test_verdict_follows_from_results():
     # Scoped calibration defect: IID bootstrap liberal under clustered events.
     clustered_null = [c["rejection_rate"]["M1"] for c in sig if c["gen"] == "G_C" and c["delta_atr"] == 0]
     assert min(clustered_null) > 0.075
-    # Block methods calibrated under both generators at delta=0.
-    for c in sig:
-        if c["delta_atr"] == 0 and c["gen"] in ("G_U", "G_C"):
-            assert c["rejection_rate"]["M2"] <= 0.08 and c["rejection_rate"]["M3"] <= 0.08
+    # A calibrated dependence-aware alternative exists: M3 never above 0.075.
+    # M2 exceeds it once (0.0825, clustered n=200), recorded in the manifest.
+    null = [c for c in sig if c["delta_atr"] == 0 and c["gen"] in ("G_U", "G_C")]
+    assert max(c["rejection_rate"]["M3"] for c in null) <= 0.075
+    assert max(c["rejection_rate"]["M2"] for c in null) == 0.0825
     # Underpowered: no economically relevant edge reaches 80% power at n <= 50.
     for c in res["trade"]:
         if c["n"] <= 50 and c["deltaR"] in (0.1, 0.2, 0.3):

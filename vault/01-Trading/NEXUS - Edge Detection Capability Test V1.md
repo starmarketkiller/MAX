@@ -15,8 +15,9 @@ falsi positivi, potenza, bias e copertura. Nessun holdout, nessun backtest.
 
 **Verdetto: `PIPELINE_UNDERPOWERED`**, più un difetto di calibrazione
 circoscritto: il bootstrap IID (usato in 7.21/7.25/7.27) dà 17-29% di falsi
-positivi quando gli eventi sono raggruppati; i metodi a blocchi
-dell'engine restano calibrati.
+positivi quando gli eventi sono raggruppati. Lo studentized block bootstrap
+dell'engine non supera mai 0,075 (max 0,0725); il block sign-flip lo supera
+una volta (0,0825, n=200).
 
 - Con 47 trade la potenza è 12-34% per edge di 0,2-0,3R; per 0,3R servono
   ~180-500 trade, per 0,2R ~400-1.100.
