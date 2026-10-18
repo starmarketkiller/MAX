@@ -1,0 +1,7 @@
+{
+ "fixture": "synthetic confirmation-family preregistration for test_power_gate_v1",
+ "protocol_version": "SYNTH_CONFIRMATION_PROTOCOL_V1",
+ "experiment_ids": ["SYNTH_READY"],
+ "alpha_allocation": "BONFERRONI",
+ "alpha": 0.05
+}

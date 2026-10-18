@@ -3,19 +3,30 @@
 Offline and fast: checks artifact hashes against the manifest and that the
 recorded verdict follows from the committed results under the frozen
 decision rule. It does not re-run the simulation (about 15 minutes).
+
+Hashes are verified on the canonical Git-blob bytes (power_gate.artifact_sha256),
+not on the physical checkout bytes: the manifest hashes were recorded on the LF
+blob content, and a Windows checkout with core.autocrlf rewrites the working files
+to CRLF without changing the versioned artifact.
 """
 from __future__ import annotations
 
-import hashlib
 import json
+import sys
 from pathlib import Path
 
 STUDY = Path(__file__).resolve().parents[1] / "research_scripts" / "edge_detection_capability_v1"
 ROOT = Path(__file__).resolve().parents[2]
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "research_scripts"))
+from research_intelligence_v1.power_gate import CANONICAL_REPRESENTATIONS, artifact_sha256  # noqa: E402
+
+
 def _sha(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    sha, representation = artifact_sha256(str(path))
+    assert representation in CANONICAL_REPRESENTATIONS, f"{path}: {representation}"
+    return sha
 
 
 def _load(name: str):
