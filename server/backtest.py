@@ -21,6 +21,7 @@ import io
 import json
 import math
 import os
+import re
 import time
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -595,14 +596,20 @@ def _regime_series(atr, adx):
     return out
 
 
-def _prep(candles, intraday_ref=None, snr_ref=None):
+def _prep(candles, intraday_ref=None, snr_ref=None, timeframe=None):
     closes = [c["close"] for c in candles]
     psar, psar_trend = psar_series(candles)
     ema12 = ema_series(closes, 12)
     ema26 = ema_series(closes, 26)
     macd_line, macd_sig = _macd_signal_series(ema12, ema26)
     atr_s = atr_series(candles, 14)
-    sess = _session_amd_series(candles, intraday_ref=intraday_ref)
+    # V3 (P0, Codex): cadenza di `candles` dichiarata dal chiamante
+    # (run_backtest conosce il proprio timeframe gia' validato), mai
+    # dedotta dall'array - vedi _session_amd_series_raw. Se intraday_ref
+    # e' presente, _session_amd_series la ignora e usa comunque M15 per
+    # quella serie (contratto di _load_dukascopy_m15), non per `candles`.
+    sess = _session_amd_series(candles, intraday_ref=intraday_ref,
+                                declared_cadence_seconds=_declared_cadence_for_timeframe(timeframe))
     weekly_pwh, weekly_pwl, weekly_open = _weekly_levels_series(candles)
     monthly_pmh, monthly_pml = _monthly_levels_series(candles)
     sb_signal, sb_sweep_level = _silver_bullet_series(
@@ -2745,14 +2752,102 @@ def _cisd_true_sl_tp(c, ind, i, direction, entry, atr):
 # / reversal_distribution (chiusura di rientro dopo la manipolazione).
 # CHoCH: stesso proxy failure-swing gia' usato per TURTLE_SOUP/IFVG (non è
 # il vero g_struct fractal-based di MQL5 - approssimazione dichiarata).
-def _session_amd_series_raw(candles):
+_BAR_TIME_RE = re.compile(
+    r'^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(Z|[+-]\d{2}:?\d{2})?$'
+)
+
+
+def _parse_bar_utc_fields(time_str):
+    """NXLAB-AUDIT-ASIAN-LOOKAHEAD-001 V2 (P1): formato supportato in modo
+    esplicito: "YYYY-MM-DD HH:MM" o "YYYY-MM-DDTHH:MM" (secondi opzionali),
+    con offset opzionale esplicito ("Z", "+HH:MM"/"+HHMM", "-HH:MM"/"-HHMM").
+
+    - Nessun offset ("YYYY-MM-DD HH:MM", il formato storico del motore):
+      trattato come GIA' UTC - comportamento invariato per ogni fixture
+      esistente, nessuna reinterpretazione.
+    - Offset esplicito presente: normalizzato ad UTC per sottrazione
+      aritmetica diretta (l'offset stesso codifica gia' lo stato DST di
+      quell'istante - nessuna regola DST propria, nessuna ambiguita').
+    - Formato non riconosciuto o data/ora non valida (es. "25:70"): fail
+      CLOSED, ritorna (None, None, None) - MAI un'interpretazione silenziosa
+      come UTC. Il chiamante esclude la barra dalla classificazione di
+      sessione invece di proseguire su un valore indovinato.
+
+    Ritorna (epoch_utc_int, date_str_utc, hour_utc) o (None, None, None).
+    """
+    m = _BAR_TIME_RE.match(time_str.strip())
+    if not m:
+        return None, None, None
+    y, mo, da, hh, mi, ss, off = m.groups()
+    try:
+        base = datetime(int(y), int(mo), int(da), int(hh), int(mi), int(ss or 0))
+    except ValueError:
+        return None, None, None
+    if off is None or off == "Z":
+        utc_dt = base
+    else:
+        sign = 1 if off[0] == "+" else -1
+        digits = off[1:].replace(":", "")
+        off_h, off_m = int(digits[:2]), int(digits[2:4])
+        # V3 (P1, Codex): "+24:00" e "+00:99" passavano la regex (2 cifre
+        # ciascuno) ma non sono un orario valido - timedelta() non li
+        # rifiuta (normalizza l'overflow invece di segnalarlo). Un offset
+        # UTC reale e' sempre un orario valido: ore 0-23, minuti 0-59.
+        if off_h > 23 or off_m > 59:
+            return None, None, None
+        utc_dt = base - sign * timedelta(hours=off_h, minutes=off_m)
+    epoch = int(utc_dt.replace(tzinfo=timezone.utc).timestamp())
+    return epoch, utc_dt.strftime("%Y-%m-%d"), utc_dt.hour
+
+
+def _bar_epoch_utc(time_str):
+    """V3 (P1, Codex): unica logica di parsing/validazione fra la funzione
+    raw e il wrapper _session_amd_series - prima quest'ultimo usava ancora
+    _epoch_utc() (strptime rigido, nessun offset) per la propria aritmetica
+    di confine, mentre _parse_bar_utc_fields() (raw) gia' gestiva gli
+    offset: stesso input, due esiti diversi (e un crash su timestamp
+    timezone-aware nel wrapper). Qui si fallisce in modo esplicito (eccezione,
+    non un sentinel silenzioso) perche' il chiamante usa questi epoch in
+    ricerche binarie su array ordinati: un valore indovinato vi si
+    inserirebbe silenziosamente al posto sbagliato - fail-closed vuol dire
+    fermarsi, non proseguire con un numero inventato."""
+    epoch, _, _ = _parse_bar_utc_fields(time_str)
+    if epoch is None:
+        raise ValueError(f"timestamp non riconosciuto o non valido: {time_str!r}")
+    return epoch
+
+
+# V3 (P0, Codex): contratto di cadenza dichiarato esplicitamente dal
+# chiamante (timeframe gia' validato altrove nel percorso produttivo - vedi
+# run_backtest: normalized_tf/raw_tf, SUPPORTED_TIMEFRAMES), non piu'
+# dedotto dall'array di barre. Stessa nomenclatura di _EXECUTION_TIMEFRAME_
+# ALIASES/SUPPORTED_TIMEFRAMES: non e' una cadenza "a caso", e' il secondo-
+# equivalente dei codici timeframe gia' dichiarati e validati altrove.
+_TF_SECONDS = {
+    "5m": 300, "15m": 900, "30m": 1800,
+    "1h": 3600, "4h": 14400, "1d": 86400, "1wk": 604800,
+}
+
+
+def _declared_cadence_for_timeframe(timeframe):
+    """None se il timeframe non e' nella mappa dichiarata - il chiamante
+    deve allora trattare la cadenza come non attestabile (mai un default
+    indovinato)."""
+    if not timeframe:
+        return None
+    raw = str(timeframe).lower()
+    normalized = _EXECUTION_TIMEFRAME_ALIASES.get(raw, raw)
+    return _TF_SECONDS.get(normalized)
+
+
+def _session_amd_series_raw(candles, declared_cadence_seconds=None):
     n = len(candles)
     hour = [None] * n
     date = [None] * n
+    epoch = [None] * n
     for i, cd in enumerate(candles):
-        d, hm = cd["time"].split(" ")
-        date[i] = d
-        hour[i] = int(hm.split(":")[0])
+        e, d, h = _parse_bar_utc_fields(cd["time"])
+        epoch[i], date[i], hour[i] = e, d, h
 
     def _sess(h):
         if h is None:
@@ -2770,14 +2865,22 @@ def _session_amd_series_raw(candles):
     session = [_sess(h) for h in hour]
 
     asian_hi_by_date, asian_lo_by_date = {}, {}
+    asian_epochs_by_date = {}
     day_hi, day_lo = {}, {}
     for i in range(n):
         d = date[i]
+        if d is None:
+            # P1: barra non classificabile (formato ignoto o data/ora non
+            # valida) - esclusa da ogni accumulo per data, mai mescolata
+            # con un'altra barra non classificabile di una data diversa
+            # sotto la stessa chiave None.
+            continue
         day_hi[d] = max(day_hi.get(d, -1e18), candles[i]["high"])
         day_lo[d] = min(day_lo.get(d, 1e18), candles[i]["low"])
         if session[i] == "ASIAN":
             asian_hi_by_date[d] = max(asian_hi_by_date.get(d, -1e18), candles[i]["high"])
             asian_lo_by_date[d] = min(asian_lo_by_date.get(d, 1e18), candles[i]["low"])
+            asian_epochs_by_date.setdefault(d, set()).add(epoch[i])
 
     dates_sorted = sorted(day_hi.keys())
     pdh_by_date, pdl_by_date = {}, {}
@@ -2786,8 +2889,52 @@ def _session_amd_series_raw(candles):
         pdh_by_date[dates_sorted[idx]] = day_hi[prev]
         pdl_by_date[dates_sorted[idx]] = day_lo[prev]
 
-    asian_hi = [asian_hi_by_date.get(date[i]) for i in range(n)]
-    asian_lo = [asian_lo_by_date.get(date[i]) for i in range(n)]
+    # NXLAB-AUDIT-ASIAN-LOOKAHEAD-001 V2/V3 (P0): "sessione conclusa" (si e'
+    # passati a una barra non-ASIAN) NON implica "sessione osservata per
+    # intero" - un gap nei dati (es. barre 00:00-02:00 presenti, 03:00-06:59
+    # mancanti, prima barra successiva alle 08:00) farebbe apparire
+    # asian_hi_by_date come se fosse il massimo VERO della sessione, quando
+    # e' solo il massimo delle poche barre arrivate. Si richiede quindi che
+    # l'insieme delle barre ASIAN osservate per quella data coincida
+    # ESATTAMENTE con l'insieme delle barre attese secondo la cadenza
+    # DICHIARATA dal chiamante (contratto point-in-time, es. il timeframe
+    # validato da run_backtest) sull'intera finestra [00:00, fine ASIAN).
+    # V3 (Codex): la V2 deduceva la cadenza con la moda delle differenze
+    # sull'INTERO array - non causale (aggiungere barre future poteva
+    # cambiare retroattivamente la moda e quindi asian_session_complete di
+    # un giorno passato). Eliminata: senza una cadenza dichiarata, la
+    # completezza resta sempre non verificabile (mai assunta vera per
+    # default) - nessuna barra artificiale creata per colmare gap.
+    cadence_s = declared_cadence_seconds
+    asian_end_hour = 7  # fedele a _sess(): ASIAN = [0, 7) - stessa costante del resto della funzione
+    asian_complete_by_date = {}
+    if cadence_s:
+        for d in asian_epochs_by_date:
+            day_start = int(datetime.strptime(d, "%Y-%m-%d")
+                             .replace(tzinfo=timezone.utc).timestamp())
+            day_end = day_start + asian_end_hour * 3600
+            if (day_end - day_start) % cadence_s != 0:
+                # la cadenza rilevata non divide esattamente la finestra
+                # ASIAN: calendario/cadenza incompatibili, non verificabile
+                asian_complete_by_date[d] = False
+                continue
+            expected = set(range(day_start, day_end, cadence_s))
+            asian_complete_by_date[d] = (asian_epochs_by_date[d] == expected)
+    # cadence_s is None (nessuna cadenza dichiarata dal chiamante): nessuna
+    # data puo' essere dichiarata completa - asian_complete_by_date resta
+    # vuoto, .get(d, False) sotto risolve correttamente a False ovunque.
+    # Deliberato: "non verificabile" e "sessione incompleta" producono lo
+    # stesso esito sicuro (nessun livello Asian disponibile), per questo
+    # non servono stati distinti qui.
+
+    asian_session_complete = [
+        (session[i] != "ASIAN") and bool(asian_complete_by_date.get(date[i], False))
+        for i in range(n)
+    ]
+    asian_hi = [(asian_hi_by_date.get(date[i]) if asian_session_complete[i] else None)
+                for i in range(n)]
+    asian_lo = [(asian_lo_by_date.get(date[i]) if asian_session_complete[i] else None)
+                for i in range(n)]
     pdh = [pdh_by_date.get(date[i]) for i in range(n)]
     pdl = [pdl_by_date.get(date[i]) for i in range(n)]
 
@@ -2796,6 +2943,9 @@ def _session_amd_series_raw(candles):
     for i in range(n):
         ah, al = asian_hi[i], asian_lo[i]
         if ah is None or al is None:
+            # Sessione ASIAN della data ancora in corso (o mai osservata):
+            # nessuna fase valutabile per costruzione - amd_phase[i] resta
+            # None, mai calcolato contro un livello che include barre future.
             continue
         if date[i] != cur_day:
             cur_day = date[i]
@@ -2822,10 +2972,11 @@ def _session_amd_series_raw(candles):
 
     return {"hour": hour, "date": date, "session": session,
             "asian_hi": asian_hi, "asian_lo": asian_lo, "pdh": pdh, "pdl": pdl,
-            "amd_phase": amd_phase}
+            "amd_phase": amd_phase, "asian_session_complete": asian_session_complete}
 
 
-def _session_amd_series(candles, intraday_ref=None):
+def _session_amd_series(candles, intraday_ref=None, declared_cadence_seconds=None,
+                         reference_cadence_seconds=None):
     """Contesto di sessione/Asian-range/AMD per ogni barra di `candles`.
 
     09/08 - bug trovato confrontando col vero MQL5 (NXS_AMDModel.mqh,
@@ -2858,22 +3009,66 @@ def _session_amd_series(candles, intraday_ref=None):
     esattamente il look-ahead che bar_range vuole impedire.
     None (default) = comportamento invariato, calcola da `candles` stesse
     (fallback Yahoo, dove non esiste una serie intraday piu' fine per il
-    periodo testato)."""
-    if not intraday_ref or intraday_ref is candles:
-        return _session_amd_series_raw(candles)
+    periodo testato).
 
-    fine = _session_amd_series_raw(intraday_ref)
-    fine_epochs = [_epoch_utc(c["time"]) for c in intraday_ref]
+    declared_cadence_seconds: contratto di cadenza point-in-time (V3, P0) -
+    cadenza di `candles` (la serie ESTERNA: H1/H4/D1, qualunque sia). Va
+    dichiarato dal chiamante (run_backtest conosce il proprio timeframe
+    validato); se omesso, la cadenza di `candles` resta non attestabile.
+
+    reference_cadence_seconds: cadenza di `intraday_ref` (V4, P0-1 - Codex
+    ha dimostrato che riusare declared_cadence_seconds anche per
+    intraday_ref trasmetteva erroneamente il timeframe ESTERNO, es. H1,
+    alla serie di RIFERIMENTO, che e' SEMPRE M15 Dukascopy per costruzione
+    del percorso produttivo (_load_dukascopy_m15 non restituisce mai
+    nient'altro) - le due cadenze sono concetti indipendenti, non la
+    stessa quantita' con due nomi). Default: M15 quando intraday_ref e'
+    presente e questo parametro non e' sovrascritto esplicitamente."""
+    if not intraday_ref or intraday_ref is candles:
+        return _session_amd_series_raw(candles, declared_cadence_seconds=declared_cadence_seconds)
+
+    # V4 (P0-1): MAI derivare la cadenza di intraday_ref da declared_cadence_
+    # seconds (quella e' la cadenza di `candles`, una serie diversa). Il
+    # default M15 e' il contratto dichiarato di _load_dukascopy_m15, non
+    # un'assunzione nuova introdotta qui.
+    ref_cadence = reference_cadence_seconds if reference_cadence_seconds is not None else _TF_SECONDS["15m"]
+    fine = _session_amd_series_raw(intraday_ref, declared_cadence_seconds=ref_cadence)
+    # V3 (P1, Codex): stessa logica di parsing della funzione raw (prima
+    # _epoch_utc, rigido: crash su timestamp timezone-aware come
+    # "2026-03-02 00:00+00:00", e incoerente con quanto _parse_bar_utc_
+    # fields gia' accettava sopra).
+    fine_epochs = [_bar_epoch_utc(c["time"]) for c in intraday_ref]
 
     n = len(candles)
-    cand_epochs = [_epoch_utc(c["time"]) for c in candles]
-    bar_width = (cand_epochs[-1] - cand_epochs[0]) / (n - 1) if n > 1 else 86400
-    boundaries = cand_epochs[1:] + [cand_epochs[-1] + bar_width]
+    cand_epochs = [_bar_epoch_utc(c["time"]) for c in candles]
+    # V4 (P0-2): Codex ha dimostrato che stimare la larghezza di barra come
+    # MEDIA dei timestamp dell'intero array ("bar_width = (ultimo-primo)/
+    # (n-1)") NON e' causale: quella media cambia quando si aggiungono
+    # barre future, e il confine della barra ALLORA corrente (prima
+    # calcolato con l'estrapolazione, "cand_epochs[-1]+bar_width") cambiava
+    # con essa - violando la prefix invariance anche quando il livello
+    # Asian stesso era gia' corretto. Fix: il confine di OGNI barra i e'
+    # ora funzione ESCLUSIVA dell'inizio di quella barra e della cadenza
+    # DICHIARATA (mai della media osservata, mai del timestamp della barra
+    # i+1, che e' "il futuro" rispetto a i) - nessuna barra successiva,
+    # presente o futura, puo' piu' influenzare il confine di una barra gia'
+    # determinabile.
+    if declared_cadence_seconds is None:
+        # Fail-closed esplicito (P0-2 punto 5): senza una cadenza dichiarata
+        # per `candles` non si puo' calcolare NESSUN confine in modo
+        # causale - meglio non fornire nulla che indovinare una larghezza
+        # dai dati (tornerebbe a essere non causale).
+        return {"hour": [None] * n, "date": [None] * n, "session": [None] * n,
+                "asian_hi": [None] * n, "asian_lo": [None] * n,
+                "pdh": [None] * n, "pdl": [None] * n,
+                "amd_phase": [None] * n, "asian_session_complete": [False] * n}
+    boundaries = [e + declared_cadence_seconds for e in cand_epochs]
 
     hour, date, session = [None] * n, [None] * n, [None] * n
     asian_hi, asian_lo = [None] * n, [None] * n
     pdh, pdl = [None] * n, [None] * n
     amd_phase = [None] * n
+    asian_session_complete = [False] * n
 
     j = -1
     m = len(intraday_ref)
@@ -2887,10 +3082,11 @@ def _session_amd_series(candles, intraday_ref=None):
         asian_hi[i], asian_lo[i] = fine["asian_hi"][j], fine["asian_lo"][j]
         pdh[i], pdl[i] = fine["pdh"][j], fine["pdl"][j]
         amd_phase[i] = fine["amd_phase"][j]
+        asian_session_complete[i] = fine["asian_session_complete"][j]
 
     return {"hour": hour, "date": date, "session": session,
             "asian_hi": asian_hi, "asian_lo": asian_lo, "pdh": pdh, "pdl": pdl,
-            "amd_phase": amd_phase}
+            "amd_phase": amd_phase, "asian_session_complete": asian_session_complete}
 
 
 def _is_swing_high_at(candles, p, wing):
@@ -4898,7 +5094,10 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # 10/08 - stesso principio per MALAYSIAN_SNR: i livelli H4/D1/W1 vanno
     # SEMPRE calcolati sulla serie PRIMA del taglio bar_range (full_candles),
     # mai sulla finestra tagliata - vedi nota in _malaysian_snr_series.
-    ind = _prep(candles, intraday_ref=intraday_ref, snr_ref=full_candles)
+    # V3 (P0, Codex): timeframe dichiarato esplicitamente - normalized_tf e'
+    # gia' validato sopra (SUPPORTED_TIMEFRAMES/_EXECUTION_TIMEFRAME_ALIASES),
+    # non una nuova assunzione introdotta qui.
+    ind = _prep(candles, intraday_ref=intraday_ref, snr_ref=full_candles, timeframe=normalized_tf)
     # 08/08 - htf_factor: bias multi-timeframe VERO (CHoCH/trend su un TF
     # ricampionato per davvero, _external_choch_series - stessa funzione gia'
     # usata per choch_ext/ORDER_BLOCK's htf gate), non lo SMA(trend_period)
