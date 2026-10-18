@@ -1,5 +1,10 @@
-"""Power Gate V1 (rules V1.2): classification, fail-closed behaviour, PR #59 calibration,
-and regressions for both Codex reviews of PR #60.
+"""Power Gate V1 (rules V1.3): classification, fail-closed behaviour, PR #59 calibration,
+and regressions for the three Codex reviews of PR #60.
+
+With the real PR #59 calibration no plan can be POWER_READY (its protocol has no pre-registered
+level qualification). Tests that exercise the later stages use QCAL: a HYPOTHETICAL calibration
+that carries such a qualification and 4000 replications per null cell (same observed rates), i.e.
+the evidence an independent study would have to supply. It never reaches production code.
 
 Synthetic plans, two small synthetic fixtures (provenance manifest, preregistration) and
 cases already published in the repository. No market data, no protected dataset, no
@@ -10,6 +15,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import math
+import subprocess
 import sys
 from pathlib import Path
 
@@ -27,7 +33,9 @@ ROOT = Path(G.REPO_ROOT)
 
 
 def _sha(rel):
-    return hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
+    sha, representation = G.artifact_sha256(str(ROOT / rel))
+    assert representation in G.CANONICAL_REPRESENTATIONS, representation
+    return sha
 
 
 MANIFEST = f"{FIX}/forward_provenance_manifest.json"
@@ -57,6 +65,7 @@ READY = {
     "costs": {"base": 0.0, "stress": 0.0, "unit": "ATR"},
     "benchmark": "REGIME_MATCHED",
     "inference_method": "STUDENTIZED_BLOCK_BOOTSTRAP",
+    "test_sidedness": "TWO_SIDED",
     "datasets": [FORWARD],
     "confirmation_family": {"size": 1, "alpha_allocation": "BONFERRONI", "preregistration_path": PREREG,
                             "preregistration_sha256": _sha(PREREG)},
@@ -93,8 +102,24 @@ def plan(**changes):
 DROP = object()
 
 
-def assess(p):
-    return G.assess(p, cal=CAL, registry=REG)
+LEVEL_QUALIFICATION = {"criterion": "WILSON_UPPER_BOUND_LE_NOMINAL", "multiplicity": "BONFERRONI_OVER_CELLS",
+                       "nominal_alpha": 0.05, "confidence": 0.95, "min_reps_per_cell": 2000,
+                       "frozen_before_results": True}
+
+
+def _qualified(cal, reps=4000, lq=LEVEL_QUALIFICATION):
+    q = copy.deepcopy(cal)
+    q["level_qualification"] = lq
+    for v in q["type1"].values():
+        v["rejections"], v["reps"] = round(v["rate"] * reps), reps
+    return q
+
+
+QCAL = _qualified(CAL)
+
+
+def assess(p, cal=None):
+    return G.assess(p, cal=cal or QCAL, registry=REG)
 
 
 # ---------- baseline and calibration ----------
@@ -102,7 +127,7 @@ def assess(p):
 def test_calibration_comes_from_pr59_results():
     assert CAL["source_sha256"] == "c538a5d2f3d65a42ac2f71bc52039e67636e9d16e25c6e443134f6e1732a05d4"
     assert CAL["winners_curse"]["inflation_by_screening_n"][47] == pytest.approx(3.845, abs=1e-3)
-    assert CAL["type1"]["G_C|IID_BOOTSTRAP|200"]["compatible_with_nominal"] is False
+    assert CAL["source_integrity"] == "VERIFIED" and CAL["level_qualification"] is None
     assert CAL["qualified_ranges"]["G_U"]["n"] == [12, 400]
 
 
@@ -112,7 +137,8 @@ def test_ready_only_by_a_dominating_simulated_cell():
     cell = card["numbers"]["dominating_pr59_cell"]
     assert cell["n"] <= 200 and cell["delta"] <= 1.0 and cell["sigma_d"] >= 3.2
     assert cell["power_lower_95_one_sided"] >= 0.8 and cell["power_mc_se"] > 0
-    assert all(v["compatible_with_nominal"] for v in card["numbers"]["simulated_null_rejections"].values())
+    assert all(v["upper_bound_bonferroni"] <= 0.05
+               for v in card["numbers"]["simulated_null_rejections_descriptive"].values())
     assert "not EDGE_VALIDATED" in card["not_an_authorization"]
 
 
@@ -263,10 +289,15 @@ def test_r2_p1_point_power_above_target_is_not_enough():
     cell = next(c for c in CAL["cells"] if c["gen"] == "G_U" and c["method"] == "HAC_NEWEY_WEST"
                 and c["n"] == 100 and c["delta"] == 1.0)
     assert cell["power"] >= 0.8 > cell["power_lower_95_one_sided"]
+    sigma = CAL["qualified_ranges"]["G_U"]["sigma_d"][0]
+    assert G._dominating_cell(QCAL, "G_U", "HAC_NEWEY_WEST", 150, 1.0, sigma, 0.8) is None
+    point_only = [c for c in QCAL["cells"] if c["gen"] == "G_U" and c["method"] == "HAC_NEWEY_WEST"
+                  and c["n"] <= 150 and c["delta"] <= 1.0 and c["sigma_d"] >= sigma and c["power"] >= 0.8]
+    assert point_only, "a point-estimate rule would have certified this plan"
+    # Through assess() HAC is stopped even earlier: its null rejections fail the level criterion.
     card = assess(plan(inference_method="HAC_NEWEY_WEST", frequency={"events_per_year": 75, "window_years": 2},
-                       dispersion__sigma_paired_difference=CAL["qualified_ranges"]["G_U"]["sigma_d"][0]))
-    assert card["status"] == "DATA_REQUIRED"
-    assert "NO_SIMULATED_PR59_CELL_LOWER_POWER_BOUND_REACHES_TARGET" in card["reasons"]
+                       dispersion__sigma_paired_difference=sigma))
+    assert card["status"] in ("METHOD_BLOCKED", "DATA_REQUIRED")
 
 
 def test_r2_p1_clustered_level_not_compatible_with_nominal_blocks():
@@ -276,13 +307,10 @@ def test_r2_p1_clustered_level_not_compatible_with_nominal_blocks():
            "design_effect_basis": {"type": "PR59_CLUSTER_MODEL_MATCH"}}
     card = assess(plan(dependence=dep, dispersion__sigma_paired_difference=4.5))
     assert card["status"] == "METHOD_BLOCKED"
-    assert "LEVEL_NOT_DEMONSTRATED_AT_NOMINAL_0.05" in card["reasons"]
+    assert "LEVEL_NOT_DEMONSTRATED_AT_NOMINAL" in card["reasons"]
     assert "G_C|STUDENTIZED_BLOCK_BOOTSTRAP|200" in card["reasons"]
-
-
-def test_r2_p1_level_uses_wilson_not_the_0075_ceiling():
-    t = CAL["type1"]["G_C|STUDENTIZED_BLOCK_BOOTSTRAP|200"]
-    assert t["rate"] <= 0.075 and t["compatible_with_nominal"] is False
+    real = assess(plan(dependence=dep, dispersion__sigma_paired_difference=4.5), cal=CAL)
+    assert real["status"] == "NOT_ASSESSABLE"
 
 
 # ---------- Review 1 findings (kept) ----------
@@ -449,3 +477,154 @@ def test_production_registry_has_no_unseen_dataset_today():
         ds = {"dataset_id": rid, "symbol": rec.get("symbol"), "timeframe": rec.get("timeframe"),
               "date_range": rec.get("date_range")}
         assert G._dataset_status(ds, real)[0] != "VERIFIED_UNSEEN", rid
+
+
+# ---------- Review 3, finding 1: alpha and test procedure must match the simulation exactly ----------
+
+def test_r3_alpha_010_family_of_one_is_not_ready():
+    # Attack on 6d49b6a: screening, family 1, alpha 0.10 -> alpha per test 0.10 >= 0.05 -> POWER_READY.
+    p = plan(purpose="SCREENING", confirmation_family=DROP, alpha=0.10)
+    p["family_size"] = 1
+    card = assess(p)
+    assert card["status"] == "NOT_ASSESSABLE"
+    assert "ALPHA_PER_TEST_0.1_NOT_SIMULATED_0.05" in card["reasons"]
+    assert any("exactly this alpha" in e for e in card["numbers"]["evidence_needed"])
+
+
+def test_r3_alpha_005_family_of_one_reaches_level_stage():
+    p = plan(purpose="SCREENING", confirmation_family=DROP)
+    p["family_size"] = 1
+    assert assess(p)["status"] == "POWER_READY"                      # hypothetical qualified level
+    assert assess(p, cal=CAL)["status"] == "NOT_ASSESSABLE"           # real PR #59 calibration
+
+
+@pytest.mark.parametrize("family,code", [(3, "ALPHA_PER_TEST_0.01667_NOT_SIMULATED_0.05"),
+                                         (21, "ALPHA_PER_TEST_0.002381_NOT_SIMULATED_0.05")])
+def test_r3_multiplicity_corrected_alpha_is_not_simulated(family, code):
+    p = plan(purpose="SCREENING", confirmation_family=DROP)
+    p["family_size"] = family
+    card = assess(p)
+    assert card["status"] == "NOT_ASSESSABLE" and code in card["reasons"]
+
+
+@pytest.mark.parametrize("value,status", [("ONE_SIDED", "NOT_ASSESSABLE"), (DROP, "NOT_ASSESSABLE")])
+def test_r3_test_sidedness_must_match(value, status):
+    assert assess(plan(test_sidedness=value))["status"] == status
+
+
+# ---------- Review 3, finding 2: level calibration must be pre-registered with MC uncertainty ----------
+
+def test_r3_contains_005_rule_is_gone():
+    # The M3 cell Codex cited: 19/400 = 0.0475, Wilson 95% [0.0306, 0.0730]; "contains 0.05" accepted it.
+    t = CAL["type1"]["G_U|STUDENTIZED_BLOCK_BOOTSTRAP|25"]
+    assert (t["rejections"], t["reps"]) == (19, 400)
+    assert t["wilson95_descriptive"] == [0.0306, 0.073]
+    assert "compatible_with_nominal" not in t
+
+
+def test_r3_real_pr59_calibration_cannot_qualify_the_level():
+    card = assess(READY, cal=CAL)
+    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["reasons"] == ["LEVEL_CALIBRATION_NOT_PREREGISTERED", "CALIBRATION_PROTOCOL_HAS_NO_LEVEL_QUALIFICATION"]
+    assert "pre-registered criterion" in card["numbers"]["evidence_needed"][0]
+
+
+def test_r3_pr59_replications_fail_even_a_preregistered_criterion():
+    # Applying the strict criterion to the real 400-replication counts (not a tolerance): it fails.
+    card = assess(READY, cal=_qualified(CAL, reps=400, lq={**LEVEL_QUALIFICATION, "min_reps_per_cell": 400}))
+    assert card["status"] == "METHOD_BLOCKED" and "LEVEL_NOT_DEMONSTRATED_AT_NOMINAL" in card["reasons"]
+
+
+@pytest.mark.parametrize("lq", [
+    {**LEVEL_QUALIFICATION, "frozen_before_results": False},
+    {**LEVEL_QUALIFICATION, "criterion": "INTERVAL_CONTAINS_NOMINAL"},
+    {**LEVEL_QUALIFICATION, "multiplicity": "NONE"},
+    {**LEVEL_QUALIFICATION, "confidence": 0.5},
+    {**LEVEL_QUALIFICATION, "nominal_alpha": 0.075},
+    {**LEVEL_QUALIFICATION, "min_reps_per_cell": 0},
+])
+def test_r3_invalid_level_qualification_is_not_assessable(lq):
+    card = assess(READY, cal=_qualified(CAL, lq=lq))
+    assert card["status"] == "NOT_ASSESSABLE" and "LEVEL_CALIBRATION_NOT_PREREGISTERED" in card["reasons"]
+
+
+def test_r3_cells_below_min_reps_fail():
+    card = assess(READY, cal=_qualified(CAL, reps=1000))
+    assert card["status"] == "METHOD_BLOCKED"
+
+
+# ---------- Review 3, finding 3: integrity on canonical Git blob bytes ----------
+
+def _git(cwd, *args):
+    subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True)
+
+
+def test_r3_pr59_artifact_hash_is_the_git_blob_hash():
+    sha, rep = G.artifact_sha256(G.CALIBRATION_PATH)
+    assert rep == "GIT_CANONICAL_EOL_NORMALIZED"
+    assert sha == "c538a5d2f3d65a42ac2f71bc52039e67636e9d16e25c6e443134f6e1732a05d4"
+
+
+def test_r3_crlf_checkout_keeps_the_canonical_hash(tmp_path):
+    # Simulates a Windows CRLF checkout on any OS: the blob stays LF, the working file becomes CRLF.
+    lf = b'{"a": 1,\n "b": 2}\n'
+    (tmp_path / "artifact.json").write_bytes(lf)
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "-c", "user.email=t@t", "-c", "user.name=t", "add", "artifact.json")
+    _git(tmp_path, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "x")
+    (tmp_path / ".gitattributes").write_text("*.json text eol=crlf\n")
+    (tmp_path / "artifact.json").unlink()
+    _git(tmp_path, "checkout", "--", "artifact.json")
+    physical = (tmp_path / "artifact.json").read_bytes()
+    assert physical == lf.replace(b"\n", b"\r\n")
+    sha, rep = G.artifact_sha256(str(tmp_path / "artifact.json"))
+    assert rep == "GIT_CANONICAL_EOL_NORMALIZED" and sha == hashlib.sha256(lf).hexdigest()
+    assert sha != hashlib.sha256(physical).hexdigest()
+
+
+def test_r3_modified_content_changes_the_canonical_hash(tmp_path):
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "a.json").write_bytes(b"{}\n")
+    before = G.artifact_sha256(str(tmp_path / "a.json"))[0]
+    (tmp_path / "a.json").write_bytes(b'{"tampered": true}\r\n')
+    assert G.artifact_sha256(str(tmp_path / "a.json"))[0] != before
+
+
+def test_r3_binary_attributed_files_are_hashed_as_is(tmp_path):
+    # Frozen CRLF datasets are marked binary in the repo's .gitattributes: their CRLF bytes are the blob.
+    (tmp_path / ".git").mkdir()
+    (tmp_path / ".gitattributes").write_text("data/frozen.csv binary\n")
+    (tmp_path / "data").mkdir()
+    crlf = b"a,b\r\n1,2\r\n"
+    (tmp_path / "data" / "frozen.csv").write_bytes(crlf)
+    sha, rep = G.artifact_sha256(str(tmp_path / "data" / "frozen.csv"))
+    assert rep == "GIT_CANONICAL_BINARY_AS_IS" and sha == hashlib.sha256(crlf).hexdigest()
+
+
+def test_r3_repo_binary_attribute_respected_for_real_frozen_dataset():
+    path = ROOT / "server/research_scripts/contextual_edge_phase1/macd_selection_manifest_v1.json"
+    assert G.artifact_sha256(str(path))[1] == "GIT_CANONICAL_BINARY_AS_IS"
+
+
+def test_r3_no_repository_is_not_a_versioned_attestation(tmp_path):
+    (tmp_path / "x.json").write_bytes(b"{}")
+    assert G.artifact_sha256(str(tmp_path / "x.json"))[1] == "PHYSICAL_BYTES_NO_GIT_REPO"
+
+
+def test_r3_calibration_integrity_failure_is_not_assessable():
+    broken = {**QCAL, "source_integrity": "FAILED:WORKTREE_DIFFERS_FROM_GIT_BLOB"}
+    card = assess(READY, cal=broken)
+    assert card["status"] == "NOT_ASSESSABLE"
+    assert card["reasons"] == ["CALIBRATION_SOURCE_INTEGRITY_FAILED:WORKTREE_DIFFERS_FROM_GIT_BLOB"]
+
+
+def test_r3_windows_crlf_copy_of_frozen_results_keeps_recorded_hash(tmp_path):
+    # Windows checkout with core.autocrlf=true: same blob, CRLF working bytes, same attested hash.
+    lf = Path(G.CALIBRATION_PATH).read_bytes()
+    assert b"\r\n" not in lf
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "results_v1.json").write_bytes(lf.replace(b"\n", b"\r\n"))
+    sha, rep = G.artifact_sha256(str(tmp_path / "results_v1.json"))
+    assert rep == "GIT_CANONICAL_EOL_NORMALIZED"
+    assert sha == "c538a5d2f3d65a42ac2f71bc52039e67636e9d16e25c6e443134f6e1732a05d4"
+    assert hashlib.sha256(lf.replace(b"\n", b"\r\n")).hexdigest() != sha

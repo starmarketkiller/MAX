@@ -1,18 +1,23 @@
-# NEXUS Power Gate V1 (rules V1.2)
+# NEXUS Power Gate V1 (rules V1.3)
 
 Date: 2026-10-18. Pre-experiment power assessment for trading experiments. No backtest, no screening, no holdout, no market data read.
 
 - Module: `server/research_scripts/research_intelligence_v1/power_gate.py` (`assess(plan) -> Power Decision Card`).
 - Tests: `server/tests/test_power_gate_v1.py`, with two synthetic fixtures in `server/tests/fixtures/power_gate/`.
 - Calibration source: `server/research_scripts/edge_detection_capability_v1/results_v1.json` (PR #59, verdict `PIPELINE_UNDERPOWERED`), read only.
-- V1.1 addresses the first Codex review of PR #60 (1 P0, 5 P1, confirmatory multiplicity). V1.2 addresses the second review (base `6a42669`: provenance P0, preregistration, calibrated range, statistical uncertainty). Both tables are at the end.
+- V1.1 addresses the first Codex review of PR #60 (1 P0, 5 P1, confirmatory multiplicity). V1.2 addresses the second review (base `6a42669`: provenance P0, preregistration, calibrated range, statistical uncertainty). V1.3 addresses the third review (base `6d49b6a`: exact alpha/procedure, pre-registered level calibration, Windows-safe integrity). All tables are at the end.
 
 ## Principle
 
 **Only a simulated PR #59 cell, read with its Monte Carlo uncertainty, can certify power.** A plan is `POWER_READY` only when four conditions hold:
 
-1. **Inside the qualified box.** The plan matches the simulated design (estimand, benchmark, number of controls, method, dependence model; α per test ≥ the simulated 0.05). Its n, effect and paired-difference σ also lie inside the simulated ranges for that dependence model. For independent events: n 12–400, effect 0.1–1.0 ATR, σ 3.10–3.33 ATR.
-2. **Level control.** At every simulated n from the method's minimum up to the plan's n, the two-sided 95% Wilson interval of the null rejection rate (400 replications) reaches the nominal 0.05. The 0.075 ceiling is not used as evidence of calibration at 0.05.
+1. **Inside the qualified box.** The plan matches the simulated design (estimand, benchmark, number of controls, method, dependence model, and **exactly** the simulated test procedure: α per test = 0.05, two-sided). Its n, effect and paired-difference σ also lie inside the simulated ranges for that dependence model. For independent events: n 12–400, effect 0.1–1.0 ATR, σ 3.10–3.33 ATR.
+2. **Pre-registered level qualification.** The calibration study must carry a level criterion frozen before its results. It must state:
+   - `criterion` = `WILSON_UPPER_BOUND_LE_NOMINAL`;
+   - `multiplicity` = `BONFERRONI_OVER_CELLS`;
+   - `nominal_alpha` = 0.05, a declared confidence and a minimum number of replications per cell.
+
+   Every simulated null cell from the method's minimum n up to the plan's n must then have its Bonferroni-adjusted Wilson **upper** bound ≤ 0.05. Neither "the interval contains 0.05" nor the 0.075 band counts as evidence of calibration.
 3. **Power with uncertainty.** A dominating cell exists: cell n and effect ≤ plan, cell σ ≥ plan. Its **one-sided 95% Wilson lower bound** on power must reach the target; a point estimate above 0.80 is not enough. The card reports the point power, its Monte Carlo standard error and the lower bound.
 4. **Verified independent data**, for confirmations (see rule 1 below).
 
@@ -22,20 +27,13 @@ Anything outside the box is `NOT_ASSESSABLE`, and the card lists the evidence th
 
 ## What can still be POWER_READY
 
-Only **independent events** on the simulated design:
-- paired ATR difference vs one regime-matched control, 10-bar outcome, no control reuse, α 0.05 per test;
-- σ_d between 3.10 and 3.33 ATR.
+**Nothing, with the current evidence.** PR #59 froze only a point-estimate band for type I, [0.025, 0.075] (`protocol_v1.json`, `success_criteria.calibration`). It has no pre-registered level qualification, so the gate returns `NOT_ASSESSABLE` (`LEVEL_CALIBRATION_NOT_PREREGISTERED`) for every plan that reaches the level stage. Writing such a criterion now, after seeing the results, would be a retroactive tolerance.
 
-| Method | Smallest qualifying cell (n, effect) | Point power | Lower 95% bound |
-|---|---|---|---|
-| Studentized block bootstrap | 200, 1.0 ATR | 0.970 | 0.953 |
-| Block sign-flip | 200, 1.0 ATR | 0.975 | 0.959 |
-| HAC Newey-West | 200, 1.0 ATR | 0.990 | 0.978 |
-| IID bootstrap (independent, n ≥ 47) | 100, 1.0 ATR; 400, 0.5 ATR | 0.858; 0.863 | 0.826; 0.832 |
+For reference only: applied to the 400-replication counts, the strict criterion fails anyway (`test_r3_pr59_replications_fail_even_a_preregistered_criterion`). For example, 19/400 = 0.0475 gives Wilson 95% [0.0306, 0.0730], and 12/400 = 0.03 has an upper bound above 0.05 after Bonferroni.
 
-**Clustered or overlapping events are never `POWER_READY` today.** In the PR #59 cluster model no method has null rejections compatible with 0.05 at every simulated n. For example, the studentized block bootstrap at n=200 rejects at 0.0725, with a Wilson 95% interval of [0.051, 0.102].
+**Evidence needed:** an independent level-calibration study whose protocol is frozen before results. It needs the criterion above, a confidence level, Bonferroni over the cells used, and enough replications per cell for the bound to be reachable (e.g. ≥ 2,000; 4,000 in the test fixture). Once such a study exists, the design that could become ready is the independent-events paired ATR difference vs one regime-matched control, two-sided α 0.05, inside the simulated n / effect / σ box, with a method whose null cells pass. The tests exercise this path with a **hypothetical** qualified calibration (`QCAL`) that never reaches production code.
 
-**Confirmations also need a dataset that the canonical registry shows as never touched.** No such record exists in the committed ledger today, so no confirmation is `POWER_READY` until a forward dataset is registered.
+Confirmations also need a dataset that the canonical registry shows as never touched. None exists today.
 
 ## What PR #59 does not calibrate (→ NOT_ASSESSABLE) and the evidence needed
 
@@ -43,7 +41,8 @@ Only **independent events** on the simulated design:
 |---|---|
 | Paired difference in **R** (any benchmark) | PR #59-style synthetic study of the paired difference in R with the chosen benchmark |
 | Random-timestamp benchmark; > 1 control per event; control reuse | Synthetic study with that matched-control construction |
-| α per test < 0.05 (screening families; Bonferroni/Holm confirmation families) | Simulated rejection counts at that α |
+| α per test ≠ 0.05 (e.g. 0.10; screening families; Bonferroni/Holm families) or one-sided tests | Simulated rejection counts at exactly that α and sidedness |
+| Level qualification (all designs) | Independent calibration study with a pre-registered Wilson-upper-bound criterion, Bonferroni over cells, sufficient replications |
 | n > 400, effect outside 0.1–1.0 ATR, σ outside the simulated range | Simulations at the plan's n / effect / σ |
 | Plan-specific dependence (measured or simulated design effect) | Synthetic study reproducing that dependence |
 | Clustered events (PR #59 cluster model) | More replications, or a method whose null rejections are compatible with 0.05 at every n |
@@ -109,6 +108,16 @@ BREAKOUT_ACC confirmation in R units: paired-difference σ 2.38R, 6.7 trades/yea
 
 With new, verified data the same plan would be `NOT_ASSESSABLE`, because R-unit paired designs are not calibrated.
 
+## Integrity: which bytes are hashed
+
+`artifact_sha256` (stdlib only, no external process) hashes **Git's canonical blob representation**, not the physical checkout:
+- text files with CRLF turned into LF, which is the content Git's clean conversion stores (`GIT_CANONICAL_EOL_NORMALIZED`);
+- files marked `binary` / `-text` in `.gitattributes`, hashed as is (`GIT_CANONICAL_BINARY_AS_IS`), e.g. the frozen CRLF datasets.
+
+A Windows checkout with `core.autocrlf=true` and a Linux checkout of the same blob therefore attest the same hash. Outside a repository the representation is `PHYSICAL_BYTES_NO_GIT_REPO`, which the gate does not accept for versioned artifacts. A text blob that really contains CRLF would mismatch and fail closed.
+
+The calibration source is accepted only when its canonical hash equals the one recorded in the PR #59 manifest. The PR #59 integrity test uses the same function. No frozen file was modified.
+
 ## Remaining scientific limits
 
 - Certification covers a single design, one instrument (GOLD D1, 2019–2026) and the distributions PR #59 drew. Dominance inside the box assumes the plan's paired differences behave like the simulated ones.
@@ -146,3 +155,11 @@ It would use synthetic data only and follow the same protocol rules. This needs 
 | P1 unrelated preregistration | `POWER_READY` | Semantic check of experiment id, family size, allocation, α, protocol version, sequence position | `test_r2_p1_unrelated_preregistration_*`, `test_r2_p1_preregistration_must_match_the_plan` (6 cases), `test_conf_fixed_sequence_*` |
 | P1 dominance beyond n=400 | `POWER_READY` at n=10,000 | Qualified box on n, effect and σ; `evidence_needed` reported | `test_r2_p1_no_promotion_above_simulated_n`, `test_r2_p1_effect_and_dispersion_*` |
 | P1 statistical uncertainty | `POWER_READY` on point power 0.8225 with null rejections 0.0725 | Wilson lower bound on power ≥ target; Wilson-based level check at nominal 0.05 for every simulated n in range; MC SE reported | `test_r2_p1_point_power_above_target_is_not_enough`, `test_r2_p1_clustered_level_*`, `test_r2_p1_level_uses_wilson_*` |
+
+## Third Codex review (base 6d49b6a) → changes → tests
+
+| Finding | Reproduced on 6d49b6a | Change | Regression tests |
+|---|---|---|---|
+| Alpha | `POWER_READY` with α=0.10, family of one | α per test must equal the simulated 0.05 exactly, and the test must be two-sided, as simulated. Anything else → `NOT_ASSESSABLE` with `evidence_needed`. | `test_r3_alpha_010_family_of_one_is_not_ready`, `test_r3_alpha_005_family_of_one_reaches_level_stage`, `test_r3_multiplicity_corrected_alpha_is_not_simulated` (families 3 and 21), `test_r3_test_sidedness_must_match` |
+| Type I error | M3 19/400 = 0.0475, Wilson [0.0306, 0.0730] accepted by "interval contains 0.05" | Rule removed. A pre-registered level qualification is required (Wilson upper bound ≤ nominal, Bonferroni over cells, min replications, frozen before results). PR #59 has none → `NOT_ASSESSABLE`. | `test_r3_contains_005_rule_is_gone`, `test_r3_real_pr59_calibration_cannot_qualify_the_level`, `test_r3_pr59_replications_fail_even_a_preregistered_criterion`, `test_r3_invalid_level_qualification_is_not_assessable` (6 cases), `test_r3_cells_below_min_reps_fail` |
+| SHA-256 on Windows | Physical-byte hashing breaks on a CRLF checkout | Canonical Git-blob representation (CRLF→LF for text, as-is for binary attributes), stdlib only. Calibration integrity is checked against the PR #59 manifest. The PR #59 integrity test uses the same function. | `test_r3_pr59_artifact_hash_is_the_git_blob_hash`, `test_r3_crlf_checkout_keeps_the_canonical_hash` (real git, `eol=crlf`), `test_r3_windows_crlf_copy_of_frozen_results_keeps_recorded_hash`, `test_r3_binary_attributed_files_*`, `test_r3_no_repository_*`, `test_r3_calibration_integrity_failure_is_not_assessable` |

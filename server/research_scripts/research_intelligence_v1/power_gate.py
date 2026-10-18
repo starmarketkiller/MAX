@@ -31,19 +31,23 @@ import hashlib
 import json
 import math
 import os
+import fnmatch
 import re
+import statistics
 
 from . import gates, power
 from .memory import canonical, sha256_text
 from .review import MIN_CLOSED_FOR_FIRST_READ
 
-RULES_VERSION = "POWER_GATE_RULES_V1.2"
+RULES_VERSION = "POWER_GATE_RULES_V1.3"
 Z_ONE_SIDED_95 = 1.6448536
 Z_TWO_SIDED_95 = 1.959964
 NOMINAL_ALPHA = 0.05
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 CALIBRATION_PATH = os.path.join(HERE, "..", "edge_detection_capability_v1", "results_v1.json")
+CALIBRATION_PROTOCOL_PATH = os.path.join(HERE, "..", "edge_detection_capability_v1", "protocol_v1.json")
+CALIBRATION_MANIFEST_PATH = os.path.join(HERE, "..", "edge_detection_capability_v1", "manifest_v1.json")
 EXPOSURE_REGISTRY_PATH = os.path.join(HERE, "..", "phase7", "phase7_26", "data_exposure_registry_v1.json")
 
 STATUSES = ("POWER_READY", "EXPLORATORY_ONLY", "DATA_REQUIRED", "METHOD_BLOCKED", "NOT_ASSESSABLE")
@@ -68,7 +72,7 @@ EXPOSURE_FLAGS = ("development_exposure", "integrity_audit_exposure", "mechanism
 # 10-bar outcome, no control reuse, alpha 0.05 two-sided. G_U = independent events; G_C = clusters of
 # 4 events 2 bars apart (overlapping 10-bar windows).
 CALIBRATED_DESIGN = {"unit": "ATR", "estimand": "PAIRED_DIFFERENCE_VS_BENCHMARK", "benchmark": "REGIME_MATCHED",
-                     "controls_per_event": 1, "control_reuse": False, "alpha": 0.05,
+                     "controls_per_event": 1, "control_reuse": False, "alpha": 0.05, "test_sidedness": "TWO_SIDED",
                      "pr59_cluster_model": {"cluster_size": 4, "spacing_bars": 2, "horizon_bars": 10}}
 # The one screening configuration PR #59 simulated (winner's curse): R units, 67 candidates, BH q=0.10.
 CURSE_CONFIG = {"unit": "R", "family_size": 67, "selection_rule": "BH_Q0.10"}
@@ -79,6 +83,68 @@ FORBIDDEN_PATH = re.compile(r"(^|/)(data_cache|raw_data)(/|$)|holdout|\.(csv|par
 def _sha_file(path):
     with open(path, "rb") as handle:
         return hashlib.sha256(handle.read()).hexdigest()
+
+
+def _repo_root(path):
+    d = os.path.dirname(os.path.abspath(path))
+    while True:
+        if os.path.exists(os.path.join(d, ".git")):
+            return d
+        parent = os.path.dirname(d)
+        if parent == d:
+            return None
+        d = parent
+
+
+def _git_text_conversion_disabled(root, rel):
+    """True if .gitattributes marks the path binary / -text / text=false (no eol conversion)."""
+    attrs = os.path.join(root, ".gitattributes")
+    if not os.path.isfile(attrs):
+        return False
+    disabled = False
+    with open(attrs, encoding="utf-8") as handle:
+        for line in handle:
+            parts = line.split()
+            if not parts or parts[0].startswith("#"):
+                continue
+            pattern, values = parts[0], parts[1:]
+            target = rel if "/" in pattern.strip("/") else os.path.basename(rel)
+            if fnmatch.fnmatchcase(target, pattern.strip("/")):
+                for v in values:  # later lines override earlier ones, as in Git
+                    if v in ("binary", "-text", "text=false"):
+                        disabled = True
+                    elif v in ("text", "text=auto") or v.startswith("eol="):
+                        disabled = False
+    return disabled
+
+
+def artifact_sha256(path):
+    """SHA-256 of a versioned artifact, as (sha256, representation). Stdlib only, no external process.
+
+    The hash covers Git's canonical (blob) representation, not the physical checkout bytes:
+    - "GIT_CANONICAL_EOL_NORMALIZED": text files, with CRLF turned into LF, i.e. the content Git's
+      clean conversion stores in the blob. A Windows CRLF checkout and a Linux LF checkout of the
+      same blob give the same hash.
+    - "GIT_CANONICAL_BINARY_AS_IS": files marked binary / -text in .gitattributes, hashed as is
+      (their blob bytes are their checkout bytes; e.g. the frozen CRLF datasets).
+    - "PHYSICAL_BYTES_NO_GIT_REPO": no repository found; callers that attest versioned artifacts
+      must not accept it.
+    A text blob that genuinely contains CRLF would hash differently from its recorded value and the
+    verification fails closed.
+    """
+    full = os.path.abspath(path)
+    with open(full, "rb") as handle:
+        data = handle.read()
+    root = _repo_root(full)
+    if root is None:
+        return hashlib.sha256(data).hexdigest(), "PHYSICAL_BYTES_NO_GIT_REPO"
+    rel = os.path.relpath(full, root).replace(os.sep, "/")
+    if _git_text_conversion_disabled(root, rel):
+        return hashlib.sha256(data).hexdigest(), "GIT_CANONICAL_BINARY_AS_IS"
+    return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest(), "GIT_CANONICAL_EOL_NORMALIZED"
+
+
+CANONICAL_REPRESENTATIONS = ("GIT_CANONICAL_EOL_NORMALIZED", "GIT_CANONICAL_BINARY_AS_IS")
 
 
 def _num(x, *, lo=None, hi=None, lo_open=False):
@@ -101,7 +167,19 @@ def wilson(successes, n, z):
 
 
 def calibration():
-    """PR #59 frozen results reduced to what the gate may use (read only)."""
+    """PR #59 frozen results reduced to what the gate may use (read only).
+
+    source_integrity is "VERIFIED" only when the canonical Git-blob SHA-256 of results_v1.json equals
+    the hash recorded in the PR #59 manifest. level_qualification is the pre-registered level
+    criterion of the calibration protocol, if any (PR #59's protocol has none: see assess()).
+    """
+    source_sha, representation = artifact_sha256(CALIBRATION_PATH)
+    with open(CALIBRATION_MANIFEST_PATH, encoding="utf-8") as handle:
+        recorded = json.load(handle)["artifacts_sha256"]["results_v1.json"]
+    integrity = "VERIFIED" if representation in CANONICAL_REPRESENTATIONS and source_sha == recorded \
+        else f"FAILED:{representation}:{'MATCH' if source_sha == recorded else 'SHA256_MISMATCH'}"
+    with open(CALIBRATION_PROTOCOL_PATH, encoding="utf-8") as handle:
+        level_qualification = json.load(handle).get("level_qualification")
     with open(CALIBRATION_PATH, encoding="utf-8") as handle:
         res = json.load(handle)
     sig = [c for c in res["signal"] if c["cost_atr"] == 0 and c["gen"] in ("G_U", "G_C")]
@@ -121,8 +199,8 @@ def calibration():
             for method, spec in METHODS.items():
                 p, reps = c["rejection_rate"][spec["col"]], c["reps"]
                 lo, hi = wilson(round(p * reps), reps, Z_TWO_SIDED_95)
-                type1[f"{c['gen']}|{method}|{c['n']}"] = {"rate": p, "reps": reps, "wilson95": [round(lo, 4), round(hi, 4)],
-                                                          "compatible_with_nominal": lo <= NOMINAL_ALPHA}
+                type1[f"{c['gen']}|{method}|{c['n']}"] = {"rate": p, "rejections": round(p * reps), "reps": reps,
+                                                          "wilson95_descriptive": [round(lo, 4), round(hi, 4)]}
     sd = res["meta"]["trade_dist_sd"]
     over = {}
     for c in res["trade"]:
@@ -136,7 +214,8 @@ def calibration():
     curse = {c["n"]: c["winners_curse_inflation_true_edges"] for c in res["screen_confirm"]
              if c["m_true"] and c["winners_curse_inflation_true_edges"]}
     return {"source": "server/research_scripts/edge_detection_capability_v1/results_v1.json",
-            "source_sha256": _sha_file(CALIBRATION_PATH), "design": CALIBRATED_DESIGN, "cells": cells,
+            "source_sha256": source_sha, "source_integrity": integrity,
+            "level_qualification": level_qualification, "design": CALIBRATED_DESIGN, "cells": cells,
             "type1": dict(sorted(type1.items())),
             "qualified_ranges": {g: {"n": [min(c["n"] for c in cells if c["gen"] == g),
                                            max(c["n"] for c in cells if c["gen"] == g)],
@@ -184,7 +263,10 @@ def verify_repo_file(rel_path, declared_sha256):
         return False, "FILE_NOT_FOUND"
     if os.path.getsize(full) > MAX_MANIFEST_BYTES:
         return False, "FILE_TOO_LARGE_FOR_A_MANIFEST"
-    return (_sha_file(full) == declared_sha256.lower()), "SHA256_MISMATCH"
+    sha, representation = artifact_sha256(full)
+    if representation not in CANONICAL_REPRESENTATIONS:
+        return False, f"NOT_A_VERIFIED_VERSIONED_ARTIFACT:{representation}"
+    return (sha == declared_sha256.lower()), "SHA256_MISMATCH"
 
 
 def _dataset_status(ds, registry):
@@ -299,6 +381,7 @@ def assess(plan, *, cal=None, registry=None):
         reasons.append("UNITS_INCOHERENT")
     alpha = need(_num(plan.get("alpha", 0.05), lo=0, hi=0.5, lo_open=True), "ALPHA_INVALID")
     target = need(_num(plan.get("power_target", 0.8), lo=0.5, hi=0.99), "POWER_TARGET_INVALID")
+    need(plan.get("test_sidedness") in ("TWO_SIDED", "ONE_SIDED") or None, "TEST_SIDEDNESS_UNDECLARED")
     need(dep.get("structure") in DEPENDENCE or None, "DEPENDENCE_UNKNOWN")
     horizon = need(_num(dep.get("horizon_bars"), lo=1), "HORIZON_BARS_INVALID")
     spacing = need(_num(dep.get("min_spacing_bars"), lo=0), "MIN_SPACING_BARS_INVALID")
@@ -435,6 +518,9 @@ def assess(plan, *, cal=None, registry=None):
         return _card(plan, status, reasons, warnings, numbers, cal)
 
     # 6. Certification: only a dominating simulated PR #59 cell can make the plan POWER_READY.
+    if cal.get("source_integrity") != "VERIFIED":
+        return _card(plan, "NOT_ASSESSABLE", [f"CALIBRATION_SOURCE_INTEGRITY_{cal.get('source_integrity')}"],
+                     warnings, numbers, cal)
     d = cal["design"]
     gen, uncalibrated = None, []
     if unit != d["unit"]:
@@ -443,8 +529,10 @@ def assess(plan, *, cal=None, registry=None):
         uncalibrated.append(f"BENCHMARK_{bench}_NOT_SIMULATED")
     if disp["controls_per_event"] != d["controls_per_event"]:
         uncalibrated.append("CONTROLS_PER_EVENT_NOT_SIMULATED")
-    if alpha_test < d["alpha"]:
-        uncalibrated.append(f"ALPHA_PER_TEST_{alpha_test:.4g}_BELOW_SIMULATED_{d['alpha']}")
+    if alpha_test != d["alpha"]:
+        uncalibrated.append(f"ALPHA_PER_TEST_{alpha_test:.4g}_NOT_SIMULATED_{d['alpha']}")
+    if plan.get("test_sidedness") != d["test_sidedness"]:
+        uncalibrated.append(f"TEST_SIDEDNESS_{plan.get('test_sidedness')}_NOT_SIMULATED_{d['test_sidedness']}")
     if dep["structure"] == "INDEPENDENT":
         gen = "G_U"
     else:
@@ -475,18 +563,33 @@ def assess(plan, *, cal=None, registry=None):
         return _card(plan, "NOT_ASSESSABLE", ["POWER_NOT_CALIBRATED_FOR_DESIGN", *uncalibrated], warnings,
                      numbers, cal)
 
-    # 7. Level control: every simulated null cell of this method and dependence model, at the
-    # simulated sample sizes from the method minimum up to the plan's n, must be compatible with
-    # the nominal 0.05 (two-sided 95% Wilson interval reaches 0.05). The 0.075 ceiling is not used.
+    # 7. Level control. A pre-registered level qualification of the calibration study is required:
+    # criterion "Wilson upper bound <= nominal alpha" at the declared confidence, Bonferroni over the
+    # cells used, a minimum number of replications per cell, frozen before results. "The interval
+    # contains 0.05" and the 0.075 band are not evidence of calibration. PR #59 froze only a
+    # point-estimate band [0.025, 0.075], so its simulations cannot qualify the level: NOT_ASSESSABLE.
     grid = sorted({int(k.rsplit("|", 1)[1]) for k in cal["type1"] if k.startswith(f"{gen}|{method}|")})
     upper = min(g for g in grid if g >= n_expected)  # n_expected <= max(grid) after the box check
     level = {k: v for k, v in cal["type1"].items()
              if k.startswith(f"{gen}|{method}|") and min_n <= int(k.rsplit("|", 1)[1]) <= upper}
-    numbers["simulated_null_rejections"] = level
-    failing = sorted(k for k, v in level.items() if not v["compatible_with_nominal"])
-    if not level or failing:
-        return _card(plan, "METHOD_BLOCKED", ["LEVEL_NOT_DEMONSTRATED_AT_NOMINAL_0.05", *failing], warnings,
+    numbers["simulated_null_rejections_descriptive"] = level
+    lq = cal.get("level_qualification")
+    problem = _level_qualification_problem(lq)
+    if problem:
+        numbers["evidence_needed"] = [LEVEL_EVIDENCE]
+        return _card(plan, "NOT_ASSESSABLE", ["LEVEL_CALIBRATION_NOT_PREREGISTERED", problem], warnings,
                      numbers, cal)
+    if not level:
+        return _card(plan, "NOT_ASSESSABLE", ["NO_SIMULATED_NULL_CELLS_IN_RANGE"], warnings, numbers, cal)
+    z = statistics.NormalDist().inv_cdf(1 - (1 - lq["confidence"]) / len(level))
+    failing = []
+    for key, v in sorted(level.items()):
+        bound = wilson(v["rejections"], v["reps"], z)[1]
+        v["upper_bound_bonferroni"] = round(bound, 4)
+        if v["reps"] < lq["min_reps_per_cell"] or bound > lq["nominal_alpha"]:
+            failing.append(key)
+    if failing:
+        return _card(plan, "METHOD_BLOCKED", ["LEVEL_NOT_DEMONSTRATED_AT_NOMINAL", *failing], warnings, numbers, cal)
 
     # 8. Power: a dominating simulated cell whose one-sided 95% Wilson lower bound reaches the target.
     cell = _dominating_cell(cal, gen, method, n_expected, effect_sizing, sigma, target)
@@ -500,11 +603,34 @@ def assess(plan, *, cal=None, registry=None):
     return _card(plan, "POWER_READY", [], warnings, numbers, cal)
 
 
+LEVEL_EVIDENCE = ("independent level-calibration study with a pre-registered criterion: Wilson upper bound "
+                  "of the null rejection rate <= 0.05 at the declared confidence, Bonferroni over the cells "
+                  "used, a minimum replication count per cell sized to make that bound reachable (e.g. "
+                  ">= 2000), protocol frozen before results (PR #59 froze only the point band [0.025, 0.075])")
+LEVEL_FIELDS = {"criterion": "WILSON_UPPER_BOUND_LE_NOMINAL", "multiplicity": "BONFERRONI_OVER_CELLS"}
+
+
+def _level_qualification_problem(lq):
+    if not isinstance(lq, dict):
+        return "CALIBRATION_PROTOCOL_HAS_NO_LEVEL_QUALIFICATION"
+    for key, value in LEVEL_FIELDS.items():
+        if lq.get(key) != value:
+            return f"LEVEL_QUALIFICATION_{key.upper()}_NOT_{value}"
+    if lq.get("nominal_alpha") != NOMINAL_ALPHA or _num(lq.get("confidence"), lo=0.9, hi=0.999) is None:
+        return "LEVEL_QUALIFICATION_ALPHA_OR_CONFIDENCE_INVALID"
+    if not isinstance(lq.get("min_reps_per_cell"), int) or lq["min_reps_per_cell"] < 1:
+        return "LEVEL_QUALIFICATION_MIN_REPS_INVALID"
+    if lq.get("frozen_before_results") is not True:
+        return "LEVEL_QUALIFICATION_NOT_FROZEN_BEFORE_RESULTS"
+    return None
+
+
 EVIDENCE_FOR = {
+    "TEST_SIDEDNESS_": "simulated rejections with this test sidedness (PR #59: two-sided only)",
     "UNIT_": "PR #59-style synthetic study of the paired difference in this unit, with this benchmark",
     "BENCHMARK_": "synthetic study with this benchmark's matched-control construction",
     "CONTROLS_PER_EVENT": "synthetic study with this number of controls per event",
-    "ALPHA_PER_TEST_": "simulated rejection counts at this alpha per test (PR #59 recorded 0.05 only)",
+    "ALPHA_PER_TEST_": "simulated rejection counts at exactly this alpha per test (PR #59: 0.05 two-sided only)",
     "PLAN_SPECIFIC_DEPENDENCE": "synthetic study reproducing this plan's dependence structure",
     "N_": "simulations at the plan's sample size (PR #59 simulated n up to 400)",
     "EFFECT_": "simulations at the plan's effect size (PR #59 simulated 0.1-1.0 ATR)",
@@ -527,6 +653,9 @@ def _card(plan, status, reasons, warnings, numbers, cal):
             "not_an_authorization": "POWER_READY is not EDGE_VALIDATED and does not authorize execution, "
                                     "holdout access, deploy or trading.",
             "calibration_source_sha256": cal["source_sha256"],
+            "calibration_source_integrity": cal.get("source_integrity"),
+            "hash_representation": "Git canonical blob bytes (CRLF->LF for text, as-is for binary attributes); "
+                                   "independent of CRLF/LF checkout",
             "plan_sha256": sha256_text(json.dumps(plan, sort_keys=True, separators=(",", ":"), default=repr))
             if plan else None}
     card["card_sha256"] = sha256_text(canonical(card))
