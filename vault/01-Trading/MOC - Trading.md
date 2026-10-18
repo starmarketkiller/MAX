@@ -13,6 +13,9 @@ EA MQL5 per gold/BTC su conto piccolo (~€200-1000), pensato per rispecchiare 1
 motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo:
 profitto reale, non solo curve di backtest.
 
+- 📏 **[[NEXUS - Edge Detection Capability Test V1]]** (18-10) — test sintetico
+  della pipeline: `PIPELINE_UNDERPOWERED` (con 47 trade potenza 12-34% per
+  edge di 0,2-0,3R); bootstrap IID non calibrato con eventi raggruppati.
 - 🐛 **[[NEXUS EA - FVG_CONT Piramidale Isolato, Bug di Re-Innesco Senza Freno (09-09)]]** —
   primo test isolato della coda FVG_CONT: piramidale attivato sopra la
   baseline prop-compliant. Risultato non un peggioramento ma un

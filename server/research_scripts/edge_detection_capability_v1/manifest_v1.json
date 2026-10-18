@@ -1,0 +1,108 @@
+{
+ "manifest_id": "NEXUS_P0_EDGE_DETECTION_CAPABILITY_V1_MANIFEST",
+ "verdict": "PIPELINE_UNDERPOWERED",
+ "scoped_findings": [
+  "IID percentile bootstrap (M1, used in Phase 7.21/7.25/7.27) is miscalibrated under clustered/overlapping events: type I 0.17-0.29, CI coverage 0.71-0.85; liberal at n<=25 (0.08-0.10) with independent events.",
+  "Engine block methods: studentized block bootstrap (M3) never exceeds the protocol band ceiling 0.075 (max 0.0725, clustered n=200); block sign-flip (M2) exceeds it once (0.0825, clustered n=200, ~0.5 MC SE above 0.075) and has no power at n=12. Both are conservative (<0.025) in some small-n and n=400 cells. CORRECTION: the original Decision Card and chat report rounded this to '<=0.08, calibrated in all configurations'; the exact figures above prevail. Verdict unchanged (a calibrated alternative, M3, exists)."
+ ],
+ "provenance": {
+  "experiment_run": "2026-10-18, Claude Code cloud session https://claude.ai/code/session_01V1vTJ3PtNpciE5LzF2uK2N",
+  "baseline_commit": "bad01720d2b15b9ad923fe48cc09a978fe14eb21",
+  "original_location": "session scratchpad (ephemeral), copied byte-identical",
+  "protocol_frozen_before_results": true,
+  "authorization": "user mandates NEXUS P0 EDGE DETECTION CAPABILITY TEST and NEXUS P0 PRESERVE EDGE DETECTION EVIDENCE (2026-10-18)"
+ },
+ "artifacts_sha256": {
+  "protocol_v1.json": "8dd988251b280e390162c979cf446eb782e3b35371c732f9215bb6624359a698",
+  "protocol_v1.sha256": "8cc474c0ccd1e99ce85f2a19802910a8af53539771b9bcf37a9675b1eedb11a6",
+  "run_edgetest.py": "4c72b6d8132065ab1d2d0636b81fe05ddb75f8702bccba60bd01f80071890c64",
+  "summarize.py": "be7c148b6bac608d655c7ea996b0e857e0a857bff1518f5047a721c4a1e11e4a",
+  "explore.py": "d0074417b45b558f70b31d2ed4ece7ec1d20c6c699757a47c03f46bb0b18d034",
+  "results_v1.json": "c538a5d2f3d65a42ac2f71bc52039e67636e9d16e25c6e443134f6e1732a05d4",
+  "summary_v1.txt": "d113397db81f444128a8dec4cfd92c4e246d00f6383d6488180f80f410994110",
+  "DECISION_CARD_P0_EDGE_DETECTION_V1.md": "415d82aa27fe5825206a0ce147f72882fea149e13c4ef5a784dd790036b5a39b"
+ },
+ "inputs_sha256": {
+  "server/research_scripts/phase7/phase7_9h/raw_data/nxs_d1_gold_phase79h.csv": "ac3533a639ada63f850f402b3c03a976ce69d0600b4f05bdb6376b86769244ea",
+  "server/research_scripts/phase7/phase7_9k/breakout_acc_intended_d1_v2_dataset.json": "6a27ab0862bd77cf358dc015a866aed698368763342e6d7f5f1e6f2eb6acdf1a",
+  "server/research_scripts/phase7/phase7_24/liq_sweep_canonical_dataset_v1.json": "dbd55dbc4c041ddaf46864f3047ecd0e9b8dd202f6da665af751e6b657ff1019",
+  "server/research_scripts/phase7/phase7_27/nxs_gold_d1_loader.py": "279436a6031e8d406623cc8047b2ea9a7e78f8dcde539c861606cc386ae1ff4f",
+  "server/research_scripts/phase7/phase7_27/nxs_regime_classifier.py": "81b02dfe309c7f9ad23f941d1da81ca554766bda729262aa112e08ad64919e74",
+  "server/research_scripts/phase7/phase7_21/nxs_breakoutacc_dataset_loader.py": "6f2ce354e00e3b400bd867635160290f534a806801edce5c92fc47656fe28c9c",
+  "server/research_scripts/phase7/phase7_25/nxs_liq_sweep_edge_dataset_loader.py": "42bec4f854b4156fd92a38cb1583bbea3dacc9887ece22bfce0cf0a1bba2ee92",
+  "server/research_scripts/phase7/engine/matched_pair_permutation_test.py": "5a785e3dbc1e5f79caf6574f79ee965eb88fb34cccbe212db784496db39aaf0f",
+  "server/research_scripts/phase7/engine/dependence_aware_mean_tests.py": "dc5748d37209794babe70fb295a74c48eaf896ebc25fb4f152f898e35cf240f1",
+  "server/research_scripts/phase7/engine/multiple_testing_v2.py": "a9e7eec85e6714981bbadc73860056c0eddcd0ad893d0478407d89158d2e3b5a",
+  "server/research_scripts/phase6_5/block_bootstrap.py": "7fe3bab021f280b5b5aabf8df312dd67526f7248c257bb1a9ed0d927de02e7fc"
+ },
+ "not_committed": {
+  "run.log": "excluded by .gitignore (*.log); its only content is the meta line already stored in results_v1.json['meta'], sha256 940844626f38d478e841c2753c938644f5047ae454180ffdf2629e55d82bc49c"
+ },
+ "environment": {
+  "python": "3.13.16",
+  "numpy": "2.5.3",
+  "pandas": "3.0.5",
+  "scipy": "1.18.1",
+  "os": "Linux x86_64 (cloud container)",
+  "cpus": 4,
+  "parallelism": "multiprocessing.Pool(4); results do not depend on worker order (per-cell seeds)",
+  "scipy_note": "scipy==1.18.1 pinned in server/requirements-dev.txt; not in base requirements"
+ },
+ "seeds": {
+  "base": 90000,
+  "per_cell": "(90000 + zlib.crc32(cell_key)) % 2**31, cell_key e.g. 'S|G_U|47|0.25|0.0', 'T|BREAKOUT_ACC|47|0.2|0.0', 'SC|3|200'",
+  "inner_engine_seeds": "drawn from the cell RNG"
+ },
+ "command": "python3 server/research_scripts/edge_detection_capability_v1/run_edgetest.py <repo_root> server/research_scripts/edge_detection_capability_v1/protocol_v1.json <out.json>",
+ "reproduction": {
+  "date": "2026-10-18",
+  "from": "clean checkout of branch research/edge-detection-capability-v1 (base bad0172)",
+  "result": "IDENTICAL to results_v1.json on every field except meta.runtime_s (916.7s original, 965.8s re-run)",
+  "rerun_results_sha256": "a3ceb1f87023b92aae2fbb8f38f98117df3650830cd63ee8e5af2fc569a7084f"
+ },
+ "holdout_statement": "No sealed holdout and no ValidationAccessLedger path was read. Inputs are discovery data already exposed in Phases 7.21/7.24/7.27. The D1 CSV (2019-01-02..2026-08-19) overlaps in calendar dates the Phase 7 final_holdout_seal_v1 window (2026-02-04..2026-09-16), but that seal governs the Phase 7 partitioned market-state dataset, not this CSV, which Phase 7.27 already read in full. No real strategy signal was evaluated: events are synthetic draws.",
+ "limits": [
+  "explore.py was run before freezing the protocol to read data scale (ATR, outcome sd, trade R distributions); disclosed, no effect sizes were tested.",
+  "A timing smoke test ran 5 reps of 4 cells before the full run; outputs were not inspected.",
+  "M1 uses B=2000 bootstrap draws (Phase 7.27 used 10,000).",
+  "Clustered generator G_C is one stylized dependence model (clusters of 4 events, 2 bars apart).",
+  "Trade layer resamples 47/42 real trades IID: tails limited to observed values, no serial dependence.",
+  "Single instrument (GOLD) and two strategies' R distributions.",
+  "At n=400 events cover 21% of eligible D1 bars: finite-population effect makes block methods conservative there.",
+  "Regime tercile edges are full-sample (inherited from Phase 7.27 classifier).",
+  "Expected beta-confusion of the unconditional benchmark (M_UNC) did not materialize (0.06-0.12); reported as found.",
+  "protocol_v1.sha256 contains the original scratchpad absolute path (kept byte-identical).",
+  "The proposed power gate is a proposal, not adopted policy."
+ ],
+ "not_modified": "original data, statistical engine, EA code, historical protocols, ResearchMemory",
+ "corrections": [
+  "DECISION_CARD_P0_EDGE_DETECTION_V1.md (frozen evidence, unchanged) states M2/M3 type I '0.03-0.08' under clustering and 'calibrated in all configurations'; exact: M2 max 0.0825, M3 max 0.0725, both below 0.025 in some cells."
+ ],
+ "d1_csv_provenance": {
+  "path": "server/research_scripts/phase7/phase7_9h/raw_data/nxs_d1_gold_phase79h.csv",
+  "sha256": "ac3533a639ada63f850f402b3c03a976ce69d0600b4f05bdb6376b86769244ea",
+  "added_in": "commit 4870248 (2026-09-26), Phase 7.9H BREAKOUT_ACC_INTENDED_D1_V1",
+  "source": "XMGlobal-MT5 broker feed, D1 bars via CopyRates from the terminal history cache (phase7_9k/breakout_acc_temporal_contract_v1.json)",
+  "coverage": "2019.01.02 - 2026.08.19, 1970 bars, columns time/open/high/low/close/tick_volume",
+  "prior_exposure": "read in full by Phase 7.9H/7.9K (BREAKOUT_ACC dataset) and Phase 7.27 (registered in phase7_26 GLOBAL_DATA_EXPOSURE_REGISTRY as BUY_DOMINANCE_BENCHMARK_V1_2019-2026, holdout_status DERIVED_FROM_DISCOVERY_DATASETS)",
+  "modified_by_this_experiment": false
+ },
+ "holdout_seal_relationship": [
+  {
+   "seal": "server/research_scripts/phase7/final_holdout_seal_v1.json",
+   "scope": "Phase 7 partitioned Dukascopy XAUUSD TICK dataset (dataset_version_registry_v2, 2023-02-04..2026-09-16), final holdout 2026-02-04..2026-09-16, status SEALED, access only via ValidationAccessLedger",
+   "relationship": "Different source (Dukascopy ticks vs XM broker D1 bars) and different files. Not read; no ValidationAccessLedger call. Calendar overlap: 2026-02-04..2026-08-19 of the D1 CSV."
+  },
+  {
+   "seal": "server/research_scripts/phase6/true_holdout_declaration.json",
+   "scope": "Dukascopy XAUUSD ticks 2022-02-04..2023-02-03, temporal holdout already consumed by Phase 6 (vault: NEXUS - Phase 6 True Holdout Validation Sweep Reclaim)",
+   "relationship": "Different source and files; not read. Calendar overlap: the whole period lies inside the D1 CSV range."
+  },
+  {
+   "seal": "server/research_scripts/phase7/phase7_8d, 7_8g, 7_8h, 7_8i (VOLATILITY_BREAKOUT pre-run seals/reseals)",
+   "scope": "candidate-specific integrity seals of the VOLBRK Serious 3Y MT5 runs (candidate archived after FAIL)",
+   "relationship": "Not read; unrelated to the files used."
+  }
+ ],
+ "holdout_overlap_assessment": "No sealed file was read and no ledger was touched. The D1 CSV is an independent broker feed, but it describes the same market over calendar windows that overlap the Phase 6 (consumed) and Phase 7 (SEALED) holdout periods. That price path had already been exposed by Phases 7.9H/7.21/7.25/7.27. This experiment evaluated no real strategy or candidate (synthetic events and injected effects only), so it adds no selection information about any candidate. Any future confirmatory use of the Phase 7 holdout should still treat its calendar window's price path as already seen through broker D1 data."
+}
