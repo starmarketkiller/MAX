@@ -4,3 +4,4 @@
 {"count":103,"head_hash":"1406bc84f937f197d4da2d7ab4f65dffe5b28e69b80317e96208933ca6e0e36a","note":"BL-01 discovery analysis recorded","prev":"e34c657af5e352f1f26ae2953fd3c738296197c6f2af6b54315879d462078064"}
 {"count":124,"head_hash":"59ec446a64593d3e03973a5c3e794fa56de2030f63e4045ae6cd2dcecc4677ed","note":"research loop C0002 closed","prev":"13bf5ccdda094f48da8f52832f7028efbb1576604d7f92989c708c95616b314a"}
 {"count":136,"head_hash":"3e0546d5afc0e7cc0f1d02372eda1e51f57e9cb8945622680e738ba48ca4046d","note":"NXL2-CP2-PILOT-A-001 prereg 12 HYPOTHESIS (auth NXL2-CP2-A-20261014-01)","prev":"c22d8d3b975f3d597db5c645fc4a782308ec802146055350cf91d32145173f3a"}
+{"count":148,"head_hash":"77d31b77e8a3efd5ef1016b08e4e7be99c143dc2db9187b82dbcba5380ee3adb","note":"NXL2-CP2-PILOT-A-001 canonical append","prev":"2867483376f6ba33f02066bbd7b913cfd5de02a02227ee0c5530151f60072be7"}

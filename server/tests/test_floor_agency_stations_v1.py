@@ -1,12 +1,34 @@
 """Floor handoff with the Agency store attached: comply/model/style/pack run for real."""
+import datetime
 import json
+
+import pytest
 
 from test_floor_workflow_v1 import _context, _message, _service  # imports app (core path)
 from core.dispatcher import DurableQueueDispatcher
+from business_units.ai_fashion_agency import pipeline
 from business_units.ai_fashion_agency.store import AgencyStore
 from jarvis_v1.floor_workflow import AGENCY_STATIONS, WORKFLOW_ID, project_trace
 from jarvis_v1.local_operations import OperationsProjection
 from jarvis_v1.gateway import JarvisGateway
+
+
+@pytest.fixture
+def fresh_agency_quote_clock(monkeypatch):
+    """Pin the quote fixture to its last valid day, including local imports."""
+    class FrozenDate(datetime.date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 10, 14)
+
+    monkeypatch.setattr(datetime, "date", FrozenDate)
+    monkeypatch.setattr(pipeline, "date", FrozenDate)
+
+
+@pytest.mark.parametrize("day,expected", [(14, True), (15, False), (17, False)])
+def test_agency_quote_seven_day_boundary(day, expected):
+    quote = {"credits": 2.25, "quoted_at": "2026-10-07", "stale_after_days": 7}
+    assert pipeline._quote_is_fresh(quote, today=datetime.date(2026, 10, day)) is expected
 
 
 def _attach(service, tmp_path):
@@ -27,7 +49,8 @@ def _run(tmp_path, monkeypatch):
     return service, store, task_id, dispatcher, calls
 
 
-def test_agency_stations_run_and_stop_at_generation_approval(tmp_path, monkeypatch):
+def test_agency_stations_run_and_stop_at_generation_approval(
+        tmp_path, monkeypatch, fresh_agency_quote_clock):
     service, store, task_id, _, _ = _run(tmp_path, monkeypatch)
     record = service.queue.get(task_id)
     assert record["state"] == "WAITING_APPROVAL"
@@ -56,7 +79,8 @@ def test_agency_stations_run_and_stop_at_generation_approval(tmp_path, monkeypat
     assert trace["not_run_reasons"]["fashion.asset"].startswith("paid Higgsfield generation")
 
 
-def test_accepting_the_handoff_spends_nothing_and_does_not_rerun(tmp_path, monkeypatch):
+def test_accepting_the_handoff_spends_nothing_and_does_not_rerun(
+        tmp_path, monkeypatch, fresh_agency_quote_clock):
     service, store, task_id, dispatcher, calls = _run(tmp_path, monkeypatch)
     approved = JarvisGateway(service).handle(_message(task_id, "APPROVE"))
     assert approved["status"] == "PROPOSAL_ACCEPTED"
