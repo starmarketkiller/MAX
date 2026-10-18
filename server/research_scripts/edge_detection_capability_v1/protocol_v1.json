@@ -1,0 +1,66 @@
+{
+  "protocol_id": "NEXUS_P0_EDGE_DETECTION_CAPABILITY_V1",
+  "frozen_at": "2026-10-18, before any simulation result was computed",
+  "baseline": "origin/main@bad0172 (read-only detached worktree)",
+  "data": {
+    "price_series": "server/research_scripts/phase7/phase7_9h/raw_data/nxs_d1_gold_phase79h.csv (discovery, already exposed in Phase 7.27; never modified)",
+    "regime": "phase7_27/nxs_regime_classifier.build_regime_table (causal SMA50 slope x ATR14 tercile, as 7.27)",
+    "trade_distributions": ["phase7_9k BREAKOUT_ACC opened events net R (n=47, via phase7_21 loader)", "phase7_24 LIQ_SWEEP closed events net R (n=42, via phase7_25 loader)"],
+    "holdout": "none used"
+  },
+  "edge_injection": "Additive shift delta applied ONLY to an in-memory copy of event outcomes (signal layer: h10 forward return in ATR14 units; trade layer: net R). Prices and datasets untouched.",
+  "signal_layer": {
+    "outcome": "y = (close[t+10]-close[t]) / ATR14[t]",
+    "eligible_bars": "regime known (no UNKNOWN) and h10 available",
+    "generators": {
+      "G_U": "n bars uniform without replacement, sorted by time",
+      "G_C": "clustered: n/4 cluster centres uniform, events at centre+{0,2,4,6} bars (overlapping h10 windows = serial dependence)",
+      "G_B": "beta-only: n bars uniform among sma50_slope==UP bars, delta=0 (directional exposure, no selection skill)"
+    },
+    "control": "one regime-matched random bar per event (same sma50_slope x vol_tercile, != event), as 7.27 REGIME_MATCHED_RANDOM_LONG",
+    "paired_difference": "d_i = (y_event_i + delta - cost) - y_control_i",
+    "grid": {"n": [12, 25, 47, 100, 200, 400], "delta_atr": [0, 0.1, 0.25, 0.5, 1.0], "cost_atr": [0, 0.019, 0.074]},
+    "cost_note": "0.5$ and 2.0$ round trip (phase7_21 COST_MODERATE/COST_STRESS) divided by median ATR14 26.9$; cost grid run only at n in {47,200}, delta in {0,0.25,0.5}",
+    "methods": {
+      "M1": "Phase 7.27 primary: IID percentile bootstrap of paired diffs, 95% CI excludes 0 (B=2000 vectorized; 7.27 used 10000)",
+      "M2": "engine.matched_pair_permutation_test.block_sign_flip_permutation_p (n_boot=999)",
+      "M3": "engine.dependence_aware_mean_tests.studentized_block_bootstrap_p (n_boot=999)",
+      "M4": "engine.dependence_aware_mean_tests.hac_newey_west_p",
+      "M_UNC": "beta-confusion check: one-sample IID bootstrap of y_event - mean(all eligible y) (7.27 UNCONDITIONAL_LONG_EXPOSURE), G_B only"
+    },
+    "alpha": 0.05,
+    "reps_per_cell": 400
+  },
+  "trade_layer": {
+    "base": "real net R recentred to mean 0 (H0), then +deltaR - costR; IID resampling of n trades",
+    "grid": {"n": [25, 47, 100, 200, 400, 800], "deltaR": [0, 0.1, 0.2, 0.3, 0.5], "costR": [0, 0.02, 0.08]},
+    "cost_note": "0.5$ / 2.0$ over BREAKOUT_ACC median risk 25.2$; cost grid run on BREAKOUT_ACC only",
+    "method": "IID percentile bootstrap 95% CI on mean R (as 7.21/7.25 statistical_uncertainty); success = CI lower bound > 0",
+    "reps_per_cell": 400
+  },
+  "screening_vs_confirmation": {
+    "family_size": 67,
+    "m_true": [0, 3],
+    "true_deltaR": 0.3,
+    "n_per_strategy": [47, 200],
+    "screen": "two-sided IID bootstrap p (B=2000) -> engine.multiple_testing_v2.benjamini_hochberg q=0.10, positive mean required",
+    "confirm": "fresh independent sample of same n, CI lower bound > 0",
+    "reps": 200,
+    "base_distribution": "BREAKOUT_ACC recentred"
+  },
+  "seeds": "base 90000; per-cell seed = (90000 + crc32(cell_key)) % 2^31",
+  "success_criteria": {
+    "calibration": "type I in [0.025, 0.075] (MC SE ~1.1% at 400 reps) for M1..M4 under G_U and G_C at delta=0; M1 CI coverage of true E[d] in [0.92, 0.98] under G_U",
+    "beta_discrimination": "under G_B, regime-matched methods keep type I <= 0.075 while M_UNC is expected to reject",
+    "economically_relevant": "trade layer deltaR in {0.1, 0.2, 0.3}; signal layer delta in {0.25, 0.5} ATR",
+    "realistic_n": "n <= 50 (current D1 candidates over ~7 years)",
+    "capable_cell": "power >= 0.80 at alpha 0.05"
+  },
+  "decision_rule": {
+    "PIPELINE_MIS_CALIBRATED": "M1 (method used in past decisions) type I > 0.075 under G_U, or coverage < 0.90, and no calibrated dependence-aware alternative exists in the engine",
+    "PIPELINE_UNDERPOWERED": "calibrated, but power < 0.80 for every economically relevant delta at realistic n",
+    "PIPELINE_CAPABLE": "calibrated and power >= 0.80 for deltaR = 0.2 at n <= 50",
+    "INCONCLUSIVE": "Monte Carlo uncertainty or missing data prevents classification",
+    "note": "if M1 is miscalibrated only under G_C while M2-M4 are calibrated, report as a scoped calibration defect, not a pipeline-wide verdict"
+  }
+}

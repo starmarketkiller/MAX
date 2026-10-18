@@ -1,0 +1,223 @@
+META {'protocol_sha256': '8dd988251b280e390162c979cf446eb782e3b35371c732f9215bb6624359a698', 'pop_mean_y_atr': 0.545860047108577, 'sd_y_atr': 2.3618155350783385, 'n_eligible_bars': 1906, 'n_up_bars': 1116, 'trade_dist_sd': {'BREAKOUT_ACC': 2.3789485302923516, 'LIQ_SWEEP': 1.4387817965441505}, 'runtime_s': 916.7}
+
+== SIGNAL: rejection rate (M1 M2 M3 M4) | bias | M1 coverage | est|sig  (cost=0)
+G_U d=0    n=12    0.10  0.00  0.03  0.13 | bias +0.027 sd 0.95 | cov 0.90 | est|sig -0.03
+G_U d=0    n=25    0.08  0.05  0.05  0.09 | bias +0.059 sd 0.66 | cov 0.92 | est|sig  0.04
+G_U d=0    n=47    0.06  0.04  0.03  0.06 | bias -0.057 sd 0.49 | cov 0.94 | est|sig -0.85
+G_U d=0    n=100   0.04  0.03  0.03  0.04 | bias +0.008 sd 0.31 | cov 0.96 | est|sig  0.07
+G_U d=0    n=200   0.06  0.03  0.03  0.04 | bias -0.022 sd 0.23 | cov 0.94 | est|sig -0.19
+G_U d=0    n=400   0.03  0.00  0.00  0.00 | bias -0.004 sd 0.16 | cov 0.97 | est|sig  0.07
+G_U d=0.1  n=12    0.09  0.00  0.03  0.10 | bias -0.003 sd 0.93 | cov 0.92 | est|sig  0.94
+G_U d=0.1  n=25    0.10  0.06  0.04  0.10 | bias +0.058 sd 0.70 | cov 0.91 | est|sig  0.83
+G_U d=0.1  n=47    0.05  0.04  0.03  0.06 | bias -0.000 sd 0.46 | cov 0.95 | est|sig  0.58
+G_U d=0.1  n=100   0.07  0.04  0.04  0.05 | bias -0.010 sd 0.32 | cov 0.94 | est|sig  0.34
+G_U d=0.1  n=200   0.06  0.02  0.02  0.03 | bias -0.008 sd 0.23 | cov 0.96 | est|sig  0.35
+G_U d=0.1  n=400   0.09  0.02  0.02  0.02 | bias -0.011 sd 0.16 | cov 0.95 | est|sig  0.34
+G_U d=0.25 n=12    0.12  0.00  0.04  0.16 | bias -0.082 sd 0.97 | cov 0.91 | est|sig  0.90
+G_U d=0.25 n=25    0.11  0.07  0.06  0.14 | bias -0.010 sd 0.71 | cov 0.90 | est|sig  0.99
+G_U d=0.25 n=47    0.12  0.07  0.06  0.12 | bias +0.018 sd 0.48 | cov 0.94 | est|sig  0.85
+G_U d=0.25 n=100   0.12  0.08  0.08  0.11 | bias -0.013 sd 0.34 | cov 0.95 | est|sig  0.73
+G_U d=0.25 n=200   0.20  0.10  0.10  0.13 | bias +0.012 sd 0.22 | cov 0.97 | est|sig  0.57
+G_U d=0.25 n=400   0.29  0.09  0.09  0.11 | bias -0.003 sd 0.15 | cov 0.97 | est|sig  0.42
+G_U d=0.5  n=12    0.13  0.00  0.04  0.17 | bias -0.036 sd 1.02 | cov 0.89 | est|sig  1.80
+G_U d=0.5  n=25    0.18  0.10  0.07  0.18 | bias +0.038 sd 0.67 | cov 0.94 | est|sig  1.31
+G_U d=0.5  n=47    0.21  0.12  0.11  0.20 | bias -0.005 sd 0.48 | cov 0.95 | est|sig  1.09
+G_U d=0.5  n=100   0.31  0.21  0.20  0.29 | bias -0.029 sd 0.32 | cov 0.94 | est|sig  0.83
+G_U d=0.5  n=200   0.59  0.43  0.44  0.50 | bias -0.002 sd 0.22 | cov 0.96 | est|sig  0.64
+G_U d=0.5  n=400   0.86  0.67  0.66  0.68 | bias +0.005 sd 0.15 | cov 0.96 | est|sig  0.55
+G_U d=1.0  n=12    0.24  0.00  0.07  0.27 | bias -0.032 sd 0.91 | cov 0.93 | est|sig  2.02
+G_U d=1.0  n=25    0.34  0.27  0.20  0.38 | bias +0.006 sd 0.66 | cov 0.93 | est|sig  1.69
+G_U d=1.0  n=47    0.55  0.45  0.41  0.54 | bias -0.023 sd 0.50 | cov 0.94 | est|sig  1.32
+G_U d=1.0  n=100   0.86  0.76  0.73  0.82 | bias -0.024 sd 0.32 | cov 0.95 | est|sig  1.06
+G_U d=1.0  n=200   0.99  0.97  0.97  0.99 | bias +0.019 sd 0.21 | cov 0.97 | est|sig  1.02
+G_U d=1.0  n=400   1.00  1.00  1.00  1.00 | bias -0.011 sd 0.15 | cov 0.97 | est|sig  0.99
+G_C d=0    n=12    0.29  0.00  0.04  0.22 | bias +0.069 sd 1.40 | cov 0.71 | est|sig  0.13
+G_C d=0    n=25    0.17  0.07  0.04  0.12 | bias -0.018 sd 0.86 | cov 0.83 | est|sig -0.25
+G_C d=0    n=47    0.18  0.04  0.04  0.10 | bias +0.097 sd 0.67 | cov 0.82 | est|sig  0.23
+G_C d=0    n=100   0.20  0.07  0.04  0.08 | bias -0.028 sd 0.47 | cov 0.80 | est|sig -0.03
+G_C d=0    n=200   0.22  0.08  0.07  0.09 | bias -0.010 sd 0.36 | cov 0.78 | est|sig -0.03
+G_C d=0    n=400   0.21  0.03  0.03  0.04 | bias +0.014 sd 0.24 | cov 0.79 | est|sig  0.01
+G_C d=0.1  n=12    0.23  0.00  0.05  0.18 | bias +0.059 sd 1.34 | cov 0.78 | est|sig  0.34
+G_C d=0.1  n=25    0.19  0.09  0.06  0.13 | bias +0.039 sd 0.92 | cov 0.80 | est|sig  0.58
+G_C d=0.1  n=47    0.15  0.06  0.05  0.10 | bias -0.010 sd 0.65 | cov 0.85 | est|sig  0.29
+G_C d=0.1  n=100   0.19  0.07  0.05  0.08 | bias -0.002 sd 0.46 | cov 0.83 | est|sig  0.13
+G_C d=0.1  n=200   0.17  0.06  0.05  0.07 | bias -0.003 sd 0.31 | cov 0.84 | est|sig  0.33
+G_C d=0.1  n=400   0.21  0.07  0.06  0.07 | bias +0.015 sd 0.24 | cov 0.83 | est|sig  0.33
+G_C d=0.25 n=12    0.23  0.00  0.05  0.19 | bias -0.009 sd 1.38 | cov 0.74 | est|sig  0.72
+G_C d=0.25 n=25    0.20  0.07  0.05  0.12 | bias -0.024 sd 0.92 | cov 0.80 | est|sig  0.63
+G_C d=0.25 n=47    0.23  0.08  0.07  0.15 | bias +0.053 sd 0.70 | cov 0.81 | est|sig  0.80
+G_C d=0.25 n=100   0.22  0.08  0.06  0.10 | bias -0.004 sd 0.45 | cov 0.84 | est|sig  0.66
+G_C d=0.25 n=200   0.27  0.10  0.11  0.12 | bias -0.005 sd 0.32 | cov 0.83 | est|sig  0.56
+G_C d=0.25 n=400   0.40  0.12  0.11  0.15 | bias +0.004 sd 0.23 | cov 0.85 | est|sig  0.44
+G_C d=0.5  n=12    0.28  0.00  0.05  0.24 | bias +0.100 sd 1.30 | cov 0.78 | est|sig  1.49
+G_C d=0.5  n=25    0.22  0.10  0.09  0.15 | bias +0.020 sd 0.91 | cov 0.82 | est|sig  1.45
+G_C d=0.5  n=47    0.28  0.11  0.08  0.17 | bias +0.003 sd 0.62 | cov 0.84 | est|sig  1.08
+G_C d=0.5  n=100   0.42  0.18  0.17  0.23 | bias +0.019 sd 0.44 | cov 0.84 | est|sig  0.91
+G_C d=0.5  n=200   0.61  0.33  0.30  0.34 | bias +0.025 sd 0.33 | cov 0.83 | est|sig  0.72
+G_C d=0.5  n=400   0.77  0.46  0.45  0.49 | bias -0.012 sd 0.23 | cov 0.83 | est|sig  0.58
+G_C d=1.0  n=12    0.37  0.00  0.06  0.32 | bias +0.074 sd 1.37 | cov 0.76 | est|sig  2.12
+G_C d=1.0  n=25    0.43  0.23  0.19  0.29 | bias +0.034 sd 0.92 | cov 0.82 | est|sig  1.78
+G_C d=1.0  n=47    0.56  0.34  0.28  0.42 | bias +0.017 sd 0.69 | cov 0.80 | est|sig  1.48
+G_C d=1.0  n=100   0.77  0.56  0.53  0.60 | bias -0.012 sd 0.48 | cov 0.80 | est|sig  1.17
+G_C d=1.0  n=200   0.94  0.84  0.82  0.87 | bias +0.014 sd 0.34 | cov 0.80 | est|sig  1.05
+G_C d=1.0  n=400   1.00  0.99  0.99  1.00 | bias +0.013 sd 0.23 | cov 0.82 | est|sig  1.01
+G_B d=0.0  n=12    0.10  0.00  0.03  0.13 UNC=0.09 | bias -0.036 sd 0.96 | cov 0.90 | est|sig -0.03
+G_B d=0.0  n=25    0.07  0.04  0.03  0.07 UNC=0.07 | bias +0.010 sd 0.63 | cov 0.93 | est|sig -0.10
+G_B d=0.0  n=47    0.06  0.04  0.03  0.07 UNC=0.06 | bias -0.020 sd 0.45 | cov 0.94 | est|sig -0.01
+G_B d=0.0  n=100   0.05  0.02  0.03  0.04 UNC=0.07 | bias -0.025 sd 0.32 | cov 0.95 | est|sig -0.27
+G_B d=0.0  n=200   0.04  0.01  0.01  0.02 UNC=0.10 | bias -0.003 sd 0.22 | cov 0.96 | est|sig -0.04
+G_B d=0.0  n=400   0.04  0.00  0.00  0.00 UNC=0.12 | bias -0.002 sd 0.14 | cov 0.96 | est|sig  0.00
+
+== SIGNAL cost cells (M1 M2 M3 M4)
+G_U n=47 d=0 cost=0.019 true=-0.019  0.04  0.03  0.02  0.05
+G_U n=47 d=0 cost=0.074 true=-0.074  0.07  0.04  0.03  0.07
+G_U n=47 d=0.25 cost=0.019 true=+0.231  0.12  0.07  0.06  0.11
+G_U n=47 d=0.25 cost=0.074 true=+0.176  0.07  0.06  0.05  0.08
+G_U n=47 d=0.5 cost=0.019 true=+0.481  0.22  0.16  0.14  0.22
+G_U n=47 d=0.5 cost=0.074 true=+0.426  0.18  0.12  0.11  0.19
+G_U n=200 d=0 cost=0.019 true=-0.019  0.06  0.01  0.01  0.02
+G_U n=200 d=0 cost=0.074 true=-0.074  0.08  0.04  0.04  0.04
+G_U n=200 d=0.25 cost=0.019 true=+0.231  0.17  0.09  0.09  0.10
+G_U n=200 d=0.25 cost=0.074 true=+0.176  0.10  0.05  0.05  0.08
+G_U n=200 d=0.5 cost=0.019 true=+0.481  0.54  0.39  0.37  0.43
+G_U n=200 d=0.5 cost=0.074 true=+0.426  0.45  0.31  0.30  0.35
+G_C n=47 d=0 cost=0.019 true=-0.019  0.19  0.06  0.04  0.10
+G_C n=47 d=0 cost=0.074 true=-0.074  0.17  0.06  0.04  0.09
+G_C n=47 d=0.25 cost=0.019 true=+0.231  0.22  0.07  0.04  0.09
+G_C n=47 d=0.25 cost=0.074 true=+0.176  0.17  0.05  0.04  0.09
+G_C n=47 d=0.5 cost=0.019 true=+0.481  0.29  0.12  0.09  0.17
+G_C n=47 d=0.5 cost=0.074 true=+0.426  0.22  0.08  0.06  0.12
+G_C n=200 d=0 cost=0.019 true=-0.019  0.16  0.05  0.04  0.06
+G_C n=200 d=0 cost=0.074 true=-0.074  0.16  0.06  0.05  0.06
+G_C n=200 d=0.25 cost=0.019 true=+0.231  0.25  0.08  0.07  0.08
+G_C n=200 d=0.25 cost=0.074 true=+0.176  0.21  0.09  0.09  0.10
+G_C n=200 d=0.5 cost=0.019 true=+0.481  0.55  0.28  0.27  0.31
+G_C n=200 d=0.5 cost=0.074 true=+0.426  0.50  0.25  0.24  0.27
+
+== TRADE: power (lower CI>0) | coverage | est|sig
+BREAKOUT_ACC n=25   dR=0    cR=0.0   power 0.01 cov 0.95 est|sig  1.23
+BREAKOUT_ACC n=25   dR=0.1  cR=0.0   power 0.05 cov 0.94 est|sig  1.13
+BREAKOUT_ACC n=25   dR=0.2  cR=0.0   power 0.06 cov 0.94 est|sig  1.21
+BREAKOUT_ACC n=25   dR=0.3  cR=0.0   power 0.06 cov 0.93 est|sig  1.25
+BREAKOUT_ACC n=25   dR=0.5  cR=0.0   power 0.19 cov 0.93 est|sig  1.20
+BREAKOUT_ACC n=47   dR=0    cR=0.0   power 0.02 cov 0.95 est|sig  0.81
+BREAKOUT_ACC n=47   dR=0.1  cR=0.0   power 0.04 cov 0.94 est|sig  0.85
+BREAKOUT_ACC n=47   dR=0.2  cR=0.0   power 0.12 cov 0.95 est|sig  0.87
+BREAKOUT_ACC n=47   dR=0.3  cR=0.0   power 0.12 cov 0.94 est|sig  0.92
+BREAKOUT_ACC n=47   dR=0.5  cR=0.0   power 0.27 cov 0.93 est|sig  0.92
+BREAKOUT_ACC n=100  dR=0    cR=0.0   power 0.02 cov 0.94 est|sig  0.56
+BREAKOUT_ACC n=100  dR=0.1  cR=0.0   power 0.06 cov 0.94 est|sig  0.58
+BREAKOUT_ACC n=100  dR=0.2  cR=0.0   power 0.14 cov 0.93 est|sig  0.59
+BREAKOUT_ACC n=100  dR=0.3  cR=0.0   power 0.24 cov 0.94 est|sig  0.61
+BREAKOUT_ACC n=100  dR=0.5  cR=0.0   power 0.60 cov 0.94 est|sig  0.67
+BREAKOUT_ACC n=200  dR=0    cR=0.0   power 0.01 cov 0.95 est|sig  0.40
+BREAKOUT_ACC n=200  dR=0.1  cR=0.0   power 0.09 cov 0.96 est|sig  0.41
+BREAKOUT_ACC n=200  dR=0.2  cR=0.0   power 0.20 cov 0.94 est|sig  0.43
+BREAKOUT_ACC n=200  dR=0.3  cR=0.0   power 0.42 cov 0.95 est|sig  0.44
+BREAKOUT_ACC n=200  dR=0.5  cR=0.0   power 0.88 cov 0.95 est|sig  0.54
+BREAKOUT_ACC n=400  dR=0    cR=0.0   power 0.02 cov 0.95 est|sig  0.32
+BREAKOUT_ACC n=400  dR=0.1  cR=0.0   power 0.12 cov 0.93 est|sig  0.30
+BREAKOUT_ACC n=400  dR=0.2  cR=0.0   power 0.41 cov 0.94 est|sig  0.31
+BREAKOUT_ACC n=400  dR=0.3  cR=0.0   power 0.69 cov 0.94 est|sig  0.36
+BREAKOUT_ACC n=400  dR=0.5  cR=0.0   power 1.00 cov 0.97 est|sig  0.50
+BREAKOUT_ACC n=800  dR=0    cR=0.0   power 0.03 cov 0.95 est|sig  0.20
+BREAKOUT_ACC n=800  dR=0.1  cR=0.0   power 0.23 cov 0.95 est|sig  0.21
+BREAKOUT_ACC n=800  dR=0.2  cR=0.0   power 0.67 cov 0.97 est|sig  0.24
+BREAKOUT_ACC n=800  dR=0.3  cR=0.0   power 0.96 cov 0.96 est|sig  0.31
+BREAKOUT_ACC n=800  dR=0.5  cR=0.0   power 1.00 cov 0.95 est|sig  0.50
+LIQ_SWEEP    n=25   dR=0    cR=0.0   power 0.03 cov 0.94 est|sig  0.66
+LIQ_SWEEP    n=25   dR=0.1  cR=0.0   power 0.07 cov 0.95 est|sig  0.63
+LIQ_SWEEP    n=25   dR=0.2  cR=0.0   power 0.12 cov 0.96 est|sig  0.65
+LIQ_SWEEP    n=25   dR=0.3  cR=0.0   power 0.20 cov 0.94 est|sig  0.70
+LIQ_SWEEP    n=25   dR=0.5  cR=0.0   power 0.41 cov 0.93 est|sig  0.77
+LIQ_SWEEP    n=47   dR=0    cR=0.0   power 0.04 cov 0.93 est|sig  0.48
+LIQ_SWEEP    n=47   dR=0.1  cR=0.0   power 0.07 cov 0.95 est|sig  0.47
+LIQ_SWEEP    n=47   dR=0.2  cR=0.0   power 0.17 cov 0.95 est|sig  0.49
+LIQ_SWEEP    n=47   dR=0.3  cR=0.0   power 0.34 cov 0.94 est|sig  0.55
+LIQ_SWEEP    n=47   dR=0.5  cR=0.0   power 0.68 cov 0.93 est|sig  0.61
+LIQ_SWEEP    n=100  dR=0    cR=0.0   power 0.03 cov 0.94 est|sig  0.34
+LIQ_SWEEP    n=100  dR=0.1  cR=0.0   power 0.11 cov 0.96 est|sig  0.34
+LIQ_SWEEP    n=100  dR=0.2  cR=0.0   power 0.27 cov 0.94 est|sig  0.36
+LIQ_SWEEP    n=100  dR=0.3  cR=0.0   power 0.56 cov 0.95 est|sig  0.40
+LIQ_SWEEP    n=100  dR=0.5  cR=0.0   power 0.94 cov 0.95 est|sig  0.52
+LIQ_SWEEP    n=200  dR=0    cR=0.0   power 0.03 cov 0.94 est|sig  0.21
+LIQ_SWEEP    n=200  dR=0.1  cR=0.0   power 0.17 cov 0.94 est|sig  0.26
+LIQ_SWEEP    n=200  dR=0.2  cR=0.0   power 0.52 cov 0.95 est|sig  0.28
+LIQ_SWEEP    n=200  dR=0.3  cR=0.0   power 0.90 cov 0.94 est|sig  0.33
+LIQ_SWEEP    n=200  dR=0.5  cR=0.0   power 1.00 cov 0.95 est|sig  0.50
+LIQ_SWEEP    n=400  dR=0    cR=0.0   power 0.01 cov 0.96 est|sig  0.15
+LIQ_SWEEP    n=400  dR=0.1  cR=0.0   power 0.30 cov 0.95 est|sig  0.19
+LIQ_SWEEP    n=400  dR=0.2  cR=0.0   power 0.83 cov 0.94 est|sig  0.22
+LIQ_SWEEP    n=400  dR=0.3  cR=0.0   power 0.98 cov 0.94 est|sig  0.30
+LIQ_SWEEP    n=400  dR=0.5  cR=0.0   power 1.00 cov 0.96 est|sig  0.50
+LIQ_SWEEP    n=800  dR=0    cR=0.0   power 0.03 cov 0.94 est|sig  0.12
+LIQ_SWEEP    n=800  dR=0.1  cR=0.0   power 0.53 cov 0.98 est|sig  0.14
+LIQ_SWEEP    n=800  dR=0.2  cR=0.0   power 0.98 cov 0.96 est|sig  0.20
+LIQ_SWEEP    n=800  dR=0.3  cR=0.0   power 1.00 cov 0.96 est|sig  0.30
+LIQ_SWEEP    n=800  dR=0.5  cR=0.0   power 1.00 cov 0.96 est|sig  0.50
+BREAKOUT_ACC n=25   dR=0    cR=0.02  power 0.02 cov 0.95 est|sig  1.17
+BREAKOUT_ACC n=25   dR=0    cR=0.08  power 0.02 cov 0.94 est|sig  1.21
+BREAKOUT_ACC n=25   dR=0.1  cR=0.02  power 0.03 cov 0.94 est|sig  1.26
+BREAKOUT_ACC n=25   dR=0.1  cR=0.08  power 0.01 cov 0.96 est|sig  1.11
+BREAKOUT_ACC n=25   dR=0.2  cR=0.02  power 0.03 cov 0.94 est|sig  1.19
+BREAKOUT_ACC n=25   dR=0.2  cR=0.08  power 0.04 cov 0.96 est|sig  1.20
+BREAKOUT_ACC n=25   dR=0.3  cR=0.02  power 0.07 cov 0.94 est|sig  1.26
+BREAKOUT_ACC n=25   dR=0.3  cR=0.08  power 0.07 cov 0.91 est|sig  1.23
+BREAKOUT_ACC n=25   dR=0.5  cR=0.02  power 0.16 cov 0.93 est|sig  1.22
+BREAKOUT_ACC n=25   dR=0.5  cR=0.08  power 0.12 cov 0.94 est|sig  1.19
+BREAKOUT_ACC n=47   dR=0    cR=0.02  power 0.02 cov 0.93 est|sig  0.87
+BREAKOUT_ACC n=47   dR=0    cR=0.08  power 0.02 cov 0.94 est|sig  0.84
+BREAKOUT_ACC n=47   dR=0.1  cR=0.02  power 0.03 cov 0.95 est|sig  0.84
+BREAKOUT_ACC n=47   dR=0.1  cR=0.08  power 0.03 cov 0.94 est|sig  0.84
+BREAKOUT_ACC n=47   dR=0.2  cR=0.02  power 0.06 cov 0.93 est|sig  0.87
+BREAKOUT_ACC n=47   dR=0.2  cR=0.08  power 0.04 cov 0.96 est|sig  0.88
+BREAKOUT_ACC n=47   dR=0.3  cR=0.02  power 0.10 cov 0.95 est|sig  0.88
+BREAKOUT_ACC n=47   dR=0.3  cR=0.08  power 0.07 cov 0.94 est|sig  0.85
+BREAKOUT_ACC n=47   dR=0.5  cR=0.02  power 0.32 cov 0.92 est|sig  0.93
+BREAKOUT_ACC n=47   dR=0.5  cR=0.08  power 0.19 cov 0.96 est|sig  0.86
+BREAKOUT_ACC n=100  dR=0    cR=0.02  power 0.02 cov 0.93 est|sig  0.57
+BREAKOUT_ACC n=100  dR=0    cR=0.08  power 0.00 cov 0.95 est|sig  0.46
+BREAKOUT_ACC n=100  dR=0.1  cR=0.02  power 0.04 cov 0.94 est|sig  0.57
+BREAKOUT_ACC n=100  dR=0.1  cR=0.08  power 0.02 cov 0.96 est|sig  0.52
+BREAKOUT_ACC n=100  dR=0.2  cR=0.02  power 0.12 cov 0.95 est|sig  0.58
+BREAKOUT_ACC n=100  dR=0.2  cR=0.08  power 0.07 cov 0.96 est|sig  0.55
+BREAKOUT_ACC n=100  dR=0.3  cR=0.02  power 0.19 cov 0.94 est|sig  0.60
+BREAKOUT_ACC n=100  dR=0.3  cR=0.08  power 0.17 cov 0.93 est|sig  0.62
+BREAKOUT_ACC n=100  dR=0.5  cR=0.02  power 0.58 cov 0.93 est|sig  0.65
+BREAKOUT_ACC n=100  dR=0.5  cR=0.08  power 0.48 cov 0.94 est|sig  0.63
+BREAKOUT_ACC n=200  dR=0    cR=0.02  power 0.01 cov 0.94 est|sig  0.38
+BREAKOUT_ACC n=200  dR=0    cR=0.08  power 0.01 cov 0.94 est|sig  0.40
+BREAKOUT_ACC n=200  dR=0.1  cR=0.02  power 0.06 cov 0.94 est|sig  0.39
+BREAKOUT_ACC n=200  dR=0.1  cR=0.08  power 0.02 cov 0.95 est|sig  0.44
+BREAKOUT_ACC n=200  dR=0.2  cR=0.02  power 0.15 cov 0.95 est|sig  0.42
+BREAKOUT_ACC n=200  dR=0.2  cR=0.08  power 0.09 cov 0.94 est|sig  0.41
+BREAKOUT_ACC n=200  dR=0.3  cR=0.02  power 0.41 cov 0.94 est|sig  0.44
+BREAKOUT_ACC n=200  dR=0.3  cR=0.08  power 0.29 cov 0.94 est|sig  0.44
+BREAKOUT_ACC n=200  dR=0.5  cR=0.02  power 0.86 cov 0.93 est|sig  0.52
+BREAKOUT_ACC n=200  dR=0.5  cR=0.08  power 0.74 cov 0.94 est|sig  0.50
+BREAKOUT_ACC n=400  dR=0    cR=0.02  power 0.01 cov 0.95 est|sig  0.28
+BREAKOUT_ACC n=400  dR=0    cR=0.08  power 0.01 cov 0.96 est|sig  0.29
+BREAKOUT_ACC n=400  dR=0.1  cR=0.02  power 0.11 cov 0.93 est|sig  0.29
+BREAKOUT_ACC n=400  dR=0.1  cR=0.08  power 0.04 cov 0.95 est|sig  0.26
+BREAKOUT_ACC n=400  dR=0.2  cR=0.02  power 0.33 cov 0.94 est|sig  0.31
+BREAKOUT_ACC n=400  dR=0.2  cR=0.08  power 0.17 cov 0.96 est|sig  0.29
+BREAKOUT_ACC n=400  dR=0.3  cR=0.02  power 0.65 cov 0.94 est|sig  0.34
+BREAKOUT_ACC n=400  dR=0.3  cR=0.08  power 0.50 cov 0.94 est|sig  0.33
+BREAKOUT_ACC n=400  dR=0.5  cR=0.02  power 0.99 cov 0.96 est|sig  0.48
+BREAKOUT_ACC n=400  dR=0.5  cR=0.08  power 0.95 cov 0.95 est|sig  0.43
+BREAKOUT_ACC n=800  dR=0    cR=0.02  power 0.01 cov 0.94 est|sig  0.19
+BREAKOUT_ACC n=800  dR=0    cR=0.08  power 0.01 cov 0.97 est|sig  0.18
+BREAKOUT_ACC n=800  dR=0.1  cR=0.02  power 0.13 cov 0.96 est|sig  0.20
+BREAKOUT_ACC n=800  dR=0.1  cR=0.08  power 0.03 cov 0.95 est|sig  0.20
+BREAKOUT_ACC n=800  dR=0.2  cR=0.02  power 0.54 cov 0.95 est|sig  0.23
+BREAKOUT_ACC n=800  dR=0.2  cR=0.08  power 0.31 cov 0.96 est|sig  0.21
+BREAKOUT_ACC n=800  dR=0.3  cR=0.02  power 0.93 cov 0.94 est|sig  0.30
+BREAKOUT_ACC n=800  dR=0.3  cR=0.08  power 0.79 cov 0.96 est|sig  0.25
+BREAKOUT_ACC n=800  dR=0.5  cR=0.02  power 1.00 cov 0.94 est|sig  0.47
+BREAKOUT_ACC n=800  dR=0.5  cR=0.08  power 1.00 cov 0.94 est|sig  0.42
+
+== SCREEN -> CONFIRM
+{'layer': 'screen_confirm', 'm_true': 0, 'n': 47, 'reps': 200, 'P_any_false_positive_screen': 0.035, 'FDR_screen': 1.0, 'mean_positives_per_family': 0.04, 'true_edge_pass_screen_rate': None, 'true_edge_pass_both_rate': None, 'false_edges_confirmed_per_family': 0.0, 'winners_curse_inflation_true_edges': None}
+{'layer': 'screen_confirm', 'm_true': 0, 'n': 200, 'reps': 200, 'P_any_false_positive_screen': 0.07, 'FDR_screen': 1.0, 'mean_positives_per_family': 0.075, 'true_edge_pass_screen_rate': None, 'true_edge_pass_both_rate': None, 'false_edges_confirmed_per_family': 0.005, 'winners_curse_inflation_true_edges': None}
+{'layer': 'screen_confirm', 'm_true': 3, 'n': 47, 'reps': 200, 'P_any_false_positive_screen': 0.075, 'FDR_screen': 0.7142857142857143, 'mean_positives_per_family': 0.105, 'true_edge_pass_screen_rate': 0.01, 'true_edge_pass_both_rate': 0.0016666666666666668, 'false_edges_confirmed_per_family': 0.0, 'winners_curse_inflation_true_edges': 3.845382140489477}
+{'layer': 'screen_confirm', 'm_true': 3, 'n': 200, 'reps': 200, 'P_any_false_positive_screen': 0.065, 'FDR_screen': 0.13829787234042554, 'mean_positives_per_family': 0.47, 'true_edge_pass_screen_rate': 0.135, 'true_edge_pass_both_rate': 0.058333333333333334, 'false_edges_confirmed_per_family': 0.0, 'winners_curse_inflation_true_edges': 2.0056584735290097}
