@@ -1,0 +1,9 @@
+{
+ "fixture": "synthetic provenance manifest for test_power_gate_v1 (not a real dataset)",
+ "dataset_id": "SYNTH_FORWARD_2026Q4",
+ "source": "synthetic",
+ "declared_at": "2026-10-18",
+ "data_start": "2026-11-01",
+ "data_end": "2028-10-31",
+ "declared_before_collection": true
+}
