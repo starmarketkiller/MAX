@@ -65,18 +65,18 @@
 // (NXS_MarketAnalysis.mqh, incluso sopra). Modulo SOLO diagnostico: non
 // genera SNXSSignal, non e' letto da nessuna strategia o gate.
 #include <NEXUS_v1\NXS_StructuralResearchLog.mqh>
+// 19/10 - Unified Level/Reaction Engine: LevelRegistry/ReactionEngine PRIMA
+// di NXS_Strategies.mqh (hook Order Block Phase A) e di
+// NXS_Strategies_Experimental.mqh (hook WICK). Telemetry-only: non generano
+// segnali, non aprono trade, non sono lette da nessuna strategia.
+#include <NEXUS_v1\NXS_LevelRegistry.mqh>
+#include <NEXUS_v1\NXS_ReactionEngine.mqh>
 #include <NEXUS_v1\NXS_Strategies.mqh>
 #include <NEXUS_v1\NXS_ResearchMode.mqh>
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
 #include <NEXUS_v1\NXS_TestValidityCertificate.mqh>   // 12/09 - dipende da NXS_ResearchMode.mqh + NXS_BlockerDiagnostics.mqh
 #include <NEXUS_v1\NXS_ElliottFilter.mqh>
 #include <NEXUS_v1\NXS_Strategies_SMC.mqh>
-// 13/09 - Unified Level/Reaction Engine, Fase A (telemetry-only). Devono
-// stare PRIMA di NXS_Strategies_Experimental.mqh perche' i suoi hook WICK
-// chiamano NXS_Reaction_On*/NXS_LevelReg_* definite qui. Non generano
-// segnali, non aprono trade, non sono lette da nessuna strategia.
-#include <NEXUS_v1\NXS_LevelRegistry.mqh>
-#include <NEXUS_v1\NXS_ReactionEngine.mqh>
 #include <NEXUS_v1\NXS_Strategies_Experimental.mqh>
 #include <NEXUS_v1\NXS_Strategies_Institutional.mqh>
 #include <NEXUS_v1\NXS_Strategies_Elliott.mqh>
@@ -957,6 +957,7 @@ void OnDeinit(const int reason){
    NXS_WickShadow_PrintSummary();   // 11/09 - no-op se InpResearchWickShadow=false
    NXS_WickReclaim_PrintFunnel();   // 12/09 - no-op se InpStrat_WickSweepReclaim=false
    NXS_LevelEngine_PrintWickParity();   // 13/09 - Fase A, parity old-vs-new (telemetry-only, vedi NXS_ReactionEngine.mqh)
+   NXS_LevelEngine_PrintObParity();     // 19/10 - Order Block Phase A telemetry parity
    NXS_LevelEngine_PrintReadPathSummary();   // 13/09 - Fase C, riepilogo comparator read-path (vedi NXS_ReactionEngine.mqh)
    NXS_LevelEngine_PrintStateConsistency();   // 13/09 - Fase D, confronto stato legacy vs unified a fine run (vedi NXS_ReactionEngine.mqh)
    NXS_Cert_Generate();   // 12/09 - Test Validity Certificate v2, no-op se non Research Mode
@@ -1894,6 +1895,27 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
    // una sola volta per trade logico dentro NXS_EA_OnLogicalClose, col PnL
    // aggregato. I gate daily-DD non passano da qui (usano balance/equity).
    // realizedDelta resta per la riga CSV PARTIAL.
+
+   // NEXUS-WF-002: conferma broker di apertura → NEXUS (non autoritativa).
+   // Il ledger ha gia' classificato il primo IN; qui solo si notifica.
+   if(ev == NXS_LEDGER_EV_OPEN && HistoryDealSelect(trans.deal)){
+      ulong posIdOpen = (ulong)HistoryDealGetInteger(trans.deal, DEAL_POSITION_ID);
+      SNxsLedgerTrade tOpen;
+      if(NXS_Ledger_AggregatePosition(posIdOpen, tOpen)){
+         string stratOpen = (tOpen.strategy == "") ? "UNKNOWN" : tOpen.strategy;
+         NXS_LogTradeCSV("OPEN", tOpen.position_id, stratOpen, tOpen.vwap_in,
+                         tOpen.vol_in, 0, 0, 0.0, "open", 0, 0,
+                         EnumToString(NXS_Profile_TF(stratOpen)));
+         NXS_Prot_PushTradeReason(tOpen.position_id, tOpen.magic, stratOpen,
+                                  tOpen.side, tOpen.vol_in, tOpen.vwap_in,
+                                  tOpen.vwap_in, 0.0, "open",
+                                  tOpen.open_time, tOpen.open_time, "open",
+                                  0, 0.0, tOpen.symbol);
+      } else {
+         PrintFormat("[NEXUS WF-002] OPEN pos %I64u: AggregatePosition fallita, "
+                     "nessun push", posIdOpen);
+      }
+   }
 
    if(ev == NXS_LEDGER_EV_PARTIAL && HistoryDealSelect(trans.deal)){
       // riga PARTIAL: pnl/lots del singolo deal, cosi' il CSV mostra ogni

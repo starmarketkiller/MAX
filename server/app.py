@@ -436,11 +436,13 @@ def init_db() -> None:
                 payload      TEXT,
                 created_at   REAL
             );
-            -- exactly-once per trade logico: un solo evento close e un solo
-            -- resync per trade_uid, qualunque replay arrivi dall'EA.
+            -- exactly-once per trade logico: un solo open, un solo close e un
+            -- solo resync per trade_uid, qualunque replay arrivi dall'EA.
+            -- NEXUS-WF-002: open e' nella stessa chiave (conferma broker, non
+            -- autoritativa per `trades`, ma non deve duplicarsi al replay).
             CREATE UNIQUE INDEX IF NOT EXISTS idx_trade_events_once
                 ON trade_events(trade_uid, event)
-                WHERE event IN ('close', 'resync');
+                WHERE event IN ('open', 'close', 'resync');
             """
         )
         _migrate_trade_ledger(c)
@@ -781,6 +783,14 @@ def _migrate_event_ledger_integrity(c: sqlite3.Connection) -> None:
     c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_trade_events_deal_once "
               "ON trade_events(trade_uid, event, deal_id) "
               "WHERE deal_id IS NOT NULL")
+    # NEXUS-WF-002: DB creati prima di questo commit avevano l'indice solo su
+    # close/resync. Ricrearlo include open nell'exactly-once.
+    c.execute("DROP INDEX IF EXISTS idx_trade_events_once")
+    c.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_trade_events_once "
+        "ON trade_events(trade_uid, event) "
+        "WHERE event IN ('open', 'close', 'resync')"
+    )
 
     # I trigger vanno ricreati: DROP+CREATE mantiene la migrazione idempotente.
     c.execute("DROP TRIGGER IF EXISTS trg_trade_events_no_update")

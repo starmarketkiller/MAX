@@ -133,9 +133,10 @@ void _NXS_Reaction_Emit(long level_id, ENUM_NXS_REACTION_TYPE_A rtype, ENUM_NXS_
 // l'elenco file:riga di ogni call site.
 
 void NXS_Reaction_OnLevelCreated(long level_id, string side, ENUM_NXS_DIR direction,
-                                  double price, datetime created_time, ENUM_TIMEFRAMES source_tf){
-   NXS_LevelReg_Create(level_id, side, direction, price, created_time, source_tf);
-   g_nxsWickParity.levelsCreated++;
+                                  double price, datetime created_time, ENUM_TIMEFRAMES source_tf,
+                                  string source = NXS_LVLSRC_WICK){
+   NXS_LevelReg_Create(level_id, side, direction, price, created_time, source_tf, source);
+   if(source == NXS_LVLSRC_WICK) g_nxsWickParity.levelsCreated++;
    _NXS_Reaction_Emit(level_id, NXS_REACT_CREATE_A, direction, 0, false, created_time, source_tf, "", "");
 }
 
@@ -283,6 +284,72 @@ void NXS_LevelEngine_PrintReadPathSummary(){
 // registro per verificare che nessun livello "vecchio" (sostituito) sia
 // rimasto in uno stato non-terminale (cioe' apparentemente ancora attivo pur
 // non essendo piu' il livello corrente per quel lato).
+// === Order Block Phase A — parity counters (telemetry-only) ================
+// g_obFunnel: incrementato dal codice legacy OB (NXS_Strategies.mqh) nello
+// stesso punto causale degli hook. g_nxsObParity: incrementato SOLO dagli
+// hook telemetry. Dichiarati qui perche' LevelRegistry/ReactionEngine sono
+// inclusi PRIMA di Strategies.mqh.
+struct SNXSObFunnel {
+   long zonesCreated;
+   long invalidatedMaxWait;
+   long invalidatedPrice;
+   long consumed;
+};
+SNXSObFunnel g_obFunnel;
+
+struct SNXSObParityCounters {
+   long zonesCreated;
+   long invalidatedMaxWait;
+   long invalidatedPrice;
+   long consumed;
+};
+SNXSObParityCounters g_nxsObParity;
+
+void NXS_Reaction_OnObCreated(long level_id, string side, ENUM_NXS_DIR direction,
+                               double price, datetime created_time, ENUM_TIMEFRAMES source_tf){
+   NXS_Reaction_OnLevelCreated(level_id, side, direction, price, created_time,
+                               source_tf, NXS_LVLSRC_ORDER_BLOCK);
+   g_nxsObParity.zonesCreated++;
+}
+
+void NXS_Reaction_OnObInvalidated(long level_id, ENUM_NXS_DIR direction,
+                                   ENUM_TIMEFRAMES source_tf, datetime t, string reason){
+   // Non passare da NXS_Reaction_OnInvalidated: quello incrementa i contatori
+   // WICK. Qui solo registro + emit + parity OB.
+   NXS_LevelReg_SetInvalidated(level_id, false);
+   _NXS_Reaction_Emit(level_id, NXS_REACT_INVALIDATE_A, direction, 0, false, t,
+                      source_tf, "ORDER_BLOCK", reason);
+   if(reason == "max_wait_bars") g_nxsObParity.invalidatedMaxWait++;
+   else                          g_nxsObParity.invalidatedPrice++;
+}
+
+void NXS_Reaction_OnObConsumed(long level_id, ENUM_NXS_DIR direction,
+                                ENUM_TIMEFRAMES source_tf, datetime t){
+   // Idem: OnConsumed bumpa solo i contatori WICK_* se matchano; comunque
+   // scriviamo stato + evento qui senza riusarlo, per chiarezza di famiglia.
+   NXS_LevelReg_SetConsumed(level_id, "ORDER_BLOCK");
+   _NXS_Reaction_Emit(level_id, NXS_REACT_CONSUME_A, direction, 0, false, t,
+                      source_tf, "ORDER_BLOCK", "");
+   g_nxsObParity.consumed++;
+}
+
+void NXS_LevelEngine_PrintObParity(){
+   if(!InpLevelRegistry_ObTelemetry) return;
+   if(!InpStrat_ORDER_BLOCK){
+      Print("[LEVELENGINE][OB_PARITY] skipped: ORDER_BLOCK non attivo in questo run");
+      return;
+   }
+   Print("[LEVELENGINE][OB_PARITY] === ORDER_BLOCK old-vs-new (Phase A, telemetry-only) ===");
+   _NXS_Parity_Line("zones_created", g_obFunnel.zonesCreated, g_nxsObParity.zonesCreated,
+                     "hook create mancante in NXS_OB_UpdateSide");
+   _NXS_Parity_Line("invalidated_max_wait", g_obFunnel.invalidatedMaxWait, g_nxsObParity.invalidatedMaxWait,
+                     "hook invalidate max_wait non allineato");
+   _NXS_Parity_Line("invalidated_price", g_obFunnel.invalidatedPrice, g_nxsObParity.invalidatedPrice,
+                     "hook invalidate price_through non allineato");
+   _NXS_Parity_Line("consumed", g_obFunnel.consumed, g_nxsObParity.consumed,
+                     "hook consume non allineato al one-shot retest");
+}
+
 void NXS_LevelEngine_PrintStateConsistency(){
    if(!InpLevelRegistry_WickTelemetry || !InpStrat_WickSweep) return;
 
