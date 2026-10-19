@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-10-19T19:59:27.788431+00:00",
+  "generation_script": "phase7_30_liq_sweep_buy_trend/build_decision_card.py",
+  "canonical_sha256": "11d46ee360b2cf12b492d1d8dbdd76feb0755918188f3fb2e1ac56c833830bbc",
+  "payload": {
+    "phase": "7.30",
+    "hypothesis_id": "LIQ-SWEEP-BUY-TREND-RM-001",
+    "status": "EXPLORATORY_REPLAY_COMPLETE_NOT_PROMOTABLE",
+    "promotable": false,
+    "evidence_grade": "DISCOVERY_REUSE",
+    "decision_exploratory": "SIGNAL_SUPPORTED_AS_HYPOTHESIS",
+    "headline": "BUY+SMA200 filter on exposed IS: n=39, mean R=0.4627 vs baseline n=42 mean R=0.4314. Proxy B\u2212C CI95=[0.5477, 1.9719]. No promotion; confirmatory needs forward data after 2026-09-27.",
+    "numbers": {
+      "A_recipe": {
+        "n": 42,
+        "mean_R": 0.4314,
+        "sum_R": 18.12,
+        "win_rate": 0.5476
+      },
+      "B_recipe": {
+        "n": 39,
+        "mean_R": 0.4627,
+        "sum_R": 18.047,
+        "win_rate": 0.5641
+      },
+      "B_month_ci": [
+        0.071,
+        0.8391
+      ],
+      "C_proxy_paired_delta": {
+        "n": 39,
+        "mean_R": 1.2577,
+        "sum_R": 49.0511,
+        "win_rate": 0.7179
+      },
+      "C_proxy_ci": [
+        0.5477,
+        1.9719
+      ]
+    },
+    "prereg_commit_sha": "eb8e78c36bd21a1178a4a78b01a38f5a0d79a232",
+    "next": "New forward MT5 isolation run after 2026-09-27 OR a genuinely untouched dataset per phase7_26 exposure registry; prereg commit must precede that run (engine/preregistration_provenance_guard.py).",
+    "not_ready_for_deploy": true,
+    "not_an_edge_claim": true
+  }
+}

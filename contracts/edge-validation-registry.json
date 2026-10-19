@@ -972,7 +972,8 @@
       "latest_relevant_note_date": "2026-10-19",
       "validation_notes": [
         "OOS n=6 is negative but insufficient for final refutation.",
-        "2026-10-19 Phase 7.29: OOS failure mode = HABITAT_REGIME + SETUP_MIX_SHIFT (IS 93% BUY in +119% gold bull; OOS 50% SELL all stopped; execution bug rejected). Status stays CANDIDATE / REGIME_CONDITIONAL — not FAILED (n=6), not SUPPORTED. See phase7_29_liq_sweep_oos_failure/liq_sweep_oos_failure_decision_card_v1.json"
+        "2026-10-19 Phase 7.29: OOS failure mode = HABITAT_REGIME + SETUP_MIX_SHIFT (IS 93% BUY in +119% gold bull; OOS 50% SELL all stopped; execution bug rejected). Status stays CANDIDATE / REGIME_CONDITIONAL — not FAILED (n=6), not SUPPORTED. See phase7_29_liq_sweep_oos_failure/liq_sweep_oos_failure_decision_card_v1.json",
+        "2026-10-19 Phase 7.30: prereg LIQ-SWEEP-BUY-TREND-RM-001 committed (eb8e78c). Exploratory replay on EXPOSED IS: B n=39 meanR=0.46; proxy B−C CI95>0 → label SIGNAL_SUPPORTED_AS_HYPOTHESIS for bookkeeping ONLY — evidence_grade=DISCOVERY_REUSE, promotable=false. Confirmatory requires forward isolation run after 2026-09-27."
       ]
     },
     {

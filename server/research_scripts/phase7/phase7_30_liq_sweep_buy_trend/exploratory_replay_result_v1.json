@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-10-19T19:59:22.993383+00:00",
+  "generation_script": "phase7_30_liq_sweep_buy_trend/run_exploratory_replay.py",
+  "canonical_sha256": "0c873fc233e6da6c59c2e040da198851eb4ea44e68664a0560fa6dbc817e164f",
+  "payload": {
+    "phase": "7.30",
+    "hypothesis_id": "LIQ-SWEEP-BUY-TREND-RM-001",
+    "prereg_commit_sha": "eb8e78c36bd21a1178a4a78b01a38f5a0d79a232",
+    "params_sha256": "1ce33aa6a81c48b625a6115614aaa1e3011f540f672bf00f904fdb14471acddc",
+    "run_mode": "EXPLORATORY_REPLAY_ON_EXPOSED_DATA",
+    "promotable": false,
+    "evidence_grade": "DISCOVERY_REUSE",
+    "window": [
+      "2023.10.02",
+      "2026.06.30"
+    ],
+    "arm_A_baseline_recipe_R": {
+      "n": 42,
+      "mean_R": 0.4314,
+      "sum_R": 18.12,
+      "win_rate": 0.5476
+    },
+    "arm_B_buy_trend_recipe_R": {
+      "n": 39,
+      "mean_R": 0.4627,
+      "sum_R": 18.047,
+      "win_rate": 0.5641
+    },
+    "arm_B_month_block_ci95_recipe_R": [
+      0.071,
+      0.8391
+    ],
+    "arm_A_buy_share": 0.9286,
+    "arm_B_n_filtered_from_A": {
+      "A": 42,
+      "B": 39
+    },
+    "arm_C_proxy": {
+      "outcome": "10d_forward_return_over_ATR14 \u2014 NOT recipe R; exploratory habitat control only",
+      "B_proxy": {
+        "n": 39,
+        "mean_R": 0.9524,
+        "sum_R": 37.1451,
+        "win_rate": 0.6923
+      },
+      "C_proxy": {
+        "n": 39,
+        "mean_R": -0.3053,
+        "sum_R": -11.906,
+        "win_rate": 0.4103
+      },
+      "paired_delta_B_minus_C": {
+        "n": 39,
+        "mean_R": 1.2577,
+        "sum_R": 49.0511,
+        "win_rate": 0.7179
+      },
+      "paired_delta_iid_bootstrap_ci95": [
+        0.5477,
+        1.9719
+      ],
+      "n_paired": 39
+    },
+    "decision_exploratory": "SIGNAL_SUPPORTED_AS_HYPOTHESIS",
+    "decision_meaning": "Applies frozen decision_rule labels for bookkeeping only. Because data are EXPOSED, this decision CANNOT promote LIQ_SWEEP. Confirmatory requires forward run after 2026-09-27 under the same prereg.",
+    "power_note": "Edge Detection Capability V1: LIQ-like \u03c3~1.44R needs ~180 trades for 0.3R at 80% power. IS BUY n\u224839 is EXPLORATORY_ONLY for confirmatory claims. Power Gate V1 currently returns NOT_ASSESSABLE for production plans (level calibration not preregistered) \u2014 this experiment does not claim POWER_READY.",
+    "next_confirmatory_step": "New forward MT5 isolation run after 2026-09-27 OR a genuinely untouched dataset per phase7_26 exposure registry; prereg commit must precede that run (engine/preregistration_provenance_guard.py)."
+  }
+}
