@@ -250,6 +250,55 @@ def test_unknown_trade_event_is_rejected(client):
     assert _trades() == []
 
 
+def _open_payload(pos_id, *, symbol="GOLD", strategy="ORDER_BLOCK"):
+    """Payload EA per NEXUS-WF-002: conferma apertura (non autoritativa)."""
+    return {
+        "ticket": pos_id, "magic": 990001, "symbol": symbol,
+        "strategy": strategy, "side": "BUY", "lots": 0.10,
+        "openPrice": 2400.0, "closePrice": 2400.0, "pnl": 0.0,
+        "openTime": "2026-07-20 10:00:00", "closeTime": "2026-07-20 10:00:00",
+        "reason": "open", "event": "open", "positionId": pos_id,
+        "tradeUid": f"111:{pos_id}", "partialCount": 0, "volumeOut": 0.0,
+    }
+
+
+def test_open_event_lands_in_ledger_not_trades(client):
+    """NEXUS-WF-002: l'EA emette open; il backend lo archivia in trade_events
+    senza scrivere PnL in `trades` (open non e' autoritativo)."""
+    _clear()
+    r = client.post("/api/ea/trade_reason", json=_open_payload(5001),
+                    headers=TOKEN)
+    assert r.status_code == 200
+    assert _trades() == []
+    opens = _events("open")
+    assert len(opens) == 1
+    assert opens[0]["trade_uid"] == "111:5001"
+    assert opens[0]["symbol"] == "GOLD"
+
+
+def test_open_then_close_keeps_single_authoritative_trade(client):
+    """Open + close: un solo trade autoritativo; entrambi gli eventi in ledger."""
+    _clear()
+    client.post("/api/ea/trade_reason", json=_open_payload(5002), headers=TOKEN)
+    client.post("/api/ea/trade_reason",
+                json=_close_payload(5002, 12.5), headers=TOKEN)
+    rows = _trades()
+    assert len(rows) == 1
+    assert rows[0]["pnl"] == 12.5
+    assert len(_events("open")) == 1
+    assert len(_events("close")) == 1
+
+
+def test_open_event_replay_is_idempotent(client):
+    """Replay dello stesso open (trade_uid,event) non duplica il ledger."""
+    _clear()
+    p = _open_payload(5003)
+    client.post("/api/ea/trade_reason", json=p, headers=TOKEN)
+    client.post("/api/ea/trade_reason", json=p, headers=TOKEN)
+    assert len(_events("open")) == 1
+    assert _trades() == []
+
+
 def test_migration_is_additive_and_idempotent(tmp_path, monkeypatch):
     """DB legacy (schema pre-PR1) -> init_db aggiunge le colonne senza
     toccare le righe esistenti; doppia esecuzione = nessun errore."""

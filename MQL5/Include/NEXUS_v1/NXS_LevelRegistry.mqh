@@ -22,11 +22,11 @@
 #ifndef __NXS_LEVEL_REGISTRY_MQH__
 #define __NXS_LEVEL_REGISTRY_MQH__
 
-// Fase A: unica fonte. Il campo esiste come string (non enum) perche' lo
-// schema target (vedi migration plan) prevede piu' fonti in fasi future
-// (pivot, order block, FVG, ...) senza dover ritoccare questo file ogni
-// volta - Fase A popola sempre e solo "WICK".
-#define NXS_LVLSRC_WICK "WICK"
+// Fonte del livello: stringa (non enum) perche' lo schema target prevede
+// piu' famiglie senza ritoccare questo file a ogni migrazione.
+// WICK: Phase A-E. ORDER_BLOCK: Phase A telemetry (19/10).
+#define NXS_LVLSRC_WICK         "WICK"
+#define NXS_LVLSRC_ORDER_BLOCK  "ORDER_BLOCK"
 
 // Lifecycle target completo (dal migration plan). Fase A NON emette MAI
 // NXS_LVLST_APPROACHED ne' NXS_LVLST_BROKEN per la famiglia WICK: il
@@ -54,9 +54,9 @@ enum ENUM_NXS_LEVEL_LIFECYCLE_A {
 // nel vecchio codice - non un campo nuovo di significato, solo di comodo).
 struct SNXSUnifiedLevel {
    long                       level_id;         // riusa l'id canonico esistente (SNxsWickSide.id) - NON un nuovo id
-   string                     source;           // sempre NXS_LVLSRC_WICK in Fase A
-   string                     source_strategy;  // "" finche' nessun path canonico ha osservato reazioni; poi "WICK_SWEEP_REV" e/o "WICK_SWEEP_RECLAIM"
-   ENUM_TIMEFRAMES            source_tf;        // sempre PERIOD_H4 in Fase A (fonte del livello, non del follow-up)
+   string                     source;           // NXS_LVLSRC_WICK / NXS_LVLSRC_ORDER_BLOCK / ...
+   string                     source_strategy;  // "" finche' nessun path canonico ha osservato reazioni; poi id strategia
+   ENUM_TIMEFRAMES            source_tf;        // TF della fonte del livello (H4 per WICK; profilo OB per ORDER_BLOCK)
    ENUM_NXS_DIR               direction;        // direzione del fade atteso: DIR_SELL per side=HIGH, DIR_BUY per side=LOW
    string                     side;             // "HIGH" / "LOW"
    double                     price;
@@ -108,11 +108,12 @@ int _NXS_LevelReg_Find(long level_id){
 // garantisce per costruzione che level_id combaci sempre tra vecchio e
 // nuovo, senza bisogno di una mappa di corrispondenza separata.
 void NXS_LevelReg_Create(long level_id, string side, ENUM_NXS_DIR direction,
-                          double price, datetime created_time, ENUM_TIMEFRAMES source_tf){
+                          double price, datetime created_time, ENUM_TIMEFRAMES source_tf,
+                          string source = NXS_LVLSRC_WICK){
    _NXS_LevelReg_EnsureCapacity();
    SNXSUnifiedLevel lv;
    lv.level_id = level_id;
-   lv.source = NXS_LVLSRC_WICK;
+   lv.source = source;
    lv.source_strategy = "";
    lv.source_tf = source_tf;
    lv.direction = direction;

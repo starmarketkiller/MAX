@@ -11,18 +11,25 @@ definizione) usa il prezzo futuro.
 Discovery, non ottimizzazione: WICK_SWEEP_REV resta una negative research
 baseline. Nessun parametro della strategia viene toccato qui.
 """
+import argparse
 import re
 import json
 import csv
-from datetime import datetime, timedelta
+import os
+from datetime import datetime
 from collections import defaultdict
+from pathlib import Path
 
 PIP = 0.10          # 1 pip = $0.10 su GOLD (convenzione NEXUS gia' usata ovunque nel progetto)
 R_PIPS = 25.0        # 1R simmetrico per QUESTO esperimento - indipendente dal TP100 legacy
 R_PRICE = R_PIPS * PIP
 
-BASE = r"C:\Users\User\.claude\jobs\703d44b4\tmp\phaseE_results"
-BARS_PATH = r"C:\Users\User\AppData\Roaming\MetaQuotes\Terminal\Common\Files\nxs_research_bars_m1.csv"
+# Default storici (macchina di ricerca originale). Preferire --events-dir / --bars /
+# variabili d'ambiente NEXUS_CAUSAL_EVENTS_DIR / NEXUS_CAUSAL_BARS.
+_LEGACY_BASE = r"C:\Users\User\.claude\jobs\703d44b4\tmp\phaseE_results"
+_LEGACY_BARS = r"C:\Users\User\AppData\Roaming\MetaQuotes\Terminal\Common\Files\nxs_research_bars_m1.csv"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_DEFAULT_OUT_DIR = _REPO_ROOT / "results" / "causal_experiment_1"
 
 WINDOWS = {
     "W1": "w1_events_v2.txt",
@@ -125,15 +132,51 @@ def find_outcome(bars, from_ts, entry_ref, direction, dataset_end):
     return ("CENSORED", None, False)
 
 
-def main():
+def _parse_args(argv=None):
+    p = argparse.ArgumentParser(
+        description="Causal Experiment 1: WICK sweep +1R-before--1R dataset builder")
+    p.add_argument("--events-dir",
+                   default=os.environ.get("NEXUS_CAUSAL_EVENTS_DIR", _LEGACY_BASE),
+                   help="Directory with w1/w2/w3_events_v2.txt")
+    p.add_argument("--bars",
+                   default=os.environ.get("NEXUS_CAUSAL_BARS", _LEGACY_BARS),
+                   help="CSV barre M1/M15 esportate (utf-16)")
+    p.add_argument("--out-dir",
+                   default=os.environ.get("NEXUS_CAUSAL_OUT_DIR", str(_DEFAULT_OUT_DIR)),
+                   help="Directory output CSV/JSON (default: results/causal_experiment_1)")
+    return p.parse_args(argv)
+
+
+def main(argv=None):
+    args = _parse_args(argv)
+    events_dir = Path(args.events_dir)
+    bars_path = Path(args.bars)
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    if not bars_path.is_file():
+        raise SystemExit(
+            f"Bars file not found: {bars_path}\n"
+            "Pass --bars PATH or set NEXUS_CAUSAL_BARS. "
+            "Frozen dataset already lives in results/causal_experiment_1/."
+        )
+    if not events_dir.is_dir():
+        raise SystemExit(
+            f"Events dir not found: {events_dir}\n"
+            "Pass --events-dir PATH or set NEXUS_CAUSAL_EVENTS_DIR."
+        )
+
     print("Caricamento barre M15...")
-    bars = load_bars(BARS_PATH)
+    bars = load_bars(str(bars_path))
     print(f"  {len(bars)} barre, {bars[0][0]} -> {bars[-1][0]}")
     dataset_end = bars[-1][0]
 
     all_events = []
     for wid, fname in WINDOWS.items():
-        evs = load_events(wid, f"{BASE}\\{fname}")
+        path = events_dir / fname
+        if not path.is_file():
+            raise SystemExit(f"Missing events file: {path}")
+        evs = load_events(wid, str(path))
         all_events.extend(evs)
         print(f"  {wid}: {len(evs)} eventi grezzi")
 
@@ -229,8 +272,8 @@ def main():
     dq["duplicate_event_id_global"] = len(eids) - len(set(eids))
     dq["duplicate_level_id_global"] = len(lids) - len(set(lids))
 
-    out_csv = r"C:\Users\User\ClaudeWork\MAX\results\causal_experiment_1\wick_sweep_1r_dataset.csv"
-    out_json = r"C:\Users\User\ClaudeWork\MAX\results\causal_experiment_1\wick_sweep_1r_dataset.json"
+    out_csv = out_dir / "wick_sweep_1r_dataset.csv"
+    out_json = out_dir / "wick_sweep_1r_dataset.json"
     fieldnames = list(records[0].keys()) if records else []
     with open(out_csv, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames)

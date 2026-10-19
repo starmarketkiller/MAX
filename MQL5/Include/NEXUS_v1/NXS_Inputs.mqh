@@ -1189,6 +1189,11 @@ input bool     InpLevelRegistry_WickEventLog  = false;
 // (se false, il registro non e' popolato e il read-path si comporta come
 // se fosse spento, restando sul legacy).
 input bool     InpLevelRegistry_WickReadPath  = false;
+// 19/10 - Unified Level Engine, Order Block Phase A (telemetry-only).
+// Osserva create/invalidate/consume di SNXSOBState e li registra nel
+// Level Registry con source=ORDER_BLOCK. Non genera segnali, non cambia
+// gate HTF/reaction, non apre trade. Default ON: puro logging in parallelo.
+input bool     InpLevelRegistry_ObTelemetry   = true;
 
 // 14/09 - Causal Research Thread 2, Phase A (structural lifecycle
 // instrumentation). Gate unico per tutto il logging diagnostico read-only
