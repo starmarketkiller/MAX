@@ -63,12 +63,13 @@ Remediation ≠ edge. FVG_CONT stays `CANDIDATE`. Production remains **NO-GO**.
 3. **Done in Phase 7.29** — LIQ_SWEEP OOS failure mode: `HABITAT_REGIME + SETUP_MIX_SHIFT`
    (not execution bug). Stays CANDIDATE / regime-conditional.
    Artifacts: `server/research_scripts/phase7/phase7_29_liq_sweep_oos_failure/`.
-4. **Phase 7.30 confirmatory package ready** — hypothesis `LIQ-SWEEP-BUY-TREND-RM-001`
+4. **Done in Phase 7.30 confirmatory** — hypothesis `LIQ-SWEEP-BUY-TREND-RM-001`
    prereg frozen; exploratory replay **NOT_PROMOTABLE** (`DISCOVERY_REUSE`).
-   Confirmatory forward window **2026.09.28–2026.10.19** prepared
-   (`PREPARED_AWAITING_WINDOWS_MT5`). Launch/collect/analyze + Windows runbook:
-   `server/research_scripts/phase7/phase7_30_liq_sweep_buy_trend/`
-   (`RUNBOOK_CONFIRMATORY_WINDOWS.md`). Cloud cannot run MT5 — research PC only.
+   Windows MT5 isolation **2026.09.28–2026.10.19**: Tester finished, `OPENED=0`,
+   Arm A/B n=0 → frozen decision **`INSUFFICIENT_EVIDENCE`** (min_n=30).
+   Not a strategy fail; not live-ready; no registry promotion.
+   Artifacts: `server/research_scripts/phase7/phase7_30_liq_sweep_buy_trend/`
+   (`confirmatory_forward_result_v1.json`, run `…T210920Z_c8f867f7`).
 
 Stop condition for each task: a Decision Card with GO / INVESTIGATE / STOP.
 No card → no next premium session.
