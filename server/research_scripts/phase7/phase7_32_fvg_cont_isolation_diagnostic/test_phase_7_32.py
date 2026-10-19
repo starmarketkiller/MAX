@@ -33,8 +33,18 @@ class Phase732Tests(unittest.TestCase):
         self.assertTrue(os.path.isfile(path))
         with open(path, encoding="utf-8") as f:
             s = json.load(f)
-        self.assertEqual(s["status"], "PREPARED_AWAITING_WINDOWS_MT5")
-        self.assertEqual(s["hypothesis_id"], "FVG-CONT-MT5-ISOLATION-DIAG-001")
+        self.assertIn(
+            s["status"],
+            (
+                "PREPARED_AWAITING_WINDOWS_MT5",
+                "LAUNCHED",
+                "COLLECTED",
+                "ANALYZED",
+                "RUN_NOT_YET_COLLECTED",
+            ),
+        )
+        if s.get("hypothesis_id"):
+            self.assertEqual(s["hypothesis_id"], "FVG-CONT-MT5-ISOLATION-DIAG-001")
 
     def test_analyze_early(self):
         import sys
@@ -42,8 +52,19 @@ class Phase732Tests(unittest.TestCase):
             sys.path.insert(0, PHASE_DIR)
         from analyze_diagnostic_run import analyze
         p = analyze()
-        self.assertEqual(p["decision"], "INSUFFICIENT_SAMPLE")
+        self.assertIn(
+            p["decision"],
+            (
+                "INSUFFICIENT_SAMPLE",
+                "SAMPLE_READY_FOR_EDGE_PREREG",
+                "HARNESS_OR_IDENTITY_PROBLEM",
+                "MIXED",
+            ),
+        )
+        if p.get("status") in ("RUN_NOT_YET_PREPARED", "RUN_NOT_YET_COLLECTED"):
+            self.assertEqual(p["decision"], "INSUFFICIENT_SAMPLE")
         self.assertFalse(p["promotable"])
+        self.assertFalse(p.get("live_ready", False))
 
 
 if __name__ == "__main__":

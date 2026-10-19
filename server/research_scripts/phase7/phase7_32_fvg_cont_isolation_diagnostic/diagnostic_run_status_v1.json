@@ -1,22 +1,8 @@
 {
-  "status": "PREPARED_AWAITING_WINDOWS_MT5",
-  "run_id": "FVG_CONT_2023.10.02_2026.06.30_bb0f6ebccb790dbf_20261019T213333Z_204cede5",
-  "manifest_path": "/workspace/server/research_scripts/phase7/phase7_32_fvg_cont_isolation_diagnostic/runs/fvg_cont_isolation_diagnostic/FVG_CONT_2023.10.02_2026.06.30_bb0f6ebccb790dbf_20261019T213333Z_204cede5.manifest.json",
-  "ini_path": "/workspace/server/research_scripts/phase7/phase7_32_fvg_cont_isolation_diagnostic/runs/fvg_cont_isolation_diagnostic/FVG_CONT_2023.10.02_2026.06.30_bb0f6ebccb790dbf_20261019T213333Z_204cede5.ini",
+  "status": "ANALYZED",
+  "decision": "SAMPLE_READY_FOR_EDGE_PREREG",
+  "run_id": "FVG_CONT_2023.10.02_2026.06.30_8761b3513079eed9_20261019T214337Z_1b2a7150",
   "hypothesis_id": "FVG-CONT-MT5-ISOLATION-DIAG-001",
-  "prereg_commit_sha": "eafd78ce66e50e45d611c92011f59a386c4c7692",
-  "period": [
-    "2023.10.02",
-    "2026.06.30"
-  ],
-  "selector": 8,
-  "next": "On PC-MT5: python launch_diagnostic_run.py  then collect \u2192 analyze",
-  "runbook": "RUNBOOK_DIAGNOSTIC_WINDOWS.md",
-  "updated_at_utc": "2026-10-19T21:33:33.606075+00:00",
-  "analyze_probe": {
-    "status": "RUN_NOT_YET_COLLECTED",
-    "decision": "INSUFFICIENT_SAMPLE",
-    "result_path": "/workspace/server/research_scripts/phase7/phase7_32_fvg_cont_isolation_diagnostic/diagnostic_result_v1.json",
-    "updated_at_utc": "2026-10-19T21:33:33.642458+00:00"
-  }
+  "result_path": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_32_fvg_cont_isolation_diagnostic\\diagnostic_result_v1.json",
+  "updated_at_utc": "2026-10-19T23:56:21.274362+00:00"
 }

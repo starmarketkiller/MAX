@@ -18,19 +18,41 @@ RUN_DIR = os.path.join(PHASE_DIR, "runs", "fvg_cont_isolation_diagnostic")
 STATUS_PATH = os.path.join(PHASE_DIR, "diagnostic_run_status_v1.json")
 
 
+def _latest_manifest(run_dir: str) -> str | None:
+    """Pick the run that was actually launched, not the lexicographic filename.
+
+    Cloud prepare writes a manifest whose config hash sorts after the Windows
+    run hash. ``sorted(glob)[-1]`` therefore collected the unlaunched prepare
+    file (run_dir ``/workspace/...``) and failed to copy trades.
+    """
+    launched = []
+    prepared = []
+    for path in glob.glob(os.path.join(run_dir, "*.manifest.json")):
+        try:
+            with open(path, encoding="utf-8") as f:
+                manifest = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if manifest.get("hypothesis_id") not in (None, "FVG-CONT-MT5-ISOLATION-DIAG-001"):
+            continue
+        if manifest.get("start_time_utc"):
+            launched.append((manifest["start_time_utc"], path))
+        else:
+            prepared.append((manifest.get("prepared_at_utc") or "", path))
+    if launched:
+        launched.sort()
+        return launched[-1][1]
+    if prepared:
+        prepared.sort()
+        return prepared[-1][1]
+    return None
+
+
 def main() -> int:
-    cands = sorted(glob.glob(os.path.join(RUN_DIR, "*.manifest.json")))
-    if not cands:
+    chosen = _latest_manifest(RUN_DIR)
+    if not chosen:
         print("No manifest. Run launch_diagnostic_run.py first.")
         return 1
-    # Prefer manifests tagged diagnostic / hypothesis
-    chosen = cands[-1]
-    for p in reversed(cands):
-        with open(p, encoding="utf-8") as f:
-            m = json.load(f)
-        if m.get("hypothesis_id") == "FVG-CONT-MT5-ISOLATION-DIAG-001" or m.get("diagnostic"):
-            chosen = p
-            break
     with open(chosen, encoding="utf-8") as f:
         manifest = json.load(f)
     manifest = collect_after_run(manifest, chosen)

@@ -34,13 +34,32 @@ from nxs_research_run_harness import _detect_text_encoding  # noqa: E402
 
 
 def _find_manifest() -> Optional[str]:
-    cands = sorted(glob.glob(os.path.join(RUN_DIR, "*.manifest.json")))
-    for p in reversed(cands):
-        with open(p, encoding="utf-8") as f:
-            m = json.load(f)
-        if m.get("hypothesis_id") == "FVG-CONT-MT5-ISOLATION-DIAG-001" or m.get("diagnostic"):
-            return p
-    return cands[-1] if cands else None
+    """Latest launched diagnostic manifest.
+
+    Filename order is not launch order: the cloud prepare hash sorts after
+    the Windows run hash, so the unlaunched manifest would win ``sorted(glob)``.
+    """
+    launched = []
+    prepared = []
+    for path in glob.glob(os.path.join(RUN_DIR, "*.manifest.json")):
+        try:
+            with open(path, encoding="utf-8") as f:
+                manifest = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if manifest.get("hypothesis_id") not in (None, "FVG-CONT-MT5-ISOLATION-DIAG-001"):
+            continue
+        if manifest.get("start_time_utc"):
+            launched.append((manifest["start_time_utc"], path))
+        else:
+            prepared.append((manifest.get("prepared_at_utc") or "", path))
+    if launched:
+        launched.sort()
+        return launched[-1][1]
+    if prepared:
+        prepared.sort()
+        return prepared[-1][1]
+    return None
 
 
 def _load_closes(path: str) -> List[dict]:
