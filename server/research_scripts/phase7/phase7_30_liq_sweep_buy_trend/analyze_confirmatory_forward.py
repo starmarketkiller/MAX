@@ -42,7 +42,10 @@ from canonical_utils import save_json, wrap_with_provenance  # noqa: E402
 from engine.preregistration_provenance_guard import (  # noqa: E402
     assert_frozen_spec_committed_before_run,
 )
-from nxs_research_run_harness import _detect_text_encoding  # noqa: E402
+from nxs_research_run_harness import (  # noqa: E402
+    _detect_text_encoding,
+    _parse_certificate_opened,
+)
 
 
 def _load_prereg():
@@ -51,8 +54,30 @@ def _load_prereg():
 
 
 def _find_manifest() -> Optional[str]:
-    cands = sorted(glob.glob(os.path.join(RUN_DIR, "*.manifest.json")))
-    return cands[-1] if cands else None
+    """Latest launched confirmatory manifest.
+
+    Filename order is not launch order: the cloud prepare hash sorts after
+    the Windows run hash, so the unlaunched manifest would win `sorted(glob)`.
+    """
+    launched = []
+    prepared = []
+    for path in glob.glob(os.path.join(RUN_DIR, "*.manifest.json")):
+        try:
+            with open(path, encoding="utf-8") as f:
+                manifest = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if manifest.get("start_time_utc"):
+            launched.append((manifest["start_time_utc"], path))
+        else:
+            prepared.append((manifest.get("prepared_at_utc") or "", path))
+    if launched:
+        launched.sort()
+        return launched[-1][1]
+    if prepared:
+        prepared.sort()
+        return prepared[-1][1]
+    return None
 
 
 def _load_rows(trades_path: str) -> List[dict]:
@@ -225,14 +250,23 @@ def analyze(d1_path: str) -> dict:
     trades_path = manifest.get("trades_csv_dest")
     if trades_path and not os.path.isabs(trades_path):
         trades_path = os.path.join(RUN_DIR, os.path.basename(trades_path))
-    if not trades_path or not os.path.exists(trades_path):
+    cert_path = manifest.get("certificate_dest")
+    if cert_path and not os.path.isabs(cert_path):
+        cert_path = os.path.join(RUN_DIR, os.path.basename(cert_path))
+    opened_on_certificate = _parse_certificate_opened(cert_path) if cert_path else None
+    trades_missing = not trades_path or not os.path.exists(trades_path)
+    # NXS_LogTradeCSV creates NEXUS_trades.csv only when a trade is logged.
+    # A finished isolation run whose certificate says OPENED=0 therefore has
+    # no CSV. That is an empty sample, not a failed collect.
+    zero_trade_sample = trades_missing and opened_on_certificate == 0
+    if trades_missing and not zero_trade_sample:
         return {
             "status": "TRADES_CSV_MISSING",
             "run_id": manifest.get("run_id"),
             "decision": "INSUFFICIENT_EVIDENCE",
         }
 
-    eps = _episodes(_load_rows(trades_path))
+    eps = [] if zero_trade_sample else _episodes(_load_rows(trades_path))
     d1 = _load_d1(d1_path)
     d1_last = d1[-1][0] if d1 else None
     window_end = datetime.strptime(manifest["period_to"], "%Y.%m.%d")
@@ -315,6 +349,11 @@ def analyze(d1_path: str) -> dict:
         )
     if missing_d1:
         notes.append(f"{missing_d1} episodes lacked a prior D1 bar in the CSV.")
+    if zero_trade_sample:
+        notes.append(
+            "Certificate OPENED=0 and NEXUS_trades.csv was not created. "
+            "The EA writes that file only when a trade is logged, so Arm A/B n=0."
+        )
 
     return {
         "status": status,

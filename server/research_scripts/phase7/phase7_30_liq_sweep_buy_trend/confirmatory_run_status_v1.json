@@ -1,21 +1,8 @@
 {
-  "status": "PREPARED_AWAITING_WINDOWS_MT5",
-  "reason": "Cloud/Linux agent has no MetaTrader 5 terminal. INI+manifest are ready; run launch on the research Windows PC (see RUNBOOK_CONFIRMATORY_WINDOWS.md).",
-  "run_id": "LIQ_SWEEP_2026.09.28_2026.10.19_ed92366cd9bd15bb_20261019T200219Z_0e054b19",
-  "manifest_path": "/workspace/server/research_scripts/phase7/phase7_30_liq_sweep_buy_trend/runs/liq_sweep_confirmatory_forward/LIQ_SWEEP_2026.09.28_2026.10.19_ed92366cd9bd15bb_20261019T200219Z_0e054b19.manifest.json",
-  "ini_path": "/workspace/server/research_scripts/phase7/phase7_30_liq_sweep_buy_trend/runs/liq_sweep_confirmatory_forward/LIQ_SWEEP_2026.09.28_2026.10.19_ed92366cd9bd15bb_20261019T200219Z_0e054b19.ini",
+  "status": "ANALYZED",
+  "decision": "INSUFFICIENT_EVIDENCE",
+  "run_id": "LIQ_SWEEP_2026.09.28_2026.10.19_4210f3444108de84_20261019T210920Z_c8f867f7",
   "hypothesis_id": "LIQ-SWEEP-BUY-TREND-RM-001",
-  "prereg_commit_sha": "eb8e78c36bd21a1178a4a78b01a38f5a0d79a232",
-  "period": [
-    "2026.09.28",
-    "2026.10.19"
-  ],
-  "expected_n_note": "OOS rate ~2 trades/month \u21d2 ~3-week window likely yields 0\u20132 closes; decision will almost certainly be INSUFFICIENT_EVIDENCE (min_n=30). Still required as first confirmatory sample under the frozen prereg.",
-  "updated_at_utc": "2026-10-19T20:02:19.257945+00:00",
-  "analyze_probe": {
-    "status": "RUN_NOT_YET_COLLECTED",
-    "decision": "INSUFFICIENT_EVIDENCE",
-    "result_path": "/workspace/server/research_scripts/phase7/phase7_30_liq_sweep_buy_trend/confirmatory_forward_result_v1.json",
-    "updated_at_utc": "2026-10-19T20:02:19.300270+00:00"
-  }
+  "result_path": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_30_liq_sweep_buy_trend\\confirmatory_forward_result_v1.json",
+  "updated_at_utc": "2026-10-19T21:19:38.132968+00:00"
 }

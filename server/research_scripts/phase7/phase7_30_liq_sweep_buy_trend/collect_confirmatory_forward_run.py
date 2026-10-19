@@ -22,12 +22,40 @@ RUN_DIR = os.path.join(PHASE_DIR, "runs", "liq_sweep_confirmatory_forward")
 STATUS_PATH = os.path.join(PHASE_DIR, "confirmatory_run_status_v1.json")
 
 
+def _latest_manifest(run_dir: str) -> str | None:
+    """Pick the run that was actually launched, not the lexicographic filename.
+
+    Cloud prepare writes a manifest whose config hash (`ed92366…`) sorts after
+    the Windows run hash (`4210f344…`). `sorted(glob)[-1]` therefore collected
+    the unlaunched prepare file and treated every local certificate as new.
+    """
+    candidates = glob.glob(os.path.join(run_dir, "*.manifest.json"))
+    launched = []
+    prepared = []
+    for path in candidates:
+        try:
+            with open(path, encoding="utf-8") as f:
+                manifest = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if manifest.get("start_time_utc"):
+            launched.append((manifest["start_time_utc"], path))
+        else:
+            prepared.append((manifest.get("prepared_at_utc") or "", path))
+    if launched:
+        launched.sort()
+        return launched[-1][1]
+    if prepared:
+        prepared.sort()
+        return prepared[-1][1]
+    return None
+
+
 def main() -> int:
-    candidates = sorted(glob.glob(os.path.join(RUN_DIR, "*.manifest.json")))
-    if not candidates:
+    manifest_path = _latest_manifest(RUN_DIR)
+    if not manifest_path:
         print("No confirmatory manifest found. Run launch_confirmatory_forward_run.py first.")
         return 1
-    manifest_path = candidates[-1]
     with open(manifest_path, encoding="utf-8") as f:
         manifest = json.load(f)
     if not manifest.get("confirmatory"):
