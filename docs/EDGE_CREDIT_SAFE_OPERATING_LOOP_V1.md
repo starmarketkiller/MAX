@@ -70,6 +70,12 @@ Remediation ≠ edge. FVG_CONT stays `CANDIDATE`. Production remains **NO-GO**.
    Not a strategy fail; not live-ready; no registry promotion.
    Artifacts: `server/research_scripts/phase7/phase7_30_liq_sweep_buy_trend/`
    (`confirmatory_forward_result_v1.json`, run `…T210920Z_c8f867f7`).
+5. **Done in Phase 7.31 identity** — `FVG-CONT-IDENTITY-ISOLATION-001` →
+   **`ISOLATION_READY`**: selector=8 isolable; variants SEPARATE_FUNCTION;
+   Python exit mismatch forbids PF reuse; FVG_MIT_WINDOW alone has CTF zone state.
+   Next (cheap→PC): new MT5 *diagnostic* prereg, then long-window selector=8 run
+   (not another 3-week confirmatory). Artifacts:
+   `server/research_scripts/phase7/phase7_31_fvg_cont_identity/`.
 
 Stop condition for each task: a Decision Card with GO / INVESTIGATE / STOP.
 No card → no next premium session.
