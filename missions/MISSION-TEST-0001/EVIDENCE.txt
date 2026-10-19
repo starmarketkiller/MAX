@@ -1,0 +1,5 @@
+EVIDENCE MISSION-TEST-0001
+Verifica: sha256(payload_input.txt) = a8c5990da5f8319e2dd65016c1ce4a31e98232568c63bd7ddbbc6dfbe345ed31
+Verifica: sha256(payload_output.txt) = 9e2445a7264e409dd0f9c060bb5f2b41089831afd4a69766c92f554152f59816
+Parola di controllo: ORSA-MAGGIORE-42
+Nessun dato di mercato, nessuna credenziale, nessun riferimento interno.
