@@ -60,8 +60,12 @@ Remediation ≠ edge. FVG_CONT stays `CANDIDATE`. Production remains **NO-GO**.
 2. **Done in Phase 7.28** — same-feed A/B for BAR_UPDN (MATERIAL) + BB_SQUEEZE (LOW);
    TF guards applied to all remaining persistent-state DEFECT_CONFIRMED; TSI registry reconciled.
    Artifacts: `server/research_scripts/phase7/phase7_28_defect_impact_batch/`.
-3. **One falsifiable experiment** — Contextual Edge Phase 1 on MACD (`docs/CONTEXTUAL_EDGE_DISCOVERY_V1_DESIGN.md`),
-   or LIQ_SWEEP OOS diagnosis. Premium agent only for preregistration adjudication if Power Gate fails.
+3. **Done in Phase 7.29** — LIQ_SWEEP OOS failure mode: `HABITAT_REGIME + SETUP_MIX_SHIFT`
+   (not execution bug). Stays CANDIDATE / regime-conditional.
+   Artifacts: `server/research_scripts/phase7/phase7_29_liq_sweep_oos_failure/`.
+4. **Next falsifiable experiment** — preregistered `LIQ_SWEEP_BUY_TREND_FILTER_OR_REGIME_MATCH_V1`
+   (see Phase 7.29 decision card), **or** Contextual Edge Phase 1 on MACD.
+   Premium agent only for preregistration adjudication if Power Gate fails.
 
 Stop condition for each task: a Decision Card with GO / INVESTIGATE / STOP.
 No card → no next premium session.
