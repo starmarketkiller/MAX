@@ -55,9 +55,13 @@ Remediation ≠ edge. FVG_CONT stays `CANDIDATE`. Production remains **NO-GO**.
 
 ## Next three tasks (order fixed, cheap first)
 
-1. **Deterministic** — run `python3 scripts/edge_freeze_check.py` in CI/local; fix any new DEFECT_BLOCKED that reappears as enabled.
-2. **Local / scripted** — same-feed A/B/C impact measure for the remaining DEFECT_CONFIRMED strategies (harness already exists from Phase 7.9/7.13). No premium agent needed to *run* it; escalate only to interpret ambiguous causal results.
-3. **One falsifiable experiment** — Contextual Edge Phase 1 on MACD (`docs/CONTEXTUAL_EDGE_DISCOVERY_V1_DESIGN.md`). Premium agent only for preregistration adjudication if the local plan fails the Power Gate / provenance checks.
+1. **Deterministic** — run `python3 scripts/edge_freeze_check.py` and
+   `python3 -m unittest server/research_scripts/phase7/phase7_28_defect_impact_batch/test_phase_7_28.py`.
+2. **Done in Phase 7.28** — same-feed A/B for BAR_UPDN (MATERIAL) + BB_SQUEEZE (LOW);
+   TF guards applied to all remaining persistent-state DEFECT_CONFIRMED; TSI registry reconciled.
+   Artifacts: `server/research_scripts/phase7/phase7_28_defect_impact_batch/`.
+3. **One falsifiable experiment** — Contextual Edge Phase 1 on MACD (`docs/CONTEXTUAL_EDGE_DISCOVERY_V1_DESIGN.md`),
+   or LIQ_SWEEP OOS diagnosis. Premium agent only for preregistration adjudication if Power Gate fails.
 
 Stop condition for each task: a Decision Card with GO / INVESTIGATE / STOP.
 No card → no next premium session.

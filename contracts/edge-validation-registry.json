@@ -199,14 +199,16 @@
       "known_defects": [
         {
           "defect_id": "COOLDOWN_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard + offline A/B MATERIAL (3706 scoped vs 2777 contaminated). Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "BB_SQUEEZE",
@@ -228,15 +230,16 @@
       "known_defects": [
         {
           "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
       "latest_relevant_note_date": "2026-10-19",
       "validation_notes": [
-        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop)."
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop).",
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard + offline A/B LOW_IMPACT on signal count. Remediation≠edge; default_enabled stays false if previously frozen."
       ]
     },
     {
@@ -1459,14 +1462,16 @@
       "known_defects": [
         {
           "defect_id": "COOLDOWN_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard (cooldown top-level; same class as BREAKOUT_ACC). Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "PMAX",
@@ -1488,14 +1493,16 @@
       "known_defects": [
         {
           "defect_id": "RECURSIVE_VALUE_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard (RECURSIVE_VALUE class; structural sibling of TSI). Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "PO3",
@@ -1542,14 +1549,16 @@
       "known_defects": [
         {
           "defect_id": "STATE_MACHINE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard before persistent range state mutation. Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "RSI_DIV",
@@ -1816,15 +1825,16 @@
       "known_defects": [
         {
           "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
       "latest_relevant_note_date": "2026-10-19",
       "validation_notes": [
-        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop)."
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop).",
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard (STATE_MACHINE class; same pattern as ORDER_BLOCK). Remediation≠edge; default_enabled stays false if previously frozen."
       ]
     },
     {
@@ -1847,14 +1857,16 @@
       "known_defects": [
         {
           "defect_id": "STATE_MACHINE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard before g_shbmsV2LastBar mutation. Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "SILVER_BULLET",
@@ -1876,15 +1888,16 @@
       "known_defects": [
         {
           "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
       "latest_relevant_note_date": "2026-10-19",
       "validation_notes": [
-        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop)."
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop).",
+        "2026-10-19 Phase 7.28: Phase 7.28 Profile_TF=M15 + TF guard (was PERIOD_CURRENT). Remediation≠edge; default_enabled stays false if previously frozen."
       ]
     },
     {
@@ -2053,15 +2066,16 @@
       "known_defects": [
         {
           "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
       "latest_relevant_note_date": "2026-10-19",
       "validation_notes": [
-        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop)."
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop).",
+        "2026-10-19 Phase 7.28: Phase 7.18 guard already in code; registry reconcile Phase 7.28. Remediation≠edge; default_enabled stays false if previously frozen."
       ]
     },
     {

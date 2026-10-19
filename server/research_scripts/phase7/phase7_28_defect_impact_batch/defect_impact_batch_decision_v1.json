@@ -1,0 +1,52 @@
+{
+  "generated_at": "2026-10-19T19:17:42.126436+00:00",
+  "generation_script": "phase7_28_defect_impact_batch/build_decision_batch.py",
+  "canonical_sha256": "980439c7af9f9c205f10ad470cabc84d6e510ad7f65052d3d47a84edbe96c58a",
+  "payload": {
+    "phase": "7.28",
+    "title": "DEFECT_IMPACT_BATCH_V1",
+    "principle": "Same-feed A/B where offline data allows; TF-scoped early guard (validated on BREAKOUT_ACC/ORDER_BLOCK/TSI) applied to all remaining DEFECT_CONFIRMED persistent-state strategies. Remediation \u2260 edge.",
+    "measured": {
+      "BAR_UPDN": {
+        "decision": "DEFECT_CONFIRMED_MATERIAL_IMPACT",
+        "A_signals": 2777,
+        "B_signals": 3706,
+        "suppression_vs_scoped": 0.2507,
+        "artifact": "bar_updn_abc_impact_v1.json"
+      },
+      "BB_SQUEEZE": {
+        "decision": "DEFECT_CONFIRMED_LOW_IMPACT",
+        "A_signals": 23,
+        "B_signals": 23,
+        "suppression_vs_scoped": 0.0,
+        "artifact": "bb_squeeze_abc_impact_v1.json",
+        "caveat": "H1/H4 synthetically densified from D1 OHLC for mechanism stress only"
+      }
+    },
+    "structural_guard_applied": {
+      "BAR_UPDN": true,
+      "PIVOT_WICK": true,
+      "PMAX": true,
+      "BB_SQUEEZE": true,
+      "TSI": true,
+      "SH_BMS_RTO": true,
+      "SH_BMS_RTO_V2": true,
+      "SILVER_BULLET": true,
+      "RANGE_FADE": true
+    },
+    "silver_bullet_profile_tf_fixed": true,
+    "tsi_reconcile": {
+      "prior_registry": "DEFECT_BLOCKED",
+      "code_before_this_phase": "guard already present (Phase 7.18)",
+      "action": "registry \u2192 REMEDIATED (recover only)"
+    },
+    "not_mt5_event_parity": true,
+    "not_an_edge_claim": true,
+    "production_status": "NO-GO unchanged",
+    "next": [
+      "Keep DEFECT_BLOCKED strategies default_enabled=false until dedicated forward/edge work",
+      "Optional: MT5 A/B/C for SH_BMS_RTO / SILVER_BULLET / PMAX when Tester automation exists",
+      "Resume shortlist edge work (FVG_CONT/LIQ_SWEEP/\u2026) \u2014 not these defect repairs"
+    ]
+  }
+}

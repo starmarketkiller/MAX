@@ -451,6 +451,10 @@ SNXSSignal NXS_Strat_BarUpDn(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "BAR_UPDN";
    if(!InpStrat_BarUpDn || !NXS_SelectorAllows(43)) return s;
    ENUM_TIMEFRAMES tf = NXS_EffTF();
+   // Phase 7.28: same COOLDOWN_STATE_CONTAMINATION class as BREAKOUT_ACC (Phase 7.9G).
+   // Offline same-feed A/B on M15 gold: scoped 3706 signals vs contaminated 2777
+   // (DEFECT_CONFIRMED_MATERIAL_IMPACT). Guard before any state read/write.
+   if(tf != NXS_Profile_TF("BAR_UPDN")) return s;
    datetime curBar0 = iTime(g_sym, tf, 0);
    if(g_barUpDnState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
    g_barUpDnState.lastBarTime = curBar0;
@@ -498,6 +502,9 @@ SNXSSignal NXS_Strat_PMax(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "PMAX";
    if(!InpStrat_PMax || !NXS_SelectorAllows(44)) return s;
    ENUM_TIMEFRAMES tf = NXS_EffTF();
+   // Phase 7.28: RECURSIVE_VALUE_STATE_CONTAMINATION (Phase 7.10). Same TF-scoped
+   // early guard pattern validated on BREAKOUT_ACC/ORDER_BLOCK/TSI.
+   if(tf != NXS_Profile_TF("PMAX")) return s;
    datetime curBar0 = iTime(g_sym, tf, 0);
    if(g_pmaxState.lastBarTime == curBar0) return s;   // gia' valutata su questa barra
 
@@ -802,6 +809,9 @@ SNXSSignal NXS_Strat_PivotWick(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "PIVOT_WICK";
    if(!InpStrat_PivotWick || !NXS_SelectorAllows(49)) return s;
    ENUM_TIMEFRAMES execTF = NXS_EffTF();   // M15 dal profilo (NXS_Profile_TF)
+   // Phase 7.28: top-level lastFireTime cooldown is COOLDOWN_STATE_CONTAMINATION
+   // (pool pivots remain per-TF SAFE). Guard before top-level state mutation.
+   if(execTF != NXS_Profile_TF("PIVOT_WICK")) return s;
    datetime curBar0 = iTime(g_sym, execTF, 0);
    if(g_pivotWickState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
    g_pivotWickState.lastBarTime = curBar0;
@@ -1872,6 +1882,9 @@ SNXSSignal NXS_Strat_BBSqueeze(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BB_SQUEEZE; s.stratName = "BB_SQUEEZE";
    if(!InpStrat_BB_SQUEEZE || !NXS_SelectorAllows(12)) return s;
    ENUM_TIMEFRAMES tf = NXS_EffTF();
+   // Phase 7.28: squeezeBars accumulator contamination (Phase 7.10). Offline A/B
+   // on D1 showed LOW_IMPACT on signal count; guard still required for correctness.
+   if(tf != NXS_Profile_TF("BB_SQUEEZE")) return s;
    datetime curBar0 = iTime(g_sym, tf, 0);
    if(g_bbsqState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
    g_bbsqState.lastBarTime = curBar0;
