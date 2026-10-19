@@ -211,7 +211,7 @@
     {
       "strategy_id": "BB_SQUEEZE",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "UNVALIDATED",
       "component_value_status": "UNKNOWN",
       "role_in_system": [],
@@ -234,8 +234,10 @@
       ],
       "defect_status": "DEFECT_BLOCKED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop)."
+      ]
     },
     {
       "strategy_id": "BJORGUM",
@@ -574,9 +576,10 @@
         }
       ],
       "needs_reimplementation_review": true,
-      "edge_validation_date": "2026-10-06",
+      "edge_validation_date": "2026-10-19",
       "edge_validation_source": [
-        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+        "docs/EDGE_CREDIT_SAFE_OPERATING_LOOP_V1.md"
       ],
       "edge_validation_sha": [
         "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
@@ -585,15 +588,17 @@
       "known_defects": [
         {
           "defect_id": "SLRECLAIM_ACCOUNT_PROTECTION_BYPASS",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "UNKNOWN_REMEDIATION"
+          "source": "git:50e9ec7,1ac0437,a225aa3 + NXS_SLReclaim.mqh CommonExposurePreflight",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "UNKNOWN_REMEDIATION",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
+      "latest_relevant_note_date": "2026-10-19",
       "validation_notes": [
-        "Research candidate; SLReclaim remediation is not confirmed."
+        "SLReclaim account-protection bypass remediated in code: 50e9ec7 (CheckProtections), 1ac0437 (CommonExposurePreflight + ProfitReclaim twin), a225aa3 (identity/attribution).",
+        "Code verified 2026-10-19: NXS_SLReclaim.mqh still calls NXS_CheckProtections then NXS_CommonExposurePreflight before SafeBuy/SafeSell.",
+        "Standalone edge remains CANDIDATE — remediation closes the defect provenance gap only; does not promote edge status."
       ]
     },
     {
@@ -1794,7 +1799,7 @@
     {
       "strategy_id": "SH_BMS_RTO",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "UNVALIDATED",
       "component_value_status": "UNKNOWN",
       "role_in_system": [],
@@ -1817,8 +1822,10 @@
       ],
       "defect_status": "DEFECT_BLOCKED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop)."
+      ]
     },
     {
       "strategy_id": "SH_BMS_RTO_V2",
@@ -1852,7 +1859,7 @@
     {
       "strategy_id": "SILVER_BULLET",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "UNVALIDATED",
       "component_value_status": "UNKNOWN",
       "role_in_system": [],
@@ -1875,8 +1882,10 @@
       ],
       "defect_status": "DEFECT_BLOCKED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop)."
+      ]
     },
     {
       "strategy_id": "SILVER_BULLET_V2",
@@ -2027,7 +2036,7 @@
     {
       "strategy_id": "TSI",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "UNVALIDATED",
       "component_value_status": "UNKNOWN",
       "role_in_system": [],
@@ -2050,8 +2059,10 @@
       ],
       "defect_status": "DEFECT_BLOCKED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop)."
+      ]
     },
     {
       "strategy_id": "TSI_EXTREME",
