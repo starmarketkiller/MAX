@@ -41,6 +41,42 @@ class Phase730Tests(unittest.TestCase):
         self.assertFalse(p["promotable"])
         self.assertTrue(p["not_ready_for_deploy"])
 
+    def test_confirmatory_scripts_exist(self):
+        for name in (
+            "launch_confirmatory_forward_run.py",
+            "collect_confirmatory_forward_run.py",
+            "analyze_confirmatory_forward.py",
+            "RUNBOOK_CONFIRMATORY_WINDOWS.md",
+        ):
+            self.assertTrue(
+                os.path.isfile(os.path.join(PHASE_DIR, name)), f"missing {name}"
+            )
+
+    def test_confirmatory_status_prepared(self):
+        path = os.path.join(PHASE_DIR, "confirmatory_run_status_v1.json")
+        self.assertTrue(os.path.isfile(path), "run launch --prepare-only first")
+        with open(path, encoding="utf-8") as f:
+            s = json.load(f)
+        self.assertEqual(s["status"], "PREPARED_AWAITING_WINDOWS_MT5")
+        self.assertEqual(s["hypothesis_id"], "LIQ-SWEEP-BUY-TREND-RM-001")
+        self.assertEqual(s["period"], ["2026.09.28", "2026.10.19"])
+
+    def test_analyze_before_collect_is_insufficient(self):
+        import sys
+        if PHASE_DIR not in sys.path:
+            sys.path.insert(0, PHASE_DIR)
+        from analyze_confirmatory_forward import analyze
+        d1 = os.path.join(
+            ROOT, "server/research_scripts/phase7/phase7_9h/raw_data/nxs_d1_gold_phase79h.csv"
+        )
+        p = analyze(d1)
+        self.assertIn(
+            p["status"],
+            ("RUN_NOT_YET_COLLECTED", "RUN_NOT_YET_PREPARED", "TRADES_CSV_MISSING"),
+        )
+        self.assertEqual(p["decision"], "INSUFFICIENT_EVIDENCE")
+        self.assertFalse(p.get("live_ready", False))
+
 
 if __name__ == "__main__":
     unittest.main()
