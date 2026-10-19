@@ -958,7 +958,9 @@
       "needs_reimplementation_review": false,
       "edge_validation_date": "2026-10-06",
       "edge_validation_source": [
-        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+        "docs/EDGE_CREDIT_SAFE_OPERATING_LOOP_V1.md",
+        "server/research_scripts/phase7/phase7_29_liq_sweep_oos_failure/liq_sweep_oos_failure_decision_card_v1.json"
       ],
       "edge_validation_sha": [
         "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
@@ -967,9 +969,10 @@
       "known_defects": [],
       "defect_status": "NONE_KNOWN",
       "forward_validation_status": "NEGATIVE_INSUFFICIENT",
-      "latest_relevant_note_date": "2026-10-06",
+      "latest_relevant_note_date": "2026-10-19",
       "validation_notes": [
-        "OOS n=6 is negative but insufficient for final refutation."
+        "OOS n=6 is negative but insufficient for final refutation.",
+        "2026-10-19 Phase 7.29: OOS failure mode = HABITAT_REGIME + SETUP_MIX_SHIFT (IS 93% BUY in +119% gold bull; OOS 50% SELL all stopped; execution bug rejected). Status stays CANDIDATE / REGIME_CONDITIONAL — not FAILED (n=6), not SUPPORTED. See phase7_29_liq_sweep_oos_failure/liq_sweep_oos_failure_decision_card_v1.json"
       ]
     },
     {

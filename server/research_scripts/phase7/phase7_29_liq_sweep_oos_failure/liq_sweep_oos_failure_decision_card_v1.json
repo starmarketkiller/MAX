@@ -1,0 +1,43 @@
+{
+  "generated_at": "2026-10-19T19:23:58.444483+00:00",
+  "generation_script": "phase7_29_liq_sweep_oos_failure/build_decision_card.py",
+  "canonical_sha256": "2a6385dbb71f03be8c273ea65261f14037264b3f5df9762ed7a393c102ed86fe",
+  "payload": {
+    "phase": "7.29",
+    "strategy": "LIQ_SWEEP",
+    "question": "Why was the Phase 7.25 OOS window negative?",
+    "decision": "FAILURE_MODE_IDENTIFIED_REGIME_CONDITIONAL",
+    "primary_failure_mode": "H1_HABITAT_REGIME+H2_SETUP_MIX_SHIFT",
+    "supported_hypotheses": [
+      "H1_HABITAT_REGIME",
+      "H2_SETUP_MIX_SHIFT",
+      "H4_SAMPLE_SIZE"
+    ],
+    "rejected_hypotheses": [
+      "H3_EXECUTION_BUG",
+      "H5_DETECTOR_REGRESSION"
+    ],
+    "headline": "OOS (\u22120.52R/trade, n=6) is explained by habitat + setup-mix shift: IS was 93% BUY inside a +119% gold bull; OOS drew 50% SELL and all SELLS stopped out while gold kept rising (+12%). Not an execution bug.",
+    "numbers": {
+      "IS_mean_R": 0.4314,
+      "OOS_mean_R": -0.5242,
+      "IS_gold_ret_pct": 119.259,
+      "OOS_gold_ret_pct": 12.201,
+      "oos_buy_only_mean_R": -0.0573
+    },
+    "edge_implication": "LIQ_SWEEP remains CANDIDATE only as a regime-conditional / BUY-with-trend hypothesis. Standalone promotion to SUPPORTED is blocked until a preregistered test separates habitat effect from signal (regime-matched or SELL-disabled ablation) with adequate n.",
+    "registry_action": "Keep standalone_edge_status=CANDIDATE; add validation note REGIME_CONDITIONAL; do not promote; do not mark FAILED from n=6 alone.",
+    "next_experiment": {
+      "name": "LIQ_SWEEP_BUY_TREND_FILTER_OR_REGIME_MATCH_V1",
+      "preregister_before_running": true,
+      "design_sketch": "Compare (A) current LIQ_SWEEP vs (B) BUY-only when D1 close > SMA200 vs (C) regime-matched random entries in same bull cells. Success = B beats C after costs with n powered for 0.3R.",
+      "do_not": [
+        "Optimize SL/TP on IS",
+        "Declare FAILED from n=6 alone",
+        "Go live / prop on current bidirectional recipe"
+      ]
+    },
+    "not_ready_for_deploy": true,
+    "not_an_edge_claim": true
+  }
+}

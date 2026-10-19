@@ -1,0 +1,264 @@
+{
+  "generated_at": "2026-10-19T19:23:58.421465+00:00",
+  "generation_script": "phase7_29_liq_sweep_oos_failure/build_oos_failure_mode_diagnosis.py",
+  "canonical_sha256": "d198cd6e65c58362b20d0efdc7d48d51f26594c631a5fb327e9efafbb845c2ab",
+  "payload": {
+    "phase": "7.29",
+    "strategy": "LIQ_SWEEP",
+    "question": "Why was the Phase 7.25 OOS window negative?",
+    "inputs": {
+      "is_trades": "phase7_23/runs/liq_sweep_diagnostic/*.trades.csv",
+      "oos_trades": "phase7_25/runs/liq_sweep_oos_forward/*.trades.csv",
+      "d1_path": "phase7_9h/raw_data/nxs_d1_gold_phase79h.csv",
+      "prior_decision": "phase7_25/decision_card_v1.json \u2192 EDGE_CANDIDATE_REQUIRES_FORWARD_VALIDATION"
+    },
+    "windows": {
+      "IS": {
+        "range": [
+          "2023.10.02",
+          "2026.06.30"
+        ],
+        "gold_drift": {
+          "start_px": 1827.66,
+          "end_px": 4007.3,
+          "ret_pct": 119.259,
+          "n_bars": 708
+        },
+        "stats": {
+          "n": 42,
+          "mean_R": 0.4314,
+          "sum_R": 18.12,
+          "win_rate": 0.5476,
+          "sl": 19,
+          "tp": 23,
+          "mean_hold_h": 453.7
+        }
+      },
+      "OOS": {
+        "range": [
+          "2026.07.01",
+          "2026.09.27"
+        ],
+        "gold_drift": {
+          "start_px": 4030.9,
+          "end_px": 4522.7,
+          "ret_pct": 12.201,
+          "n_bars": 36
+        },
+        "stats": {
+          "n": 6,
+          "mean_R": -0.5242,
+          "sum_R": -3.145,
+          "win_rate": 0.1667,
+          "sl": 5,
+          "tp": 1,
+          "mean_hold_h": 195.87
+        }
+      }
+    },
+    "mix": {
+      "IS_by_side_level": {
+        "BUY|Asia": {
+          "n": 31,
+          "mean_R": 0.3986,
+          "sum_R": 12.358,
+          "win_rate": 0.5161,
+          "sl": 15,
+          "tp": 16,
+          "mean_hold_h": 291.38
+        },
+        "BUY|Other": {
+          "n": 1,
+          "mean_R": 1.102,
+          "sum_R": 1.102,
+          "win_rate": 1.0,
+          "sl": 0,
+          "tp": 1,
+          "mean_hold_h": 1575.97
+        },
+        "BUY|Weekly": {
+          "n": 7,
+          "mean_R": 0.6553,
+          "sum_R": 4.587,
+          "win_rate": 0.7143,
+          "sl": 2,
+          "tp": 5,
+          "mean_hold_h": 1130.95
+        },
+        "SELL|Asia": {
+          "n": 3,
+          "mean_R": 0.0243,
+          "sum_R": 0.073,
+          "win_rate": 0.3333,
+          "sl": 2,
+          "tp": 1,
+          "mean_hold_h": 176.55
+        }
+      },
+      "OOS_by_side_level": {
+        "BUY|Asia": {
+          "n": 2,
+          "mean_R": 0.4335,
+          "sum_R": 0.867,
+          "win_rate": 0.5,
+          "sl": 1,
+          "tp": 1,
+          "mean_hold_h": 237.77
+        },
+        "BUY|Weekly": {
+          "n": 1,
+          "mean_R": -1.039,
+          "sum_R": -1.039,
+          "win_rate": 0.0,
+          "sl": 1,
+          "tp": 0,
+          "mean_hold_h": 169.36
+        },
+        "SELL|Asia": {
+          "n": 2,
+          "mean_R": -0.9945,
+          "sum_R": -1.989,
+          "win_rate": 0.0,
+          "sl": 2,
+          "tp": 0,
+          "mean_hold_h": 119.8
+        },
+        "SELL|Weekly": {
+          "n": 1,
+          "mean_R": -0.984,
+          "sum_R": -0.984,
+          "win_rate": 0.0,
+          "sl": 1,
+          "tp": 0,
+          "mean_hold_h": 290.74
+        }
+      },
+      "OOS_episodes": [
+        {
+          "open": "2026.07.14 04:15:00",
+          "side": "SELL",
+          "level": "Asia",
+          "exit": "sl",
+          "R": -0.99
+        },
+        {
+          "open": "2026.07.24 06:00:00",
+          "side": "SELL",
+          "level": "Weekly",
+          "exit": "sl",
+          "R": -0.984
+        },
+        {
+          "open": "2026.08.06 04:00:00",
+          "side": "BUY",
+          "level": "Asia",
+          "exit": "tp",
+          "R": 1.9
+        },
+        {
+          "open": "2026.08.24 05:15:00",
+          "side": "BUY",
+          "level": "Asia",
+          "exit": "sl",
+          "R": -1.033
+        },
+        {
+          "open": "2026.09.02 04:45:00",
+          "side": "SELL",
+          "level": "Asia",
+          "exit": "sl",
+          "R": -0.999
+        },
+        {
+          "open": "2026.09.04 05:00:00",
+          "side": "BUY",
+          "level": "Weekly",
+          "exit": "sl",
+          "R": -1.039
+        }
+      ],
+      "OOS_open_without_close": 1
+    },
+    "hypotheses": [
+      {
+        "id": "H1_HABITAT_REGIME",
+        "claim": "In-sample expectancy was mostly gold-bull BUY habitat, not symmetric sweep edge.",
+        "supported": true,
+        "evidence": {
+          "is_buy_share": 0.9286,
+          "is_buy_mean_R": 0.4627,
+          "is_sell_n": 3,
+          "is_sell_mean_R": 0.0243,
+          "is_gold_ret_pct": 119.259,
+          "oos_gold_ret_pct": 12.201,
+          "oos_sell_all_stopped": true
+        }
+      },
+      {
+        "id": "H2_SETUP_MIX_SHIFT",
+        "claim": "OOS trade mix shifted toward SELL (counter-trend in the same bull) vs IS.",
+        "supported": true,
+        "evidence": {
+          "sell_share_is": 0.0714,
+          "sell_share_oos": 0.5,
+          "oos_sell_mean_R": -0.991,
+          "oos_buy_mean_R": -0.0573
+        }
+      },
+      {
+        "id": "H3_EXECUTION_BUG",
+        "claim": "OOS failure is an execution/fill/ATR bug.",
+        "supported": false,
+        "rejected": true,
+        "evidence": {
+          "oos_exits": {
+            "n": 6,
+            "mean_R": -0.5242,
+            "sum_R": -3.145,
+            "win_rate": 0.1667,
+            "sl": 5,
+            "tp": 1,
+            "mean_hold_h": 195.87
+          },
+          "R_magnitudes_look_canonical_sl_tp": true,
+          "note": "5/6 exits are SL near -1R, 1 TP near +1.9R \u2014 consistent with recipe, not broken fills."
+        }
+      },
+      {
+        "id": "H4_SAMPLE_SIZE",
+        "claim": "n=6 alone makes any OOS verdict fragile (already noted in Phase 7.25).",
+        "supported": true,
+        "primary": false,
+        "evidence": {
+          "oos_n": 6,
+          "threshold_for_power": "~180 trades for 0.3R LIQ-like (edge capability V1)"
+        }
+      },
+      {
+        "id": "H5_DETECTOR_REGRESSION",
+        "claim": "OOS used a broken post-fix detector vs IS.",
+        "supported": false,
+        "rejected": true,
+        "evidence": {
+          "note": "Same Phase 7.23 isolation harness / selector-7 identity; OOS window declared untouched in 7.25."
+        }
+      }
+    ],
+    "primary_failure_mode": "H1_HABITAT_REGIME+H2_SETUP_MIX_SHIFT",
+    "decision": "FAILURE_MODE_IDENTIFIED_REGIME_CONDITIONAL",
+    "edge_implication": "LIQ_SWEEP remains CANDIDATE only as a regime-conditional / BUY-with-trend hypothesis. Standalone promotion to SUPPORTED is blocked until a preregistered test separates habitat effect from signal (regime-matched or SELL-disabled ablation) with adequate n.",
+    "oos_buy_only_mean_R": -0.0573,
+    "recommended_next_experiment": {
+      "name": "LIQ_SWEEP_BUY_TREND_FILTER_OR_REGIME_MATCH_V1",
+      "preregister_before_running": true,
+      "design_sketch": "Compare (A) current LIQ_SWEEP vs (B) BUY-only when D1 close > SMA200 vs (C) regime-matched random entries in same bull cells. Success = B beats C after costs with n powered for 0.3R.",
+      "do_not": [
+        "Optimize SL/TP on IS",
+        "Declare FAILED from n=6 alone",
+        "Go live / prop on current bidirectional recipe"
+      ]
+    },
+    "not_an_edge_claim": true,
+    "production_status": "NO-GO unchanged"
+  }
+}
