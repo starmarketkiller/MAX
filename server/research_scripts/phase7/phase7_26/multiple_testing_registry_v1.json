@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-28T10:24:30.929224+00:00",
-  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_multiple_testing_registry.py",
-  "canonical_sha256": "f197c83d6cc60f4e30266c847b8f48b3217aabf8d5eac7c07d3f871688cb171e",
+  "generated_at": "2026-10-19T07:10:13.986397+00:00",
+  "generation_script": "/workspace/nexus_ops/wt_ledger/server/research_scripts/phase7/phase7_26/build_multiple_testing_registry.py",
+  "canonical_sha256": "2fc8c193ac65486b61595cc095a8e70f27cc3bd16163d06a63ed4258080c581e",
   "payload": {
     "n_hypotheses_tested": 9,
     "n_strategies_variants_tested": 4,
     "n_experiments_run": 9,
-    "n_datasets_registered": 12,
+    "n_datasets_registered": 14,
     "datasets_reused_across_multiple_experiments": {
       "LIQ_SWEEP::2023.10.02_2026.06.30": 2
     },

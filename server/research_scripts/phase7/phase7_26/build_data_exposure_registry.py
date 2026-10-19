@@ -183,9 +183,43 @@ def _buy_dominance_benchmark_records():
     )]
 
 
+def _histdata_timestamp_audit_records():
+    """2026-10-19: diagnosi copertura HistData M1 (box Grok Bot, PROB_EDGE_V0
+    data_diag/diag_gaps.py sha256 56f3de0a...). Gli zip grezzi annuali sono
+    stati decompressi e iterati riga per riga: letti SOLO i timestamp (primi
+    15 caratteri), convertiti EST+5h e scartati se fuori dalla discovery
+    2023-02-04..2024-08-03. Nessun prezzo letto/usato, nessuna statistica su
+    queste righe. Registrato per trasparenza: NON sono finestre untouched."""
+    common = dict(symbol="XAUUSD", timeframe="M1", strategy_identity="NONE_DATA_COVERAGE_DIAGNOSIS",
+                  implementation_identity="PROB_EDGE_V0_DATA_DIAG diag_gaps.py sha256 56f3de0a8163b86887090f9fab56aba1839d5b7f283d213aa65ed17f51c016c3",
+                  experiment_run_ids=["PROB_EDGE_V0_DATA_DIAG_2026-10-19"],
+                  first_seen_date="2026-10-19 ~08:25 Europe/Rome (Grok Bot executor, orchestratore NEXUS)",
+                  development_exposure=False, integrity_audit_exposure=True,
+                  mechanism_discovery_exposure=False, visual_review_exposure=False,
+                  optimization_exposure=False, validation_exposure=False,
+                  oos_exposure=False, forward_exposure=False)
+    return [
+        _record(dataset_id="HISTDATA_XAUUSD_M1::2023.01.01_2023.02.03",
+                date_range=["2023.01.01", "2023.02.03"],
+                holdout_status="TIMESTAMP_ITERATED_ONLY - DAT_ASCII_XAUUSD_M1_2023.zip (sha256 "
+                               "89a4f3f7ec2a52b29fbce8d4ca2ab650971817ae371b332f5fe471a488bcffc2, da "
+                               "MANIFEST box, non ricalcolato): solo timestamp, nessun prezzo, nessuna "
+                               "statistica. Periodo nel TEMPORAL_HOLDOUT Phase 6 (2022-02-04..2023-02-03, "
+                               "Dukascopy, gia' consumato); qui fonte HistData.", **common),
+        _record(dataset_id="HISTDATA_XAUUSD_M1::2024.08.04_2024.12.31",
+                date_range=["2024.08.04", "2024.12.31"],
+                holdout_status="TIMESTAMP_ITERATED_ONLY - DAT_ASCII_XAUUSD_M1_2024.zip (sha256 "
+                               "6d47f5cb269e0c4f35c63c7532713aae7dcf98901f605458b00dd6a69e7105de, da "
+                               "MANIFEST box, non ricalcolato): solo timestamp, nessun prezzo, nessuna "
+                               "statistica. Periodo dentro development_internal_validation "
+                               "(2024-08-04..2025-05-03, partition_manifest_v1.json).", **common),
+    ]
+
+
 def build():
     records = (_breakout_acc_records() + _order_block_records() + _tsi_records() +
-              _liq_sweep_records() + _buy_dominance_benchmark_records())
+              _liq_sweep_records() + _buy_dominance_benchmark_records() +
+              _histdata_timestamp_audit_records())
     by_id = {r["dataset_id"]: r for r in records}
     payload = {
         "records": records, "n_records": len(records),

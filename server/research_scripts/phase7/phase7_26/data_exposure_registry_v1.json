@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T10:24:30.821303+00:00",
-  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_data_exposure_registry.py",
-  "canonical_sha256": "5c2ad371ece3cd064e6ffcbd7029a0e491a77a3944572657e794a1ce020dfa4c",
+  "generated_at": "2026-10-19T07:09:59.184103+00:00",
+  "generation_script": "/workspace/nexus_ops/wt_ledger/server/research_scripts/phase7/phase7_26/build_data_exposure_registry.py",
+  "canonical_sha256": "8ec1e7c11f5356f22753346c34bdead174a131fa5b8726baeb2cbc5194c367c2",
   "payload": {
     "records": [
       {
@@ -286,9 +286,57 @@
         "oos_exposure": false,
         "forward_exposure": false,
         "holdout_status": "DERIVED_FROM_DISCOVERY_DATASETS - composito dei 3 dataset di discovery gia' esposti (BREAKOUT_ACC/ORDER_BLOCK/LIQ_SWEEP) + serie D1 condivisa - NON un holdout indipendente, dichiarato esplicitamente (Phase 7.27, punto 7 del task: preferito dataset gia' visti per la prima verifica della hypothesis)."
+      },
+      {
+        "dataset_id": "HISTDATA_XAUUSD_M1::2023.01.01_2023.02.03",
+        "symbol": "XAUUSD",
+        "timeframe": "M1",
+        "date_range": [
+          "2023.01.01",
+          "2023.02.03"
+        ],
+        "strategy_identity": "NONE_DATA_COVERAGE_DIAGNOSIS",
+        "implementation_identity": "PROB_EDGE_V0_DATA_DIAG diag_gaps.py sha256 56f3de0a8163b86887090f9fab56aba1839d5b7f283d213aa65ed17f51c016c3",
+        "experiment_run_ids": [
+          "PROB_EDGE_V0_DATA_DIAG_2026-10-19"
+        ],
+        "first_seen_date": "2026-10-19 ~08:25 Europe/Rome (Grok Bot executor, orchestratore NEXUS)",
+        "development_exposure": false,
+        "integrity_audit_exposure": true,
+        "mechanism_discovery_exposure": false,
+        "visual_review_exposure": false,
+        "optimization_exposure": false,
+        "validation_exposure": false,
+        "oos_exposure": false,
+        "forward_exposure": false,
+        "holdout_status": "TIMESTAMP_ITERATED_ONLY - DAT_ASCII_XAUUSD_M1_2023.zip (sha256 89a4f3f7ec2a52b29fbce8d4ca2ab650971817ae371b332f5fe471a488bcffc2, da MANIFEST box, non ricalcolato): solo timestamp, nessun prezzo, nessuna statistica. Periodo nel TEMPORAL_HOLDOUT Phase 6 (2022-02-04..2023-02-03, Dukascopy, gia' consumato); qui fonte HistData."
+      },
+      {
+        "dataset_id": "HISTDATA_XAUUSD_M1::2024.08.04_2024.12.31",
+        "symbol": "XAUUSD",
+        "timeframe": "M1",
+        "date_range": [
+          "2024.08.04",
+          "2024.12.31"
+        ],
+        "strategy_identity": "NONE_DATA_COVERAGE_DIAGNOSIS",
+        "implementation_identity": "PROB_EDGE_V0_DATA_DIAG diag_gaps.py sha256 56f3de0a8163b86887090f9fab56aba1839d5b7f283d213aa65ed17f51c016c3",
+        "experiment_run_ids": [
+          "PROB_EDGE_V0_DATA_DIAG_2026-10-19"
+        ],
+        "first_seen_date": "2026-10-19 ~08:25 Europe/Rome (Grok Bot executor, orchestratore NEXUS)",
+        "development_exposure": false,
+        "integrity_audit_exposure": true,
+        "mechanism_discovery_exposure": false,
+        "visual_review_exposure": false,
+        "optimization_exposure": false,
+        "validation_exposure": false,
+        "oos_exposure": false,
+        "forward_exposure": false,
+        "holdout_status": "TIMESTAMP_ITERATED_ONLY - DAT_ASCII_XAUUSD_M1_2024.zip (sha256 6d47f5cb269e0c4f35c63c7532713aae7dcf98901f605458b00dd6a69e7105de, da MANIFEST box, non ricalcolato): solo timestamp, nessun prezzo, nessuna statistica. Periodo dentro development_internal_validation (2024-08-04..2025-05-03, partition_manifest_v1.json)."
       }
     ],
-    "n_records": 12,
+    "n_records": 14,
     "backfilled_strategies": [
       "BREAKOUT_ACC",
       "ORDER_BLOCK",
@@ -305,6 +353,7 @@
       "NO_EVENTS",
       "SEEN_FOR_NET_PNL_TOTALE_NOT_FOR_GRANULAR_STATS",
       "SEEN_FOR_SIGNALS_NOT_FOR_ECONOMICS",
+      "TIMESTAMP_ITERATED_ONLY",
       "UNVERIFIED"
     ]
   }
