@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-10-19T21:33:33.642317+00:00",
+  "generation_script": "phase7_32_fvg_cont_isolation_diagnostic/analyze_diagnostic_run.py",
+  "canonical_sha256": "39bf773f98912ad849cea1cff755274d014c618f04e9bb5b1f0ad1530271b113",
+  "payload": {
+    "status": "RUN_NOT_YET_COLLECTED",
+    "manifest_status": "PREPARED",
+    "run_id": "FVG_CONT_2023.10.02_2026.06.30_bb0f6ebccb790dbf_20261019T213333Z_204cede5",
+    "hypothesis_id": "FVG-CONT-MT5-ISOLATION-DIAG-001",
+    "prereg_commit_sha": "eafd78ce66e50e45d611c92011f59a386c4c7692",
+    "decision": "INSUFFICIENT_SAMPLE",
+    "promotable": false,
+    "live_ready": false
+  }
+}

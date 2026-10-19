@@ -73,9 +73,12 @@ Remediation ≠ edge. FVG_CONT stays `CANDIDATE`. Production remains **NO-GO**.
 5. **Done in Phase 7.31 identity** — `FVG-CONT-IDENTITY-ISOLATION-001` →
    **`ISOLATION_READY`**: selector=8 isolable; variants SEPARATE_FUNCTION;
    Python exit mismatch forbids PF reuse; FVG_MIT_WINDOW alone has CTF zone state.
-   Next (cheap→PC): new MT5 *diagnostic* prereg, then long-window selector=8 run
-   (not another 3-week confirmatory). Artifacts:
-   `server/research_scripts/phase7/phase7_31_fvg_cont_identity/`.
+   Artifacts: `server/research_scripts/phase7/phase7_31_fvg_cont_identity/`.
+6. **Phase 7.32 diagnostic package ready** — `FVG-CONT-MT5-ISOLATION-DIAG-001`
+   prereg frozen; long window **2023.10.02–2026.06.30** GOLD H4 selector=8
+   prepared (`PREPARED_AWAITING_WINDOWS_MT5`). Run on PC-MT5 via
+   `RUNBOOK_DIAGNOSTIC_WINDOWS.md`. Not an edge claim; density gate only.
+   Artifacts: `server/research_scripts/phase7/phase7_32_fvg_cont_isolation_diagnostic/`.
 
 Stop condition for each task: a Decision Card with GO / INVESTIGATE / STOP.
 No card → no next premium session.
