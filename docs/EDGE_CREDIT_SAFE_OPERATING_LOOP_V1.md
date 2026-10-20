@@ -78,10 +78,14 @@ Remediation ≠ edge. FVG_CONT stays `CANDIDATE`. Production remains **NO-GO**.
    n=82, mean R≈0.30, BUY≈78%, recon OK → **`SAMPLE_READY_FOR_EDGE_PREREG`**
    (still not SUPPORTED / not live). Artifacts:
    `server/research_scripts/phase7/phase7_32_fvg_cont_isolation_diagnostic/`.
-7. **Phase 7.33 habitat prereg + exploratory** — `FVG-CONT-HABITAT-RM-001`
-   frozen; exploratory on exposed diagnostic is **NOT_PROMOTABLE**.
-   Confirmatory = forward MT5 after **2026-06-30** (long window; not 3 weeks).
+7. **Done in Phase 7.33 habitat exploratory** — `FVG-CONT-HABITAT-RM-001`
+   frozen; exploratory **MIXED / NOT_PROMOTABLE** (BUY n=64, proxy CI crosses 0).
    Artifacts: `server/research_scripts/phase7/phase7_33_fvg_cont_habitat/`.
+8. **Phase 7.34 confirmatory package ready** — same prereg; window
+   **2026.07.01–2026.10.19** GOLD H4 selector=8
+   (`PREPARED_AWAITING_WINDOWS_MT5`). Runbook:
+   `phase7_34_fvg_cont_confirmatory/RUNBOOK_CONFIRMATORY_WINDOWS.md`.
+   Ladder: `docs/TRADING_RESEARCH_LADDER_V1.md`.
 
 Stop condition for each task: a Decision Card with GO / INVESTIGATE / STOP.
 No card → no next premium session.

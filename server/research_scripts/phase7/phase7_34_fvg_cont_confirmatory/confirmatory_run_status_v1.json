@@ -1,0 +1,21 @@
+{
+  "status": "PREPARED_AWAITING_WINDOWS_MT5",
+  "reason": "Cloud/Linux has no MT5. Run launch on PC-MT5 (see RUNBOOK_CONFIRMATORY_WINDOWS.md).",
+  "run_id": "FVG_CONT_2026.07.01_2026.10.19_95753555bf486cf7_20261020T074245Z_759db760",
+  "manifest_path": "/workspace/server/research_scripts/phase7/phase7_34_fvg_cont_confirmatory/runs/fvg_cont_confirmatory_forward/FVG_CONT_2026.07.01_2026.10.19_95753555bf486cf7_20261020T074245Z_759db760.manifest.json",
+  "ini_path": "/workspace/server/research_scripts/phase7/phase7_34_fvg_cont_confirmatory/runs/fvg_cont_confirmatory_forward/FVG_CONT_2026.07.01_2026.10.19_95753555bf486cf7_20261020T074245Z_759db760.ini",
+  "hypothesis_id": "FVG-CONT-HABITAT-RM-001",
+  "prereg_commit_sha": "17e6b0408bfecd1cf107a6eb88531e5e6beaf5ae",
+  "period": [
+    "2026.07.01",
+    "2026.10.19"
+  ],
+  "expected_n_note": "Diagnostic density ~2.5 trades/month \u21d2 ~3.5 months \u2248 8\u201310 closes; n_B likely still <30 \u2192 INSUFFICIENT_EVIDENCE is the expected honest label, but this is the first confirmatory sample under the frozen prereg.",
+  "updated_at_utc": "2026-10-20T07:42:45.150798+00:00",
+  "analyze_probe": {
+    "status": "RUN_NOT_YET_COLLECTED",
+    "decision": "INSUFFICIENT_EVIDENCE",
+    "result_path": "/workspace/server/research_scripts/phase7/phase7_34_fvg_cont_confirmatory/confirmatory_forward_result_v1.json",
+    "updated_at_utc": "2026-10-20T07:42:45.191586+00:00"
+  }
+}

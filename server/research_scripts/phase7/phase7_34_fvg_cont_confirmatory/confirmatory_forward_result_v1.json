@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-10-20T07:42:45.191422+00:00",
+  "generation_script": "phase7_34_fvg_cont_confirmatory/analyze_confirmatory_forward.py",
+  "canonical_sha256": "a8c969aafa3797becb200e23575fad122e013cee1b9675328f94b0a7bd49ed0e",
+  "payload": {
+    "status": "RUN_NOT_YET_COLLECTED",
+    "manifest_status": "PREPARED",
+    "run_id": "FVG_CONT_2026.07.01_2026.10.19_95753555bf486cf7_20261020T074245Z_759db760",
+    "hypothesis_id": "FVG-CONT-HABITAT-RM-001",
+    "prereg_commit_sha": "17e6b0408bfecd1cf107a6eb88531e5e6beaf5ae",
+    "decision": "INSUFFICIENT_EVIDENCE",
+    "promotable": false,
+    "live_ready": false
+  }
+}
