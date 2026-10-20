@@ -1,0 +1,99 @@
+{
+  "generated_at": "2026-10-20T07:35:20.311177+00:00",
+  "generation_script": "phase7_33_fvg_cont_habitat/write_preregistration.py",
+  "canonical_sha256": "7c5f7b1a7038d6a12092555e0e2fdf5e8b2aa42b6b3cfa73bf1b2fb34efbc3a5",
+  "payload": {
+    "schema_version": 1,
+    "hypothesis_id": "FVG-CONT-HABITAT-RM-001",
+    "title": "FVG_CONT recipe vs regime-matched random (BUY-heavy habitat test)",
+    "phase": "7.33",
+    "declared_at": "2026-10-20",
+    "frozen_before_any_arm_result": true,
+    "parent_decision": {
+      "phase": "7.32",
+      "decision": "SAMPLE_READY_FOR_EDGE_PREREG",
+      "artifact": "server/research_scripts/phase7/phase7_32_fvg_cont_isolation_diagnostic/diagnostic_result_v1.json",
+      "diagnostic_summary": "n=82, mean_R\u22480.298, win_rate\u22480.28, BUY\u224878% (64/82), recon OK"
+    },
+    "question": "Phase 7.32 isolation showed FVG_CONT n=82 mean recipe R\u22480.30 with ~78% BUY on GOLD H4. The MQL5 entry already requires aligned g_structH1.trend. Does the FVG gap trigger add expectancy beyond regime-matched random entries in the same (trend_bucket \u00d7 ATR tercile) cells after costs, or is the apparent edge pure habitat / side-mix?",
+    "arms": {
+      "A_BASELINE_BIDIRECTIONAL": {
+        "definition": "All FVG_CONT closed trades from Phase 7.32 isolation diagnostic (BUY+SELL, recipe R).",
+        "role": "reference_only"
+      },
+      "B_BUY_ONLY": {
+        "definition": "Subset of A with side=BUY (reason contains bull / FVG_cont bull).",
+        "role": "primary_candidate"
+      },
+      "C_REGIME_MATCHED_RANDOM_LONG": {
+        "definition": "For each retained B event, one random entry timestamp in the same causal regime cell (D1 trend bucket vs SMA200 \u00d7 ATR14 tercile) that is not the event bar; exploratory outcome = 10d forward return / ATR14 proxy unless recipe path sim available. Labeled OUTCOME_PROXY when not recipe R.",
+        "role": "primary_benchmark"
+      }
+    },
+    "primary_comparison": "B_mean_R_net - C_mean_outcome (paired where possible); exploratory may use proxy for C",
+    "primary_outcome": "mean net R per closed trade for B (recipe); C may be proxy until confirmatory path sim",
+    "secondary_outcomes": [
+      "win_rate B",
+      "BUY share of A",
+      "n_B",
+      "month_block CI95 on mean R_B",
+      "paired delta B\u2212C CI95"
+    ],
+    "decision_rule_frozen": {
+      "INSUFFICIENT_EVIDENCE": "n_B < 30 OR power gate not POWER_READY for 0.3R target",
+      "HABITAT_ONLY": "n_B>=30 AND (mean_B - mean_C) CI95 includes <=0 after costs/proxy rules",
+      "SIGNAL_SUPPORTED_AS_HYPOTHESIS": "n_B>=30 AND (mean_B - mean_C) CI95 lower bound > 0 after base costs (or declared proxy with explicit NON_RECIPE label for exploratory only); still NOT live-ready",
+      "MIXED": "any other non-insufficient pattern; no promotion"
+    },
+    "allowed_decisions": [
+      "INSUFFICIENT_EVIDENCE",
+      "HABITAT_ONLY",
+      "SIGNAL_SUPPORTED_AS_HYPOTHESIS",
+      "MIXED"
+    ],
+    "params": {
+      "symbol": "XAUUSD",
+      "strategy_id": "FVG_CONT",
+      "side_filter_B": "BUY_ONLY",
+      "sma_period": 200,
+      "sma_timeframe": "D1",
+      "regime_match_dimensions": [
+        "trend_bucket",
+        "atr_tercile"
+      ],
+      "random_seed": 73301,
+      "min_n_for_decision": 30,
+      "target_edge_R": 0.3,
+      "bootstrap": {
+        "method": "month_block",
+        "n_resamples": 5000,
+        "ci": 0.95
+      },
+      "diagnostic_run_id": "FVG_CONT_2023.10.02_2026.06.30_8761b3513079eed9_20261019T214337Z_1b2a7150"
+    },
+    "data_policy": {
+      "exploratory_replay_allowed_on": [
+        "phase7_32 FVG_CONT isolation diagnostic trades 2023.10.02\u20132026.06.30 \u2014 EXPOSED after 7.32 look",
+        "phase7_9h / phase7_30 refreshed D1 gold CSV for regime labels \u2014 EXPOSED"
+      ],
+      "exploratory_replay_status": "NOT_PROMOTABLE \u2014 DISCOVERY_REUSE / CONTAMINATED for confirmation",
+      "confirmatory_requires": "New forward MT5 isolation after 2026-06-30 under this same prereg (or untouched dataset), prereg commit must precede that run. Do not use short ~3-week windows that can yield n\u22480.",
+      "forbidden": [
+        "Promoting from exploratory replay alone",
+        "Live / prop",
+        "Optimizing SL/TP/SMA after seeing arm results",
+        "Changing random_seed after seeing C",
+        "Using Python backtest PF (exit mismatch vs MQL5)",
+        "Reading sealed holdouts"
+      ]
+    },
+    "power_note": "Diagnostic n_B\u224864 BUY already clears min_n=30 for exploratory bookkeeping. Confirmatory still needs a forward sample sized for density (~LIQ_SWEEP lesson). Power Gate V1 may be NOT_ASSESSABLE \u2014 this experiment does not claim POWER_READY for live.",
+    "explicit_non_goals": [
+      "No registry promotion in 7.33",
+      "No FVG_MIT_WINDOW CTF fix here",
+      "No re-open of LIQ_SWEEP confirmatory"
+    ],
+    "params_sha256": "9594301552caa1693c8a3ad081a60ec7ee6046e87eca3f9923225332034e8d01",
+    "protocol_sha256": "0ec4d8d80df6419c5312c28a24e9fb6cfc3119c6a133fb198aec79a1547313b5"
+  }
+}
