@@ -31,7 +31,8 @@ One page. How trading structure advances without burning credits.
 ## Routing
 
 1. Deterministic scripts / unittest / density gate  
-2. Local PC-MT5 for Tester (after EA recompile for Logging.mqh)  
+2. Local PC-MT5 for Tester (after EA recompile for Logging.mqh) — see `server/research_scripts/phase7/phase7_35_isolation_measure_hardening/RUNBOOK_MEASURE_HARDENING_WINDOWS.md`  
+
 3. Premium agent only for scientific adjudication / multi-file after local fail  
 
 ## Forbidden
