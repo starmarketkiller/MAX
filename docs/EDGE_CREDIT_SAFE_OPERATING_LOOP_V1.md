@@ -74,11 +74,14 @@ Remediation ≠ edge. FVG_CONT stays `CANDIDATE`. Production remains **NO-GO**.
    **`ISOLATION_READY`**: selector=8 isolable; variants SEPARATE_FUNCTION;
    Python exit mismatch forbids PF reuse; FVG_MIT_WINDOW alone has CTF zone state.
    Artifacts: `server/research_scripts/phase7/phase7_31_fvg_cont_identity/`.
-6. **Phase 7.32 diagnostic package ready** — `FVG-CONT-MT5-ISOLATION-DIAG-001`
-   prereg frozen; long window **2023.10.02–2026.06.30** GOLD H4 selector=8
-   prepared (`PREPARED_AWAITING_WINDOWS_MT5`). Run on PC-MT5 via
-   `RUNBOOK_DIAGNOSTIC_WINDOWS.md`. Not an edge claim; density gate only.
-   Artifacts: `server/research_scripts/phase7/phase7_32_fvg_cont_isolation_diagnostic/`.
+6. **Done in Phase 7.32 diagnostic** — `FVG-CONT-MT5-ISOLATION-DIAG-001`:
+   n=82, mean R≈0.30, BUY≈78%, recon OK → **`SAMPLE_READY_FOR_EDGE_PREREG`**
+   (still not SUPPORTED / not live). Artifacts:
+   `server/research_scripts/phase7/phase7_32_fvg_cont_isolation_diagnostic/`.
+7. **Phase 7.33 habitat prereg + exploratory** — `FVG-CONT-HABITAT-RM-001`
+   frozen; exploratory on exposed diagnostic is **NOT_PROMOTABLE**.
+   Confirmatory = forward MT5 after **2026-06-30** (long window; not 3 weeks).
+   Artifacts: `server/research_scripts/phase7/phase7_33_fvg_cont_habitat/`.
 
 Stop condition for each task: a Decision Card with GO / INVESTIGATE / STOP.
 No card → no next premium session.

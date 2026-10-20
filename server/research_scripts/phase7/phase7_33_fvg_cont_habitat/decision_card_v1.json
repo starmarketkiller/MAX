@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-10-20T07:35:52.617177+00:00",
+  "generation_script": "phase7_33_fvg_cont_habitat/build_decision_card.py",
+  "canonical_sha256": "0c6145954d51755002785465f1c14c7a653503246971c749e1ddf8f5286e91d5",
+  "payload": {
+    "phase": "7.33",
+    "hypothesis_id": "FVG-CONT-HABITAT-RM-001",
+    "status": "EXPLORATORY_REPLAY_COMPLETE_NOT_PROMOTABLE",
+    "promotable": false,
+    "evidence_grade": "DISCOVERY_REUSE",
+    "decision_exploratory": "MIXED",
+    "headline": "FVG_CONT BUY habitat exploratory: n_B=64, mean R=0.4225 vs A n=82 mean R=0.2983; BUY share=0.7805; proxy B\u2212C CI95=[-0.2557, 1.2515]. No promotion; confirmatory needs forward after 2026-06-30.",
+    "numbers": {
+      "A_recipe": {
+        "n": 82,
+        "mean_R": 0.2983,
+        "sum_R": 24.463,
+        "win_rate": 0.2805
+      },
+      "B_recipe": {
+        "n": 64,
+        "mean_R": 0.4225,
+        "sum_R": 27.04,
+        "win_rate": 0.3125
+      },
+      "B_month_ci": [
+        -0.098,
+        0.9047
+      ],
+      "C_proxy_paired_delta": {
+        "n": 64,
+        "mean_R": 0.5032,
+        "sum_R": 32.2026,
+        "win_rate": 0.5156
+      },
+      "C_proxy_ci": [
+        -0.2557,
+        1.2515
+      ]
+    },
+    "prereg_commit_sha": "17e6b0408bfecd1cf107a6eb88531e5e6beaf5ae",
+    "next": "New forward MT5 isolation after 2026-06-30 under this same prereg (or untouched dataset), prereg commit must precede that run. Do not use short ~3-week windows that can yield n\u22480.",
+    "not_ready_for_deploy": true,
+    "not_an_edge_claim": true
+  }
+}
