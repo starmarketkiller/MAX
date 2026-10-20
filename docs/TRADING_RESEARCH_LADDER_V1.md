@@ -9,8 +9,9 @@ One page. How trading structure advances without burning credits.
 1. Identity / isolation feasibility (code)
 2. MT5 isolation diagnostic (long window, density)
 3. Prereg habitat vs signal  →  exploratory on exposed (NOT_PROMOTABLE)
-4. Confirmatory forward under SAME prereg (after diagnostic end date)
-5. Only then: discuss SUPPORTED / live — still NO-GO until costs+power clear
+4. Density gate ALLOW (scripts/confirmatory_density_gate.py) BEFORE confirmatory
+5. Confirmatory forward under SAME prereg — isolation_ok required (raw CSV == OPENED)
+6. Only then: discuss SUPPORTED / live — still NO-GO until costs+power clear
 ```
 
 ## Live shortlist
@@ -21,15 +22,18 @@ One page. How trading structure advances without burning credits.
 
 | Strategy | Step | Status |
 |---|---|---|
-| LIQ_SWEEP | 4 confirmatory | `INSUFFICIENT_EVIDENCE` (n=0, short window) — parked |
-| FVG_CONT | 4 package ready | 7.31 identity OK → 7.32 diagnostic n=82 → 7.33 exploratory `MIXED` NOT_PROMOTABLE → **7.34 confirmatory prepared** |
+| LIQ_SWEEP | 5 confirmatory | `INSUFFICIENT_EVIDENCE` — **parked** |
+| FVG_CONT | 5 confirmatory | `INSUFFICIENT_EVIDENCE` (n_B=3) + CSV contamination lesson — **parked** |
+| Measure stack | 7.35 | Harness preflight + MQL5 reset fallback + density gate — **active** |
+
+**Do not start another shortlist strategy confirmatory until density gate ALLOW and a clean isolation_ok collect.**
 
 ## Routing
 
-1. Deterministic scripts / unittest  
-2. Local PC-MT5 for Tester  
+1. Deterministic scripts / unittest / density gate  
+2. Local PC-MT5 for Tester (after EA recompile for Logging.mqh)  
 3. Premium agent only for scientific adjudication / multi-file after local fail  
 
 ## Forbidden
 
-Live/prop, promoting from exploratory, Python PF when exit ≠ MQL5, parallel agents on the same Tester, 3-week confirmatory as if it could hit min_n=30.
+Live/prop, promoting from exploratory, Python PF when exit ≠ MQL5, parallel agents on the same Tester, confirmatory windows with expected n_B &lt; min_n, treating window-filtered CSV match as isolation proof.

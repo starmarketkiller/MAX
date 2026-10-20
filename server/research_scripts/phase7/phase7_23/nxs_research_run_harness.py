@@ -151,10 +151,48 @@ def build_ini(*, run_dir, strategy_identity, selector, symbol, period, chart_per
     return manifest, manifest_path, ini_path
 
 
+def preflight_archive_trades_csv(run_dir):
+    """Phase 7.35 — archive+remove Common/Files/NEXUS_trades.csv BEFORE Tester
+    launch. Defense in depth when MQL5 FileMove fails (err=5020 observed on
+    research PC): Python clears the shared log so the run cannot append onto
+    a prior diagnostic. Never deletes without copying into run_dir first.
+    Returns a small report dict (always JSON-serializable)."""
+    os.makedirs(run_dir, exist_ok=True)
+    src = os.path.join(COMMON_FILES_DIR, TRADES_CSV_NAME)
+    report = {
+        "preflight": "trades_csv_archive",
+        "src_existed": os.path.exists(src),
+        "archived_to": None,
+        "cleared": False,
+        "error": None,
+    }
+    if not os.path.exists(src):
+        return report
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    dest = os.path.join(run_dir, f"preflight_archive_{ts}_{TRADES_CSV_NAME}")
+    try:
+        shutil.copy2(src, dest)
+        report["archived_to"] = dest
+        os.remove(src)
+        report["cleared"] = not os.path.exists(src)
+        if not report["cleared"]:
+            report["error"] = "copy_ok_but_source_still_exists"
+    except OSError as e:
+        report["error"] = str(e)
+    return report
+
+
 def launch(manifest, manifest_path):
     """Lancia il Tester. NON blocca - il chiamante e' responsabile del
     polling (stesso schema gia' usato nelle fasi precedenti, qui non
     reimplementato per non duplicare logica di attesa gia' matura)."""
+    # Refresh snapshot + clear shared trades log before start (Phase 7.35).
+    manifest["pre_run_snapshot"] = snapshot_shared_state()
+    manifest["preflight_trades_archive"] = preflight_archive_trades_csv(manifest["run_dir"])
+    if manifest["preflight_trades_archive"].get("error"):
+        manifest.setdefault("warnings", []).append(
+            "preflight_archive_incomplete: " + manifest["preflight_trades_archive"]["error"]
+        )
     dest_ini = os.path.join(TERMINAL_DIR, os.path.basename(manifest["ini_path"]))
     shutil.copy(manifest["ini_path"], dest_ini)
     manifest["start_time_utc"] = datetime.now(timezone.utc).isoformat()
@@ -166,12 +204,15 @@ def launch(manifest, manifest_path):
     return manifest
 
 
-def collect_after_run(manifest, manifest_path):
+def collect_after_run(manifest, manifest_path, *, strict_isolation=True):
     """Da chiamare DOPO che il Tester ha terminato (verificato esternamente
     dal chiamante, es. via log 'successfully finished'). Copia (non
-    sposta) NEXUS_trades.csv - post InpResetTradesLogOnInit contiene
-    SOLO i trade di QUESTO run - e identifica il certificato per DELTA
-    rispetto allo snapshot pre-run."""
+    sposta) NEXUS_trades.csv - post InpResetTradesLogOnInit / preflight
+    dovrebbe contenere SOLO i trade di QUESTO run - e identifica il
+    certificato per DELTA rispetto allo snapshot pre-run.
+
+    Phase 7.35: if certificate OPENED and CSV closes disagree, status becomes
+    COLLECTED_ISOLATION_FAILED when strict_isolation=True (default)."""
     run_dir = manifest["run_dir"]
     trades_src = os.path.join(COMMON_FILES_DIR, TRADES_CSV_NAME)
     trades_dest = os.path.join(run_dir, f"{manifest['run_id']}.trades.csv")
@@ -202,8 +243,16 @@ def collect_after_run(manifest, manifest_path):
             "ambiguita' non risolta automaticamente, riportata per revisione manuale")
 
     manifest["end_time_utc"] = datetime.now(timezone.utc).isoformat()
-    manifest["status"] = "COLLECTED"
     manifest["reconciliation"] = reconcile(manifest)
+    isol_ok = manifest["reconciliation"].get("isolation_ok")
+    if strict_isolation and isol_ok is False:
+        manifest["status"] = "COLLECTED_ISOLATION_FAILED"
+        manifest.setdefault("warnings", []).append(
+            "isolation_failed: CSV close count != certificate OPENED "
+            "(shared trades log likely contaminated; refuse promotion/analysis as clean)"
+        )
+    else:
+        manifest["status"] = "COLLECTED"
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=True)
     return manifest
@@ -237,7 +286,7 @@ def _detect_text_encoding(path):
     return "utf-8"
 
 
-def _count_trade_closes(trades_csv_path, strategy_name):
+def _iter_trade_rows(trades_csv_path):
     if not trades_csv_path or not os.path.exists(trades_csv_path):
         return None
     import csv
@@ -247,10 +296,49 @@ def _count_trade_closes(trades_csv_path, strategy_name):
     with open(trades_csv_path, encoding=encoding, errors="replace") as f:
         try:
             reader = csv.reader(f)
-            rows = [dict(zip(cols, row)) for row in reader if row]
+            return [dict(zip(cols, row)) for row in reader if row]
         except UnicodeDecodeError:
             return None
-    return sum(1 for r in rows if r.get("strategy") == strategy_name and r.get("action") == "CLOSE")
+
+
+def _count_trade_closes(trades_csv_path, strategy_name, *, period_from=None, period_to=None):
+    """Count CLOSE rows for strategy. Optional period_from/to (YYYY.MM.DD)
+    filters by OPEN time of the paired episode when both OPEN+CLOSE present
+    in order; if only CLOSE rows, filters by CLOSE time. Phase 7.35."""
+    rows = _iter_trade_rows(trades_csv_path)
+    if rows is None:
+        return None
+    if period_from is None and period_to is None:
+        return sum(1 for r in rows if r.get("strategy") == strategy_name and r.get("action") == "CLOSE")
+
+    # Pair OPEN→CLOSE FIFO for strategy; count closes whose OPEN is in window.
+    from datetime import datetime as _dt
+    start = _dt.strptime(period_from, "%Y.%m.%d") if period_from else None
+    end = _dt.strptime(period_to, "%Y.%m.%d") if period_to else None
+    # inclusive end-of-day
+    if end is not None:
+        end = end.replace(hour=23, minute=59, second=59)
+
+    opens = []
+    n = 0
+    for r in rows:
+        if r.get("strategy") != strategy_name:
+            continue
+        t_raw = (r.get("time") or "").lstrip("\ufeff")
+        try:
+            t = _dt.strptime(t_raw, "%Y.%m.%d %H:%M:%S")
+        except ValueError:
+            continue
+        if r.get("action") == "OPEN":
+            opens.append(t)
+        elif r.get("action") == "CLOSE":
+            ot = opens.pop(0) if opens else t
+            if start is not None and ot < start:
+                continue
+            if end is not None and ot > end:
+                continue
+            n += 1
+    return n
 
 
 def _parse_certificate_opened(cert_path):
@@ -264,19 +352,39 @@ def _parse_certificate_opened(cert_path):
 
 
 def reconcile(manifest):
-    """Riconcilia trade CSV e certificato usando lo STESSO run_id -
-    nessun artifact di sessioni precedenti deve poter essere interpretato
-    come parte di questo run (garantito dal reset + dalla identificazione
-    per delta, non per nome fisso)."""
-    n_closes = _count_trade_closes(manifest.get("trades_csv_dest"), manifest["strategy_identity"])
+    """Riconcilia trade CSV e certificato. Phase 7.35 also reports
+    window-filtered CSV closes (period_from/to) and isolation_ok.
+
+    isolation_ok is True only when raw CSV closes == certificate OPENED.
+    Window-filtered equality alone is NOT enough for isolation_ok (that
+    pattern is what hid FileMove-5020 contamination in Phase 7.34)."""
+    n_closes = _count_trade_closes(
+        manifest.get("trades_csv_dest"), manifest["strategy_identity"]
+    )
+    n_closes_window = _count_trade_closes(
+        manifest.get("trades_csv_dest"),
+        manifest["strategy_identity"],
+        period_from=manifest.get("period_from"),
+        period_to=manifest.get("period_to"),
+    )
     n_opened_cert = _parse_certificate_opened(manifest.get("certificate_dest"))
     match = None
     if n_closes is not None and n_opened_cert is not None:
         match = (n_closes == n_opened_cert)
+    window_match = None
+    if n_closes_window is not None and n_opened_cert is not None:
+        window_match = (n_closes_window == n_opened_cert)
+    isolation_ok = match  # strict: raw CSV must equal certificate
     return {
         "n_trade_closes_in_csv": n_closes,
+        "n_trade_closes_in_csv_in_window": n_closes_window,
         "n_opened_per_certificate": n_opened_cert,
         "match": match,
-        "note": "None per un campo significa che il dato non era disponibile (run interrotto, "
-               "certificato mancante/ambiguo, o CSV assente) - MAI trattato come 0 implicito.",
+        "window_match": window_match,
+        "isolation_ok": isolation_ok,
+        "note": (
+            "isolation_ok requires raw CSV closes == certificate OPENED. "
+            "window_match alone is insufficient (Phase 7.34 contamination lesson). "
+            "None means data unavailable — never treated as implicit 0."
+        ),
     }

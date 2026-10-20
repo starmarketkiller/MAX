@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-10-20T09:30:00+00:00",
+  "generation_script": "phase7_35_isolation_measure_hardening (manual)",
+  "payload": {
+    "phase": "7.35",
+    "status": "MEASURE_HARDENING_APPLIED",
+    "headline": "Stop strategy confirmatory churn; harden isolation measurement after Phase 7.34 FileMove err=5020 contamination and underpowered windows.",
+    "changes": [
+      "MQL5 NXS_ResetTradesLogIfRequested: FILE_REWRITE + FileCopy/FileDelete fallback",
+      "Python harness preflight_archive_trades_csv before Tester launch",
+      "reconcile.isolation_ok requires raw CSV closes == certificate OPENED; collect → COLLECTED_ISOLATION_FAILED if not",
+      "scripts/confirmatory_density_gate.py refuses windows with expected n_B < min_n"
+    ],
+    "worked_example_refuse": {
+      "trades_per_month": 2.5,
+      "months": 3.5,
+      "buy_share": 0.4,
+      "min_n": 30,
+      "expected_n_B": 3.5,
+      "verdict": "REFUSE"
+    },
+    "promotable": false,
+    "not_an_edge_claim": true,
+    "next": "Recompile EA on research PC before next isolation run. No new strategy confirmatory until density gate ALLOW and isolation_ok."
+  }
+}

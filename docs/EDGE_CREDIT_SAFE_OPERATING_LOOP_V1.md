@@ -81,11 +81,13 @@ Remediation ≠ edge. FVG_CONT stays `CANDIDATE`. Production remains **NO-GO**.
 7. **Done in Phase 7.33 habitat exploratory** — `FVG-CONT-HABITAT-RM-001`
    frozen; exploratory **MIXED / NOT_PROMOTABLE** (BUY n=64, proxy CI crosses 0).
    Artifacts: `server/research_scripts/phase7/phase7_33_fvg_cont_habitat/`.
-8. **Phase 7.34 confirmatory package ready** — same prereg; window
-   **2026.07.01–2026.10.19** GOLD H4 selector=8
-   (`PREPARED_AWAITING_WINDOWS_MT5`). Runbook:
-   `phase7_34_fvg_cont_confirmatory/RUNBOOK_CONFIRMATORY_WINDOWS.md`.
-   Ladder: `docs/TRADING_RESEARCH_LADDER_V1.md`.
+8. **Done in Phase 7.34 confirmatory** — `INSUFFICIENT_EVIDENCE` (A=8, B=3).
+   Lesson: FileMove err=5020 left diagnostic rows in CSV; window filter hid it.
+9. **Phase 7.35 measure hardening (active)** — MQL5 reset fallback,
+   harness preflight archive before launch, `isolation_ok` strict recon,
+   `scripts/confirmatory_density_gate.py`. **No new strategy confirmatory**
+   until density gate ALLOW + clean isolation. Ladder:
+   `docs/TRADING_RESEARCH_LADDER_V1.md`.
 
 Stop condition for each task: a Decision Card with GO / INVESTIGATE / STOP.
 No card → no next premium session.
