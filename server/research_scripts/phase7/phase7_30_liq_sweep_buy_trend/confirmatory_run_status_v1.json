@@ -1,0 +1,8 @@
+{
+  "status": "ANALYZED",
+  "decision": "INSUFFICIENT_EVIDENCE",
+  "run_id": "LIQ_SWEEP_2026.09.28_2026.10.19_4210f3444108de84_20261019T210920Z_c8f867f7",
+  "hypothesis_id": "LIQ-SWEEP-BUY-TREND-RM-001",
+  "result_path": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_30_liq_sweep_buy_trend\\confirmatory_forward_result_v1.json",
+  "updated_at_utc": "2026-10-19T21:19:38.132968+00:00"
+}

@@ -1,0 +1,28 @@
+{
+  "generated_at": "2026-10-19T19:16:31.368665+00:00",
+  "generation_script": "phase7_28_defect_impact_batch/sim_bar_updn_abc.py",
+  "canonical_sha256": "4a6c0373bd628ca7070aeab847bb6c04245cae48fa03ee3ac4f7523bae89c97e",
+  "payload": {
+    "phase": "7.28",
+    "strategy": "BAR_UPDN",
+    "defect_class": "COOLDOWN_STATE_CONTAMINATION",
+    "profile_tf": "M15",
+    "data": {
+      "source": "server/research_scripts/nxs_m15_gold_29-08.csv",
+      "n_m15_bars": 20163,
+      "range": [
+        "2025-10-15T01:00:00+00:00",
+        "2026-08-24T23:45:00+00:00"
+      ],
+      "higher_tf": "resampled from same M15 feed (same-feed A/B)"
+    },
+    "stream_A_contaminated_signals_on_profile_pass": 2777,
+    "stream_B_tf_scoped_signals": 3706,
+    "overlap_events": 1590,
+    "only_A": 1187,
+    "only_B": 2116,
+    "suppression_vs_scoped": 0.2507,
+    "decision": "DEFECT_CONFIRMED_MATERIAL_IMPACT",
+    "method_note": "Python replica of NXS_Strat_BarUpDn cooldown+pattern. Pass order D1\u2192H4\u2192H1\u2192M30\u2192M15 mirrors EA multi-TF collector. Not MT5 event-level parity; mechanism impact measure."
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "generated_at": "2026-10-19T21:31:35.551331+00:00",
+  "generation_script": "phase7_31_fvg_cont_identity/build_fvg_cont_identity_map.py",
+  "canonical_sha256": "796f670d8c4bf80650c38f7c76aa2c1f8853cba39b6fd5aad2774da96aad0f9a",
+  "payload": {
+    "phase": "7.31",
+    "hypothesis_id": "FVG-CONT-IDENTITY-ISOLATION-001",
+    "prereg_commit_sha": "f600fa4c0d45bf889e7d065ef80497ae932a6c82",
+    "canonical_strategy_identity": "FVG_CONT",
+    "mql5_canonical": {
+      "function": "NXS_Strat_FVG()",
+      "file": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+      "approx_lines": "1498-1522",
+      "enum": "STRAT_FVG_CONT",
+      "stratName": "FVG_CONT",
+      "selector": 8,
+      "enable_input": "InpStrat_FVG_CONT",
+      "profile_tf": "PERIOD_H4 (NXS_Profile_TF)",
+      "profile_sltp": "slMult=1.5, tpMult=6.0, htf=true, beR=InpFvgContBeR",
+      "persistent_state": "NONE \u2014 function is STATELESS; uses iHigh/iLow/iClose + g_structH1.trend read-only",
+      "tf_guard": "NONE inside function. Collector still filters by NXS_Profile_TF at NXS_CollectAllSignals. No own lastFireTime / zone registry \u2192 CROSS_TIMEFRAME_STATE_CONTAMINATION class does NOT apply to canonical path.",
+      "trigger": "3-candle FVG (low[1]>high[3] bull / high[1]<low[3] bear) AND external H1 structure trend g_structH1.trend aligned; optional InpUseSMCReactionGate via NXS_SMCReactionOK",
+      "exit": "NXS_DefaultSLTP(s) \u2014 ATR multiples from profile (NOT dynamic liq target)"
+    },
+    "variants_sharing_enum_STRAT_FVG_CONT": [
+      {
+        "stratName": "IFVG",
+        "function": "NXS_Strat_IFVG_Reversal \u2192 #define \u2192 NXR_Strat_IFVG_Reversal",
+        "file": "NXS_Strategies_SMC.mqh / NXS_ReusePerformancePack.mqh",
+        "selector": 18,
+        "enable_input": "InpStrat_IFVG (default false)",
+        "dependency_class": "SEPARATE_FUNCTION",
+        "calls_canonical_FVG": false,
+        "own_persistent_state": false,
+        "notes": "Reversal / MSS logic; not a wrapper of NXS_Strat_FVG."
+      },
+      {
+        "stratName": "FVG_MIT",
+        "function": "NXS_Strat_FVG_Mitigation \u2192 #define \u2192 NXR_Strat_FVG_Mitigation",
+        "file": "NXS_Strategies_SMC.mqh / NXS_ReusePerformancePack.mqh",
+        "selector": 19,
+        "enable_input": "InpStrat_FVG_Mit",
+        "dependency_class": "SEPARATE_FUNCTION",
+        "calls_canonical_FVG": false,
+        "own_persistent_state": false,
+        "notes": "Mature-zone retest+reject; distinct from continuation gap."
+      },
+      {
+        "stratName": "FVG_MIT_WINDOW",
+        "function": "NXS_Strat_FVG_Mitigation_Window",
+        "file": "NXS_Strategies_SMC.mqh",
+        "selector": 39,
+        "enable_input": "InpStrat_FVG_MIT_WINDOW (default true)",
+        "dependency_class": "SEPARATE_FUNCTION",
+        "calls_canonical_FVG": false,
+        "own_persistent_state": true,
+        "state_symbols": [
+          "g_fvgMitWBull",
+          "g_fvgMitWBear",
+          "g_fvgMitWLastBar",
+          "NXS_FvgMitWindow_Update"
+        ],
+        "ctf_risk": "YES for THIS variant: persistent zone registry updated via NXS_EffTF() without an early if(tf != NXS_Profile_TF(...)) return guard \u2014 same defect class as BREAKOUT_ACC pre-fix. Does NOT infect canonical FVG_CONT path.",
+        "notes": "Profile_Enabled currently false for FVG_MIT_WINDOW in profiles map (14/08 disable) \u2014 still relevant for integrity when re-enabled."
+      }
+    ],
+    "collector_gates": {
+      "file": "MQL5/Experts/NEXUS_EA_v2.mq5",
+      "FVG_CONT": "InpStrat_FVG_CONT && NXS_SelectorAllows(8) \u2192 NXS_Strat_FVG()",
+      "IFVG": "InpStrat_IFVG && NXS_SelectorAllows(18)",
+      "FVG_MIT": "InpStrat_FVG_Mit && NXS_SelectorAllows(19)",
+      "FVG_MIT_WINDOW": "InpStrat_FVG_MIT_WINDOW && NXS_SelectorAllows(39)",
+      "isolation_implication": "InpStrategySelector=8 runs ONLY the canonical gate among these four. Unlike OB_MIT\u2192ORDER_BLOCK nested selector trap (Phase 7.14), variants do not call NXS_Strat_FVG internally."
+    },
+    "python_parity_flags": {
+      "dispatcher": "server/backtest.py STRATEGY_DISPATCH['FVG_CONT']=sig_fvg_cont_ext",
+      "entry_alignment": "PARTIALLY_ALIGNED \u2014 sig_fvg_cont_ext uses 3-candle gap + choch_ext trend; MQL5 uses g_structH1.trend + optional SMC reaction gate. Not byte-identical.",
+      "exit_mismatch": {
+        "severity": "HIGH",
+        "finding": "STRATEGY_TARGETS_OPTIN maps FVG_CONT \u2192 _liq_sweep_target (dynamic opposite liquidity) while MQL5 uses NXS_DefaultSLTP ATR fixed multiples. Same class of invalidation as LIQ_SWEEP Phase 7.23 Python\u2194MT5 exit split.",
+        "forbid_python_pf_as_evidence": true
+      }
+    },
+    "slreclaim_note": "SLRECLAIM_ACCOUNT_PROTECTION_BYPASS is REMEDIATED (registry 2026-10-19). Remediation \u2260 edge; not re-opened in this audit.",
+    "mismatches_verified_this_phase": [
+      {
+        "area": "ENUM_SHARING",
+        "finding": "IFVG/FVG_MIT/FVG_MIT_WINDOW set s.strat=STRAT_FVG_CONT but use distinct stratName and separate selectors/functions.",
+        "severity": "MEDIUM for attribution if consumer keys on enum only; LOW if consumer keys on stratName (NEXUS_trades.csv uses strategy name string)."
+      },
+      {
+        "area": "EXIT_PYTHON_VS_MQL5",
+        "finding": "Python opt-in target \u2260 MQL5 DefaultSLTP.",
+        "severity": "HIGH \u2014 blocks promotion from Python/sweep37 PF."
+      },
+      {
+        "area": "CTF_STATE",
+        "finding": "Canonical path clean; FVG_MIT_WINDOW variant has persistent TF-unsafe state.",
+        "severity": "HIGH for FVG_MIT_WINDOW if re-enabled; NONE for selector-8 FVG_CONT."
+      }
+    ]
+  }
+}

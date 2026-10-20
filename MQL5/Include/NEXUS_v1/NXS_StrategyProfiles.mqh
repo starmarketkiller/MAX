@@ -278,6 +278,9 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "SAR")               return PERIOD_H4;
    if(name == "SH_BMS_RTO")        return PERIOD_D1;
    if(name == "SH_BMS_RTO_V2")     return PERIOD_H1;
+   // Phase 7.28: was falling through to PERIOD_CURRENT (EffTF), so a TF guard
+   // could not be meaningful. Audit Phase 7.10 profile_tf = M15 (session KZ).
+   if(name == "SILVER_BULLET")     return PERIOD_M15;
    if(name == "SMS_BMS_RTO")       return PERIOD_D1;
    if(name == "STRUCT_REACT")      return PERIOD_H4;   // 25/08 - vedi NXS_Profile_Get sopra, H1 era in perdita
    if(name == "TSI")               return PERIOD_D1;

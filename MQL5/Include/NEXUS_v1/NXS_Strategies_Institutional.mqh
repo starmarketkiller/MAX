@@ -648,6 +648,8 @@ SNXSSignal NXS_Strat_RangeFade(){
    if(!InpUseStrat_RangeFade) return s;
    double atr = _inst_atr();
    ENUM_TIMEFRAMES tf = NXS_EffTF();
+   // Phase 7.28: persistent range state contamination (Phase 7.10).
+   if(tf != NXS_Profile_TF("RANGE_FADE")) return s;
    datetime curBar0 = iTime(g_sym, tf, 0);
 
    if(g_rangeFadeState.lastBarTime != curBar0){

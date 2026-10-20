@@ -1,0 +1,28 @@
+{
+  "generated_at": "2026-10-19T19:16:38.886184+00:00",
+  "generation_script": "phase7_28_defect_impact_batch/sim_bb_squeeze_abc.py",
+  "canonical_sha256": "8fd90546aaae82941b7c2b40effa3e6a74f346878e509e8d0a01207f697a5762",
+  "payload": {
+    "phase": "7.28",
+    "strategy": "BB_SQUEEZE",
+    "defect_class": "ACCUMULATOR_STATE_CONTAMINATION",
+    "profile_tf": "D1",
+    "data": {
+      "source": "server/research_scripts/phase7/phase7_9h/raw_data/nxs_d1_gold_phase79h.csv",
+      "n_d1_bars": 1970,
+      "range": [
+        "2019-01-02T00:00:00+00:00",
+        "2026-08-19T00:00:00+00:00"
+      ],
+      "higher_tf_note": "H1/H4 synthetically densified from D1 OHLC for mechanism stress only"
+    },
+    "stream_A_contaminated_signals_on_profile_pass": 23,
+    "stream_B_tf_scoped_signals": 23,
+    "overlap_events": 23,
+    "only_A": 0,
+    "only_B": 0,
+    "suppression_vs_scoped": 0.0,
+    "decision": "DEFECT_CONFIRMED_LOW_IMPACT",
+    "method_note": "Python replica of squeezeBars/consumed + BB percentile gate. H1/H4 legs are synthetic densifications \u2014 sufficient to show whether foreign-TF mutations corrupt the D1 accumulator; not MT5 parity."
+  }
+}

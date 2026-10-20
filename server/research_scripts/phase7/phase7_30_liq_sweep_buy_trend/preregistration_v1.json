@@ -1,0 +1,98 @@
+{
+  "generated_at": "2026-10-19T19:58:44.607787+00:00",
+  "generation_script": "phase7_30_liq_sweep_buy_trend/write_preregistration.py (inline)",
+  "canonical_sha256": "d21a5201d31a909cff1ec4535ebe8585a3932ea28ab28c94da6a8aea0e79b87b",
+  "payload": {
+    "schema_version": 1,
+    "hypothesis_id": "LIQ-SWEEP-BUY-TREND-RM-001",
+    "title": "LIQ_SWEEP: BUY+D1-trend filter vs bidirectional recipe vs regime-matched controls",
+    "phase": "7.30",
+    "declared_at": "2026-10-19",
+    "frozen_before_any_arm_result": true,
+    "parent_decision": {
+      "phase": "7.29",
+      "decision": "FAILURE_MODE_IDENTIFIED_REGIME_CONDITIONAL",
+      "artifact": "server/research_scripts/phase7/phase7_29_liq_sweep_oos_failure/liq_sweep_oos_failure_decision_card_v1.json"
+    },
+    "question": "After Phase 7.29 showed IS expectancy was ~93% BUY inside a gold bull and OOS failed via SELL mix-shift, does a BUY-only LIQ_SWEEP gated by D1 close > SMA200 beat regime-matched random long entries in the same bull cells, after costs, or is the apparent edge pure habitat?",
+    "arms": {
+      "A_BASELINE_BIDIRECTIONAL": {
+        "definition": "Current LIQ_SWEEP recipe as executed in Phase 7.23 isolation harness (BUY+SELL).",
+        "role": "reference_only"
+      },
+      "B_BUY_TREND_FILTER": {
+        "definition": "Same LIQ_SWEEP entries restricted to side=BUY AND causal D1 trend filter: at signal bar, prior D1 close > SMA(200) of D1 closes ending at that prior close (no future bars).",
+        "role": "primary_candidate"
+      },
+      "C_REGIME_MATCHED_RANDOM_LONG": {
+        "definition": "For each retained B event, one random D1 entry in the same regime cell (trend bucket x ATR tercile, trailing/causal) that is NOT the event bar; same forward outcome construction as B.",
+        "role": "primary_benchmark"
+      }
+    },
+    "primary_comparison": "B_mean_R_net - C_mean_R_net (paired where possible)",
+    "primary_outcome": "mean net R per closed trade (recipe SL/TP as in harness; costs: Dukascopy/spread stress profiles already used in Phase 7.25 when available, else report gross R and note)",
+    "secondary_outcomes": [
+      "win_rate",
+      "profit_factor",
+      "n_trades",
+      "BUY share",
+      "block bootstrap CI95 on mean R (month blocks)",
+      "cost stress delta if profiles available"
+    ],
+    "decision_rule_frozen": {
+      "INSUFFICIENT_EVIDENCE": "n_B < 30 OR power gate NOT_ASSESSABLE/not POWER_READY for 0.3R target",
+      "HABITAT_ONLY": "n_B>=30 AND (mean_R_B - mean_R_C) CI95 includes <=0 after costs",
+      "SIGNAL_SUPPORTED_AS_HYPOTHESIS": "n_B>=30 AND (mean_R_B - mean_R_C) CI95 lower bound > 0 after base costs AND survives one declared cost-stress profile; still NOT live-ready",
+      "MIXED": "any other non-insufficient pattern; no promotion"
+    },
+    "allowed_decisions": [
+      "INSUFFICIENT_EVIDENCE",
+      "HABITAT_ONLY",
+      "SIGNAL_SUPPORTED_AS_HYPOTHESIS",
+      "MIXED"
+    ],
+    "params": {
+      "symbol": "XAUUSD",
+      "strategy_id": "LIQ_SWEEP",
+      "sma_period": 200,
+      "sma_timeframe": "D1",
+      "trend_filter": "prior_d1_close > sma200",
+      "side_filter_B": "BUY_ONLY",
+      "regime_match_dimensions": [
+        "trend_bucket",
+        "atr_tercile"
+      ],
+      "random_seed": 73001,
+      "min_n_for_decision": 30,
+      "target_edge_R": 0.3,
+      "bootstrap": {
+        "method": "month_block",
+        "n_resamples": 5000,
+        "ci": 0.95
+      }
+    },
+    "data_policy": {
+      "exploratory_replay_allowed_on": [
+        "phase7_23 LIQ_SWEEP diagnostic trades (2023-10-02..2026-06-30) \u2014 EXPOSED / DISCOVERY_REUSE",
+        "phase7_9h D1 gold CSV for SMA200 / regime labels \u2014 EXPOSED"
+      ],
+      "exploratory_replay_status": "NOT_PROMOTABLE \u2014 any result on exposed windows is DISCOVERY_REUSE / CONTAMINATED for confirmation",
+      "confirmatory_requires": "New forward MT5 isolation run after 2026-09-27 OR a genuinely untouched dataset per phase7_26 exposure registry; prereg commit must precede that run (engine/preregistration_provenance_guard.py).",
+      "forbidden": [
+        "Reading sealed holdouts for this hypothesis",
+        "Optimizing SL/TP/SMA period after seeing arm results",
+        "Changing random_seed after seeing C",
+        "Promoting from exploratory replay alone",
+        "Live / prop trading"
+      ]
+    },
+    "power_note": "Edge Detection Capability V1: LIQ-like \u03c3~1.44R needs ~180 trades for 0.3R at 80% power. IS BUY n\u224839 is EXPLORATORY_ONLY for confirmatory claims. Power Gate V1 currently returns NOT_ASSESSABLE for production plans (level calibration not preregistered) \u2014 this experiment does not claim POWER_READY.",
+    "explicit_non_goals": [
+      "No MQL5 live flag changes",
+      "No new strategy family",
+      "No Contextual Edge MACD Phase 1 in this hypothesis_id"
+    ],
+    "params_sha256": "1ce33aa6a81c48b625a6115614aaa1e3011f540f672bf00f904fdb14471acddc",
+    "protocol_sha256": "a3b72c42311690d118845bc3562b5c1840ef99d066cd691f74096805d1168c6a"
+  }
+}

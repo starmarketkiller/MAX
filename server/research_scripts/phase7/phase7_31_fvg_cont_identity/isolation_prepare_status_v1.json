@@ -1,0 +1,13 @@
+{
+  "status": "PREPARED_PACKAGE_AWAITING_MT5_DIAGNOSTIC_PREREG",
+  "run_id": "FVG_CONT_2023.10.02_2026.06.30_bf77dd9a7723d64b_20261019T213135Z_1c08ba2d",
+  "ini_path": "/workspace/server/research_scripts/phase7/phase7_31_fvg_cont_identity/runs/fvg_cont_isolation_diagnostic/FVG_CONT_2023.10.02_2026.06.30_bf77dd9a7723d64b_20261019T213135Z_1c08ba2d.ini",
+  "manifest_path": "/workspace/server/research_scripts/phase7/phase7_31_fvg_cont_identity/runs/fvg_cont_isolation_diagnostic/FVG_CONT_2023.10.02_2026.06.30_bf77dd9a7723d64b_20261019T213135Z_1c08ba2d.manifest.json",
+  "selector": 8,
+  "period": [
+    "2023.10.02",
+    "2026.06.30"
+  ],
+  "warning": "Launching Tester now without a new economic/diagnostic prereg commit is allowed for smoke only; results must be labeled NON_PROMOTABLE / UNPREREGISTERED until that prereg exists.",
+  "updated_at_utc": "2026-10-19T21:31:35.607002+00:00"
+}

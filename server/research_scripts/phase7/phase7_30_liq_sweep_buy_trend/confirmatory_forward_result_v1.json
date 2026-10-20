@@ -1,0 +1,87 @@
+{
+  "generated_at": "2026-10-19T21:19:38.130991+00:00",
+  "generation_script": "phase7_30_liq_sweep_buy_trend/analyze_confirmatory_forward.py",
+  "canonical_sha256": "312715d265b228b75c6b808eec86e569d44861e426032c6d0812a764152d5146",
+  "payload": {
+    "status": "ANALYZED",
+    "phase": "7.30",
+    "hypothesis_id": "LIQ-SWEEP-BUY-TREND-RM-001",
+    "prereg_commit_sha": "eb8e78c36bd21a1178a4a78b01a38f5a0d79a232",
+    "params_sha256": "1ce33aa6a81c48b625a6115614aaa1e3011f540f672bf00f904fdb14471acddc",
+    "run_mode": "CONFIRMATORY_FORWARD",
+    "promotable": false,
+    "live_ready": false,
+    "run_id": "LIQ_SWEEP_2026.09.28_2026.10.19_4210f3444108de84_20261019T210920Z_c8f867f7",
+    "window": [
+      "2026.09.28",
+      "2026.10.19"
+    ],
+    "d1_csv": "server\\research_scripts\\phase7\\phase7_30_liq_sweep_buy_trend\\runs\\liq_sweep_confirmatory_forward\\nxs_d1_gold_refresh_20261019.csv",
+    "d1_last_bar": "2026-10-19T00:00:00",
+    "d1_covers_window": true,
+    "arm_A_baseline_recipe_R": {
+      "n": 0,
+      "mean_R": null,
+      "sum_R": 0.0,
+      "win_rate": null
+    },
+    "arm_B_buy_trend_recipe_R": {
+      "n": 0,
+      "mean_R": null,
+      "sum_R": 0.0,
+      "win_rate": null
+    },
+    "arm_B_month_block_ci95_recipe_R": null,
+    "arm_A_buy_share": null,
+    "arm_B_n_filtered_from_A": {
+      "A": 0,
+      "B": 0
+    },
+    "arm_C_proxy": {
+      "outcome": "10d_forward_return_over_ATR14 \u2014 NOT recipe R; habitat control only",
+      "B_proxy": {
+        "n": 0,
+        "mean_R": null,
+        "sum_R": 0.0,
+        "win_rate": null
+      },
+      "C_proxy": {
+        "n": 0,
+        "mean_R": null,
+        "sum_R": 0.0,
+        "win_rate": null
+      },
+      "paired_delta_B_minus_C": {
+        "n": 0,
+        "mean_R": null,
+        "sum_R": 0.0,
+        "win_rate": null
+      },
+      "paired_delta_iid_bootstrap_ci95": null,
+      "n_paired": 0
+    },
+    "decision": "INSUFFICIENT_EVIDENCE",
+    "decision_rule_source": "preregistration_v1.json decision_rule_frozen",
+    "allowed_decisions": [
+      "INSUFFICIENT_EVIDENCE",
+      "HABITAT_ONLY",
+      "SIGNAL_SUPPORTED_AS_HYPOTHESIS",
+      "MIXED"
+    ],
+    "notes": [
+      "Certificate OPENED=0 and NEXUS_trades.csv was not created. The EA writes that file only when a trade is logged, so Arm A/B n=0."
+    ],
+    "reconciliation": {
+      "n_trade_closes_in_csv": null,
+      "n_opened_per_certificate": 0,
+      "match": null,
+      "note": "None per un campo significa che il dato non era disponibile (run interrotto, certificato mancante/ambiguo, o CSV assente) - MAI trattato come 0 implicito."
+    },
+    "power_note": "Edge Detection Capability V1: LIQ-like \u03c3~1.44R needs ~180 trades for 0.3R at 80% power. IS BUY n\u224839 is EXPLORATORY_ONLY for confirmatory claims. Power Gate V1 currently returns NOT_ASSESSABLE for production plans (level calibration not preregistered) \u2014 this experiment does not claim POWER_READY.",
+    "explicit_non_goals": [
+      "No MQL5 live flag changes",
+      "No new strategy family",
+      "No Contextual Edge MACD Phase 1 in this hypothesis_id"
+    ]
+  }
+}

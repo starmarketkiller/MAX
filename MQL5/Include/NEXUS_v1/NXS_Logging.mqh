@@ -16,21 +16,43 @@
 // NXS_LogTradeCSV. Se InpResetTradesLogOnInit e' true, archivia il file
 // corrente (rinominandolo con un timestamp) cosi' la prossima scrittura di
 // NXS_LogTradeCSV lo ricrea vuoto (isNew=true, header riscritto). Non
-// cancella mai nulla: se il rename fallisce (es. file gia' aperto altrove),
-// lascia il file esistente com'e' e continua ad accumulare, senza bloccare
-// l'EA.
+// cancella mai il contenuto senza archivio: se entrambi i tentativi
+// falliscono, lascia il file esistente e continua ad accumulare (senza
+// bloccare l'EA), ma stampa un errore esplicito.
+//
+// 20/10/2026 - Phase 7.35: FileMove senza FILE_REWRITE falliva su alcuni
+// Tester Windows con err=5020 (destinazione/path), lasciando il CSV
+// diagnostico precedente attaccato al run successivo. Ora: nome archivio
+// univoco + FILE_REWRITE + fallback FileCopy+FileDelete.
 void NXS_ResetTradesLogIfRequested(){
    if(!InpResetTradesLogOnInit) return;
    if(!FileIsExist("NEXUS_trades.csv", FILE_COMMON)) return;
-   string archiveName = StringFormat("NEXUS_trades_archive_%s.csv",
-                        TimeToString(TimeLocal(), TIME_DATE|TIME_SECONDS));
+   string archiveName = "NEXUS_trades_archive_"
+                        + TimeToString(TimeLocal(), TIME_DATE|TIME_SECONDS)
+                        + "_" + IntegerToString((int)GetTickCount()) + ".csv";
    StringReplace(archiveName, ".", "-");
    StringReplace(archiveName, ":", "-");
    StringReplace(archiveName, " ", "_");
-   if(FileMove("NEXUS_trades.csv", FILE_COMMON, archiveName, FILE_COMMON))
+   // Prefer atomic rename with rewrite; FILE_COMMON on both ends.
+   ResetLastError();
+   if(FileMove("NEXUS_trades.csv", FILE_COMMON, archiveName, FILE_COMMON|FILE_REWRITE)){
       PrintFormat("[NEXUS] NEXUS_trades.csv archiviato come %s, log ripartito vuoto.", archiveName);
-   else
-      PrintFormat("[NEXUS] Reset log richiesto ma FileMove fallito (err=%d) — continuo ad accumulare sul file esistente.", GetLastError());
+      return;
+   }
+   int moveErr = GetLastError();
+   ResetLastError();
+   if(FileCopy("NEXUS_trades.csv", FILE_COMMON, archiveName, FILE_COMMON|FILE_REWRITE)){
+      if(FileDelete("NEXUS_trades.csv", FILE_COMMON)){
+         PrintFormat("[NEXUS] NEXUS_trades.csv copiato+cancellato come %s (FileMove err=%d), log ripartito vuoto.",
+                     archiveName, moveErr);
+         return;
+      }
+      PrintFormat("[NEXUS] Reset log: FileCopy ok ma FileDelete fallito (err=%d) dopo FileMove err=%d — accumulo possibile.",
+                  GetLastError(), moveErr);
+      return;
+   }
+   PrintFormat("[NEXUS] Reset log fallito: FileMove err=%d FileCopy err=%d — continuo ad accumulare sul file esistente.",
+               moveErr, GetLastError());
 }
 
 void NXS_LogTradeCSV(string action, ulong ticket, string strat, double price,

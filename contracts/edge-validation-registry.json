@@ -199,19 +199,21 @@
       "known_defects": [
         {
           "defect_id": "COOLDOWN_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard + offline A/B MATERIAL (3706 scoped vs 2777 contaminated). Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "BB_SQUEEZE",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "UNVALIDATED",
       "component_value_status": "UNKNOWN",
       "role_in_system": [],
@@ -228,14 +230,17 @@
       "known_defects": [
         {
           "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop).",
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard + offline A/B LOW_IMPACT on signal count. Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "BJORGUM",
@@ -574,9 +579,10 @@
         }
       ],
       "needs_reimplementation_review": true,
-      "edge_validation_date": "2026-10-06",
+      "edge_validation_date": "2026-10-19",
       "edge_validation_source": [
-        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+        "docs/EDGE_CREDIT_SAFE_OPERATING_LOOP_V1.md"
       ],
       "edge_validation_sha": [
         "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
@@ -585,15 +591,17 @@
       "known_defects": [
         {
           "defect_id": "SLRECLAIM_ACCOUNT_PROTECTION_BYPASS",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "UNKNOWN_REMEDIATION"
+          "source": "git:50e9ec7,1ac0437,a225aa3 + NXS_SLReclaim.mqh CommonExposurePreflight",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "UNKNOWN_REMEDIATION",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
+      "latest_relevant_note_date": "2026-10-19",
       "validation_notes": [
-        "Research candidate; SLReclaim remediation is not confirmed."
+        "SLReclaim account-protection bypass remediated in code: 50e9ec7 (CheckProtections), 1ac0437 (CommonExposurePreflight + ProfitReclaim twin), a225aa3 (identity/attribution).",
+        "Code verified 2026-10-19: NXS_SLReclaim.mqh still calls NXS_CheckProtections then NXS_CommonExposurePreflight before SafeBuy/SafeSell.",
+        "Standalone edge remains CANDIDATE — remediation closes the defect provenance gap only; does not promote edge status."
       ]
     },
     {
@@ -950,7 +958,9 @@
       "needs_reimplementation_review": false,
       "edge_validation_date": "2026-10-06",
       "edge_validation_source": [
-        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md"
+        "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
+        "docs/EDGE_CREDIT_SAFE_OPERATING_LOOP_V1.md",
+        "server/research_scripts/phase7/phase7_29_liq_sweep_oos_failure/liq_sweep_oos_failure_decision_card_v1.json"
       ],
       "edge_validation_sha": [
         "458c09b7fba852322966a490daea87ace6ab20361b5815cdf8cb9902b957e6b1"
@@ -959,9 +969,11 @@
       "known_defects": [],
       "defect_status": "NONE_KNOWN",
       "forward_validation_status": "NEGATIVE_INSUFFICIENT",
-      "latest_relevant_note_date": "2026-10-06",
+      "latest_relevant_note_date": "2026-10-19",
       "validation_notes": [
-        "OOS n=6 is negative but insufficient for final refutation."
+        "OOS n=6 is negative but insufficient for final refutation.",
+        "2026-10-19 Phase 7.29: OOS failure mode = HABITAT_REGIME + SETUP_MIX_SHIFT (IS 93% BUY in +119% gold bull; OOS 50% SELL all stopped; execution bug rejected). Status stays CANDIDATE / REGIME_CONDITIONAL — not FAILED (n=6), not SUPPORTED. See phase7_29_liq_sweep_oos_failure/liq_sweep_oos_failure_decision_card_v1.json",
+        "2026-10-19 Phase 7.30: prereg LIQ-SWEEP-BUY-TREND-RM-001 committed (eb8e78c). Exploratory replay on EXPOSED IS: B n=39 meanR=0.46; proxy B−C CI95>0 → label SIGNAL_SUPPORTED_AS_HYPOTHESIS for bookkeeping ONLY — evidence_grade=DISCOVERY_REUSE, promotable=false. Confirmatory requires forward isolation run after 2026-09-27."
       ]
     },
     {
@@ -1454,14 +1466,16 @@
       "known_defects": [
         {
           "defect_id": "COOLDOWN_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard (cooldown top-level; same class as BREAKOUT_ACC). Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "PMAX",
@@ -1483,14 +1497,16 @@
       "known_defects": [
         {
           "defect_id": "RECURSIVE_VALUE_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard (RECURSIVE_VALUE class; structural sibling of TSI). Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "PO3",
@@ -1537,14 +1553,16 @@
       "known_defects": [
         {
           "defect_id": "STATE_MACHINE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard before persistent range state mutation. Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "RSI_DIV",
@@ -1794,7 +1812,7 @@
     {
       "strategy_id": "SH_BMS_RTO",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "UNVALIDATED",
       "component_value_status": "UNKNOWN",
       "role_in_system": [],
@@ -1811,14 +1829,17 @@
       "known_defects": [
         {
           "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop).",
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard (STATE_MACHINE class; same pattern as ORDER_BLOCK). Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "SH_BMS_RTO_V2",
@@ -1840,19 +1861,21 @@
       "known_defects": [
         {
           "defect_id": "STATE_MACHINE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 Phase 7.28: Phase 7.28 TF guard before g_shbmsV2LastBar mutation. Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "SILVER_BULLET",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "UNVALIDATED",
       "component_value_status": "UNKNOWN",
       "role_in_system": [],
@@ -1869,14 +1892,17 @@
       "known_defects": [
         {
           "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop).",
+        "2026-10-19 Phase 7.28: Phase 7.28 Profile_TF=M15 + TF guard (was PERIOD_CURRENT). Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "SILVER_BULLET_V2",
@@ -2027,7 +2053,7 @@
     {
       "strategy_id": "TSI",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "UNVALIDATED",
       "component_value_status": "UNKNOWN",
       "role_in_system": [],
@@ -2044,14 +2070,17 @@
       "known_defects": [
         {
           "defect_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
-          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md",
-          "remediation_state": "DEFECT_BLOCKED"
+          "source": "docs/TRADING_EDGE_STATUS_RECONCILIATION_V1.md | phase7_28_defect_impact_batch",
+          "remediation_state": "REMEDIATED"
         }
       ],
-      "defect_status": "DEFECT_BLOCKED",
+      "defect_status": "REMEDIATED",
       "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-06",
-      "validation_notes": []
+      "latest_relevant_note_date": "2026-10-19",
+      "validation_notes": [
+        "2026-10-19 freeze: default_enabled forced false while DEFECT_BLOCKED (credit-safe edge loop).",
+        "2026-10-19 Phase 7.28: Phase 7.18 guard already in code; registry reconcile Phase 7.28. Remediation≠edge; default_enabled stays false if previously frozen."
+      ]
     },
     {
       "strategy_id": "TSI_EXTREME",

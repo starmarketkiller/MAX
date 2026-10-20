@@ -1,0 +1,8 @@
+{
+  "status": "ANALYZED",
+  "decision": "SAMPLE_READY_FOR_EDGE_PREREG",
+  "run_id": "FVG_CONT_2023.10.02_2026.06.30_8761b3513079eed9_20261019T214337Z_1b2a7150",
+  "hypothesis_id": "FVG-CONT-MT5-ISOLATION-DIAG-001",
+  "result_path": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_32_fvg_cont_isolation_diagnostic\\diagnostic_result_v1.json",
+  "updated_at_utc": "2026-10-19T23:56:21.274362+00:00"
+}

@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-10-20T07:35:52.594914+00:00",
+  "generation_script": "phase7_33_fvg_cont_habitat/run_exploratory_replay.py",
+  "canonical_sha256": "3d40a22bc9ce97d59bab8f49a040b2928da5291cdfb99d41ce9c3776f4a83f43",
+  "payload": {
+    "phase": "7.33",
+    "hypothesis_id": "FVG-CONT-HABITAT-RM-001",
+    "prereg_commit_sha": "17e6b0408bfecd1cf107a6eb88531e5e6beaf5ae",
+    "params_sha256": "9594301552caa1693c8a3ad081a60ec7ee6046e87eca3f9923225332034e8d01",
+    "run_mode": "EXPLORATORY_REPLAY_ON_EXPOSED_DIAGNOSTIC",
+    "promotable": false,
+    "evidence_grade": "DISCOVERY_REUSE",
+    "window": [
+      "2023.10.02",
+      "2026.06.30"
+    ],
+    "d1_csv": "/workspace/server/research_scripts/phase7/phase7_30_liq_sweep_buy_trend/runs/liq_sweep_confirmatory_forward/nxs_d1_gold_refresh_20261019.csv",
+    "arm_A_baseline_recipe_R": {
+      "n": 82,
+      "mean_R": 0.2983,
+      "sum_R": 24.463,
+      "win_rate": 0.2805
+    },
+    "arm_B_buy_recipe_R": {
+      "n": 64,
+      "mean_R": 0.4225,
+      "sum_R": 27.04,
+      "win_rate": 0.3125
+    },
+    "arm_B_month_block_ci95_recipe_R": [
+      -0.098,
+      0.9047
+    ],
+    "arm_A_buy_share": 0.7805,
+    "arm_B_n_filtered_from_A": {
+      "A": 82,
+      "B": 64
+    },
+    "arm_C_proxy": {
+      "outcome": "10d_forward_return_over_ATR14 \u2014 NOT recipe R; exploratory habitat control only",
+      "B_proxy": {
+        "n": 64,
+        "mean_R": 1.0417,
+        "sum_R": 66.6682,
+        "win_rate": 0.5781
+      },
+      "C_proxy": {
+        "n": 64,
+        "mean_R": 0.5385,
+        "sum_R": 34.4656,
+        "win_rate": 0.6094
+      },
+      "paired_delta_B_minus_C": {
+        "n": 64,
+        "mean_R": 0.5032,
+        "sum_R": 32.2026,
+        "win_rate": 0.5156
+      },
+      "paired_delta_iid_bootstrap_ci95": [
+        -0.2557,
+        1.2515
+      ],
+      "n_paired": 64
+    },
+    "decision_exploratory": "MIXED",
+    "decision_meaning": "Frozen labels for bookkeeping only. Data are EXPOSED (looked at in 7.32). Cannot promote FVG_CONT. Confirmatory needs forward MT5 after 2026-06-30.",
+    "power_note": "Diagnostic n_B\u224864 BUY already clears min_n=30 for exploratory bookkeeping. Confirmatory still needs a forward sample sized for density (~LIQ_SWEEP lesson). Power Gate V1 may be NOT_ASSESSABLE \u2014 this experiment does not claim POWER_READY for live.",
+    "next_confirmatory_step": "New forward MT5 isolation after 2026-06-30 under this same prereg (or untouched dataset), prereg commit must precede that run. Do not use short ~3-week windows that can yield n\u22480."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-10-19T23:56:21.273359+00:00",
+  "generation_script": "phase7_32_fvg_cont_isolation_diagnostic/analyze_diagnostic_run.py",
+  "canonical_sha256": "86da8bab7503de906c66a825ace8009813b6e48f9c0a89ff3378821b1ad6698f",
+  "payload": {
+    "status": "ANALYZED",
+    "phase": "7.32",
+    "hypothesis_id": "FVG-CONT-MT5-ISOLATION-DIAG-001",
+    "prereg_commit_sha": "eafd78ce66e50e45d611c92011f59a386c4c7692",
+    "params_sha256": "168cf5081e04a1eba98d6c863611c913a64956feea239532df7b2b82c1034de7",
+    "run_mode": "MT5_ISOLATION_DIAGNOSTIC",
+    "promotable": false,
+    "live_ready": false,
+    "evidence_grade": "DIAGNOSTIC_FIRST_LOOK",
+    "run_id": "FVG_CONT_2023.10.02_2026.06.30_8761b3513079eed9_20261019T214337Z_1b2a7150",
+    "window": [
+      "2023.10.02",
+      "2026.06.30"
+    ],
+    "n_closed_FVG_CONT": 82,
+    "mean_recipe_R": 0.2983,
+    "win_rate": 0.2805,
+    "foreign_strategies_in_csv": [],
+    "reconciliation": {
+      "n_trade_closes_in_csv": 82,
+      "n_opened_per_certificate": 82,
+      "match": true,
+      "note": "None per un campo significa che il dato non era disponibile (run interrotto, certificato mancante/ambiguo, o CSV assente) - MAI trattato come 0 implicito."
+    },
+    "decision": "SAMPLE_READY_FOR_EDGE_PREREG",
+    "decision_rule_source": "preregistration_v1.json decision_rule_frozen",
+    "power_note": "Phase 7.30 showed ~3-week forward can yield n=0. This diagnostic uses ~2.7y H4 to estimate density before any confirmatory prereg. SAMPLE_READY_FOR_EDGE_PREREG \u2260 SIGNAL_SUPPORTED.",
+    "next": "If SAMPLE_READY_FOR_EDGE_PREREG: write a NEW habitat/regime prereg (7.33+). If INSUFFICIENT_SAMPLE: extend window or accept low density \u2014 do not promote."
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-19T21:33:04.674886+00:00",
+  "generation_script": "phase7_32_fvg_cont_isolation_diagnostic/write_preregistration.py",
+  "canonical_sha256": "1093181d569978532fc5bc8f6488ff0a5b1049cf79819cb0dea4320ef4bcbddf",
+  "payload": {
+    "schema_version": 1,
+    "hypothesis_id": "FVG-CONT-MT5-ISOLATION-DIAG-001",
+    "title": "FVG_CONT selector=8 MT5 isolation diagnostic (recipe R, no promotion)",
+    "phase": "7.32",
+    "declared_at": "2026-10-19",
+    "frozen_before_any_arm_result": true,
+    "parent_decision": {
+      "phase": "7.31",
+      "decision": "ISOLATION_READY",
+      "artifact": "server/research_scripts/phase7/phase7_31_fvg_cont_identity/decision_card_v1.json"
+    },
+    "question": "Under ResearchMode isolation (selector=8, GOLD H4, fixed lot 0.01, harness Phase 7.23), what is the closed-trade sample size and mean recipe R of canonical FVG_CONT on 2023.10.02\u20132026.06.30, and is the sample large enough (n>=30) for a later edge prereg vs habitat controls \u2014 without promoting from Python/sweep37 PF?",
+    "arms": {
+      "A_ISOLATION_RECIPE": {
+        "definition": "All closed LIQ-attributed? No \u2014 all closed trades with strategy==FVG_CONT from the isolation run CSV (recipe R from EA log).",
+        "role": "primary_measurement"
+      },
+      "B_DENSITY_CHECK": {
+        "definition": "n_closed and trades/month vs LIQ_SWEEP diagnostic baseline (~42 in same window).",
+        "role": "power_planning"
+      }
+    },
+    "primary_comparison": "descriptive: n and mean_R of arm A; no B\u2212C habitat test in this phase",
+    "primary_outcome": "n_closed_FVG_CONT and mean recipe R (gross from trades CSV)",
+    "secondary_outcomes": [
+      "win_rate",
+      "BUY share",
+      "month_block CI95 on mean R if n>=5 and >=3 months",
+      "certificate OPENED vs GENERATED reconciliation"
+    ],
+    "decision_rule_frozen": {
+      "INSUFFICIENT_SAMPLE": "n_closed < 30",
+      "SAMPLE_READY_FOR_EDGE_PREREG": "n_closed >= 30 AND certificate/trades reconciliation OK \u2014 still NOT an edge claim; unlocks a SEPARATE habitat/regime prereg only",
+      "HARNESS_OR_IDENTITY_PROBLEM": "reconciliation fail, unexpected stratNames other than FVG_CONT in CSV, or OPENED=0 with non-empty unexpected side effects",
+      "MIXED": "any other pattern; no promotion"
+    },
+    "allowed_decisions": [
+      "INSUFFICIENT_SAMPLE",
+      "SAMPLE_READY_FOR_EDGE_PREREG",
+      "HARNESS_OR_IDENTITY_PROBLEM",
+      "MIXED"
+    ],
+    "params": {
+      "symbol": "GOLD",
+      "strategy_id": "FVG_CONT",
+      "selector": 8,
+      "chart_period": "H4",
+      "fixed_lot": 0.01,
+      "leverage": 100,
+      "period_from": "2023.10.02",
+      "period_to": "2026.06.30",
+      "research_mode": true,
+      "harness": "phase7_23/nxs_research_run_harness.py",
+      "min_n_for_sample_ready": 30,
+      "forbid_python_pf": true,
+      "forbid_live_prop": true,
+      "random_seed": 73201
+    },
+    "data_policy": {
+      "window_note": "Same calendar span as LIQ_SWEEP Phase 7.23 diagnostic for density comparison. This window is EXPOSED for LIQ_SWEEP economics; for FVG_CONT it is first dedicated isolation under this hypothesis_id \u2014 label DISCOVERY if any prior FVG_CONT look is found, else DIAGNOSTIC_FIRST_LOOK. Not a sealed holdout.",
+      "forbidden": [
+        "Live / prop",
+        "Promoting FVG_CONT to SUPPORTED from this run",
+        "Using Python/sweep37 PF as primary outcome",
+        "Changing SL/TP/BE after seeing trades",
+        "Reading sealed holdouts",
+        "Short 3-week confirmatory masquerading as diagnostic"
+      ]
+    },
+    "power_note": "Phase 7.30 showed ~3-week forward can yield n=0. This diagnostic uses ~2.7y H4 to estimate density before any confirmatory prereg. SAMPLE_READY_FOR_EDGE_PREREG \u2260 SIGNAL_SUPPORTED.",
+    "explicit_non_goals": [
+      "No habitat-matched random benchmark in 7.32",
+      "No FVG_MIT_WINDOW CTF fix in this phase",
+      "No registry promotion"
+    ],
+    "params_sha256": "168cf5081e04a1eba98d6c863611c913a64956feea239532df7b2b82c1034de7",
+    "protocol_sha256": "5431cd97cc6e7ee4dd6dbe7b6e434e49023eb64983b918abd2014671dc0329a3"
+  }
+}

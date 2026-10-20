@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-10-19T21:31:35.578185+00:00",
+  "generation_script": "phase7_31_fvg_cont_identity/build_decision_card.py",
+  "canonical_sha256": "8d2de16003c22a0aaee79b28a1851ac295d04909d8b91e62942ee6cb595adc12",
+  "payload": {
+    "phase": "7.31",
+    "hypothesis_id": "FVG-CONT-IDENTITY-ISOLATION-001",
+    "status": "IDENTITY_AUDIT_COMPLETE",
+    "decision": "ISOLATION_READY",
+    "promotable": false,
+    "live_ready": false,
+    "not_an_edge_claim": true,
+    "not_ready_for_deploy": true,
+    "headline": "FVG_CONT canonical path is STATELESS, selector=8 isolable, variants are SEPARATE_FUNCTION (not OB_MIT-style wrappers). Python exit uses _liq_sweep_target \u2260 MQL5 DefaultSLTP \u2014 forbid Python PF promotion. FVG_MIT_WINDOW alone carries CTF zone-state risk.",
+    "numbers": {
+      "canonical_selector": 8,
+      "variant_count": 3,
+      "python_exit_mismatch": true,
+      "canonical_ctf_risk": false
+    },
+    "prereg_commit_sha": "f600fa4c0d45bf889e7d065ef80497ae932a6c82",
+    "identity_map_sha_ref": "fvg_cont_identity_map_v1.json",
+    "next": "Commit a NEW MT5 diagnostic prereg (separate hypothesis_id), then run selector=8 GOLD H4 isolation on research PC via launch_fvg_cont_isolation_diagnostic.py. Size the window for trade density / power \u2014 do not reuse the 3-week LIQ_SWEEP confirmatory window that yielded n=0.",
+    "explicit_non_goals_honored": true
+  }
+}

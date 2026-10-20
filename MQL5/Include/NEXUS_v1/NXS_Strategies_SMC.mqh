@@ -510,6 +510,11 @@ SNXSSignal NXS_SHBMS_UpdateSide(int dir, SNXSSHBmsState &st, SNXSSweepExt &sw,
 
 SNXSSignal NXS_Strat_SH_BMS_RTO(SNXSSweepExt &sw){
    ENUM_TIMEFRAMES tf = NXS_EffTF();
+   // Phase 7.28: STATE_MACHINE_CONTAMINATION (Phase 7.10). Guard before any
+   // UpdateSide mutation of g_shbmsBuy/g_shbmsSell.
+   if(tf != NXS_Profile_TF("SH_BMS_RTO")){
+      SNXSSignal empty; ZeroMemory(empty); return empty;
+   }
    double atr = _smc_atr();
    datetime curBar0 = iTime(g_sym, tf, 0);
    SNXSSignal s = NXS_SHBMS_UpdateSide(+1, g_shbmsBuy, sw, tf, atr, curBar0);
@@ -589,7 +594,10 @@ SNXSSignal NXS_SHBMSV2_StepSide(int dir, SNXSSHBmsV2State &st, SNXSSweepExt &sw,
 SNXSSignal NXS_Strat_SH_BMS_RTO_V2(SNXSSweepExt &sw){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "SH_BMS_RTO_V2";
-   datetime tBar1 = iTime(g_sym, NXS_EffTF(), 1);
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   // Phase 7.28: STATE_MACHINE_CONTAMINATION — guard BEFORE g_shbmsV2LastBar write.
+   if(tf != NXS_Profile_TF("SH_BMS_RTO_V2")) return s;
+   datetime tBar1 = iTime(g_sym, tf, 1);
    if(tBar1 == g_shbmsV2LastBar) return s;   // gia' avanzato per questa barra
    g_shbmsV2LastBar = tBar1;
 
@@ -599,10 +607,10 @@ SNXSSignal NXS_Strat_SH_BMS_RTO_V2(SNXSSweepExt &sw){
    // il segnale.
    if(atr <= 0 || g_adx < 20.0 || g_struct.trend == 0) return s;
 
-   double c1 = iClose(g_sym, NXS_EffTF(), 1);
-   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
-   double curLo = iLow (g_sym, NXS_EffTF(), 1);
-   double curHi = iHigh(g_sym, NXS_EffTF(), 1);
+   double c1 = iClose(g_sym, tf, 1);
+   double o1 = iOpen (g_sym, tf, 1);
+   double curLo = iLow (g_sym, tf, 1);
+   double curHi = iHigh(g_sym, tf, 1);
 
    SNXSSignal sBuy = NXS_SHBMSV2_StepSide(+1, g_shbmsV2Buy, sw, c1, o1, curLo, curHi, atr);
    SNXSSignal sSell = NXS_SHBMSV2_StepSide(-1, g_shbmsV2Sell, sw, c1, o1, curLo, curHi, atr);
@@ -757,6 +765,12 @@ SNXSSignal NXS_SB_UpdateSide(int dir, SNXSSBState &st, SNXSSweepExt &sw, bool in
 }
 
 SNXSSignal NXS_Strat_SilverBullet(SNXSSweepExt &sw){
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   // Phase 7.28: STATE_MACHINE_CONTAMINATION (Phase 7.10). Profile TF now
+   // explicit PERIOD_M15 in NXS_Profile_TF (was PERIOD_CURRENT).
+   if(tf != NXS_Profile_TF("SILVER_BULLET")){
+      SNXSSignal empty; ZeroMemory(empty); return empty;
+   }
    // v2.0.5b: GMT-corrected killzones (server time → GMT)
    datetime gmtNow = (datetime)((long)TimeCurrent() - (long)InpServerGMTOffset * 3600);
    MqlDateTime mt; TimeToStruct(gmtNow, mt);
@@ -765,7 +779,6 @@ SNXSSignal NXS_Strat_SilverBullet(SNXSSweepExt &sw){
    bool killzoneNY = (h >= 14 && h < 15);   // NY KZ 14-15 GMT
    bool inKillzone = killzoneLO || killzoneNY;
    string kzTag = killzoneLO ? "SB:LO-KZ" : "SB:NY-KZ";
-   ENUM_TIMEFRAMES tf = NXS_EffTF();
    double atr = _smc_atr();
    datetime curBar0 = iTime(g_sym, tf, 0);
    SNXSSignal s = NXS_SB_UpdateSide(+1, g_sbBuy, sw, inKillzone, kzTag, tf, atr, curBar0);

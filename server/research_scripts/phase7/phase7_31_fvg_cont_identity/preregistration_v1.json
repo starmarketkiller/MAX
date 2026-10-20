@@ -1,0 +1,100 @@
+{
+  "generated_at": "2026-10-19T21:31:07.334949+00:00",
+  "generation_script": "phase7_31_fvg_cont_identity/write_preregistration.py",
+  "canonical_sha256": "14bc0d123811cfa0319471ab298cb4d7163ef2d2f63e57049ebc1da528893173",
+  "payload": {
+    "schema_version": 1,
+    "hypothesis_id": "FVG-CONT-IDENTITY-ISOLATION-001",
+    "title": "FVG_CONT identity / variant contamination map before any economic claim",
+    "phase": "7.31",
+    "declared_at": "2026-10-19",
+    "frozen_before_any_arm_result": true,
+    "parent_decision": {
+      "phase": "7.30",
+      "decision": "INSUFFICIENT_EVIDENCE",
+      "note": "LIQ_SWEEP confirmatory closed; attention moves to next shortlist item per EDGE_CREDIT_SAFE_OPERATING_LOOP_V1 and phase7_26 FVG_CONT_INTEGRITY_AUDIT",
+      "artifact": "server/research_scripts/phase7/phase7_30_liq_sweep_buy_trend/confirmatory_forward_result_v1.json"
+    },
+    "question": "Before any edge claim on FVG_CONT: (1) is the canonical MQL5 FVG_CONT path identity-distinct from IFVG / FVG_MIT / FVG_MIT_WINDOW despite shared STRAT_FVG_CONT enum? (2) can selector=8 isolation measure ONLY NXS_Strat_FVG without variant contamination? (3) is there CROSS_TIMEFRAME_STATE_CONTAMINATION risk on the canonical path or only on variants? (4) does Python backtest measure the same exit recipe as MQL5?",
+    "arms": {
+      "A_STATIC_IDENTITY_MAP": {
+        "definition": "Code-only map of function, selector, stratName, TF profile, state, exits for FVG_CONT + variants.",
+        "role": "primary_audit"
+      },
+      "B_ISOLATION_FEASIBILITY": {
+        "definition": "Determine whether InpStrategySelector=8 + ResearchMode harness yields trades attributable only to stratName FVG_CONT.",
+        "role": "gate_for_mt5_diagnostic"
+      },
+      "C_PYTHON_PARITY_FLAGS": {
+        "definition": "Flag entry/exit mismatches vs server/backtest.py that would invalidate PF reuse.",
+        "role": "contamination_guard"
+      }
+    },
+    "primary_comparison": "qualitative audit decisions (not mean R)",
+    "primary_outcome": "frozen decision label from decision_rule_frozen",
+    "secondary_outcomes": [
+      "variant_dependency_class (WRAPPER vs SEPARATE_FUNCTION)",
+      "ctf_state_risk_on_canonical_path",
+      "python_exit_mismatch_boolean",
+      "next_mt5_isolation_window_recommendation"
+    ],
+    "decision_rule_frozen": {
+      "ISOLATION_READY": "Canonical FVG_CONT is a separate function gated by selector 8; variants use different selectors/functions; no persistent state on canonical path; Python economic reuse forbidden if exit mismatch flagged \u2014 next step is MT5 isolation diagnostic under a NEW prereg.",
+      "VARIANT_CONTAMINATION_BLOCKS_ISOLATION": "Selector 8 or shared state causes non-FVG_CONT stratNames / shared persistent state to affect the canonical path \u2014 fix or redesign isolation before any diagnostic run.",
+      "CTF_DEFECT_ON_CANONICAL": "Canonical NXS_Strat_FVG has CROSS_TIMEFRAME_STATE_CONTAMINATION \u2014 remediate before edge work.",
+      "MIXED_NEEDS_HUMAN": "Any other pattern; no promotion; no live."
+    },
+    "allowed_decisions": [
+      "ISOLATION_READY",
+      "VARIANT_CONTAMINATION_BLOCKS_ISOLATION",
+      "CTF_DEFECT_ON_CANONICAL",
+      "MIXED_NEEDS_HUMAN"
+    ],
+    "params": {
+      "canonical_strategy_id": "FVG_CONT",
+      "canonical_selector": 8,
+      "canonical_profile_tf": "H4",
+      "canonical_function": "NXS_Strat_FVG",
+      "variant_strat_names": [
+        "IFVG",
+        "FVG_MIT",
+        "FVG_MIT_WINDOW"
+      ],
+      "variant_selectors": {
+        "IFVG": 18,
+        "FVG_MIT": 19,
+        "FVG_MIT_WINDOW": 39
+      },
+      "isolation_harness": "phase7_23/nxs_research_run_harness.py",
+      "symbol_for_next_mt5": "GOLD",
+      "chart_period_for_next_mt5": "H4",
+      "forbid_python_pf_promotion": true,
+      "min_n_for_later_edge_prereg": 30,
+      "random_seed": 73101
+    },
+    "data_policy": {
+      "this_phase_reads": [
+        "MQL5 source only (NXS_Strategies.mqh, NXS_Strategies_SMC.mqh, NEXUS_EA_v2.mq5 collector, profiles, inputs)",
+        "server/backtest.py dispatcher/exit maps (parity flags only)",
+        "prior Phase 7.20/7.26 queue notes (exposed context)"
+      ],
+      "forbidden": [
+        "Promoting FVG_CONT to SUPPORTED",
+        "Live / prop trading",
+        "Optimizing SL/TP/BE after seeing diagnostic trades in this phase",
+        "Treating sweep37 / Python PF as confirmatory",
+        "Reading sealed holdouts"
+      ],
+      "next_phase_requires": "If decision=ISOLATION_READY: commit a separate MT5 diagnostic prereg, then run selector=8 isolation on research PC (same harness as LIQ_SWEEP). Do not reuse LIQ_SWEEP short forward window expectations \u2014 size window for power / trade density first."
+    },
+    "power_note": "This phase makes NO edge claim and needs no trade sample. Any later FVG_CONT edge prereg must pass Power Gate / Edge Detection Capability sizing before confirmatory claims. LIQ_SWEEP 7.30 showed ~3-week H4 windows can yield n=0 \u2014 do not repeat undersized confirmatory windows.",
+    "explicit_non_goals": [
+      "No MQL5 live flag changes in this phase",
+      "No SLReclaim redesign (already REMEDIATED)",
+      "No new strategy family",
+      "No LIQ_SWEEP re-open"
+    ],
+    "params_sha256": "f2c1088384f2a3a1f7dd11c2f623d6a4deb45a389c3f7c953fd1e96e8aefa68d",
+    "protocol_sha256": "c275b57bd2817fe516591d49789a74ed1b3286300b364826e424dd4bc86cef59"
+  }
+}
