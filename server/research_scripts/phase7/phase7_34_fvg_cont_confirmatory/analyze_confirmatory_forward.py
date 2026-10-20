@@ -39,13 +39,35 @@ from nxs_research_run_harness import _detect_text_encoding  # noqa: E402
 
 
 def _find_manifest() -> Optional[str]:
-    cands = sorted(glob.glob(os.path.join(RUN_DIR, "*.manifest.json")))
-    for p in reversed(cands):
-        with open(p, encoding="utf-8") as f:
-            m = json.load(f)
-        if m.get("confirmatory") or m.get("hypothesis_id") == "FVG-CONT-HABITAT-RM-001":
-            return p
-    return cands[-1] if cands else None
+    """Latest launched confirmatory manifest.
+
+    Filename order is not launch order: the cloud prepare hash sorts after
+    the Windows run hash, so the unlaunched manifest would win ``sorted(glob)``.
+    """
+    launched = []
+    prepared = []
+    for path in glob.glob(os.path.join(RUN_DIR, "*.manifest.json")):
+        try:
+            with open(path, encoding="utf-8") as f:
+                manifest = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not (
+            manifest.get("confirmatory")
+            or manifest.get("hypothesis_id") == "FVG-CONT-HABITAT-RM-001"
+        ):
+            continue
+        if manifest.get("start_time_utc"):
+            launched.append((manifest["start_time_utc"], path))
+        else:
+            prepared.append((manifest.get("prepared_at_utc") or "", path))
+    if launched:
+        launched.sort()
+        return launched[-1][1]
+    if prepared:
+        prepared.sort()
+        return prepared[-1][1]
+    return None
 
 
 def _load_rows(path: str) -> List[dict]:
@@ -194,7 +216,17 @@ def analyze(d1_path: str) -> dict:
     trades = manifest.get("trades_csv_dest")
     if trades and not os.path.isabs(trades):
         trades = os.path.join(RUN_DIR, os.path.basename(trades))
-    eps = _episodes(_load_rows(trades)) if trades and os.path.exists(trades) else []
+    eps_all = _episodes(_load_rows(trades)) if trades and os.path.exists(trades) else []
+    # InpResetTradesLogOnInit FileMove failed on this PC (tester err=5020), so
+    # the CSV still holds the pre-window diagnostic. Confirmatory sample is
+    # opens inside the frozen tester window only — same rows the certificate
+    # counts as OPENED. Not an SL/TP retune.
+    start = datetime.strptime(manifest["period_from"], "%Y.%m.%d")
+    end = datetime.strptime(manifest["period_to"], "%Y.%m.%d").replace(
+        hour=23, minute=59, second=59
+    )
+    eps = [e for e in eps_all if start <= e["open"] <= end]
+    cert_opened = (manifest.get("reconciliation") or {}).get("n_opened_per_certificate")
 
     d1 = _load_d1(d1_path)
     d1_last = d1[-1][0] if d1 else None
@@ -267,6 +299,17 @@ def analyze(d1_path: str) -> dict:
         "live_ready": False,
         "run_id": manifest.get("run_id"),
         "window": [manifest.get("period_from"), manifest.get("period_to")],
+        "sample_isolation": {
+            "raw_episodes_in_csv": len(eps_all),
+            "in_window_episodes": len(eps),
+            "certificate_opened": cert_opened,
+            "window_matches_certificate": cert_opened == len(eps),
+            "note": (
+                "NEXUS_trades.csv was not archived (Tester: FileMove err=5020). "
+                "Pre-window rows are the Phase 7.32 diagnostic and are excluded. "
+                "Arms use opens inside the frozen window only."
+            ),
+        },
         "d1_csv": d1_path,
         "d1_covers_window": d1_covers,
         "arm_A_baseline_recipe_R": _stats([e["R"] for e in arm_a]),

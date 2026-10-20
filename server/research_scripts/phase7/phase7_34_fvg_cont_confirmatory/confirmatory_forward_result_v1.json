@@ -1,15 +1,73 @@
 {
-  "generated_at": "2026-10-20T07:42:45.191422+00:00",
+  "generated_at": "2026-10-20T08:31:53.659925+00:00",
   "generation_script": "phase7_34_fvg_cont_confirmatory/analyze_confirmatory_forward.py",
-  "canonical_sha256": "a8c969aafa3797becb200e23575fad122e013cee1b9675328f94b0a7bd49ed0e",
+  "canonical_sha256": "0a2edb94409420269c1e2d0a602c063588ac1a2caab39d2f2b235deed33e1db0",
   "payload": {
-    "status": "RUN_NOT_YET_COLLECTED",
-    "manifest_status": "PREPARED",
-    "run_id": "FVG_CONT_2026.07.01_2026.10.19_95753555bf486cf7_20261020T074245Z_759db760",
+    "status": "ANALYZED",
+    "phase": "7.34",
     "hypothesis_id": "FVG-CONT-HABITAT-RM-001",
     "prereg_commit_sha": "17e6b0408bfecd1cf107a6eb88531e5e6beaf5ae",
-    "decision": "INSUFFICIENT_EVIDENCE",
+    "params_sha256": "9594301552caa1693c8a3ad081a60ec7ee6046e87eca3f9923225332034e8d01",
+    "run_mode": "CONFIRMATORY_FORWARD",
     "promotable": false,
-    "live_ready": false
+    "live_ready": false,
+    "run_id": "FVG_CONT_2026.07.01_2026.10.19_6154ef0499aa7b46_20261020T081043Z_d16ed260",
+    "window": [
+      "2026.07.01",
+      "2026.10.19"
+    ],
+    "sample_isolation": {
+      "raw_episodes_in_csv": 90,
+      "in_window_episodes": 8,
+      "certificate_opened": 8,
+      "window_matches_certificate": true,
+      "note": "NEXUS_trades.csv was not archived (Tester: FileMove err=5020). Pre-window rows are the Phase 7.32 diagnostic and are excluded. Arms use opens inside the frozen window only."
+    },
+    "d1_csv": "server\\research_scripts\\phase7\\phase7_30_liq_sweep_buy_trend\\runs\\liq_sweep_confirmatory_forward\\nxs_d1_gold_refresh_20261019.csv",
+    "d1_covers_window": true,
+    "arm_A_baseline_recipe_R": {
+      "n": 8,
+      "mean_R": 0.2522,
+      "sum_R": 2.018,
+      "win_rate": 0.25
+    },
+    "arm_B_buy_recipe_R": {
+      "n": 3,
+      "mean_R": 0.6147,
+      "sum_R": 1.844,
+      "win_rate": 0.3333
+    },
+    "arm_A_buy_share": 0.375,
+    "arm_C_proxy": {
+      "outcome": "10d_forward_return_over_ATR14 \u2014 NOT recipe R",
+      "B_proxy": {
+        "n": 0,
+        "mean_R": null,
+        "sum_R": 0.0,
+        "win_rate": null
+      },
+      "C_proxy": {
+        "n": 0,
+        "mean_R": null,
+        "sum_R": 0.0,
+        "win_rate": null
+      },
+      "paired_delta_B_minus_C": {
+        "n": 0,
+        "mean_R": null,
+        "sum_R": 0.0,
+        "win_rate": null
+      },
+      "paired_delta_iid_bootstrap_ci95": null,
+      "n_paired": 0
+    },
+    "decision": "INSUFFICIENT_EVIDENCE",
+    "reconciliation": {
+      "n_trade_closes_in_csv": 90,
+      "n_opened_per_certificate": 8,
+      "match": false,
+      "note": "None per un campo significa che il dato non era disponibile (run interrotto, certificato mancante/ambiguo, o CSV assente) - MAI trattato come 0 implicito."
+    },
+    "power_note": "Diagnostic n_B\u224864 BUY already clears min_n=30 for exploratory bookkeeping. Confirmatory still needs a forward sample sized for density (~LIQ_SWEEP lesson). Power Gate V1 may be NOT_ASSESSABLE \u2014 this experiment does not claim POWER_READY for live."
   }
 }

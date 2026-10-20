@@ -1,0 +1,22 @@
+=== NEXUS Test Validity Certificate v2 ===
+run_id=GOLD_2026.07.01 00:00:00_sel8
+strategy=FVG_CONT selector=8
+source_tf=PERIOD_H4 entry_tf=PERIOD_M15
+period_start=2026.07.01 01:00:02 period_end=2026.10.16 23:57:58
+research_mode=true exit_mode=RAW
+leverage=1:500 lot_mode=FIXED_LOT fixed_lot=0.0100
+opt_in: RiskShield=OFF ESL=OFF DailyDD=OFF TotalDD=OFF Ruin=OFF DPT=OFF
+code_build=3.0.0 (numero di build applicativo, NON un commit git)
+git_commit=8060f053d4854dfc31cbc304caff75477f57358c
+config_fingerprint=strat=FVG_CONT|sel=8|srcTF=PERIOD_H4|entryTF=PERIOD_M15|exit=RAW|lot=0.0100|lev=500|ESL=0|DailyDD=0|TotalDD=0|DPT=0|Ruin=0|RiskShield=0|period=2026.07.01_2026.10.16
+broker_time_offset_to_GMT_h=2 (InpServerGMTOffset, sempre dichiarato - vedi NXS_Inputs.mqh)
+
+--- Funnel ---
+GENERATED=264 BLOCKED=256 OPEN_ATTEMPT=21 OPENED=8 BROKER_REJECT=0
+  gate_reason=OPEN_POSITION count=243
+  gate_reason=PROTECTIONS count=13
+
+--- Anomalie ---
+opened_missing_position_id=0 broker_reject_missing_reason=0 source_tf_mismatch=false invariant_fail_count=0 blk_paused_count=0
+
+VERDICT=PASS

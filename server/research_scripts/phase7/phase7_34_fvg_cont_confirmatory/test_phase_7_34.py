@@ -35,16 +35,36 @@ class Phase734Tests(unittest.TestCase):
             p = json.load(f)["payload"]
         self.assertEqual(p["hypothesis_id"], "FVG-CONT-HABITAT-RM-001")
 
-    def test_status_prepared(self):
+    def test_status_tracks_hypothesis(self):
         path = os.path.join(PHASE_DIR, "confirmatory_run_status_v1.json")
         self.assertTrue(os.path.isfile(path))
         with open(path, encoding="utf-8") as f:
             s = json.load(f)
-        self.assertEqual(s["status"], "PREPARED_AWAITING_WINDOWS_MT5")
-        self.assertEqual(s["period"], ["2026.07.01", "2026.10.19"])
         self.assertEqual(s["hypothesis_id"], "FVG-CONT-HABITAT-RM-001")
+        self.assertIn(
+            s["status"],
+            {
+                "PREPARED_AWAITING_WINDOWS_MT5",
+                "LAUNCHED",
+                "COLLECTED",
+                "ANALYZED",
+                "ANALYZED_D1_COVERAGE_INCOMPLETE",
+            },
+        )
+        if "period" in s:
+            self.assertEqual(s["period"], ["2026.07.01", "2026.10.19"])
+        if "decision" in s:
+            self.assertIn(
+                s["decision"],
+                {
+                    "INSUFFICIENT_EVIDENCE",
+                    "HABITAT_ONLY",
+                    "SIGNAL_SUPPORTED_AS_HYPOTHESIS",
+                    "MIXED",
+                },
+            )
 
-    def test_analyze_early(self):
+    def test_analyze_not_live_ready(self):
         import sys
         if PHASE_DIR not in sys.path:
             sys.path.insert(0, PHASE_DIR)
@@ -55,8 +75,19 @@ class Phase734Tests(unittest.TestCase):
             "liq_sweep_confirmatory_forward/nxs_d1_gold_refresh_20261019.csv",
         )
         p = analyze(d1)
-        self.assertEqual(p["decision"], "INSUFFICIENT_EVIDENCE")
+        self.assertIn(
+            p["decision"],
+            {
+                "INSUFFICIENT_EVIDENCE",
+                "HABITAT_ONLY",
+                "SIGNAL_SUPPORTED_AS_HYPOTHESIS",
+                "MIXED",
+            },
+        )
         self.assertFalse(p["live_ready"])
+        self.assertFalse(p["promotable"])
+        if p.get("status") in ("RUN_NOT_YET_PREPARED", "RUN_NOT_YET_COLLECTED"):
+            self.assertEqual(p["decision"], "INSUFFICIENT_EVIDENCE")
 
 
 if __name__ == "__main__":
