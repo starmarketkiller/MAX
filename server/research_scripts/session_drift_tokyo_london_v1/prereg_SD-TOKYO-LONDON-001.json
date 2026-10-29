@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "hypothesis_id": "SD-TOKYO-LONDON-001",
+  "title": "XAUUSD: long Tokyo cash open → London cash open (bid/ask session drift)",
+  "declared_at": "2026-10-29",
+  "declared_before_data_access": true,
+  "status": "FROZEN_NOT_EXECUTED",
+  "evidence_ceiling": "EXPLORATORY_ONLY",
+  "power_gate_status": "NOT_ASSESSED_ON_REAL_DATA",
+  "power_gate_note": "Power Gate V1.4 cannot certify POWER_READY without a preregistered level calibration (NEXUS_POWER_GATE_V1). Until then every run of this hypothesis is EXPLORATORY_ONLY. Never promote to VALIDATED from this experiment alone.",
+  "data_access_statement": "Written in a cloud container that has no copy of the Phase 7 tick files and cannot reach Dukascopy. No outcome, event count or price of this family has been computed on any period before this file was committed.",
+  "question": "Is the mean net long return of XAUUSD from Tokyo cash open to London cash open (entry on ask, exit on bid) strictly positive after costs, greater than a duration-scaled generic gold rise over the same days, stable across calendar years, and same-signed on two preregistered discovery windows?",
+  "primary_outcome": "mean_net_return_usd: arithmetic mean of (exit_bid - entry_ask - commission) over closed weekday sessions",
+  "secondary_outcomes": [
+    "mean_net_return_usd_ci95_month_blocks",
+    "mean_mid_return_usd (descriptive spread impact)",
+    "delta_vs_generic_gold_scaled",
+    "yearly_mean_net_return_usd",
+    "sign_agreement_discovery_a_vs_b",
+    "n_closed per split"
+  ],
+  "comparator": {
+    "id": "GENERIC_GOLD_TOKYO_TO_TOKYO_SCALED",
+    "definition": "For the same Tokyo-open calendar day, net return from Tokyo open ask to next Tokyo open bid (full Tokyo→Tokyo). Scale by duration_tokyo_london / duration_tokyo_tokyo. Delta = session_net - scaled_day_net. Falsify if mean delta ≤ 0 (session does not beat proportional generic rise).",
+    "not_a_matched_regime_baseline": true
+  },
+  "params": {
+    "tokyo_open_local_hour": 9,
+    "tokyo_open_local_minute": 0,
+    "london_open_local_hour": 8,
+    "london_open_local_minute": 0,
+    "entry_side": "ASK",
+    "exit_side": "BID",
+    "direction": "LONG_ONLY",
+    "bar_minutes": 15,
+    "open_match_tolerance_minutes": 15,
+    "weekday_only": true,
+    "skip_if_missing_entry_or_exit": true,
+    "commission_usd_per_oz": 0.0,
+    "tick_audit_max_spread": 5.0,
+    "primary_metric": "mean_net_return_usd",
+    "bootstrap_block": "month",
+    "bootstrap_n": 2000,
+    "bootstrap_seed": 20261029,
+    "min_n_per_discovery": 30,
+    "min_n_combined_for_ci": 60,
+    "year_concentration_max_share": 0.5,
+    "generic_gold_scale": "duration_fraction_of_tokyo_to_tokyo"
+  },
+  "param_provenance": {
+    "tokyo_open_local": "Asia/Tokyo cash open 09:00 local (DST-aware via zoneinfo); aligns with behavior_lab_v1/sessions.py TOKYO window start",
+    "london_open_local": "Europe/London cash open 08:00 local (DST-aware); aligns with behavior_lab_v1/sessions.py LONDON window start",
+    "bid_ask": "Long entry on ask_open of the matched M15 bar; exit on bid_open of the London-open bar — same fill-side convention as behavior_lab_v1",
+    "commission_usd_per_oz": "0: Dukascopy spread only. Broker commission not modelled; results are an upper bound for a commission account",
+    "year_concentration_max_share": "0.5 chosen a priori: if one calendar year accounts for more than half of the sum of positive yearly means, treat as concentration falsifier"
+  },
+  "params_sha256": "a65726467268e7ae519ec0f07eba4c328b41febececa80590c16112b69cfe7cf",
+  "timezone_policy": {
+    "session_clocks": "local IANA zones Asia/Tokyo and Europe/London — never fixed UTC hours",
+    "bar_grid": "UTC-aligned M15 as in behavior_lab_v1/bars.py / phase7_1",
+    "rationale": "London and US DST move the UTC clock of cash opens; fixed-GMT windows would mix regimes"
+  },
+  "splits": {
+    "discovery_a": {
+      "start_utc": "2023-02-04T00:00:00+00:00",
+      "end_utc": "2024-08-04T00:00:00+00:00",
+      "access": "ITERABLE for this hypothesis only"
+    },
+    "discovery_b": {
+      "start_utc": "2024-08-04T00:00:00+00:00",
+      "end_utc": "2025-11-04T00:00:00+00:00",
+      "access": "ITERABLE for this hypothesis only; used for sign-stability falsifier vs discovery_a"
+    },
+    "internal_validation": {
+      "start_utc": "2025-11-04T00:00:00+00:00",
+      "end_utc": "2026-02-04T00:00:00+00:00",
+      "access": "ONE_SHOT after both discoveries pass decision rules with frozen params; max decision PRE_REGISTERED_CANDIDATE / EXPLORATORY_ONLY"
+    },
+    "excluded_consumed_holdout_2022": {
+      "start_utc": "2022-02-04T00:00:00+00:00",
+      "end_utc": "2023-02-03T23:59:59+00:00",
+      "access": "PHYSICALLY_EXCLUDED — already consumed; runner refuses"
+    },
+    "excluded_phase7_sealed_holdout": {
+      "start_utc": "2026-02-04T00:00:00+00:00",
+      "end_utc": "2026-09-16T23:59:59+00:00",
+      "access": "PHYSICALLY_EXCLUDED — Phase 7 sealed holdout; runner refuses"
+    },
+    "forward_after_seal": {
+      "start_utc": "2026-09-17T00:00:00+00:00",
+      "end_utc": null,
+      "access": "NOT in V1 runner; future independence window after seal"
+    }
+  },
+  "excluded_windows_must_refuse": [
+    ["2022-02-04", "2023-02-03"],
+    ["2026-02-04", "2026-09-16"]
+  ],
+  "falsification": {
+    "F1_ci_includes_zero": "On combined discovery_a∪discovery_b, month-block bootstrap 95% CI for mean_net_return_usd includes ≤ 0 → FAIL",
+    "F2_does_not_beat_generic_gold": "Mean delta_vs_generic_gold_scaled ≤ 0 on combined discoveries → FAIL",
+    "F3_year_concentration": "Among years with n≥20 in combined discoveries, one year share of sum(max(yearly_mean,0)) > year_concentration_max_share → FAIL",
+    "F4_sign_flip_across_discoveries": "sign(mean_net discovery_a) != sign(mean_net discovery_b) when both n≥min_n_per_discovery → FAIL",
+    "insufficient_n": "Any discovery with n_closed < min_n_per_discovery → INSUFFICIENT_EVIDENCE (distinct from FAIL)"
+  },
+  "decision_vocabulary": {
+    "FAIL": "At least one falsifier F1–F4 fires with adequate n",
+    "INSUFFICIENT_EVIDENCE": "n below preregistered minima",
+    "EXPLORATORY_PROMISING": "No falsifier fires; still EXPLORATORY_ONLY / not POWER_READY / not VALIDATED",
+    "VALIDATED": "FORBIDDEN for this hypothesis_id — requires separate promotion gate with power + true holdout + parity"
+  },
+  "exposure_statement": {
+    "this_hypothesis": "No period has been read for this hypothesis.",
+    "neighbouring_studies": "Phase 7 / MT5 studies traversed 2023–2026 for breakout/OB/sweep families. Session-drift is a different estimand (1 obs/day, fixed clock), but calendar overlap means internal_validation is not a virgin TRUE_HOLDOUT.",
+    "consequence": "Maximum after internal_validation: EXPLORATORY_PROMISING under evidence_ceiling EXPLORATORY_ONLY. Independence for any stronger claim needs data after 2026-09-17 or an unused public history window under a new hypothesis_id.",
+    "rule": "Parameters may change only under a new hypothesis_id. Runner refuses a run whose params hash differs from an earlier run of the same hypothesis_id."
+  },
+  "anti_scope": [
+    "No SMC / CRT / Elliott hunt",
+    "No re-enable of FAILED or DEFECT_BLOCKED strategies",
+    "No MQL5 live signal wiring in V1",
+    "No promotion to edge-validation-registry VALIDATED",
+    "No reading excluded holdout windows"
+  ],
+  "known_limits": [
+    "BID/ASK from Dukascopy, not XM broker feed; MT5 Tester parity is a later PC step",
+    "Open matched to nearest M15 bar start within open_match_tolerance_minutes",
+    "commission_usd_per_oz=0: upper bound vs commission accounts",
+    "Daily observations are weakly dependent (gold trends); month-block bootstrap is descriptive, not a certified Power Gate method",
+    "Power Gate V1.4: EXPLORATORY_ONLY / NOT_ASSESSABLE until level calibration exists"
+  ],
+  "pc_execution": {
+    "required_data": "Phase 7 decoded tick gzip under server/research_scripts/phase7/data_cache_new_period/decoded/ (gitignored)",
+    "optional_m15_export": "Pre-built M15 bid/ask CSV via --bars-csv if ticks already aggregated",
+    "commands": [
+      "cd server/research_scripts",
+      "pip install -r ../requirements-dev.txt",
+      "python -m session_drift_tokyo_london_v1.run_experiment --split discovery_a --smoke-days 10",
+      "python -m session_drift_tokyo_london_v1.run_experiment --split discovery_a",
+      "python -m session_drift_tokyo_london_v1.run_experiment --split discovery_b",
+      "python -m session_drift_tokyo_london_v1.run_experiment --split combined_discoveries",
+      "python -m session_drift_tokyo_london_v1.run_experiment --split internal_validation"
+    ],
+    "tester_note": "Optional later: MT5 Strategy Tester parity on same windows with bid/ask modeling — not required to falsify V1 on Dukascopy ticks"
+  }
+}
