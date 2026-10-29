@@ -508,7 +508,7 @@ input bool     InpBollingerUseCandleFilter = false;  // hammer/engulfing (buy), 
 // trascina l'aggregato in perdita) - conferma diretta della scoperta
 // Python del 24/08. Lock di direzione per isolare il numero pulito.
 input bool     InpBollingerBuyOnly         = false;
-input bool     InpStrat_MACD         = true;
+input bool     InpStrat_MACD         = false;  // FAILED (Phase F); off until revalidated
 input bool     InpStrat_SAR          = true;
 input bool     InpSAR_RequireCandleAlign = false;  // 31/08 - vedi NXS_Strat_SAR: filtro trovato analizzando i 112 trade nudi
 input bool     InpSAR_RequirePressureContrary = false;  // 31/08 - vedi NXS_SAR_PressureContrary: non ridondante col filtro candela, si sommano
@@ -524,7 +524,7 @@ input double   InpEMAPBFixedLot     = 0;           // 01/09 - lotto FISSO per EM
                                                     // soglia per un parziale valido a due decimali.
 input ENUM_TIMEFRAMES InpScalpTFOverride = PERIOD_CURRENT;  // 02/09 - sblocca BB_SQUEEZE/ORDER_BLOCK/BREAKOUT_ACC
                                                     // dal loro D1 di default (vedi NXS_Profile_TF). PERIOD_CURRENT = off.
-input bool     InpStrat_TSI          = true;
+input bool     InpStrat_TSI          = false;  // DEFECT_BLOCKED in registry; Phase 7.18 TF guard present but status unreconciled — stay off
 // 17/07 notte - audit esterno: la vecchia "TSI" non calcolava il True
 // Strength Index (era RSI+EMA20), solo il nome coincideva. Periodi veri di
 // Blau: long=25 (primo smoothing), short=13 (secondo smoothing), signal=7.
@@ -544,9 +544,9 @@ input bool     InpStrat_BREAKOUT_ACC = true;
 input bool     InpStrat_VolBreakoutConfirmed = false;  // 17/09 - Strategy Foundry Phase 3, mai verificata su MT5 - default OFF
 input bool     InpStrat_LONDON_BO    = true;
 input bool     InpStrat_EMA_PULLBACK = true;
-input bool     InpStrat_BB_SQUEEZE   = true;
+input bool     InpStrat_BB_SQUEEZE   = false;  // DEFECT_BLOCKED (TF contamination); off until remediated
 input bool     InpStrat_ICHIMOKU     = true;
-input bool     InpStrat_RSI_DIV      = true;
+input bool     InpStrat_RSI_DIV      = false;  // FAILED; off until revalidated
 input bool     InpStrat_ORDER_BLOCK  = true;
 input bool     InpUseStructReact     = true;
 
@@ -900,12 +900,12 @@ input bool     InpStrat_FVG_MIT_WINDOW = true;
 // NXR_Strat_OB_Mitigation, stesso schema "nessun fallback senza InpNXR_
 // Enable" di IFVG/FVG_MIT sopra - morta per costruzione.
 input bool     InpStrat_OB_Mit         = false;
-input bool     InpStrat_SH_BMS_RTO     = true;
+input bool     InpStrat_SH_BMS_RTO     = false;  // DEFECT_BLOCKED (TF contamination); off until remediated
 // 14/08 - state machine indipendente (regole diverse, non un refactor della
 // v1 sopra), vedi NXS_Strat_SH_BMS_RTO_V2 in NXS_Strategies_SMC.mqh.
-input bool     InpStrat_SH_BMS_RTO_V2  = true;
+input bool     InpStrat_SH_BMS_RTO_V2  = false;  // DEFECT_BLOCKED; stay off
 input bool     InpStrat_SMS_BMS_RTO    = true;
-input bool     InpStrat_SilverBullet   = true;
+input bool     InpStrat_SilverBullet   = false;  // DEFECT_BLOCKED (TF contamination); off until remediated
 input bool     InpStrat_AMD_Reversal   = true;
 input bool     InpStrat_OTE_Cont       = true;
 input bool     InpStrat_MalaysianSNR   = true;
