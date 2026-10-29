@@ -19,11 +19,12 @@ InpCRT_MinStopATR=0.3
 InpWebURL=https://nexus-backend-8o4y.onrender.com
 InpWebToken=
 
-; --- Le 15 strategie del nucleo demo (tutte devono restare true) ---
+; --- Nucleo demo (2026-10-29 Fase A cleanup): FAILED/DEFECT_BLOCKED spenti ---
+; MACD=FAILED, TSI=DEFECT_BLOCKED (registry unreconciled post-7.18), CRT=FAILED.
 InpStrat_ADX_RSI=true
-InpStrat_MACD=true
+InpStrat_MACD=false
 InpStrat_SAR=true
-InpStrat_TSI=true
+InpStrat_TSI=false
 InpStrat_LIQ_SWEEP=true
 InpStrat_FVG_CONT=true
 InpStrat_BREAKOUT_ACC=true
@@ -37,4 +38,4 @@ InpStrat_FVG_MIT_WINDOW=true
 InpUseStrat_AMD_Cont=true
 InpUseStrat_LdnReversal=true
 InpStrat_AMD_Reversal=true
-InpUseStrat_CRT=true
+InpUseStrat_CRT=false

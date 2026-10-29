@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 BASE = ROOT / "contracts" / "strategy-registry.json"
 OUTPUT = ROOT / "contracts" / "edge-validation-registry.json"
-GENERATED_AT = "2026-10-06T00:01:09+02:00"
+GENERATED_AT = "2026-10-29T20:30:00+02:00"
 RECONCILIATION_COMMIT = "364deec32476d35509dbc97d5a8d3263cd9d44e1"
 
 SOURCES = {
@@ -33,11 +33,14 @@ CANONICAL_STANDALONE = {
     "SH_BMS_RTO": "UNVALIDATED", "SH_BMS_RTO_V2": "UNVALIDATED",
     "SILVER_BULLET": "UNVALIDATED", "STRUCT_REACT": "CANDIDATE", "TSI": "UNVALIDATED",
     "Z_SCORE_BREAKOUT": "CANDIDATE", "ELLIOTT": "UNVALIDATED", "SWING_FALSEBREAK": "UNVALIDATED",
+    # VOLBRK alias = VOLATILITY_BREAKOUT_CONFIRMED (Phase 7.8i Serious 3Y FAIL→ARCHIVE)
+    "VOLATILITY_BREAKOUT_CONFIRMED": "FAILED",
 }
 AMBIGUOUS = {"AMD_REVERSAL", "OTE_CONT", "PO3", "SMS_BMS_RTO", "WEEKLY_EXP"}
 FORWARD_STATUS = {
     "BREAKOUT_ACC": "INSUFFICIENT", "ORDER_BLOCK": "INSUFFICIENT",
     "LIQ_SWEEP": "NEGATIVE_INSUFFICIENT", "MACD": "COMPLETE_NEGATIVE",
+    "VOLATILITY_BREAKOUT_CONFIRMED": "COMPLETE_NEGATIVE",
 }
 DEFECTS = {
     "BREAKOUT_ACC": ("COOLDOWN_STATE_CONTAMINATION", "REMEDIATED"),
@@ -63,6 +66,17 @@ EVIDENCE_NOTES = {
     "MACD": "SERIOUS_VALIDATION_FAIL; two of three years negative.",
     "ORDER_BLOCK": "Defect remediated; CI95 includes zero and forward evidence remains insufficient.",
     "SAR": "SERIOUS_VALIDATION_BORDERLINE; this supersedes the incomplete placeholder UNVALIDATED state.",
+    "VOLATILITY_BREAKOUT_CONFIRMED": (
+        "VOLBRK Serious 3Y (Phase 7.8i): n=183, PF=0.867, expectancy -0.067R, "
+        "CI95 crosses zero → FAIL→ARCHIVE_CURRENT_DESIGN. "
+        "Sources: docs/NEXUS_RRA_01_STRATEGY_LEDGER_AND_COVERAGE.md, "
+        "docs/NEXUS_RRA_01_RESEARCH_RECOVERY_MASTER.md."
+    ),
+    "TSI": (
+        "Registry still DEFECT_BLOCKED (Phase 7.10 contamination). "
+        "Code has NXS_Profile_TF(\"TSI\") guard and Phase 7.18 reports causal TF-scoped fix — "
+        "status not promoted in this cleanup; leave default_enabled=false until formal reconcile."
+    ),
 }
 
 ROLE_VOCABULARY = [

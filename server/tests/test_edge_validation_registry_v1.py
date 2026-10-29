@@ -27,6 +27,7 @@ def test_canonical_scientific_statuses_and_no_promotion():
     value = build()
     expected = {
         "MACD": "FAILED", "CRT": "FAILED", "RSI_DIV": "FAILED",
+        "VOLATILITY_BREAKOUT_CONFIRMED": "FAILED",
         "LIQ_SWEEP": "CANDIDATE", "ADX_RSI": "CANDIDATE",
         "BREAKOUT_ACC": "FORWARD_REQUIRED", "ORDER_BLOCK": "FORWARD_REQUIRED",
         "SAR": "BORDERLINE", "BOLLINGER": "BORDERLINE",
@@ -77,11 +78,18 @@ def test_ambiguous_and_grouped_absence_remain_explicitly_unvalidated():
 
 
 def test_default_enabled_scientific_warnings_are_fail_closed():
-    errors, alerts = verify(build())
+    # Phase A cleanup: FAILED/DEFECT_BLOCKED are no longer default_enabled, so
+    # DEFAULT_ENABLED_FAILED / DEFAULT_ENABLED_DEFECT_BLOCKED must NOT fire for
+    # MACD/TSI. Residual UNVALIDATED still-on alerts remain fail-closed.
+    value = build()
+    assert by_id(value, "MACD")["default_enabled"] is False
+    assert by_id(value, "TSI")["default_enabled"] is False
+    assert by_id(value, "TSI")["defect_status"] == "DEFECT_BLOCKED"
+    errors, alerts = verify(value)
     assert errors == []
     codes = {(item["strategy_id"], item["code"]) for item in alerts}
-    assert ("MACD", "DEFAULT_ENABLED_FAILED") in codes
-    assert ("TSI", "DEFAULT_ENABLED_DEFECT_BLOCKED") in codes
+    assert ("MACD", "DEFAULT_ENABLED_FAILED") not in codes
+    assert ("TSI", "DEFAULT_ENABLED_DEFECT_BLOCKED") not in codes
     assert ("AMD_REVERSAL", "DEFAULT_ENABLED_UNVALIDATED") in codes
 
 

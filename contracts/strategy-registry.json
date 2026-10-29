@@ -140,7 +140,7 @@
       "supported_timeframes": [
         "D1"
       ],
-      "default_enabled": true,
+      "default_enabled": false,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
       "schema_version": 1
@@ -800,7 +800,7 @@
       "supported_timeframes": [
         "H4"
       ],
-      "default_enabled": true,
+      "default_enabled": false,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
       "schema_version": 1
@@ -1218,7 +1218,7 @@
       "supported_timeframes": [
         "H1"
       ],
-      "default_enabled": true,
+      "default_enabled": false,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
       "schema_version": 1
@@ -1416,7 +1416,7 @@
       "supported_timeframes": [
         "D1"
       ],
-      "default_enabled": true,
+      "default_enabled": false,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
       "schema_version": 1
@@ -1460,7 +1460,7 @@
       "supported_timeframes": [
         "*"
       ],
-      "default_enabled": true,
+      "default_enabled": false,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
       "schema_version": 1
@@ -1616,7 +1616,7 @@
       "supported_timeframes": [
         "D1"
       ],
-      "default_enabled": true,
+      "default_enabled": false,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
       "schema_version": 1
