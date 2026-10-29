@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "hypothesis_id": "TG-12M-GATE-001",
+  "title": "XAUUSD daily: 12-month return sign as regime gate + volatility sizing vs buy-and-hold",
+  "declared_at": "2026-10-29",
+  "declared_before_data_access": true,
+  "status": "FROZEN_NOT_EXECUTED",
+  "evidence_ceiling": "EXPLORATORY_ONLY",
+  "power_gate_status": "NOT_ASSESSED_ON_REAL_DATA",
+  "power_gate_note": "Power Gate V1.4 cannot certify POWER_READY without a preregistered level calibration (NEXUS_POWER_GATE_V1). Until then every run of this hypothesis is EXPLORATORY_ONLY. Never promote to VALIDATED from this experiment alone.",
+  "data_access_statement": "Written in a cloud container that has no long daily XAUUSD history for this hypothesis. No outcome, excess return or variant ranking has been computed on any real gold series before this file was committed.",
+  "question": "Does any preregistered variant that gates XAUUSD daily exposure by the sign of the trailing 12-month return (with optional volatility targeting) beat a size-matched buy-and-hold after Bonferroni correction on public history before 2019, and does the frozen winner keep a positive mean excess on post-2019 confirmation windows that exclude sealed/consumed holdouts?",
+  "primary_outcome": "mean_excess_log_return: arithmetic mean of (strategy_log_return - matched_bh_log_return) over evaluation days",
+  "secondary_outcomes": [
+    "mean_excess_log_return_ci95_month_blocks",
+    "mean_strategy_log_return",
+    "mean_bh_log_return",
+    "yearly_mean_excess_log_return",
+    "sign_agreement_confirmation_a_vs_b",
+    "selected_variant_id",
+    "n_days per split"
+  ],
+  "comparator": {
+    "id": "SIZE_MATCHED_BUY_AND_HOLD",
+    "definition": "For UNIT variants: always-long weight=1. For VOL variants: always-long with the same vol-target / realized-vol rule and leverage cap. Excess = strategy daily log return minus matched BH daily log return. Falsify selection if no variant has month-block CI low > 0 after Bonferroni.",
+    "not_a_matched_regime_baseline": false
+  },
+  "params": {
+    "lookback_bars": 252,
+    "vol_lookback_bars": 60,
+    "target_vol_annual": 0.1,
+    "leverage_cap": 2.0,
+    "cost_bps_roundtrip": 1.0,
+    "trading_days_per_year": 252,
+    "variant_ids": [
+      "LO_FLAT_UNIT",
+      "LO_FLAT_VOL",
+      "LS_VOL"
+    ],
+    "primary_metric": "mean_excess_log_return",
+    "bootstrap_block": "month",
+    "bootstrap_n": 2000,
+    "bootstrap_seed": 20261029,
+    "selection_alpha": 0.05,
+    "multiple_testing": "bonferroni",
+    "min_n_selection": 250,
+    "min_n_per_confirmation": 60,
+    "min_n_combined_for_ci": 120,
+    "year_concentration_max_share": 0.5,
+    "selection_end_date": "2018-12-31",
+    "price_column": "close"
+  },
+  "param_provenance": {
+    "lookback_bars": "252 ≈ 12 trading months; Moskowitz-Ooi-Pedersen 2012 time-series momentum formation window (a priori)",
+    "vol_lookback_bars": "60 trading days realized vol — common TSMOM / risk-parity choice declared a priori, not fit on gold",
+    "target_vol_annual": "0.10 annualized target; literature-scale vol targeting, declared a priori",
+    "leverage_cap": "2.0 hard cap to bound extreme inverse-vol weights",
+    "cost_bps_roundtrip": "1.0 bp charged on absolute weight change |w_t - w_{t-1}| — conservative daily gold friction placeholder, a priori",
+    "variant_ids": "Exactly three variants; no additional lookbacks or thresholds in V1",
+    "selection_end_date": "2018-12-31 inclusive — selection only on public history before 2019 (research report #2)",
+    "year_concentration_max_share": "0.5 a priori: one calendar year > half of sum of positive yearly excess means → concentration falsifier"
+  },
+  "params_sha256": "424aacfb5ff4dad348315c0b399f9ee8e7cf510048e868219425caf523aa6e12",
+  "variants": {
+    "LO_FLAT_UNIT": {
+      "gate": "long_if_r12_positive_else_flat",
+      "sizing": "unit",
+      "bh": "always_long_unit"
+    },
+    "LO_FLAT_VOL": {
+      "gate": "long_if_r12_positive_else_flat",
+      "sizing": "vol_target",
+      "bh": "always_long_vol_target"
+    },
+    "LS_VOL": {
+      "gate": "sign_of_r12",
+      "sizing": "vol_target",
+      "bh": "always_long_vol_target"
+    }
+  },
+  "splits": {
+    "selection": {
+      "start_utc": "2000-01-01T00:00:00+00:00",
+      "end_utc": "2019-01-01T00:00:00+00:00",
+      "access": "ITERABLE — sole window for variant selection / F1; evaluation days are those with full warm-up and date < 2019-01-01",
+      "note": "start_utc is a lower bound; actual first evaluation day = first bar with lookback+vol warm-up available"
+    },
+    "confirmation_a": {
+      "start_utc": "2019-01-01T00:00:00+00:00",
+      "end_utc": "2022-02-04T00:00:00+00:00",
+      "access": "ITERABLE for frozen winner only; ends before consumed holdout"
+    },
+    "confirmation_b": {
+      "start_utc": "2023-02-04T00:00:00+00:00",
+      "end_utc": "2025-11-04T00:00:00+00:00",
+      "access": "ITERABLE for frozen winner only; after consumed holdout"
+    },
+    "internal_validation": {
+      "start_utc": "2025-11-04T00:00:00+00:00",
+      "end_utc": "2026-02-04T00:00:00+00:00",
+      "access": "ONE_SHOT after combined_confirmations pass with frozen params; max EXPLORATORY_PROMISING / EXPLORATORY_ONLY"
+    },
+    "excluded_consumed_holdout_2022": {
+      "start_utc": "2022-02-04T00:00:00+00:00",
+      "end_utc": "2023-02-03T23:59:59+00:00",
+      "access": "PHYSICALLY_EXCLUDED — already consumed; runner refuses"
+    },
+    "excluded_phase7_sealed_holdout": {
+      "start_utc": "2026-02-04T00:00:00+00:00",
+      "end_utc": "2026-09-16T23:59:59+00:00",
+      "access": "PHYSICALLY_EXCLUDED — Phase 7 sealed holdout; runner refuses"
+    },
+    "forward_after_seal": {
+      "start_utc": "2026-09-17T00:00:00+00:00",
+      "end_utc": null,
+      "access": "NOT in V1 runner; future independence window after seal"
+    }
+  },
+  "excluded_windows_must_refuse": [
+    [
+      "2022-02-04",
+      "2023-02-03"
+    ],
+    [
+      "2026-02-04",
+      "2026-09-16"
+    ]
+  ],
+  "falsification": {
+    "F1_no_variant_beats_bh_after_mt": "On selection, no variant has month-block bootstrap CI for mean_excess_log_return with low > 0 at Bonferroni level (1 - selection_alpha/K) → FAIL",
+    "F2_winner_ci_includes_zero_on_confirm": "On combined_confirmations, month-block 95% CI for winner mean_excess_log_return includes ≤ 0 → FAIL",
+    "F3_year_concentration": "Among years with n≥20 in combined confirmations, one year share of sum(max(yearly_mean_excess,0)) > year_concentration_max_share → FAIL",
+    "F4_sign_flip_across_confirmations": "sign(mean_excess confirmation_a) != sign(mean_excess confirmation_b) when both n≥min_n_per_confirmation → FAIL",
+    "insufficient_n": "selection n_days < min_n_selection or any confirmation n_days < min_n_per_confirmation → INSUFFICIENT_EVIDENCE"
+  },
+  "decision_vocabulary": {
+    "FAIL": "F1 fires (no survivor) or F2–F4 fires on confirmation with adequate n",
+    "INSUFFICIENT_EVIDENCE": "n below preregistered minima",
+    "EXPLORATORY_PROMISING": "Survivor exists and no F2–F4 on confirmation; still EXPLORATORY_ONLY / not POWER_READY / not VALIDATED",
+    "VALIDATED": "FORBIDDEN for this hypothesis_id — requires separate promotion gate with power + true holdout + parity"
+  },
+  "exposure_statement": {
+    "this_hypothesis": "No real XAUUSD daily series has been read for this hypothesis.",
+    "neighbouring_studies": "Phase 7 / MT5 studies traversed 2022–2026 for other families. Daily trend-gate is a different estimand, but confirmation/IV calendars overlap prior research — not a virgin TRUE_HOLDOUT.",
+    "consequence": "Maximum after internal_validation: EXPLORATORY_PROMISING under evidence_ceiling EXPLORATORY_ONLY.",
+    "rule": "Parameters or variant set may change only under a new hypothesis_id. Runner refuses a run whose params hash differs from an earlier run of the same hypothesis_id."
+  },
+  "anti_scope": [
+    "No SMC / CRT / Elliott hunt",
+    "No re-enable of FAILED or DEFECT_BLOCKED strategies",
+    "No MQL5 live signal wiring in V1",
+    "No promotion to edge-validation-registry VALIDATED",
+    "No reading excluded holdout windows",
+    "No variant selection on post-2018 data"
+  ],
+  "known_limits": [
+    "Daily mid/close CSV is not XM broker tick; costs are a 1 bp placeholder",
+    "Vol targeting and unit sizing are tested only as the three declared variants",
+    "Month-block bootstrap is descriptive, not a certified Power Gate method",
+    "Power Gate V1.4: EXPLORATORY_ONLY / NOT_ASSESSABLE until level calibration exists",
+    "Long history before ~2010 may mix spot vs futures gold depending on PC data source — document source in run meta"
+  ],
+  "pc_execution": {
+    "required_data": "Long daily XAUUSD CSV (date, close[, open, high, low]), ideally covering ≥2005 through at least 2026-02-03 for selection+confirmations+IV",
+    "commands": [
+      "cd server/research_scripts",
+      "pip install -r ../requirements-dev.txt",
+      "python -m trend_12m_gate_v1.run_experiment --split selection --daily-csv /path/to/xauusd_daily.csv",
+      "python -m trend_12m_gate_v1.run_experiment --split confirmation_a --daily-csv /path/to/xauusd_daily.csv",
+      "python -m trend_12m_gate_v1.run_experiment --split confirmation_b --daily-csv /path/to/xauusd_daily.csv",
+      "python -m trend_12m_gate_v1.run_experiment --split combined_confirmations --daily-csv /path/to/xauusd_daily.csv",
+      "python -m trend_12m_gate_v1.run_experiment --split internal_validation --daily-csv /path/to/xauusd_daily.csv"
+    ],
+    "tester_note": "MT5 Tester parity is optional later and not required to falsify V1 on daily CSV"
+  }
+}
