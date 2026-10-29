@@ -116,7 +116,7 @@ def build_bars_from_ticks(start_ts, end_ts, max_spread, smoke_days=None):
         )
     ticks = iter_ticks(roots, start, end, missing=missing)
     series = build_bars(ticks, [M15], audit=audit)
-    return series[M15], audit.summary(), missing
+    return series[M15], audit.report(), missing
 
 
 def run_split(prereg, split, bars, smoke=False):
