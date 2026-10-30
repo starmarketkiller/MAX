@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "hypothesis_id": "MEG-NFP-CPI-FOMC-001",
+  "title": "XAUUSD: non-directional macro gate — elevated spread/range in NFP/CPI/FOMC window vs same clock non-event days",
+  "declared_at": "2026-10-30",
+  "declared_before_data_access": true,
+  "status": "FROZEN_NOT_EXECUTED",
+  "evidence_ceiling": "EXPLORATORY_ONLY",
+  "power_gate_status": "NOT_ASSESSED_ON_REAL_DATA",
+  "power_gate_note": "Power Gate V1.4 cannot certify POWER_READY without a preregistered level calibration (NEXUS_POWER_GATE_V1). Until then every run of this hypothesis is EXPLORATORY_ONLY. Never promote to VALIDATED from this experiment alone.",
+  "data_access_statement": "Written in a cloud container that has no sourced NFP/CPI/FOMC calendar with verified pre-release timestamps and no Phase 7 tick/M15 files for this hypothesis. No spread/range outcome has been computed on any real gold series before this file was committed. The committed CSV under fixtures/ is SYNTHETIC_FIXTURE for CI only.",
+  "question": "In the window from 5 minutes before to 30 minutes after scheduled NFP, CPI, and FOMC statement releases, are mean bid-ask spread and mid-price range on XAUUSD strictly higher than the same America/New_York local clock on matched non-event weekdays, with stable sign across two discovery windows and without single-year concentration?",
+  "phase": "1_non_directional_microstructure",
+  "phase_note": "Phase 1 does not trade direction. It only tests whether microstructure (spread, range) elevates in the event window — the premise for blocking or reducing entries. Directional event trading is out of V1 scope and needs a new hypothesis_id plus consensus/surprise fields.",
+  "primary_outcome": "joint elevation: at least one of mean_spread_delta or mean_range_delta has month-block CI95 with low > 0 on combined discoveries",
+  "secondary_outcomes": [
+    "mean_spread_delta",
+    "mean_range_delta",
+    "mean_spread_delta_ci95_month_blocks",
+    "mean_range_delta_ci95_month_blocks",
+    "yearly_mean_spread_delta",
+    "sign_agreement_discovery_a_vs_b",
+    "n_closed per split"
+  ],
+  "comparator": {
+    "id": "SAME_CLOCK_NON_EVENT_WEEKDAYS",
+    "definition": "For each event, measure mean_spread and mid_range in [release−pre_minutes, release+post_minutes). Control = mean of the same America/New_York local clock windows on up to max_controls_per_event non-event weekdays with the same weekday, inside the split, outside exclusions, within control_lookback_weeks. Delta = event_metric − mean(control_metric). Falsify (F1) if neither spread_delta nor range_delta has CI low > 0.",
+    "not_a_matched_regime_baseline": true
+  },
+  "params": {
+    "event_types": [
+      "NFP",
+      "CPI",
+      "FOMC_STATEMENT"
+    ],
+    "pre_minutes": 5,
+    "post_minutes": 30,
+    "bar_minutes": 15,
+    "min_bars_per_window": 2,
+    "control_lookback_weeks": 8,
+    "max_controls_per_event": 4,
+    "min_controls_per_event": 2,
+    "weekday_only": true,
+    "control_timezone": "America/New_York",
+    "spread_definition": "ask_open_minus_bid_open",
+    "range_definition": "max_mid_minus_min_mid_in_window",
+    "primary_metric": "joint_spread_or_range_elevation",
+    "bootstrap_block": "month",
+    "bootstrap_n": 2000,
+    "bootstrap_seed": 20261030,
+    "min_n_per_discovery": 12,
+    "min_n_combined_for_ci": 24,
+    "year_concentration_max_share": 0.5
+  },
+  "param_provenance": {
+    "pre_minutes": "5 — research 01 candidate #3: block/reduce from 5 minutes before release",
+    "post_minutes": "30 — research 01 candidate #3: through 30 minutes after release",
+    "event_types": "NFP, CPI, FOMC_STATEMENT only in V1; PCE and others out of scope",
+    "control_lookback_weeks": "8 weeks a priori for same-weekday matched controls",
+    "max_controls_per_event": "4 a priori cap to keep matched sets tight",
+    "min_controls_per_event": "2 a priori minimum usable controls",
+    "min_n_per_discovery": "12 events — lower than daily-session studies because macro events are sparse (~3/month combined)",
+    "year_concentration_max_share": "0.5 a priori concentration falsifier on mean_spread_delta"
+  },
+  "params_sha256": "1677a4464108a2936b89dc6a720aca474bdec566198547d34b77ad9af1f37ea6",
+  "calendar_prerequisite": {
+    "required": true,
+    "schema": "macro_calendar_v1.release_time.REQUIRED_COLUMNS",
+    "must_include": [
+      "event",
+      "reference_period",
+      "release_date_local",
+      "release_time_local",
+      "local_timezone",
+      "source_url",
+      "retrieved_at_utc"
+    ],
+    "timestamp_rule": "Use the public release clock available *before* the print (scheduled/announced time from agency archives). Never invent times. Never use post-hoc revised clocks without documenting the revision.",
+    "consensus_rule": "forecast/consensus may be empty for phase-1 microstructure. Directional phase (future hypothesis_id) requires forecast with forecast_source licensed before release.",
+    "how_to_obtain": "See server/research_scripts/macro_calendar_v1/SOURCES.md — BLS (CPI/NFP, often 403 from non-browser), Fed FOMC calendars + press releases (14:00 ET verified on sample statements), optional MT5 CalendarValueHistory export on PC. Store as CSV under macro_event_gate_v1/data/ (gitignored) with source_url per row.",
+    "fixture": "fixtures/sample_events_synthetic.csv is SYNTHETIC_FIXTURE for CI schema/window tests only; runner refuses it unless --allow-synthetic-calendar."
+  },
+  "splits": {
+    "discovery_a": {
+      "start_utc": "2023-02-04T00:00:00+00:00",
+      "end_utc": "2024-08-04T00:00:00+00:00",
+      "access": "ITERABLE for this hypothesis only"
+    },
+    "discovery_b": {
+      "start_utc": "2024-08-04T00:00:00+00:00",
+      "end_utc": "2025-11-04T00:00:00+00:00",
+      "access": "ITERABLE for this hypothesis only; used for sign-stability falsifier vs discovery_a"
+    },
+    "internal_validation": {
+      "start_utc": "2025-11-04T00:00:00+00:00",
+      "end_utc": "2026-02-04T00:00:00+00:00",
+      "access": "ONE_SHOT after combined_discoveries pass with frozen params; max EXPLORATORY_PROMISING / EXPLORATORY_ONLY"
+    },
+    "excluded_consumed_holdout_2022": {
+      "start_utc": "2022-02-04T00:00:00+00:00",
+      "end_utc": "2023-02-03T23:59:59+00:00",
+      "access": "PHYSICALLY_EXCLUDED — already consumed; runner refuses"
+    },
+    "excluded_phase7_sealed_holdout": {
+      "start_utc": "2026-02-04T00:00:00+00:00",
+      "end_utc": "2026-09-16T23:59:59+00:00",
+      "access": "PHYSICALLY_EXCLUDED — Phase 7 sealed holdout; runner refuses"
+    },
+    "forward_after_seal": {
+      "start_utc": "2026-09-17T00:00:00+00:00",
+      "end_utc": null,
+      "access": "NOT in V1 runner; future independence window after seal"
+    }
+  },
+  "excluded_windows_must_refuse": [
+    [
+      "2022-02-04",
+      "2023-02-03"
+    ],
+    [
+      "2026-02-04",
+      "2026-09-16"
+    ]
+  ],
+  "falsification": {
+    "F1_spread_and_vol_not_elevated_vs_same_clock": "On combined discovery_a∪discovery_b, neither mean_spread_delta nor mean_range_delta has month-block bootstrap 95% CI with low > 0 → FAIL",
+    "F2_year_concentration": "Among years with n≥8 in combined discoveries, one year share of sum(max(yearly_mean_spread_delta,0)) > year_concentration_max_share → FAIL",
+    "F3_sign_flip_across_discoveries": "sign(primary elevated metric) differs between discovery_a and discovery_b when both n≥min_n_per_discovery → FAIL",
+    "insufficient_n": "discovery n_closed < min_n_per_discovery or combined n_closed < min_n_combined_for_ci → INSUFFICIENT_EVIDENCE"
+  },
+  "decision_vocabulary": {
+    "FAIL": "F1–F3 fires with adequate n",
+    "INSUFFICIENT_EVIDENCE": "n below preregistered minima",
+    "EXPLORATORY_PROMISING": "Elevation survives F1–F3; still EXPLORATORY_ONLY / not POWER_READY / not VALIDATED; does not authorize live gate enable alone",
+    "VALIDATED": "FORBIDDEN for this hypothesis_id — requires separate promotion gate with power + true holdout + parity"
+  },
+  "exposure_statement": {
+    "this_hypothesis": "No real XAUUSD tick/M15 series and no sourced macro calendar have been read for outcome computation under this hypothesis_id.",
+    "neighbouring_studies": "Phase 7 / session-drift / trend-gate traversed overlapping calendars for other estimands. Macro-gate microstructure is a different estimand, but discovery/IV windows are not a virgin TRUE_HOLDOUT.",
+    "consequence": "Maximum after internal_validation: EXPLORATORY_PROMISING under evidence_ceiling EXPLORATORY_ONLY.",
+    "rule": "Parameters may change only under a new hypothesis_id. Runner refuses a run whose params hash differs from an earlier run of the same hypothesis_id."
+  },
+  "anti_scope": [
+    "No SMC / CRT / Elliott hunt",
+    "No re-enable of FAILED or DEFECT_BLOCKED strategies",
+    "No MQL5 live signal wiring in V1",
+    "No promotion to edge-validation-registry VALIDATED",
+    "No reading excluded holdout windows",
+    "No directional surprise trading in V1",
+    "No invented backtest results or invented release timestamps",
+    "Do not continue SD-TOKYO-LONDON-001 or TG-12M-GATE-001 (both FAIL)"
+  ],
+  "known_limits": [
+    "Sparse events → smaller n than session-drift; month-block CI may be wide",
+    "M15 mid-range is a coarse vol proxy; tick-level realized vol is a future refinement under a new hypothesis_id",
+    "Broker spreads differ from Dukascopy research ticks",
+    "Power Gate V1.4: EXPLORATORY_ONLY / NOT_ASSESSABLE until level calibration exists",
+    "Consensus/forecast often unavailable without paid license — not required for phase 1"
+  ],
+  "pc_execution": {
+    "required_data": [
+      "Sourced calendar CSV (NFP+CPI+FOMC_STATEMENT) with release_date_local + release_time_local + source_url",
+      "M15 bid/ask bars (or tick→M15) covering discovery windows; Phase 7 Dukascopy path on PC"
+    ],
+    "commands": [
+      "cd server/research_scripts",
+      "pip install -r ../requirements-dev.txt",
+      "python -m macro_event_gate_v1.run_experiment --split discovery_a --calendar-csv /path/to/calendar.csv --bars-csv /path/to/m15.csv",
+      "python -m macro_event_gate_v1.run_experiment --split discovery_b --calendar-csv /path/to/calendar.csv --bars-csv /path/to/m15.csv",
+      "python -m macro_event_gate_v1.run_experiment --split combined_discoveries --calendar-csv /path/to/calendar.csv --bars-csv /path/to/m15.csv",
+      "python -m macro_event_gate_v1.run_experiment --split internal_validation --calendar-csv /path/to/calendar.csv --bars-csv /path/to/m15.csv"
+    ],
+    "tester_note": "MT5 Tester parity is optional later and not required to falsify V1 on research M15"
+  }
+}

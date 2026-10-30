@@ -1,0 +1,10 @@
+event,reference_period,release_date_local,release_time_local,local_timezone,source_url,retrieved_at_utc,actual,forecast,previous,forecast_source,revision_note
+NFP,2024-01,2024-02-02,08:30,America/New_York,https://example.invalid/macro_event_gate_v1/fixture,2026-10-30T00:00:00Z,,,,,SYNTHETIC_FIXTURE — CI only; not a real BLS timestamp
+CPI,2024-01,2024-02-13,08:30,America/New_York,https://example.invalid/macro_event_gate_v1/fixture,2026-10-30T00:00:00Z,,,,,SYNTHETIC_FIXTURE — CI only; not a real BLS timestamp
+FOMC_STATEMENT,2024-01,2024-01-31,14:00,America/New_York,https://example.invalid/macro_event_gate_v1/fixture,2026-10-30T00:00:00Z,,,,,SYNTHETIC_FIXTURE — CI only; not a real Fed timestamp
+NFP,2024-06,2024-07-05,08:30,America/New_York,https://example.invalid/macro_event_gate_v1/fixture,2026-10-30T00:00:00Z,,,,,SYNTHETIC_FIXTURE — CI only
+CPI,2024-06,2024-07-11,08:30,America/New_York,https://example.invalid/macro_event_gate_v1/fixture,2026-10-30T00:00:00Z,,,,,SYNTHETIC_FIXTURE — CI only
+FOMC_STATEMENT,2024-06,2024-06-12,14:00,America/New_York,https://example.invalid/macro_event_gate_v1/fixture,2026-10-30T00:00:00Z,,,,,SYNTHETIC_FIXTURE — CI only
+NFP,2025-01,2025-02-07,08:30,America/New_York,https://example.invalid/macro_event_gate_v1/fixture,2026-10-30T00:00:00Z,,,,,SYNTHETIC_FIXTURE — CI only
+CPI,2025-01,2025-02-12,08:30,America/New_York,https://example.invalid/macro_event_gate_v1/fixture,2026-10-30T00:00:00Z,,,,,SYNTHETIC_FIXTURE — CI only
+FOMC_STATEMENT,2025-01,2025-01-29,14:00,America/New_York,https://example.invalid/macro_event_gate_v1/fixture,2026-10-30T00:00:00Z,,,,,SYNTHETIC_FIXTURE — CI only
