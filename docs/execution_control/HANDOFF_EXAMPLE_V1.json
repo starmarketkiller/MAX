@@ -1,0 +1,17 @@
+{
+  "schema_version": "EXECUTION_CONTROL_HANDOFF_EXAMPLE_V1",
+  "item_id": "M1-EXECUTION-CONTROL-V1",
+  "from_owner": "CODEX",
+  "to_owner": {"agent_id": "CLAUDE", "role": "INDEPENDENT_REVIEWER"},
+  "reason": "Implementation complete; independent review requested",
+  "acceptance": [
+    "Confirm SharedCognitiveState remains the only portfolio work graph",
+    "Confirm TaskQueue and EventLedger semantics are unchanged",
+    "Review WIP, transition, dependency and idempotency evidence"
+  ],
+  "effects": [
+    "owner changes atomically",
+    "handoff history is append-only inside the work item",
+    "no task execution, merge, deploy or external notification is triggered"
+  ]
+}
