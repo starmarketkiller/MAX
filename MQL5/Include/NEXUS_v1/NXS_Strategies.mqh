@@ -2072,13 +2072,18 @@ struct SNXSOBState {
    double   obLo, obHi;
    datetime lastBarTime;
    int      barsWaited;
+   long     id;            // 19/10 - identita' stabile per Level Registry (Phase A OB)
 };
 SNXSOBState g_obBuy, g_obSell;
+long        g_obLevelIdCounter = 0;
 
 SNXSSignal NXS_OB_UpdateSide(int dir, SNXSOBState &st, ENUM_TIMEFRAMES tf, double atr, datetime curBar0){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_ORDER_BLOCK; s.stratName = "ORDER_BLOCK";
    bool newBar = (st.lastBarTime != curBar0);
+   // Convenzione allineata a WICK: zona di domanda (BUY) = side LOW; offerta = HIGH.
+   string sideLbl = (dir == +1) ? "LOW" : "HIGH";
+   ENUM_NXS_DIR fadeDir = (dir == +1) ? DIR_BUY : DIR_SELL;
 
    if(!st.active){
       if(!newBar) return s;
@@ -2109,6 +2114,13 @@ SNXSSignal NXS_OB_UpdateSide(int dir, SNXSOBState &st, ENUM_TIMEFRAMES tf, doubl
          st.obLo = MathMin(originA, originB);
          st.obHi = MathMax(originA, originB);
          st.active = true; st.barsWaited = 0;
+         st.id = ++g_obLevelIdCounter;
+         g_obFunnel.zonesCreated++;
+         // Phase A OB: telemetry-only. Mid-zone come prezzo canonico (schema
+         // a prezzo singolo; zone_top/bot arriveranno in una fase successiva).
+         if(InpLevelRegistry_ObTelemetry)
+            NXS_Reaction_OnObCreated(st.id, sideLbl, fadeDir,
+                                     0.5 * (st.obLo + st.obHi), TimeCurrent(), tf);
          break;
       }
       return s;
@@ -2118,10 +2130,24 @@ SNXSSignal NXS_OB_UpdateSide(int dir, SNXSOBState &st, ENUM_TIMEFRAMES tf, doubl
    if(newBar){
       st.lastBarTime = curBar0;
       st.barsWaited++;
-      if(st.barsWaited > InpOB_MaxWaitBars){ st.active = false; return s; }
+      if(st.barsWaited > InpOB_MaxWaitBars){
+         long deadId = st.id;
+         st.active = false;
+         g_obFunnel.invalidatedMaxWait++;
+         if(InpLevelRegistry_ObTelemetry && deadId != 0)
+            NXS_Reaction_OnObInvalidated(deadId, fadeDir, tf, TimeCurrent(), "max_wait_bars");
+         return s;
+      }
       double c1 = iClose(g_sym, tf, 1);
       // Invalidazione: chiusura che attraversa completamente la zona nel verso sbagliato.
-      if((dir == +1 && c1 < st.obLo) || (dir == -1 && c1 > st.obHi)){ st.active = false; return s; }
+      if((dir == +1 && c1 < st.obLo) || (dir == -1 && c1 > st.obHi)){
+         long deadId = st.id;
+         st.active = false;
+         g_obFunnel.invalidatedPrice++;
+         if(InpLevelRegistry_ObTelemetry && deadId != 0)
+            NXS_Reaction_OnObInvalidated(deadId, fadeDir, tf, TimeCurrent(), "price_through_zone");
+         return s;
+      }
    }
    if(st.obHi <= st.obLo) return s;
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
@@ -2135,7 +2161,11 @@ SNXSSignal NXS_OB_UpdateSide(int dir, SNXSOBState &st, ENUM_TIMEFRAMES tf, doubl
    } else {
       s.dir = DIR_SELL; s.score = 70; s.reason = "OB_retest_bear";
    }
+   long consumedId = st.id;
    st.active = false;   // one-shot: la zona e' consumata dopo il primo retest
+   g_obFunnel.consumed++;
+   if(InpLevelRegistry_ObTelemetry && consumedId != 0)
+      NXS_Reaction_OnObConsumed(consumedId, fadeDir, tf, TimeCurrent());
    return s;
 }
 
