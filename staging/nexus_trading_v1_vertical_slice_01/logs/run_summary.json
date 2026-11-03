@@ -1,0 +1,33 @@
+{
+  "dataset_coverage": {
+    "first_bar_open_utc": "2019-02-03T20:00:00+00:00",
+    "last_bar_open_utc": "2022-02-03T16:00:00+00:00",
+    "last_bar_available_at_utc": "2022-02-03T20:00:00Z",
+    "row_count": 4808
+  },
+  "total_bars_processed": 4808,
+  "decision_counts": {
+    "WAIT": 4447,
+    "BUY": 156,
+    "SELL": 205
+  },
+  "reason_counts": {
+    "INSUFFICIENT_WARMUP_HISTORY": 20,
+    "CANDIDATE_LONG_SWEEP_RECLAIM": 156,
+    "NO_SWEEP_DETECTED": 3817,
+    "CANDIDATE_SHORT_SWEEP_RECLAIM": 205,
+    "SWEEP_WITHOUT_RECLAIM_NOT_H1A_SETUP": 470,
+    "DUPLICATE_SUPPRESSED_OPEN_ATTEMPT_EXISTS": 140
+  },
+  "total_paper_attempts": 361,
+  "outcome_counts": {
+    "TP_HIT": 150,
+    "SL_HIT": 211
+  },
+  "final_equity": 23462.505755954197,
+  "starting_equity": 10000.0,
+  "decisions_log_chain_verified": true,
+  "attempts_log_chain_verified": true,
+  "strategy_id": "H1_A",
+  "strategy_version": "H1_A_V1"
+}

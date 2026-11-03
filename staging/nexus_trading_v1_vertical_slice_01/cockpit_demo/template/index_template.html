@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEXUS Cockpit Demo — H1_A Paper Slice (ISOLATA)</title>
+<style>
+  :root{
+    --bg:#0e1117; --panel:#161b24; --panel2:#1d2330; --border:#2a3140;
+    --text:#e6e9ef; --muted:#8a93a6; --green:#36c98a; --red:#e2596b;
+    --amber:#e2b93b; --blue:#5b9bf0; --mono:ui-monospace,Consolas,"SF Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:14px}
+  header{padding:14px 18px;border-bottom:1px solid var(--border);background:var(--panel)}
+  header h1{margin:0;font-size:16px;font-weight:600}
+  header .sub{color:var(--muted);font-size:12px;margin-top:3px}
+  .banner{background:#2a2110;border:1px solid #5a4a1a;color:#e2b93b;
+          padding:8px 14px;font-size:12px;line-height:1.5}
+  .layout{display:grid;grid-template-columns:1fr 320px;gap:14px;padding:14px;max-width:1500px;margin:0 auto}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px}
+  .panel h2{margin:0 0 10px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+  button, select{background:var(--panel2);color:var(--text);border:1px solid var(--border);
+                 border-radius:5px;padding:6px 10px;font-size:12px;cursor:pointer}
+  button:hover{border-color:var(--blue)}
+  button:disabled{opacity:.4;cursor:default}
+  input[type=range]{flex:1;min-width:160px}
+  .asof{font-family:var(--mono);color:var(--blue);font-size:12px}
+  #chart-wrap{overflow:hidden}
+  svg{width:100%;height:420px;display:block}
+  .candle-up{fill:var(--green)}
+  .candle-down{fill:var(--red)}
+  .wick{stroke:var(--muted);stroke-width:1}
+  .level-line{stroke:var(--amber);stroke-width:1;stroke-dasharray:3,3;opacity:.7}
+  .marker-buy{fill:var(--green)}
+  .marker-sell{fill:var(--red)}
+  .marker-wait{fill:#444b5a}
+  .trade-line{stroke-width:1.4}
+  .trade-sl{stroke:var(--red);stroke-dasharray:4,2}
+  .trade-tp{stroke:var(--green);stroke-dasharray:4,2}
+  .axis-label{fill:var(--muted);font-size:10px;font-family:var(--mono)}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  th,td{padding:4px 5px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  tr.row-tp{color:var(--green)}
+  tr.row-sl{color:var(--red)}
+  tr.row-open{color:var(--blue)}
+  .decision-row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px;border-bottom:1px solid var(--border)}
+  .decision-row .k{color:var(--muted)}
+  .decision-row .v{font-family:var(--mono)}
+  .badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600}
+  .badge-buy{background:rgba(54,201,138,.18);color:var(--green)}
+  .badge-sell{background:rgba(226,89,107,.18);color:var(--red)}
+  .badge-wait{background:rgba(138,147,166,.18);color:var(--muted)}
+  .veto-note{color:var(--amber);font-size:11px;margin-top:4px}
+  .journal-scroll{max-height:260px;overflow-y:auto}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:4px}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  footer{padding:14px 18px;color:var(--muted);font-size:11px;border-top:1px solid var(--border)}
+  .tf-note{font-size:11px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>NEXUS Trading V1 — Vertical Slice 01 — Cockpit Demo</h1>
+  <div class="sub">XAUUSD · H1_A (Sweep/Reclaim) · H1_A_V1 · PAPER-ONLY · demo isolata, non collegata al frontend canonico NEXUS</div>
+</header>
+<div class="banner" id="no-claim-banner"></div>
+
+<div class="layout">
+  <div>
+    <div class="panel">
+      <h2>Replay</h2>
+      <div class="controls">
+        <button id="btn-start">⏮</button>
+        <button id="btn-back">◀ step</button>
+        <button id="btn-play">▶ Play</button>
+        <button id="btn-fwd">step ▶</button>
+        <button id="btn-end">⏭</button>
+        <button id="btn-next-signal">Next BUY/SELL ▶</button>
+        <select id="speed">
+          <option value="900">Lenta</option>
+          <option value="400" selected>Normale</option>
+          <option value="120">Rapida</option>
+        </select>
+        <select id="tf-select">
+          <option value="H4">Timeframe: H4 (nativo)</option>
+          <option value="D1">Timeframe: D1 (solo aggregazione display)</option>
+        </select>
+      </div>
+      <input type="range" id="scrubber" min="0" max="0" value="0">
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span class="asof" id="asof-label">—</span>
+        <span class="asof" id="idx-label">—</span>
+      </div>
+      <div id="tf-note" class="tf-note"></div>
+    </div>
+
+    <div class="panel" id="chart-panel" style="margin-top:14px">
+      <h2>Chart — XAUUSD</h2>
+      <div id="chart-wrap"><svg id="chart" viewBox="0 0 1100 420" preserveAspectRatio="none"></svg></div>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--green)"></span>candela rialzista / BUY</span>
+        <span><span class="dot" style="background:var(--red)"></span>candela ribassista / SELL</span>
+        <span><span class="dot" style="background:#444b5a"></span>WAIT</span>
+        <span><span class="dot" style="background:var(--amber)"></span>livello Donchian N=20 (high/low)</span>
+        <span><span class="dot" style="background:var(--blue)"></span>fill paper trade</span>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <h2>Decisione — bar corrente</h2>
+      <div id="decision-box"></div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h2>Trade apertura corrente (se presente)</h2>
+      <div id="open-trade-box">— nessun paper attempt aperto —</div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h2>Trade Journal (chiusi, fino a bar corrente)</h2>
+      <div class="journal-scroll">
+        <table id="journal-table">
+          <thead><tr>
+            <th>#</th><th>Dir</th><th>Fill</th><th>Exit</th><th>Esito</th><th>PnL</th><th>Bar held</th>
+          </tr></thead>
+          <tbody id="journal-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Strategy contract: STRATEGY_CONTRACT_H1_A.md · Dati: DATA_PROVENANCE.md · Limiti: LIMITATIONS.md ·
+  Questa demo usa una finestra fissa di bar reali già prodotta da scripts/run_full_replay.py e
+  scripts/export_cockpit_data.py — nessuna nuova simulazione viene eseguita nel browser.
+  Nessun ordine viene mai inviato a MetaTrader o a un broker: è una ricostruzione grafica locale,
+  offline, di decisioni e paper-trade già registrati nei log hash-chained di questa slice.
+</footer>
+
+<script id="cockpit-data" type="application/json">__COCKPIT_DATA_JSON__</script>
+<script>
+(function(){
+  "use strict";
+  const DATA = JSON.parse(document.getElementById("cockpit-data").textContent);
+  const bars = DATA.bars;
+  const decisionsByEpoch = {};
+  DATA.decisions.forEach(d => { decisionsByEpoch[d.bar_epoch] = d; });
+  const attempts = DATA.attempts.slice().sort((a,b) => a.signal_bar_epoch - b.signal_bar_epoch);
+
+  document.getElementById("no-claim-banner").textContent =
+    "⚠ " + DATA.meta.no_economic_claim;
+
+  const VISIBLE_N = 60;
+  let currentIndex = 0;
+  let playing = false;
+  let playTimer = null;
+  let tfView = "H4";
+
+  const scrubber = document.getElementById("scrubber");
+  scrubber.max = bars.length - 1;
+
+  function fmtTime(iso){
+    if(!iso) return "—";
+    return iso.replace("T"," ").replace("Z"," UTC").slice(0,19) + " UTC";
+  }
+  function fmtPrice(v){ return (v===null||v===undefined||Number.isNaN(v)) ? "—" : v.toFixed(3); }
+  function fmtPnl(v){
+    if(v===null||v===undefined) return "—";
+    const s = v>=0 ? "+" : "";
+    return s + v.toFixed(2);
+  }
+
+  function attemptsActiveAt(epoch){
+    return attempts.filter(a =>
+      a.fill_bar_epoch !== null && a.fill_bar_epoch <= epoch &&
+      (a.exit_bar_epoch === null || a.exit_bar_epoch >= epoch)
+    );
+  }
+  function attemptsClosedUpTo(epoch){
+    return attempts.filter(a => a.exit_bar_epoch !== null && a.exit_bar_epoch <= epoch && !a.is_open)
+      .sort((a,b) => a.exit_bar_epoch - b.exit_bar_epoch);
+  }
+  function openAttemptAt(epoch){
+    return attempts.find(a => a.fill_bar_epoch !== null && a.fill_bar_epoch <= epoch &&
+      (a.exit_bar_epoch === null || a.exit_bar_epoch > epoch) && a.is_open === false && a.outcome === null)
+      || attempts.find(a => a.is_open && a.fill_bar_epoch !== null && a.fill_bar_epoch <= epoch);
+  }
+
+  function groupByDate(barsSlice){
+    const groups = [];
+    let cur = null;
+    barsSlice.forEach(b => {
+      const date = (b.bar_open_utc || "").slice(0,10);
+      if(!cur || cur.date !== date){
+        cur = {date, open:b.open, high:b.high, low:b.low, close:b.close,
+               startEpoch:b.bar_epoch, endEpoch:b.bar_epoch};
+        groups.push(cur);
+      } else {
+        cur.high = Math.max(cur.high, b.high);
+        cur.low = Math.min(cur.low, b.low);
+        cur.close = b.close;
+        cur.endEpoch = b.bar_epoch;
+      }
+    });
+    return groups;
+  }
+
+  function render(){
+    const bar = bars[currentIndex];
+    document.getElementById("asof-label").textContent = "as of: " + fmtTime(bar.available_at_utc);
+    document.getElementById("idx-label").textContent = "bar " + (currentIndex+1) + " / " + bars.length;
+    scrubber.value = currentIndex;
+    renderChart();
+    renderDecision(bar);
+    renderOpenTrade(bar);
+    renderJournal(bar);
+  }
+
+  function renderDecision(bar){
+    const d = decisionsByEpoch[bar.bar_epoch];
+    const box = document.getElementById("decision-box");
+    if(!d){ box.innerHTML = "<div class='decision-row'><span class='k'>nessun record</span></div>"; return; }
+    const cls = d.h1a_decision === "BUY" ? "badge-buy" : d.h1a_decision === "SELL" ? "badge-sell" : "badge-wait";
+    let html = "";
+    html += row("Timestamp", fmtTime(d.causal_timestamp));
+    html += `<div class="decision-row"><span class="k">Decisione</span><span class="v"><span class="badge ${cls}">${d.h1a_decision}</span></span></div>`;
+    html += row("Reason code", d.h1a_reason_code);
+    html += row("Level high (N=20)", fmtPrice(d.level_high_observed));
+    html += row("Level low (N=20)", fmtPrice(d.level_low_observed));
+    html += row("Sweep buffer usato", fmtPrice(d.sweep_buffer_used));
+    if(d.candidate_detail){
+      html += row("Direzione candidato", d.candidate_detail.direction);
+      html += row("Sweep extreme", fmtPrice(d.candidate_detail.sweep_extreme));
+      html += row("Livello di riferimento", fmtPrice(d.candidate_detail.level));
+    }
+    html += row("Shadow audit (phase5d)", d.shadow_audit_event ? d.shadow_audit_event.hypothetical_decision + " / " + d.shadow_audit_event.authorization_status : "—");
+    box.innerHTML = html;
+    if(d.is_veto){
+      box.innerHTML += `<div class="veto-note">⚠ Candidato originale "${d.h1a_decision_pre_veto}" soppresso — motivo: ${d.veto_reason}</div>`;
+    }
+    function row(k,v){ return `<div class="decision-row"><span class="k">${k}</span><span class="v">${v}</span></div>`; }
+  }
+
+  function renderOpenTrade(bar){
+    const box = document.getElementById("open-trade-box");
+    const active = attemptsActiveAt(bar.bar_epoch).filter(a => a.outcome === null || a.exit_bar_epoch === null || a.exit_bar_epoch > bar.bar_epoch || a.is_open);
+    const live = attemptsActiveAt(bar.bar_epoch).filter(a => a.exit_bar_epoch === null || a.exit_bar_epoch >= bar.bar_epoch);
+    if(live.length === 0){ box.innerHTML = "— nessun paper attempt aperto —"; return; }
+    const a = live[0];
+    box.innerHTML = `
+      <div class="decision-row"><span class="k">ID</span><span class="v">${a.attempt_id}</span></div>
+      <div class="decision-row"><span class="k">Direzione</span><span class="v">${a.direction}</span></div>
+      <div class="decision-row"><span class="k">Fill</span><span class="v">${fmtPrice(a.fill_price)}</span></div>
+      <div class="decision-row"><span class="k">Stop</span><span class="v">${fmtPrice(a.stop_price)}</span></div>
+      <div class="decision-row"><span class="k">Target (2R)</span><span class="v">${fmtPrice(a.target_price)}</span></div>
+      <div class="decision-row"><span class="k">Volume</span><span class="v">${a.volume ? a.volume.toFixed(3) : "—"}</span></div>
+      <div class="decision-row"><span class="k">Rischio ($)</span><span class="v">${fmtPrice(a.risk_amount)}</span></div>
+      <div class="decision-row"><span class="k">Bars held</span><span class="v">${a.bars_held}</span></div>
+      <div class="decision-row"><span class="k">Esito</span><span class="v">${a.outcome || "in corso"}</span></div>
+    `;
+  }
+
+  function renderJournal(bar){
+    const closed = attemptsClosedUpTo(bar.bar_epoch);
+    const body = document.getElementById("journal-body");
+    body.innerHTML = closed.slice().reverse().map((a,i) => {
+      const rowCls = a.outcome === "TP_HIT" ? "row-tp" : a.outcome === "SL_HIT" ? "row-sl" : "row-open";
+      const pnl = a.cost_breakdown ? a.cost_breakdown.realized_pnl : null;
+      return `<tr class="${rowCls}">
+        <td>${closed.length - i}</td><td>${a.direction}</td>
+        <td>${fmtPrice(a.fill_price)}</td><td>${fmtPrice(a.exit_price)}</td>
+        <td>${a.outcome}</td><td>${fmtPnl(pnl)}</td><td>${a.bars_held}</td>
+      </tr>`;
+    }).join("") || "<tr><td colspan='7' style='text-align:center;color:var(--muted)'>nessun trade chiuso finora</td></tr>";
+  }
+
+  function renderChart(){
+    const svg = document.getElementById("chart");
+    const W = 1100, H = 420, padL = 56, padR = 16, padT = 14, padB = 26;
+    const start = Math.max(0, currentIndex - VISIBLE_N + 1);
+    const slice = bars.slice(start, currentIndex + 1);
+
+    let candles, note;
+    if(tfView === "D1"){
+      candles = groupByDate(slice).map(g => ({...g, isAgg:true}));
+      note = "Vista D1: aggregazione SOLO per visualizzazione (OHLC raggruppato per giornata UTC). " +
+             "Livelli, sweep e marker di decisione sono calcolati e mostrati SOLO in H4 nativo: " +
+             "non esiste una logica decisionale D1 in questa slice.";
+    } else {
+      candles = slice.map(b => ({...b, isAgg:false}));
+      note = "Vista H4 nativa: ogni candela è il bar su cui il motore decisionale H1_A ha realmente operato.";
+    }
+    document.getElementById("tf-note").textContent = note;
+
+    let lo = Infinity, hi = -Infinity;
+    slice.forEach(b => { lo = Math.min(lo, b.low); hi = Math.max(hi, b.high); });
+    if(tfView === "H4"){
+      slice.forEach(b => {
+        const d = decisionsByEpoch[b.bar_epoch];
+        if(d){
+          if(d.level_high_observed) hi = Math.max(hi, d.level_high_observed);
+          if(d.level_low_observed) lo = Math.min(lo, d.level_low_observed);
+        }
+      });
+      attemptsActiveAt(bars[currentIndex].bar_epoch).forEach(a => {
+        if(a.stop_price) { hi = Math.max(hi, a.stop_price); lo = Math.min(lo, a.stop_price); }
+        if(a.target_price) { hi = Math.max(hi, a.target_price); lo = Math.min(lo, a.target_price); }
+      });
+    }
+    const pad = (hi - lo) * 0.08 || 1;
+    lo -= pad; hi += pad;
+    const y = v => padT + (hi - v) / (hi - lo) * (H - padT - padB);
+    const n = candles.length;
+    const slotW = (W - padL - padR) / Math.max(n,1);
+    const x = i => padL + i * slotW + slotW/2;
+
+    let svgParts = [];
+    // y-axis labels
+    for(let k=0;k<=4;k++){
+      const v = lo + (hi-lo)*k/4;
+      svgParts.push(`<text class="axis-label" x="2" y="${y(v)+3}">${v.toFixed(1)}</text>`);
+      svgParts.push(`<line x1="${padL}" y1="${y(v)}" x2="${W-padR}" y2="${y(v)}" stroke="#20262f" stroke-width="1"/>`);
+    }
+
+    // level lines (H4 only)
+    if(tfView === "H4"){
+      let prevHighPt = null, prevLowPt = null;
+      slice.forEach((b,i) => {
+        const d = decisionsByEpoch[b.bar_epoch];
+        if(!d) return;
+        const xc = x(i);
+        if(d.level_high_observed != null){
+          svgParts.push(`<line class="level-line" x1="${xc-slotW/2}" y1="${y(d.level_high_observed)}" x2="${xc+slotW/2}" y2="${y(d.level_high_observed)}"/>`);
+        }
+        if(d.level_low_observed != null){
+          svgParts.push(`<line class="level-line" x1="${xc-slotW/2}" y1="${y(d.level_low_observed)}" x2="${xc+slotW/2}" y2="${y(d.level_low_observed)}"/>`);
+        }
+      });
+    }
+
+    // candles
+    candles.forEach((c,i) => {
+      const xc = x(i);
+      const up = c.close >= c.open;
+      const bw = Math.max(2, slotW*0.6);
+      svgParts.push(`<line class="wick" x1="${xc}" y1="${y(c.high)}" x2="${xc}" y2="${y(c.low)}"/>`);
+      const yo = y(Math.max(c.open,c.close)), yc = y(Math.min(c.open,c.close));
+      svgParts.push(`<rect class="${up?'candle-up':'candle-down'}" x="${xc-bw/2}" y="${yo}" width="${bw}" height="${Math.max(1,yc-yo)}"/>`);
+    });
+
+    // decision markers + trade overlays (H4 only — index-aligned with slice)
+    if(tfView === "H4"){
+      slice.forEach((b,i) => {
+        const d = decisionsByEpoch[b.bar_epoch];
+        if(!d) return;
+        const xc = x(i);
+        if(d.h1a_decision === "BUY"){
+          svgParts.push(`<polygon class="marker-buy" points="${xc-5},${y(b.low)+16} ${xc+5},${y(b.low)+16} ${xc},${y(b.low)+6}"/>`);
+        } else if(d.h1a_decision === "SELL"){
+          svgParts.push(`<polygon class="marker-sell" points="${xc-5},${y(b.high)-16} ${xc+5},${y(b.high)-16} ${xc},${y(b.high)-6}"/>`);
+        } else {
+          svgParts.push(`<circle class="marker-wait" cx="${xc}" cy="${y(b.high)-8}" r="1.6"/>`);
+        }
+        if(d.is_veto){
+          svgParts.push(`<circle cx="${xc}" cy="${y(b.high)-18}" r="3" fill="none" stroke="var(--amber)" stroke-width="1.2"/>`);
+        }
+      });
+
+      attemptsActiveAt(bars[currentIndex].bar_epoch).forEach(a => {
+        const fillIdx = slice.findIndex(b => b.bar_epoch === a.fill_bar_epoch);
+        if(fillIdx === -1 && a.fill_bar_epoch < slice[0].bar_epoch){
+          // entry before visible window: draw SL/TP across whole visible range
+          drawTradeLines(a, 0, n-1);
+        } else if(fillIdx !== -1){
+          const exitIdx = slice.findIndex(b => b.bar_epoch === a.exit_bar_epoch);
+          drawTradeLines(a, fillIdx, exitIdx === -1 ? n-1 : exitIdx);
+          svgParts.push(`<circle cx="${x(fillIdx)}" cy="${y(a.fill_price)}" r="3.5" fill="var(--blue)"/>`);
+        }
+      });
+    }
+
+    function drawTradeLines(a, i0, i1){
+      const x0 = x(i0) - slotW/2, x1 = x(i1) + slotW/2;
+      if(a.stop_price != null){
+        svgParts.push(`<line class="trade-line trade-sl" x1="${x0}" y1="${y(a.stop_price)}" x2="${x1}" y2="${y(a.stop_price)}"/>`);
+      }
+      if(a.target_price != null){
+        svgParts.push(`<line class="trade-line trade-tp" x1="${x0}" y1="${y(a.target_price)}" x2="${x1}" y2="${y(a.target_price)}"/>`);
+      }
+    }
+
+    svg.innerHTML = svgParts.join("");
+  }
+
+  function step(delta){
+    currentIndex = Math.min(bars.length-1, Math.max(0, currentIndex + delta));
+    render();
+  }
+  function jumpNextSignal(){
+    for(let i=currentIndex+1;i<bars.length;i++){
+      const d = decisionsByEpoch[bars[i].bar_epoch];
+      if(d && (d.h1a_decision === "BUY" || d.h1a_decision === "SELL")){
+        currentIndex = i; render(); return;
+      }
+    }
+  }
+  function play(){
+    if(playing) return;
+    playing = true;
+    document.getElementById("btn-play").textContent = "⏸ Pause";
+    const speed = parseInt(document.getElementById("speed").value,10);
+    playTimer = setInterval(() => {
+      if(currentIndex >= bars.length-1){ pause(); return; }
+      step(1);
+    }, speed);
+  }
+  function pause(){
+    playing = false;
+    document.getElementById("btn-play").textContent = "▶ Play";
+    if(playTimer){ clearInterval(playTimer); playTimer = null; }
+  }
+
+  document.getElementById("btn-start").addEventListener("click", () => { pause(); currentIndex=0; render(); });
+  document.getElementById("btn-end").addEventListener("click", () => { pause(); currentIndex=bars.length-1; render(); });
+  document.getElementById("btn-back").addEventListener("click", () => { pause(); step(-1); });
+  document.getElementById("btn-fwd").addEventListener("click", () => { pause(); step(1); });
+  document.getElementById("btn-next-signal").addEventListener("click", () => { pause(); jumpNextSignal(); });
+  document.getElementById("btn-play").addEventListener("click", () => { playing ? pause() : play(); });
+  document.getElementById("speed").addEventListener("change", () => { if(playing){ pause(); play(); } });
+  document.getElementById("tf-select").addEventListener("change", (e) => { tfView = e.target.value; render(); });
+  document.getElementById("scrubber").addEventListener("input", (e) => { pause(); currentIndex = parseInt(e.target.value,10); render(); });
+
+  render();
+})();
+</script>
+</body>
+</html>
