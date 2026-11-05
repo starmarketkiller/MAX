@@ -127,6 +127,19 @@ def test_incomplete_input_must_be_admitted(tmp_path, monkeypatch):
     assert decoded["missing"] == ["records"]
 
 
+def test_factual_answer_without_summary_is_accepted(tmp_path, monkeypatch):
+    svc = _service(tmp_path, monkeypatch)
+    _plant(monkeypatch, json.dumps({
+        "classification": "timeout", "cited_ids": ["E1", "E2"], "missing": ["fill_price"],
+    }))
+    task_id = _delegate(svc, COMPLETE, "input.json")
+    record = svc.orchestrator.process_task(task_id)
+    assert record["state"] == "COMPLETED"
+    decoded = compiler.decode_bounded_output(record["result_packet"]["artifacts_created"])
+    assert decoded["cited_ids"] == ["E1", "E2"]
+    assert decoded["missing"] == ["fill_price"]
+
+
 def test_invented_id_is_rejected_and_not_accepted(tmp_path, monkeypatch):
     svc = _service(tmp_path, monkeypatch)
     _plant(monkeypatch, json.dumps({

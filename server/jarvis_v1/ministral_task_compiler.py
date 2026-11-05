@@ -118,19 +118,15 @@ ANCHORED_FAILURE_REPORT_V1 = MinistralTaskTemplate(
     work_type="routine_summary",
     instructions=(
         "Rispondi SOLO con questo JSON, niente testo prima o dopo:\n"
-        '{"summary":"una frase non vuota","classification":"expected_classification",'
-        '"cited_ids":["ogni id dei fatti"],"missing":["ogni campo missing dei fatti"]}\n'
-        "Sostituisci i segnaposto con i fatti deterministici.\n"
-        "classification copia expected_classification.\n"
-        "cited_ids elenca ogni id e nessun altro.\n"
-        "missing copia la lista missing.\n"
-        "summary e' una frase non vuota e non nomina id assenti."
+        '{"classification":"expected_classification","cited_ids":["ogni id dei fatti"],'
+        '"missing":["ogni campo missing dei fatti"]}\n'
+        "Non aggiungere altre chiavi. summary e' facoltativa.\n"
+        "classification, cited_ids e missing copiano i fatti deterministici."
     ),
     output_contract={
         "classification": "string",
         "cited_ids": "array[string]",
         "missing": "array[string]",
-        "summary": "string",
     },
     required_capabilities=("summaries", "json_structured_output"),
     read_only=True,
