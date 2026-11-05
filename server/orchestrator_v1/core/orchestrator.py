@@ -229,10 +229,24 @@ class Orchestrator:
 
         start = now_iso()
         prompt = handler.build_prompt(record)
-        call_kwargs = {"model": decision.agent["model_or_runtime"].split(" ")[0]}
+        configured_model = decision.agent["model_or_runtime"].split(" ")[0]
+        model, model_error = ollama_worker.resolve_model(configured_model)
+        if model_error:
+            self.ledger.append("TASK_FAILED", task_id, {
+                "reason": "LOCAL_MODEL_OVERRIDE_REJECTED",
+                "configured_model": configured_model, "detail": model_error})
+            self.queue.transition(task_id, "FAILED", dispatch_last_error=model_error)
+            return self.queue.get(task_id)
+        call_kwargs = {"model": model}
+        # A named probe model must not unload the other residents of the daemon.
+        if model != configured_model:
+            call_kwargs["ensure_single_resident"] = False
         # Additive opt-in: legacy handlers and their test doubles retain the
         # exact two-argument call contract.
-        if bool(getattr(handler, "json_mode", False)):
+        wants_json = getattr(handler, "wants_json_mode", None)
+        if callable(wants_json) and wants_json(record):
+            call_kwargs["json_mode"] = True
+        elif bool(getattr(handler, "json_mode", False)):
             call_kwargs["json_mode"] = True
         call = ollama_worker.call_local_model(prompt, **call_kwargs)
         self.ledger.append("TOOL_USED", task_id, {"tool": "ollama_local_model",

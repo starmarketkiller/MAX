@@ -17,6 +17,7 @@ parametro a caso):
   riceve un errore esplicito, mai un tentativo silenzioso su un provider
   premium)."""
 import json
+import os
 import time
 
 import requests
@@ -27,6 +28,7 @@ OLLAMA_BASE = f"http://{OLLAMA_HOST}:{OLLAMA_PORT}"
 DEFAULT_MODEL = "ministral-3:3b"  # selezionato nel Local Model Bake-Off V1 - vedi
                                  # bakeoff_final_report_v1.json, decisione
                                  # LOCAL_MODEL_SELECTION_VALIDATED
+PROBE_MODEL_ENV = "NEXUS_PROBE_LOCAL_MODEL"
 KNOWN_MODELS = ["qwen2.5:3b-instruct", "qwen2.5:7b-instruct", "qwen3:4b", "ministral-3:3b",
                "gemma3:4b"]
 
@@ -42,8 +44,24 @@ def _unload_other_models(keep_model):
             pass
 
 
+def resolve_model(configured):
+    """Return the configured model unless a probe explicitly names another known one.
+
+    An unset NEXUS_PROBE_LOCAL_MODEL preserves the caller value, which on the
+    canonical path is ministral-3:3b. A set value outside KNOWN_MODELS fails
+    closed and is never replaced with a different installed model.
+    """
+    override = os.environ.get(PROBE_MODEL_ENV, "").strip()
+    if not override:
+        return configured, None
+    if override not in KNOWN_MODELS:
+        return None, (f"{PROBE_MODEL_ENV}={override} is not in KNOWN_MODELS; "
+                      "the configured model was not replaced")
+    return override, None
+
+
 def call_local_model(prompt, model=DEFAULT_MODEL, num_ctx=8192, timeout=180, json_mode=False,
-                    ensure_single_resident=True):
+                     ensure_single_resident=True):
     """Un SINGOLO tentativo (nessun retry qui - vedi core/retry_escalation.py).
     Ritorna sempre un dict, mai solleva un'eccezione di rete non gestita
     (un timeout/errore di connessione e' un ESITO, non un crash del
