@@ -31,11 +31,18 @@ build_prompt() below.
 """
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
+import sys
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+
+
+class SnapshotMismatch(ValueError):
+    """The stored bytes, their hash, and the inventory are not one snapshot."""
 
 
 def _now_iso():
@@ -107,6 +114,131 @@ REPO_INSPECTION_V1 = MinistralTaskTemplate(
 )
 register_template(REPO_INSPECTION_V1)
 
+# T01 vertical slice. The model may classify and cite; the record count,
+# the absent fields, and the input hash come from inventory_failure_report.
+ANCHORED_FAILURE_REPORT_V1 = MinistralTaskTemplate(
+    template_id="anchored_failure_report_v1",
+    title="Anchored failure report",
+    task_type="DOCUMENTATION",
+    work_type="routine_summary",
+    instructions=(
+        "Rispondi SOLO con questo JSON, niente testo prima o dopo:\n"
+        '{"classification":"expected_classification","cited_ids":["ogni id dei fatti"],'
+        '"missing":["ogni campo missing dei fatti"]}\n'
+        "Non aggiungere altre chiavi. Una summary o altra prosa non e' accettata.\n"
+        "classification, cited_ids e missing copiano i fatti deterministici."
+    ),
+    output_contract={
+        "classification": "string",
+        "cited_ids": "array[string]",
+        "missing": "array[string]",
+    },
+    required_capabilities=("summaries", "json_structured_output"),
+    read_only=True,
+    max_files=1,
+    max_file_bytes=4_000,
+)
+register_template(ANCHORED_FAILURE_REPORT_V1)
+
+
+def inventory_failure_report(raw):
+    """Deterministic facts for one failure document. The model never supplies these."""
+    digest = hashlib.sha256(raw).hexdigest()
+    empty = {"input_sha256": digest, "ids": [], "count": 0, "missing": ["records"],
+             "expected_classification": "insufficient"}
+    try:
+        document = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return empty
+    records = document.get("records") if isinstance(document, dict) else None
+    if not isinstance(records, list) or not records:
+        return empty
+    ids = []
+    present = set(document.keys())
+    for item in records:
+        if not isinstance(item, dict):
+            continue
+        present.update(item.keys())
+        item_id = item.get("id")
+        if isinstance(item_id, str) and item_id:
+            ids.append(item_id)
+    missing = []
+    required = document.get("required")
+    if isinstance(required, list):
+        missing = [name for name in required if isinstance(name, str) and name not in present]
+    kind = "other"
+    first = records[0] if isinstance(records[0], dict) else {}
+    if first.get("kind") in {"timeout", "missing_field", "other"}:
+        kind = first["kind"]
+    return {"input_sha256": digest, "ids": ids, "count": len(ids), "missing": missing,
+            "expected_classification": kind}
+
+
+def attach_input_provenance(action_params, *, source_name, raw, current_head):
+    """Store the input hash inside the existing context packet and the facts beside it."""
+    if not isinstance(current_head, str) or not (7 <= len(current_head) <= 40) or any(
+            char not in "0123456789abcdef" for char in current_head):
+        raise ValueError("current_head must be 7 to 40 lowercase hex characters")
+    server = Path(__file__).resolve().parents[1]
+    orch = str(server / "orchestrator_v1")
+    if orch not in sys.path:
+        sys.path.insert(0, orch)
+    from core.context_packet import build_context_packet
+
+    inventory = inventory_failure_report(raw)
+    packet = build_context_packet(
+        objective="Classificare solo i record presenti e dichiarare i campi assenti.",
+        relevant_findings=[
+            f"input_sha256={inventory['input_sha256']}",
+            f"record_count={inventory['count']}",
+            "missing=" + (",".join(inventory["missing"]) or "none"),
+        ],
+        canonical_artifacts=[{
+            "source_artifact": source_name,
+            "canonical_sha256": inventory["input_sha256"],
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "mode": "CANONICAL_ARTIFACT",
+        }],
+        allowed_files=[source_name],
+        exact_question="Quali record sono nel documento e quali campi richiesti mancano?",
+        previous_attempts=[], failures=[], tests=[],
+        constraints=["Non inventare id.", "Il conteggio resta quello dello strumento."],
+        forbidden_actions=["Non leggere file fuori da allowed_files.",
+                           "Non chiamare un provider premium."],
+        output_required="JSON con classification, cited_ids e missing. Nessuna prosa libera.",
+        current_head=current_head)
+    if len(raw) > ANCHORED_FAILURE_REPORT_V1.max_file_bytes:
+        raise ValueError("authorized snapshot exceeds the template byte limit")
+    updated = dict(action_params)
+    updated["deterministic_inventory"] = inventory
+    updated["authorized_snapshot_b64"] = base64.b64encode(raw).decode("ascii")
+    updated["authorized_source_name"] = source_name
+    updated["context_packet"] = packet
+    return updated
+
+
+def authorized_snapshot(task_record):
+    """Return the bytes frozen at delegation, or raise if they no longer match."""
+    params = task_record.get("action_params") or {}
+    inventory = params.get("deterministic_inventory")
+    encoded = params.get("authorized_snapshot_b64")
+    packet = params.get("context_packet") or {}
+    artifacts = packet.get("canonical_artifacts") or []
+    if not isinstance(inventory, dict) or not isinstance(encoded, str) or not artifacts:
+        raise SnapshotMismatch("authorized snapshot missing")
+    try:
+        raw = base64.b64decode(encoded.encode("ascii"), validate=True)
+    except ValueError as exc:
+        raise SnapshotMismatch("authorized snapshot is not valid base64") from exc
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != inventory.get("input_sha256"):
+        raise SnapshotMismatch("authorized snapshot hash does not match the inventory")
+    if artifacts[0].get("canonical_sha256") != digest:
+        raise SnapshotMismatch("context packet hash does not match the authorized snapshot")
+    if inventory_failure_report(raw) != inventory:
+        raise SnapshotMismatch("inventory does not match the authorized snapshot")
+    return raw
+
 
 def compile_task(template_id, *, goal, relevant_paths, created_by, conversation_id=None,
                  constraints=None, prior_failures=None, verifier_feedback=None):
@@ -158,16 +290,33 @@ def build_prompt(template_id, task_record, *, project_root):
     task."""
     template = TEMPLATES[template_id]
     manifest = task_record["manifest"]
-    root = Path(project_root).resolve()
     blocks = []
-    for rel in manifest.get("files_allowed", [])[:template.max_files]:
+    if template_id == "anchored_failure_report_v1":
+        raw = authorized_snapshot(task_record)
         try:
-            full = (root / rel).resolve()
-            if full.is_file() and root in full.parents and not full.is_symlink():
-                content = full.read_text(encoding="utf-8")[:template.max_file_bytes]
-                blocks.append(f"--- {rel} ---\n{content}")
-        except (OSError, UnicodeDecodeError):
-            continue
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise SnapshotMismatch("authorized snapshot is not utf-8") from exc
+        source = (task_record.get("action_params") or {}).get("authorized_source_name") or "input"
+        blocks.append(f"--- {source} ---\n{text}")
+    else:
+        root = Path(project_root).resolve()
+        for rel in manifest.get("files_allowed", [])[:template.max_files]:
+            try:
+                full = (root / rel).resolve()
+                if full.is_file() and root in full.parents and not full.is_symlink():
+                    content = full.read_text(encoding="utf-8")[:template.max_file_bytes]
+                    blocks.append(f"--- {rel} ---\n{content}")
+            except (OSError, UnicodeDecodeError):
+                continue
+    facts = (task_record.get("action_params") or {}).get("deterministic_inventory")
+    if template_id == "anchored_failure_report_v1" and isinstance(facts, dict):
+        blocks.append("FATTI DETERMINISTICI (non modificarli):\n"
+                      + json.dumps(facts, ensure_ascii=False))
+        blocks.append("Copia questi valori e non aggiungere chiavi:\n"
+                      + "classification=" + json.dumps(facts.get("expected_classification"))
+                      + "\ncited_ids=" + json.dumps(facts.get("ids"), ensure_ascii=False)
+                      + "\nmissing=" + json.dumps(facts.get("missing"), ensure_ascii=False))
     rework = (task_record.get("action_params") or {}).get("rework_instructions")
     prefix = f"{rework}\n\n" if rework else ""
     return (prefix + template.instructions +

@@ -414,16 +414,27 @@ class JarvisService:
 
     def delegate_to_ministral(self, template_id, *, goal, relevant_paths,
                               created_by="jarvis:claude_supervisor", conversation_id=None,
-                              verifier_feedback=None):
+                              verifier_feedback=None, input_bytes=None, input_name=None,
+                              current_head=None):
         """MINISTRAL_TASK_COMPILER_V1 entry point - compiles a bounded task
         from an already-registered template and submits it through the
         EXACT SAME Orchestrator.submit() every other task-creation path
         uses. Does not decide local-vs-escalation itself (core/router.py's
         route() does, at claim time) and never calls any API directly -
-        this only builds and queues data. Returns the new task_id."""
+        this only builds and queues data. Returns the new task_id.
+
+        anchored_failure_report_v1 requires the raw input so the hash and
+        the deterministic inventory are stored before the model is called.
+        """
         manifest, action, action_params = ministral_task_compiler.compile_task(
             template_id, goal=goal, relevant_paths=relevant_paths, created_by=created_by,
             conversation_id=conversation_id, verifier_feedback=verifier_feedback)
+        if template_id == "anchored_failure_report_v1":
+            if input_bytes is None or not current_head:
+                raise ValueError("anchored_failure_report_v1 requires input_bytes and current_head")
+            action_params = ministral_task_compiler.attach_input_provenance(
+                action_params, source_name=input_name or relevant_paths[0],
+                raw=input_bytes, current_head=current_head)
         return self.orchestrator.submit(manifest, action=action, action_params=action_params)
 
     def _response(self, message, response_type, summary, *, details=None, task_id=None,

@@ -53,6 +53,9 @@ class BoundedLocalTaskHandler(LocalTaskHandler):
         return compiler.build_prompt(self._template_id(task_record), task_record,
                                      project_root=self.project_root)
 
+    def wants_json_mode(self, task_record) -> bool:
+        return self._template_id(task_record) == "anchored_failure_report_v1"
+
     def verify(self, task_record, response_text) -> VerifyResult:
         template = compiler.TEMPLATES[self._template_id(task_record)]
         if not template.read_only:
@@ -84,6 +87,8 @@ class BoundedLocalTaskHandler(LocalTaskHandler):
 
     @classmethod
     def _validate_output(cls, template, task_record, parsed):
+        if template.template_id == "anchored_failure_report_v1":
+            return cls._validate_anchored(task_record, parsed)
         expected_keys = set(template.output_contract)
         if set(parsed) != expected_keys:
             return [f"output keys must be exactly {sorted(expected_keys)}, got {sorted(parsed)}"]
@@ -97,6 +102,38 @@ class BoundedLocalTaskHandler(LocalTaskHandler):
                                             cls.MAX_ITEM_CHARS)
         errors += cls._validate_string_list(parsed.get("risks"), "risks", cls.MAX_RISKS,
                                             cls.MAX_ITEM_CHARS)
+        return errors
+
+    @classmethod
+    def _validate_anchored(cls, task_record, parsed):
+        required = {"classification", "cited_ids", "missing"}
+        if set(parsed) != required:
+            return ["output keys must be exactly classification, cited_ids, missing; "
+                    "free prose is not a verified fact"]
+        inventory = (task_record.get("action_params") or {}).get("deterministic_inventory")
+        if not isinstance(inventory, dict):
+            return ["deterministic inventory missing; the model cannot supply the facts"]
+        known = list(inventory.get("ids") or [])
+        errors = []
+        if parsed.get("classification") != inventory.get("expected_classification"):
+            errors.append("classification does not match the deterministic inventory")
+        cited = parsed.get("cited_ids")
+        if not isinstance(cited, list) or not all(isinstance(item, str) for item in cited):
+            errors.append("cited_ids must be a list of strings")
+        else:
+            unknown = [item for item in cited if item not in known]
+            if unknown:
+                errors.append(f"cited_ids contains ids absent from the input: {unknown}")
+            if inventory.get("expected_classification") == "insufficient":
+                if cited:
+                    errors.append("an insufficient input cannot cite records")
+            elif sorted(cited) != sorted(known):
+                errors.append("cited_ids must reference every id present in the input")
+        missing = parsed.get("missing")
+        expected_missing = list(inventory.get("missing") or [])
+        if (not isinstance(missing, list) or not all(isinstance(item, str) for item in missing)
+                or sorted(missing) != sorted(expected_missing)):
+            errors.append("missing does not match the deterministic absent fields")
         return errors
 
     @staticmethod
@@ -120,5 +157,13 @@ class BoundedLocalTaskHandler(LocalTaskHandler):
         template_id = self._template_id(task_record)
         encoded = compiler.encode_bounded_output(template_id, task_record["task_id"],
                                                   verify_result.parsed_output)
-        return ApplyResult(files_changed=[], artifacts_created=[encoded],
+        artifacts = [encoded]
+        inventory = (task_record.get("action_params") or {}).get("deterministic_inventory")
+        if isinstance(inventory, dict):
+            artifacts.append("deterministic_inventory_v1:" + json.dumps({
+                "input_sha256": inventory.get("input_sha256"),
+                "count": inventory.get("count"),
+                "missing": inventory.get("missing"),
+            }, ensure_ascii=False))
+        return ApplyResult(files_changed=[], artifacts_created=artifacts,
                            touches_real_repo_files=False, proposal_only=False)
