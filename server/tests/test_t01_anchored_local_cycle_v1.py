@@ -101,6 +101,7 @@ def test_context_packet_carries_the_input_hash_and_excludes_the_secret(tmp_path,
     assert packet["current_head"] == HEAD
     blob = json.dumps({"prompt": calls[0]["prompt"], "packet": packet, "result": record["result_packet"]})
     assert SECRET not in blob
+    assert 'cited_ids=["E1", "E2"]' in calls[0]["prompt"]
     assert calls[0]["model"] == "ministral-3:3b"
     assert calls[0]["json_mode"] is True
     assert record["state"] == "COMPLETED"
@@ -120,6 +121,7 @@ def test_incomplete_input_must_be_admitted(tmp_path, monkeypatch):
     record = svc.orchestrator.process_task(task_id)
     assert record["state"] == "COMPLETED"
     assert calls[0]["prompt"].count("insufficient") >= 1
+    assert '"cited_ids": []' in calls[0]["prompt"] or "cited_ids=[]" in calls[0]["prompt"]
     decoded = compiler.decode_bounded_output(record["result_packet"]["artifacts_created"])
     assert decoded["classification"] == "insufficient"
     assert decoded["missing"] == ["records"]

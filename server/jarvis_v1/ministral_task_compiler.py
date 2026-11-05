@@ -276,6 +276,10 @@ def build_prompt(template_id, task_record, *, project_root):
     if template_id == "anchored_failure_report_v1" and isinstance(facts, dict):
         blocks.append("FATTI DETERMINISTICI (non modificarli):\n"
                       + json.dumps(facts, ensure_ascii=False))
+        blocks.append("Copia questi valori e non aggiungere chiavi:\n"
+                      + "classification=" + json.dumps(facts.get("expected_classification"))
+                      + "\ncited_ids=" + json.dumps(facts.get("ids"), ensure_ascii=False)
+                      + "\nmissing=" + json.dumps(facts.get("missing"), ensure_ascii=False))
     rework = (task_record.get("action_params") or {}).get("rework_instructions")
     prefix = f"{rework}\n\n" if rework else ""
     return (prefix + template.instructions +
