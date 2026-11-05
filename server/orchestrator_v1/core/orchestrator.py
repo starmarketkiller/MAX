@@ -228,7 +228,16 @@ class Orchestrator:
                                   ["authorized local bridge unavailable"])
 
         start = now_iso()
-        prompt = handler.build_prompt(record)
+        try:
+            prompt = handler.build_prompt(record)
+        except Exception as exc:
+            if type(exc).__name__ != "SnapshotMismatch":
+                raise
+            detail = str(exc)
+            self.ledger.append("TASK_FAILED", task_id, {
+                "reason": "SNAPSHOT_MISMATCH", "detail": detail})
+            self.queue.transition(task_id, "FAILED", dispatch_last_error=detail)
+            return self.queue.get(task_id)
         configured_model = decision.agent["model_or_runtime"].split(" ")[0]
         model, model_error = ollama_worker.resolve_model(configured_model)
         if model_error:

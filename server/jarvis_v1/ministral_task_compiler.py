@@ -31,6 +31,7 @@ build_prompt() below.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import sys
@@ -38,6 +39,10 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+
+
+class SnapshotMismatch(ValueError):
+    """The stored bytes, their hash, and the inventory are not one snapshot."""
 
 
 def _now_iso():
@@ -120,7 +125,7 @@ ANCHORED_FAILURE_REPORT_V1 = MinistralTaskTemplate(
         "Rispondi SOLO con questo JSON, niente testo prima o dopo:\n"
         '{"classification":"expected_classification","cited_ids":["ogni id dei fatti"],'
         '"missing":["ogni campo missing dei fatti"]}\n'
-        "Non aggiungere altre chiavi. summary e' facoltativa.\n"
+        "Non aggiungere altre chiavi. Una summary o altra prosa non e' accettata.\n"
         "classification, cited_ids e missing copiano i fatti deterministici."
     ),
     output_contract={
@@ -200,12 +205,39 @@ def attach_input_provenance(action_params, *, source_name, raw, current_head):
         constraints=["Non inventare id.", "Il conteggio resta quello dello strumento."],
         forbidden_actions=["Non leggere file fuori da allowed_files.",
                            "Non chiamare un provider premium."],
-        output_required="JSON con classification, cited_ids, missing, summary.",
+        output_required="JSON con classification, cited_ids e missing. Nessuna prosa libera.",
         current_head=current_head)
+    if len(raw) > ANCHORED_FAILURE_REPORT_V1.max_file_bytes:
+        raise ValueError("authorized snapshot exceeds the template byte limit")
     updated = dict(action_params)
     updated["deterministic_inventory"] = inventory
+    updated["authorized_snapshot_b64"] = base64.b64encode(raw).decode("ascii")
+    updated["authorized_source_name"] = source_name
     updated["context_packet"] = packet
     return updated
+
+
+def authorized_snapshot(task_record):
+    """Return the bytes frozen at delegation, or raise if they no longer match."""
+    params = task_record.get("action_params") or {}
+    inventory = params.get("deterministic_inventory")
+    encoded = params.get("authorized_snapshot_b64")
+    packet = params.get("context_packet") or {}
+    artifacts = packet.get("canonical_artifacts") or []
+    if not isinstance(inventory, dict) or not isinstance(encoded, str) or not artifacts:
+        raise SnapshotMismatch("authorized snapshot missing")
+    try:
+        raw = base64.b64decode(encoded.encode("ascii"), validate=True)
+    except ValueError as exc:
+        raise SnapshotMismatch("authorized snapshot is not valid base64") from exc
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != inventory.get("input_sha256"):
+        raise SnapshotMismatch("authorized snapshot hash does not match the inventory")
+    if artifacts[0].get("canonical_sha256") != digest:
+        raise SnapshotMismatch("context packet hash does not match the authorized snapshot")
+    if inventory_failure_report(raw) != inventory:
+        raise SnapshotMismatch("inventory does not match the authorized snapshot")
+    return raw
 
 
 def compile_task(template_id, *, goal, relevant_paths, created_by, conversation_id=None,
@@ -258,16 +290,25 @@ def build_prompt(template_id, task_record, *, project_root):
     task."""
     template = TEMPLATES[template_id]
     manifest = task_record["manifest"]
-    root = Path(project_root).resolve()
     blocks = []
-    for rel in manifest.get("files_allowed", [])[:template.max_files]:
+    if template_id == "anchored_failure_report_v1":
+        raw = authorized_snapshot(task_record)
         try:
-            full = (root / rel).resolve()
-            if full.is_file() and root in full.parents and not full.is_symlink():
-                content = full.read_text(encoding="utf-8")[:template.max_file_bytes]
-                blocks.append(f"--- {rel} ---\n{content}")
-        except (OSError, UnicodeDecodeError):
-            continue
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise SnapshotMismatch("authorized snapshot is not utf-8") from exc
+        source = (task_record.get("action_params") or {}).get("authorized_source_name") or "input"
+        blocks.append(f"--- {source} ---\n{text}")
+    else:
+        root = Path(project_root).resolve()
+        for rel in manifest.get("files_allowed", [])[:template.max_files]:
+            try:
+                full = (root / rel).resolve()
+                if full.is_file() and root in full.parents and not full.is_symlink():
+                    content = full.read_text(encoding="utf-8")[:template.max_file_bytes]
+                    blocks.append(f"--- {rel} ---\n{content}")
+            except (OSError, UnicodeDecodeError):
+                continue
     facts = (task_record.get("action_params") or {}).get("deterministic_inventory")
     if template_id == "anchored_failure_report_v1" and isinstance(facts, dict):
         blocks.append("FATTI DETERMINISTICI (non modificarli):\n"

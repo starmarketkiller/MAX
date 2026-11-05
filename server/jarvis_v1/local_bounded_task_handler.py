@@ -107,9 +107,9 @@ class BoundedLocalTaskHandler(LocalTaskHandler):
     @classmethod
     def _validate_anchored(cls, task_record, parsed):
         required = {"classification", "cited_ids", "missing"}
-        extra = set(parsed) - required - {"summary"}
-        if extra or not required <= set(parsed):
-            return [f"output keys must be {sorted(required)} plus an optional summary, got {sorted(parsed)}"]
+        if set(parsed) != required:
+            return ["output keys must be exactly classification, cited_ids, missing; "
+                    "free prose is not a verified fact"]
         inventory = (task_record.get("action_params") or {}).get("deterministic_inventory")
         if not isinstance(inventory, dict):
             return ["deterministic inventory missing; the model cannot supply the facts"]
@@ -134,16 +134,6 @@ class BoundedLocalTaskHandler(LocalTaskHandler):
         if (not isinstance(missing, list) or not all(isinstance(item, str) for item in missing)
                 or sorted(missing) != sorted(expected_missing)):
             errors.append("missing does not match the deterministic absent fields")
-        if "summary" in parsed:
-            summary = parsed.get("summary")
-            if not isinstance(summary, str) or not summary.strip():
-                errors.append("summary present but empty")
-            elif len(summary) > cls.MAX_SUMMARY_CHARS:
-                errors.append(f"summary exceeds {cls.MAX_SUMMARY_CHARS} chars")
-            else:
-                invented = [token for token in re.findall(r"\bE\d+\b", summary) if token not in known]
-                if invented:
-                    errors.append(f"summary cites ids absent from the input: {invented}")
         return errors
 
     @staticmethod

@@ -5,6 +5,8 @@ name another entry of KNOWN_MODELS for one process. An unknown name fails
 before any model call and is not replaced. The live generation is a separate
 probe; these tests plant worker text only to exercise the canonical verifier.
 """
+import base64
+import hashlib
 import json
 
 import pytest
@@ -88,8 +90,7 @@ def test_context_packet_carries_the_input_hash_and_excludes_the_secret(tmp_path,
     (fixture / "side.secret").write_text(SECRET, encoding="utf-8")
     svc.orchestrator.local_handlers["anchored_failure_report_v1"].project_root = fixture
     calls = _plant(monkeypatch, json.dumps({
-        "classification": "timeout", "cited_ids": ["E1", "E2"],
-        "missing": ["fill_price"], "summary": "E1 e E2 sono nel documento; fill_price manca.",
+        "classification": "timeout", "cited_ids": ["E1", "E2"], "missing": ["fill_price"],
     }))
     task_id = _delegate(svc, COMPLETE, "input.json")
     record = svc.orchestrator.process_task(task_id)
@@ -114,8 +115,7 @@ def test_context_packet_carries_the_input_hash_and_excludes_the_secret(tmp_path,
 def test_incomplete_input_must_be_admitted(tmp_path, monkeypatch):
     svc = _service(tmp_path, monkeypatch)
     calls = _plant(monkeypatch, json.dumps({
-        "classification": "insufficient", "cited_ids": [],
-        "missing": ["records"], "summary": "Il documento non contiene record.",
+        "classification": "insufficient", "cited_ids": [], "missing": ["records"],
     }))
     task_id = _delegate(svc, INCOMPLETE, "partial.json")
     record = svc.orchestrator.process_task(task_id)
@@ -140,11 +140,67 @@ def test_factual_answer_without_summary_is_accepted(tmp_path, monkeypatch):
     assert decoded["missing"] == ["fill_price"]
 
 
+def test_authorized_snapshot_ignores_a_changed_disk_file(tmp_path, monkeypatch):
+    svc = _service(tmp_path, monkeypatch)
+    fixture = tmp_path / "fixture"
+    fixture.mkdir()
+    disk = fixture / "input.json"
+    disk.write_bytes(b'{"records":[{"id":"E7","kind":"other","detail":"DISK_BEFORE_DELEGATE"}]}')
+    svc.orchestrator.local_handlers["anchored_failure_report_v1"].project_root = fixture
+    calls = _plant(monkeypatch, json.dumps({
+        "classification": "timeout", "cited_ids": ["E1", "E2"], "missing": ["fill_price"],
+    }))
+    task_id = _delegate(svc, COMPLETE, "input.json")
+    disk.write_bytes(b'{"records":[{"id":"E8","kind":"other","detail":"DISK_AFTER_DELEGATE"}]}')
+    record = svc.orchestrator.process_task(task_id)
+    prompt = calls[0]["prompt"]
+    document = prompt.split("--- input.json ---\n", 1)[1].split("\n\nFATTI DETERMINISTICI", 1)[0]
+    digest = hashlib.sha256(COMPLETE).hexdigest()
+    inventory = record["action_params"]["deterministic_inventory"]
+    assert document.encode("utf-8") == COMPLETE
+    assert inventory["input_sha256"] == digest
+    assert inventory["ids"] == ["E1", "E2"]
+    assert record["action_params"]["context_packet"]["canonical_artifacts"][0]["canonical_sha256"] == digest
+    assert "DISK_BEFORE_DELEGATE" not in prompt
+    assert "DISK_AFTER_DELEGATE" not in prompt
+    assert record["state"] == "COMPLETED"
+
+
+def test_tampered_snapshot_fails_before_the_model(tmp_path, monkeypatch):
+    svc = _service(tmp_path, monkeypatch)
+    calls = _plant(monkeypatch, "{}")
+    task_id = _delegate(svc, COMPLETE, "input.json")
+    params = dict(svc.queue.get(task_id)["action_params"])
+    params["authorized_snapshot_b64"] = base64.b64encode(
+        b'{"records":[{"id":"E8","kind":"other","detail":"DISK_AFTER_DELEGATE"}]}').decode()
+    svc.queue.annotate(task_id, action_params=params)
+    record = svc.orchestrator.process_task(task_id)
+    assert calls == []
+    assert record["state"] == "FAILED"
+    assert "authorized snapshot" in record["dispatch_last_error"]
+    events = [row for row in svc.ledger.read_all() if row["task_id"] == task_id]
+    assert any(row["payload"].get("reason") == "SNAPSHOT_MISMATCH" for row in events)
+
+
+def test_false_summary_is_rejected(tmp_path, monkeypatch):
+    svc = _service(tmp_path, monkeypatch)
+    _plant(monkeypatch, json.dumps({
+        "classification": "timeout", "cited_ids": ["E1", "E2"], "missing": ["fill_price"],
+        "summary": "E1 e E2 descrivono un ordine eseguito a prezzo 100.",
+    }))
+    task_id = _delegate(svc, COMPLETE, "input.json")
+    record = svc.orchestrator.process_task(task_id)
+    assert record["state"] != "COMPLETED"
+    failed = [row for row in svc.ledger.read_all()
+              if row["task_id"] == task_id and row["event_type"] == "TEST_FAILED"]
+    assert failed
+    assert any("free prose" in error for error in failed[0]["payload"]["errors"])
+
+
 def test_invented_id_is_rejected_and_not_accepted(tmp_path, monkeypatch):
     svc = _service(tmp_path, monkeypatch)
     _plant(monkeypatch, json.dumps({
-        "classification": "timeout", "cited_ids": ["E999"],
-        "missing": ["fill_price"], "summary": "E999 spiega il timeout.",
+        "classification": "timeout", "cited_ids": ["E999"], "missing": ["fill_price"],
     }))
     task_id = _delegate(svc, COMPLETE, "input.json")
     record = svc.orchestrator.process_task(task_id)
