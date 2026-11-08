@@ -208,7 +208,7 @@ enum ENUM_NXS_BOOK_MODE {
    NXS_BOOK_FULL           = 0,   // tutti i toggle/profili attuali; hard-deny FAILED/DEFECT
    NXS_BOOK_EDGE_SHORTLIST = 1    // solo FVG_CONT/LIQ_SWEEP/ORDER_BLOCK/BREAKOUT_ACC/Z_SCORE_BREAKOUT/EMA_PULLBACK
 };
-input ENUM_NXS_BOOK_MODE InpBookMode = NXS_BOOK_FULL;
+input ENUM_NXS_BOOK_MODE InpBookMode = NXS_BOOK_EDGE_SHORTLIST;  // credit-safe default; not validated LIVE edge
 // 10/09 - RAW vs RECIPE, ora un enum esplicito (richiesto dopo la scoperta
 // che il RAW iniziale non era davvero RAW - vedi audit MaxHold/MaxLossPerPos/
 // AutoClose sotto). InpUseStrategyProfiles/InpProfileMultiTF (richiesti true

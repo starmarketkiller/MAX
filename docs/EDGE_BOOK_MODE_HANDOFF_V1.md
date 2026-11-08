@@ -35,11 +35,12 @@ Base: `cursor/nexus-desktop-agent-plan-v11-b2b8`
 Isolated portable MetaEditor: **0 errors, 2 warnings** — `docs/EDGE_BOOK_COMPILE_EVIDENCE_V1.md`  
 (`NXS_EdgeBook.mqh` included; SHA256 recorded; metatester PIDs left alone).
 
-## Tester — operazioni visibili sull’account collegato
+## Tester — EDGE_SHORTLIST reale sull’account collegato
 
-Account **345277936 / XMGlobal-MT5 10** (Strategy Tester, UI lasciata aperta).  
-**8 trade / 16 deal / +46.07 USD** su GOLD H4 2026.07.01–2026.10.19 — `docs/EDGE_BOOK_TESTER_VISIBLE_OPS_V1.md`.  
-Fix collaterale: deposito sintetico Tester non deve più lockare MaxTotalDD (`NXS_Protections.mqh`).
+Account **345277936 / XMGlobal-MT5 10**.  
+InpBookMode=1 + InpResearchMode=false → **41 trade / 82 deal / -987.99 USD** (GOLD H4 2026.07.01–2026.10.19).  
+Apre (FVG_CONT, LIQ_SWEEP, EMA_PULLBACK, BREAKOUT_ACC). Edge **non** validato (finestra in perdita).  
+Dettaglio: docs/EDGE_BOOK_OPS_VISIBLE_V1.md. Default InpBookMode ora EDGE_SHORTLIST.
 
 ## Tester smoke (manuale)
 
