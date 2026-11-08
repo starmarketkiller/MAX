@@ -61,7 +61,17 @@ RATE_LIMIT_PER_MINUTE = int(os.environ.get("NEXUS_LOCAL_INFERENCE_GATEWAY_RATE_L
 #: keep_alive di Ollama) ha richiesto ~49s per ministral-3:3b; una chiamata a
 #: caldo ~6s. Il default precedente (8s) falliva quasi sempre la prima
 #: richiesta reale con MODEL_CALL_FAILED/502 - vedi anche il warmup in run().
-DEFAULT_TIMEOUT_SECONDS = int(os.environ.get("NEXUS_LOCAL_INFERENCE_GATEWAY_TIMEOUT_SECONDS", "60"))
+# T04 HTTP cold start on the installed local model was 11.98s; the warm call
+# was 0.72s. The margin is 18s, one and a half times that single cold sample,
+# so 11.98 + 18 rounds to 30. ministral-3:3b is not installed and its old 49s
+# figure is not this budget.
+MEASURED_COLD_START_SECONDS = 11.98
+MEASURED_WARM_SECONDS = 0.72
+COLD_START_MARGIN_SECONDS = 18
+MODEL_BUDGET_SECONDS = 30
+DEFAULT_TIMEOUT_SECONDS = int(os.environ.get(
+    "NEXUS_LOCAL_INFERENCE_GATEWAY_TIMEOUT_SECONDS", str(MODEL_BUDGET_SECONDS)))
+SERVICE_NAME = "nexus-local-inference-gateway"
 
 SYSTEM_PROMPT = """Sei il motore di interpretazione di Jarvis, un assistente NEXUS via Telegram.
 Il tuo UNICO compito e' interpretare il messaggio dell'utente e produrre UN oggetto
@@ -121,6 +131,21 @@ def build_chat_prompt(text: str, history: list) -> str:
     return "\n".join(lines)
 
 
+def prepare_model(explicit=None):
+    """Process-local selection. An unknown override is refused, never replaced."""
+    model, error = ollama_worker.resolve_model(explicit or ollama_worker.DEFAULT_MODEL)
+    if error or not model:
+        return {"ok": False, "error": error or "MODEL_NOT_SELECTED", "status": 409}
+    return {"ok": True, "model": model}
+
+
+def _model_failure(call):
+    error = str(call.get("error") or "MODEL_CALL_FAILED")
+    if error.startswith("MODEL_NOT_INSTALLED"):
+        return {"ok": False, "error": error, "status": 409}
+    return {"ok": False, "error": f"MODEL_CALL_FAILED: {error}", "status": 502}
+
+
 def chat(text, history, *, model=None, timeout=None, call_local_model=None):
     """Pure core logic, no HTTP - mirrors interpret() but free-form: no
     forced JSON schema, no candidate_task_ids validation (this mode never
@@ -131,15 +156,18 @@ def chat(text, history, *, model=None, timeout=None, call_local_model=None):
     text = (text or "")[:MAX_TEXT_LENGTH]
     if not text.strip():
         return {"ok": False, "error": "EMPTY_TEXT", "status": 400}
+    selected = prepare_model(model)
+    if not selected["ok"]:
+        return selected
     prompt = build_chat_prompt(text, history)
     try:
-        call = call_local_model(prompt, model=model or ollama_worker.DEFAULT_MODEL,
+        call = call_local_model(prompt, model=selected["model"],
                                 timeout=timeout or DEFAULT_TIMEOUT_SECONDS,
                                 json_mode=False, ensure_single_resident=False)
     except Exception as exc:  # noqa: BLE001 - never leak an unhandled error to the caller
         return {"ok": False, "error": f"MODEL_CALL_FAILED: {type(exc).__name__}", "status": 502}
     if not call.get("success"):
-        return {"ok": False, "error": f"MODEL_CALL_FAILED: {call.get('error')}", "status": 502}
+        return _model_failure(call)
     reply = (call.get("response_text") or "").strip()
     if not reply:
         return {"ok": False, "error": "EMPTY_MODEL_RESPONSE", "status": 502}
@@ -161,15 +189,18 @@ def interpret(text, context_packet, *, model=None, timeout=None, call_local_mode
     text = (text or "")[:MAX_TEXT_LENGTH]
     context_packet = context_packet if isinstance(context_packet, dict) else {}
     candidate_ids = set(context_packet.get("candidate_task_ids") or [])
+    selected = prepare_model(model)
+    if not selected["ok"]:
+        return selected
     prompt = build_prompt(text, context_packet)
     try:
-        call = call_local_model(prompt, model=model or ollama_worker.DEFAULT_MODEL,
+        call = call_local_model(prompt, model=selected["model"],
                                 timeout=timeout or DEFAULT_TIMEOUT_SECONDS,
                                 json_mode=True, ensure_single_resident=False)
     except Exception as exc:  # noqa: BLE001 - never leak an unhandled error to the caller
         return {"ok": False, "error": f"MODEL_CALL_FAILED: {type(exc).__name__}", "status": 502}
     if not call.get("success"):
-        return {"ok": False, "error": f"MODEL_CALL_FAILED: {call.get('error')}", "status": 502}
+        return _model_failure(call)
     parsed = ollama_worker.try_parse_json(call.get("response_text") or "")
     if not isinstance(parsed, dict):
         return {"ok": False, "error": "OUTPUT_NOT_JSON_OBJECT", "status": 422}
@@ -238,7 +269,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
         if self.path != "/v1/jarvis/health":
             self._json(404, {"ok": False, "error": "NOT_FOUND"})
             return
-        self._json(200, {"ok": True, "ollama_reachable": ollama_worker.is_ollama_reachable(timeout=2)})
+        self._json(200, {
+            "ok": True,
+            "liveness": True,
+            "service": SERVICE_NAME,
+            "ollama_reachable": ollama_worker.is_ollama_reachable(timeout=2),
+            "inference_verified": False,
+        })
 
     def do_POST(self):  # noqa: N802 - stdlib handler naming
         if self.path not in ("/v1/jarvis/interpret", "/v1/jarvis/chat"):
@@ -274,21 +311,27 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
 
 def _warmup_model():
-    """LOCAL_INFERENCE_CONNECTIVITY_V1: a cold call to Ollama (model not yet
-    resident) measured ~49s on this machine vs ~6s warm - without this, the
-    first real /interpret or /chat request after the gateway starts (or
-    after Ollama's keep_alive window expires) was the one most likely to
-    time out. Best-effort, non-fatal, never blocks the server from accepting
-    connections (runs in a background thread) - a failed/slow warmup just
-    means the first real request pays the cold-start cost instead."""
+    """Warm the process-selected model once. "ok" requires a non-empty reply.
+
+    A missing model, a timeout, an error, or an empty body is "failed".
+    This never blocks the listening socket and never retries.
+    """
     try:
+        selected = prepare_model(None)
+        if not selected["ok"]:
+            print(f"[gateway] warmup failed ({selected['error']})", flush=True)
+            return
         result = ollama_worker.call_local_model(
-            "ciao", model=ollama_worker.DEFAULT_MODEL, timeout=90, json_mode=False,
-            ensure_single_resident=False)
-        print(f"[gateway] warmup {'ok' if result.get('success') else 'failed'} "
-             f"({result.get('wall_seconds')}s)", flush=True)
+            "ciao", model=selected["model"], timeout=DEFAULT_TIMEOUT_SECONDS,
+            json_mode=False, ensure_single_resident=False)
+        reply = (result.get("response_text") or "").strip()
+        if result.get("success") and reply:
+            print(f"[gateway] warmup ok ({result.get('wall_seconds')}s)", flush=True)
+        else:
+            print(f"[gateway] warmup failed ({result.get('error') or 'EMPTY_MODEL_RESPONSE'})",
+                  flush=True)
     except Exception as exc:  # noqa: BLE001 - warmup is best-effort, never fatal
-        print(f"[gateway] warmup raised {type(exc).__name__} (non-fatal)", flush=True)
+        print(f"[gateway] warmup failed ({type(exc).__name__})", flush=True)
 
 
 def run(port=None):

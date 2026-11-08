@@ -216,6 +216,27 @@ def test_is_confident_enough_false_below_threshold():
     assert not ministral_router.is_confident_enough(dict(VALID_OUTPUT, confidence=0.5), threshold=0.75)
 
 
+def test_router_budget_outlasts_the_measured_cold_start():
+    assert ministral_router.DEFAULT_TIMEOUT_SECONDS >= 35
+    assert ministral_router.DEFAULT_TIMEOUT_SECONDS > 11.98
+
+
+def test_router_timeout_calls_the_gateway_once(service, monkeypatch):
+    monkeypatch.setenv("JARVIS_MINISTRAL_GATEWAY_URL", "https://gateway.example/")
+    monkeypatch.setenv("JARVIS_MINISTRAL_GATEWAY_TOKEN", "secret")
+    calls = []
+
+    def _opener(req, timeout=None):
+        calls.append(timeout)
+        raise TimeoutError("budget")
+
+    result = ministral_router.resolve_intent_via_router(
+        service, message("ciao"), timeout=0.2, opener=_opener)
+    assert result["ok"] is False
+    assert "GATEWAY_UNREACHABLE" in result["error"]
+    assert calls == [0.2]
+
+
 def test_is_confident_enough_false_when_needs_clarification():
     assert not ministral_router.is_confident_enough(
         dict(VALID_OUTPUT, confidence=0.99, needs_clarification=True), threshold=0.75)

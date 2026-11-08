@@ -31,7 +31,11 @@ from path_resolver import resolve_contracts_dir
 CONTRACTS = resolve_contracts_dir(__file__)
 OUTPUT_SCHEMA = json.loads((CONTRACTS / "jarvis-ministral-router-output.schema.json").read_text(encoding="utf-8"))
 
-DEFAULT_TIMEOUT_SECONDS = float(os.environ.get("JARVIS_MINISTRAL_ROUTER_TIMEOUT_SECONDS", "4"))
+# T04 measured one HTTP cold start at 11.98s on an already installed model.
+# The gateway budget is 30s (that sample plus an 18s margin). This client
+# waits 35s so it can observe the gateway's own timeout instead of aborting
+# first. One call, no retry loop.
+DEFAULT_TIMEOUT_SECONDS = float(os.environ.get("JARVIS_MINISTRAL_ROUTER_TIMEOUT_SECONDS", "35"))
 DEFAULT_CONFIDENCE_THRESHOLD = float(os.environ.get("JARVIS_MINISTRAL_ROUTER_CONFIDENCE_THRESHOLD", "0.75"))
 MAX_CANDIDATE_TASKS = 20
 
