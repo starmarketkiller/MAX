@@ -43,3 +43,7 @@ Same window GOLD H4 2026.07.01–2026.10.19, account 345277936:
 Artifacts: docs/evidence/nxs_edge_fvg_only_ops_20260701_20261019.htm, MQL5/Profiles/NEXUS_EDGE_FVG_ONLY_OPS_GOLD.ini.
 
 Still not LIVE GO (n=20 underpowered vs Power Gate). Directionally: isolate FVG_CONT; keep EMA_PULLBACK off.
+
+## Ranking concurrence
+
+Independent ranking agrees: FVG_CONT strongest; no VALIDATED; next = powered confirmatory selector=8 OPENED>=30. See EDGE_FVG_POWERED_FORWARD_NEXT_V1.md.
