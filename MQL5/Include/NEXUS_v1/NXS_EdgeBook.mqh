@@ -69,6 +69,12 @@ bool NXS_EdgeBook_Preflight(){
             "InpUseStrategyProfiles=true");
       return false;
    }
+   if(InpStrat_MACD || InpStrat_RSI_DIV || InpStrat_TSI || InpStrat_BB_SQUEEZE
+      || InpStrat_SH_BMS_RTO || InpStrat_SilverBullet || InpUseStructReact
+      || InpStrat_SAR || InpStrat_LONDON_BO || InpStrat_ICHIMOKU){
+      Print("[EDGE_BOOK][WARN] toggles outside shortlist are still true; "
+            "collector/open gates will ignore them in EDGE_SHORTLIST");
+   }
    Print("[EDGE_BOOK] mode=EDGE_SHORTLIST "
          "allow=FVG_CONT,LIQ_SWEEP,ORDER_BLOCK,BREAKOUT_ACC,Z_SCORE_BREAKOUT,EMA_PULLBACK "
          "note=credit-safe book, not validated production edge");

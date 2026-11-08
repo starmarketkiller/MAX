@@ -32,9 +32,13 @@ Research Mode isolation may still open these for measurement.
 |---|---|
 | `InpBookMode` | Tester-visible book switch (default `FULL`) |
 | `NXS_EdgeBook.mqh` | Allow / deny by `stratName` |
+| `NXS_CollectRaw` | Skips strategies outside the active book before they run |
 | `NXS_OpenTrade` / `NXR_OpenTrade` | Gate before exposure creation |
 | `NXS_CommonExposurePreflight` | Unchanged; still required |
 | `scripts/edge_freeze_check.py` | Registry ↔ EA default alignment |
+
+FVG_CONT confirmatory (Phase 7.34) remains `INSUFFICIENT_EVIDENCE` /
+not live-ready — still allowed in the shortlist as a research candidate only.
 
 ## How to use
 

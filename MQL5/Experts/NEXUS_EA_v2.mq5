@@ -518,116 +518,118 @@ void NXS_Router_AuditRegistry(){
 int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
                    SNXSSignal &out[]){
    int n = 0;
-   // Classic 16
-   out[n++] = NXS_Strat_ADXRSI();
-   out[n++] = NXS_Strat_Bollinger();
-   out[n++] = NXS_Strat_MACD();
-   out[n++] = NXS_Strat_SAR();
-   out[n++] = NXS_Strat_TSI();
-   out[n++] = NXS_Strat_Bjorgum();
-   out[n++] = NXS_Strat_LiqSweep(swExt);
-   out[n++] = NXS_Strat_FVG();
-   out[n++] = NXS_Strat_BreakoutAcc();
-   out[n++] = NXS_Strat_LondonBO();
-   out[n++] = NXS_Strat_EMAPullback();
-   out[n++] = NXS_Strat_BBSqueeze();
-   out[n++] = NXS_Strat_Ichimoku();
-   out[n++] = NXS_Strat_RSIDiv();
-   out[n++] = NXS_Strat_OrderBlock();
-   out[n++] = NXS_Strat_StructureReaction();
+   // Classic 16 — EdgeBook skips names outside the active book before they
+   // can mutate persistent state on a non-owned TF pass (Research Mode still
+   // allows every name via NXS_EdgeBook_Allows).
+   if(NXS_EdgeBook_Allows("ADX_RSI"))      out[n++] = NXS_Strat_ADXRSI();
+   if(NXS_EdgeBook_Allows("BOLLINGER"))    out[n++] = NXS_Strat_Bollinger();
+   if(NXS_EdgeBook_Allows("MACD"))         out[n++] = NXS_Strat_MACD();
+   if(NXS_EdgeBook_Allows("SAR"))          out[n++] = NXS_Strat_SAR();
+   if(NXS_EdgeBook_Allows("TSI"))          out[n++] = NXS_Strat_TSI();
+   if(NXS_EdgeBook_Allows("BJORGUM"))      out[n++] = NXS_Strat_Bjorgum();
+   if(NXS_EdgeBook_Allows("LIQ_SWEEP"))    out[n++] = NXS_Strat_LiqSweep(swExt);
+   if(NXS_EdgeBook_Allows("FVG_CONT"))     out[n++] = NXS_Strat_FVG();
+   if(NXS_EdgeBook_Allows("BREAKOUT_ACC")) out[n++] = NXS_Strat_BreakoutAcc();
+   if(NXS_EdgeBook_Allows("LONDON_BO"))    out[n++] = NXS_Strat_LondonBO();
+   if(NXS_EdgeBook_Allows("EMA_PULLBACK")) out[n++] = NXS_Strat_EMAPullback();
+   if(NXS_EdgeBook_Allows("BB_SQUEEZE"))   out[n++] = NXS_Strat_BBSqueeze();
+   if(NXS_EdgeBook_Allows("ICHIMOKU"))     out[n++] = NXS_Strat_Ichimoku();
+   if(NXS_EdgeBook_Allows("RSI_DIV"))      out[n++] = NXS_Strat_RSIDiv();
+   if(NXS_EdgeBook_Allows("ORDER_BLOCK"))  out[n++] = NXS_Strat_OrderBlock();
+   if(NXS_EdgeBook_Allows("STRUCT_REACT")) out[n++] = NXS_Strat_StructureReaction();
    // SMC/ICT 10 (v2.0.36: && NXS_SelectorAllows(N) - see InpStrategySelector)
-   if(InpStrat_TurtleSoup    && NXS_SelectorAllows(17)) out[n++] = NXS_Strat_TurtleSoup(swExt);
-   if(InpStrat_IFVG          && NXS_SelectorAllows(18)) out[n++] = NXS_Strat_IFVG_Reversal();
-   if(InpStrat_FVG_Mit       && NXS_SelectorAllows(19)) out[n++] = NXS_Strat_FVG_Mitigation();
+   if(InpStrat_TurtleSoup    && NXS_SelectorAllows(17) && NXS_EdgeBook_Allows("TURTLE_SOUP")) out[n++] = NXS_Strat_TurtleSoup(swExt);
+   if(InpStrat_IFVG          && NXS_SelectorAllows(18) && NXS_EdgeBook_Allows("IFVG")) out[n++] = NXS_Strat_IFVG_Reversal();
+   if(InpStrat_FVG_Mit       && NXS_SelectorAllows(19) && NXS_EdgeBook_Allows("FVG_MIT")) out[n++] = NXS_Strat_FVG_Mitigation();
    // 13/08 - variante a registro (15 barre), vedi NXS_Strategies_SMC.mqh
-   if(InpStrat_FVG_MIT_WINDOW && NXS_SelectorAllows(39)) out[n++] = NXS_Strat_FVG_Mitigation_Window();
-   if(InpStrat_OB_Mit        && NXS_SelectorAllows(20)) out[n++] = NXS_Strat_OB_Mitigation_Structural();
-   if(InpStrat_SH_BMS_RTO    && NXS_SelectorAllows(21)) out[n++] = NXS_Strat_SH_BMS_RTO(swExt);
+   if(InpStrat_FVG_MIT_WINDOW && NXS_SelectorAllows(39) && NXS_EdgeBook_Allows("FVG_MIT_WINDOW")) out[n++] = NXS_Strat_FVG_Mitigation_Window();
+   if(InpStrat_OB_Mit        && NXS_SelectorAllows(20) && NXS_EdgeBook_Allows("OB_MIT")) out[n++] = NXS_Strat_OB_Mitigation_Structural();
+   if(InpStrat_SH_BMS_RTO    && NXS_SelectorAllows(21) && NXS_EdgeBook_Allows("SH_BMS_RTO")) out[n++] = NXS_Strat_SH_BMS_RTO(swExt);
    // 14/08 - state machine V2 indipendente, walk-forward 5/5 su 1h (vedi vault)
-   if(InpStrat_SH_BMS_RTO_V2 && NXS_SelectorAllows(40)) out[n++] = NXS_Strat_SH_BMS_RTO_V2(swExt);
-   if(InpStrat_SMS_BMS_RTO   && NXS_SelectorAllows(22)) out[n++] = NXS_Strat_SMS_BMS_RTO();
-   if(InpStrat_SilverBullet  && NXS_SelectorAllows(23)) out[n++] = NXS_Strat_SilverBullet(swExt);
-   if(InpStrat_AMD_Reversal  && NXS_SelectorAllows(24)) out[n++] = NXS_Strat_AMD_Reversal(swExt, amd);
-   if(InpStrat_OTE_Cont      && NXS_SelectorAllows(25)) out[n++] = NXS_Strat_OTE_Continuation();
-   if(InpStrat_MalaysianSNR  && NXS_SelectorAllows(26)) out[n++] = NXS_Strat_MalaysianSNR_Rejection();
+   if(InpStrat_SH_BMS_RTO_V2 && NXS_SelectorAllows(40) && NXS_EdgeBook_Allows("SH_BMS_RTO_V2")) out[n++] = NXS_Strat_SH_BMS_RTO_V2(swExt);
+   if(InpStrat_SMS_BMS_RTO   && NXS_SelectorAllows(22) && NXS_EdgeBook_Allows("SMS_BMS_RTO")) out[n++] = NXS_Strat_SMS_BMS_RTO();
+   if(InpStrat_SilverBullet  && NXS_SelectorAllows(23) && NXS_EdgeBook_Allows("SILVER_BULLET")) out[n++] = NXS_Strat_SilverBullet(swExt);
+   if(InpStrat_AMD_Reversal  && NXS_SelectorAllows(24) && NXS_EdgeBook_Allows("AMD_REVERSAL")) out[n++] = NXS_Strat_AMD_Reversal(swExt, amd);
+   if(InpStrat_OTE_Cont      && NXS_SelectorAllows(25) && NXS_EdgeBook_Allows("OTE_CONT")) out[n++] = NXS_Strat_OTE_Continuation();
+   if(InpStrat_MalaysianSNR  && NXS_SelectorAllows(26) && NXS_EdgeBook_Allows("MALAYSIAN_SNR")) out[n++] = NXS_Strat_MalaysianSNR_Rejection();
    // 24/08 - pivot di swing maggiore, vedi NXS_Strategies_SMC.mqh
-   if(InpStrat_SwingFalseBreak && NXS_SelectorAllows(41)) out[n++] = NXS_Strat_SwingFalseBreak();
+   if(InpStrat_SwingFalseBreak && NXS_SelectorAllows(41) && NXS_EdgeBook_Allows("SWING_FALSEBREAK")) out[n++] = NXS_Strat_SwingFalseBreak();
    // 24/08 - z-score + regime SMA200, stop strutturale M5, vedi NXS_Strategies.mqh
-   if(InpStrat_ZScoreBreakout  && NXS_SelectorAllows(42)) out[n++] = NXS_Strat_ZScoreBreakout();
+   if(InpStrat_ZScoreBreakout  && NXS_SelectorAllows(42) && NXS_EdgeBook_Allows("Z_SCORE_BREAKOUT")) out[n++] = NXS_Strat_ZScoreBreakout();
 
    // v2.0.7 INSTITUTIONAL MODELS (9)
    SNXSHTF htfInst = NXS_GetHTFBias();
-   if(InpUseStrat_CISD        && NXS_SelectorAllows(27)) out[n++] = NXS_Strat_CISD(swExt);
-   if(InpUseStrat_AMD_Cont    && NXS_SelectorAllows(28)) out[n++] = NXS_Strat_AMD_Continuation(amd, htfInst);
-   if(InpUseStrat_Judas       && NXS_SelectorAllows(29)) out[n++] = NXS_Strat_JudasSwing(swExt, amd);
-   if(InpUseStrat_LdnReversal && NXS_SelectorAllows(30)) out[n++] = NXS_Strat_LondonReversal(swExt, amd);
-   if(InpUseStrat_NYReversal  && NXS_SelectorAllows(31)) out[n++] = NXS_Strat_NYReversal(swExt);
-   if(InpUseStrat_WeeklyExp   && NXS_SelectorAllows(32)) out[n++] = NXS_Strat_WeeklyRangeExp();
-   if(InpUseStrat_PO3         && NXS_SelectorAllows(33)) out[n++] = NXS_Strat_PO3(swExt, amd);
-   if(InpUseStrat_LiqVoid     && NXS_SelectorAllows(34)) out[n++] = NXS_Strat_LiquidityVoid(htfInst);
-   if(InpUseStrat_DispRebal   && NXS_SelectorAllows(35)) out[n++] = NXS_Strat_DisplacementRebalance();
+   if(InpUseStrat_CISD        && NXS_SelectorAllows(27) && NXS_EdgeBook_Allows("THREE_BAR_DELIVERY_BREAK")) out[n++] = NXS_Strat_CISD(swExt);
+   if(InpUseStrat_AMD_Cont    && NXS_SelectorAllows(28) && NXS_EdgeBook_Allows("AMD_CONT")) out[n++] = NXS_Strat_AMD_Continuation(amd, htfInst);
+   if(InpUseStrat_Judas       && NXS_SelectorAllows(29) && NXS_EdgeBook_Allows("JUDAS_SWING")) out[n++] = NXS_Strat_JudasSwing(swExt, amd);
+   if(InpUseStrat_LdnReversal && NXS_SelectorAllows(30) && NXS_EdgeBook_Allows("LDN_REVERSAL")) out[n++] = NXS_Strat_LondonReversal(swExt, amd);
+   if(InpUseStrat_NYReversal  && NXS_SelectorAllows(31) && NXS_EdgeBook_Allows("NY_REVERSAL")) out[n++] = NXS_Strat_NYReversal(swExt);
+   if(InpUseStrat_WeeklyExp   && NXS_SelectorAllows(32) && NXS_EdgeBook_Allows("WEEKLY_EXP")) out[n++] = NXS_Strat_WeeklyRangeExp();
+   if(InpUseStrat_PO3         && NXS_SelectorAllows(33) && NXS_EdgeBook_Allows("PO3")) out[n++] = NXS_Strat_PO3(swExt, amd);
+   if(InpUseStrat_LiqVoid     && NXS_SelectorAllows(34) && NXS_EdgeBook_Allows("LIQ_VOID")) out[n++] = NXS_Strat_LiquidityVoid(htfInst);
+   if(InpUseStrat_DispRebal   && NXS_SelectorAllows(35) && NXS_EdgeBook_Allows("DISP_REBAL")) out[n++] = NXS_Strat_DisplacementRebalance();
 
    // v2.0.8 — Range Fade
-   if(InpUseStrat_RangeFade   && NXS_SelectorAllows(37)) out[n++] = NXS_Strat_RangeFade();
+   if(InpUseStrat_RangeFade   && NXS_SelectorAllows(37) && NXS_EdgeBook_Allows("RANGE_FADE")) out[n++] = NXS_Strat_RangeFade();
 
    // v2.0.20 — Elliott Wave (#37)
-   if(InpUseStrat_Elliott     && NXS_SelectorAllows(36)) out[n++] = NXS_Strat_Elliott();
+   if(InpUseStrat_Elliott     && NXS_SelectorAllows(36) && NXS_EdgeBook_Allows("ELLIOTT")) out[n++] = NXS_Strat_Elliott();
 
    // 11/08 — CRT (Candle Range Theory, #38)
-   if(InpUseStrat_CRT         && NXS_SelectorAllows(38)) out[n++] = NXS_Strat_CRT();
+   if(InpUseStrat_CRT         && NXS_SelectorAllows(38) && NXS_EdgeBook_Allows("CRT")) out[n++] = NXS_Strat_CRT();
 
    // 28/08 — BarUpDn, portata da script Pine TradingView pubblico (#43)
-   if(InpStrat_BarUpDn        && NXS_SelectorAllows(43)) out[n++] = NXS_Strat_BarUpDn();
+   if(InpStrat_BarUpDn        && NXS_SelectorAllows(43) && NXS_EdgeBook_Allows("BAR_UPDN")) out[n++] = NXS_Strat_BarUpDn();
 
    // 28/08 — PMax, portata da script Pine TradingView pubblico (#44)
-   if(InpStrat_PMax           && NXS_SelectorAllows(44)) out[n++] = NXS_Strat_PMax();
+   if(InpStrat_PMax           && NXS_SelectorAllows(44) && NXS_EdgeBook_Allows("PMAX")) out[n++] = NXS_Strat_PMax();
 
    // 28/08 — MACD+SMA200, portata da script Pine TradingView pubblico (#45)
-   if(InpStrat_MacdSma200     && NXS_SelectorAllows(45)) out[n++] = NXS_Strat_MacdSma200();
+   if(InpStrat_MacdSma200     && NXS_SelectorAllows(45) && NXS_EdgeBook_Allows("MACD_SMA200")) out[n++] = NXS_Strat_MacdSma200();
 
    // 28/08 — RSI Divergence su pivot, portata da script Pine TradingView pubblico (#46)
-   if(InpStrat_RsiDivPine     && NXS_SelectorAllows(46)) out[n++] = NXS_Strat_RsiDivPine();
+   if(InpStrat_RsiDivPine     && NXS_SelectorAllows(46) && NXS_EdgeBook_Allows("RSI_DIV_PINE")) out[n++] = NXS_Strat_RsiDivPine();
 
    // 28/08 — Ichimoku+HullMA+MACD, portata da script Pine TradingView pubblico (#47)
-   if(InpStrat_IchimokuHull   && NXS_SelectorAllows(47)) out[n++] = NXS_Strat_IchimokuHullMacd();
+   if(InpStrat_IchimokuHull   && NXS_SelectorAllows(47) && NXS_EdgeBook_Allows("ICHIMOKU_HULL_MACD")) out[n++] = NXS_Strat_IchimokuHullMacd();
 
    // 28/08 — 3Commas Bot, portata da script Pine TradingView pubblico (#48)
-   if(InpStrat_3CommasBot     && NXS_SelectorAllows(48)) out[n++] = NXS_Strat_3CommasBot();
+   if(InpStrat_3CommasBot     && NXS_SelectorAllows(48) && NXS_EdgeBook_Allows("3COMMAS_BOT")) out[n++] = NXS_Strat_3CommasBot();
 
    // 02/09 — Pivot Extension + Wick Rejection, idea originale utente (#49)
-   if(InpStrat_PivotWick      && NXS_SelectorAllows(49)) out[n++] = NXS_Strat_PivotWick();
+   if(InpStrat_PivotWick      && NXS_SelectorAllows(49) && NXS_EdgeBook_Allows("PIVOT_WICK")) out[n++] = NXS_Strat_PivotWick();
 
    // 06/09 — LEVEL_CONFLUENCE: merge PIVOT_WICK/STRUCT_REACT/MALAYSIAN_SNR
    // con bonus di confluenza multi-TF e trigger touch/sweep, idea utente (#50)
-   if(InpStrat_LevelConfluence && NXS_SelectorAllows(50)) out[n++] = NXS_Strat_LevelConfluence();
+   if(InpStrat_LevelConfluence && NXS_SelectorAllows(50) && NXS_EdgeBook_Allows("LEVEL_CONFLUENCE")) out[n++] = NXS_Strat_LevelConfluence();
 
    // 06/09 — LEVEL_CONFLUENCE gemella su M5: livelli H1/H4/D1, esecuzione M5
    // invece di M15, idea utente "segnamo i livelli D1 H4 H1 e entriamo su
    // M15 e M5" (#51)
-   if(InpStrat_LevelConfluenceM5 && NXS_SelectorAllows(51)) out[n++] = NXS_Strat_LevelConfluence_M5();
+   if(InpStrat_LevelConfluenceM5 && NXS_SelectorAllows(51) && NXS_EdgeBook_Allows("LEVEL_CONFLUENCE_M5")) out[n++] = NXS_Strat_LevelConfluence_M5();
 
    // 06/09 — LEVEL_REACTION: merge VERO di PIVOT_WICK+STRUCT_REACT+MALAYSIAN_SNR
    // (due fonti di livello indipendenti + gate sulla profondita' di
    // sfondamento in pip tarato sull'analisi fresca del grafico), idea utente
    // dopo aver notato che sono la stessa idea implementata quattro volte (#52)
-   if(InpStrat_LevelReaction && NXS_SelectorAllows(52)) out[n++] = NXS_Strat_LevelReaction();
+   if(InpStrat_LevelReaction && NXS_SelectorAllows(52) && NXS_EdgeBook_Allows("LEVEL_REACTION")) out[n++] = NXS_Strat_LevelReaction();
 
    // 06/09 — LEVEL_REACTION gemella su M5 (#53)
-   if(InpStrat_LevelReactionM5 && NXS_SelectorAllows(53)) out[n++] = NXS_Strat_LevelReaction_M5();
+   if(InpStrat_LevelReactionM5 && NXS_SelectorAllows(53) && NXS_EdgeBook_Allows("LEVEL_REACTION_M5")) out[n++] = NXS_Strat_LevelReaction_M5();
 
    // 10/09 — WICK_SWEEP_REV: idea sperimentale utente, H4, sweep di una
    // wick di N pip -> entrata immediata in direzione opposta (#54). Tenuta
    // separata dal nucleo (NXS_Strategies_Experimental.mqh) - vedi anche
    // LEVEL_REACTION (#52) sopra, stessa famiglia concettuale (sweep+reversal
    // con gate in pip sulla profondita' di sfondamento), da confrontare.
-   if(InpStrat_WickSweep && NXS_SelectorAllows(54)) out[n++] = NXS_Strat_WickSweepReversal();
+   if(InpStrat_WickSweep && NXS_SelectorAllows(54) && NXS_EdgeBook_Allows("WICK_SWEEP_REV")) out[n++] = NXS_Strat_WickSweepReversal();
 
    // 17/09 — VOLATILITY_BREAKOUT_CONFIRMED (#56): Strategy Foundry Phase 3,
    // porting congelato del braccio "confermato" gia' promosso dallo
    // screening causale Phase 2 (server/backtest.py sig_volatility_breakout_confirmed,
    // verificato identico 927/927 eventi). Nessun filtro extra per istruzione
    // esplicita del task.
-   if(InpStrat_VolBreakoutConfirmed && NXS_SelectorAllows(56)) out[n++] = NXS_Strat_VolatilityBreakoutConfirmed();
+   if(InpStrat_VolBreakoutConfirmed && NXS_SelectorAllows(56) && NXS_EdgeBook_Allows("VOLATILITY_BREAKOUT_CONFIRMED")) out[n++] = NXS_Strat_VolatilityBreakoutConfirmed();
 
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
