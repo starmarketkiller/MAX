@@ -62,3 +62,40 @@ def test_mql_header_lists_match_python_mirror():
     ).read_text(encoding="utf-8")
     for name in SHORTLIST | HARD_DENIED:
         assert f'"{name}"' in text
+
+
+def test_collect_raw_every_push_is_book_gated():
+    import re
+    from pathlib import Path
+
+    ea = (
+        Path(__file__).resolve().parents[2]
+        / "MQL5"
+        / "Experts"
+        / "NEXUS_EA_v2.mq5"
+    ).read_text(encoding="utf-8")
+    start = ea.index("int NXS_CollectRaw(")
+    end = ea.index("if(InpUseStrategyProfiles)", start)
+    body = ea[start:end]
+    pushes = re.findall(r"out\[n\+\+\]\s*=\s*NXS_Strat_\w+", body)
+    assert len(pushes) >= 40
+    for line in body.splitlines():
+        if "out[n++] = NXS_Strat_" not in line and "out[n++]=NXS_Strat_" not in line:
+            continue
+        assert "NXS_EdgeBook_Allows(" in line, line
+
+
+def test_data_collection_path_is_book_gated():
+    from pathlib import Path
+
+    ea = (
+        Path(__file__).resolve().parents[2]
+        / "MQL5"
+        / "Experts"
+        / "NEXUS_EA_v2.mq5"
+    ).read_text(encoding="utf-8")
+    start = ea.index("=== MODALITÀ RACCOLTA DATI")
+    end = ea.index("NXS_SafeBuy(dlots", start)
+    dc = ea[start:end]
+    assert "NXS_EdgeBook_Allows(s.stratName)" in dc
+    assert "GATE_EDGE_BOOK" in dc

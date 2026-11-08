@@ -1405,6 +1405,15 @@ void OnTick(){
             NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, GATE_OPEN_POSITION, "");
             continue;
          }
+         // Credit-safe book: Data Collection bypasses NXS_OpenTrade, so the
+         // same stratName gate must live here. EDGE_SHORTLIST already refuses
+         // this mode in OnInit; FULL still hard-denies FAILED/DEFECT names.
+         if(!NXS_EdgeBook_Allows(s.stratName)){
+            string dcBookReason = NXS_EdgeBook_DenyReason(s.stratName);
+            NXS_GateTelemetry("data_collection", "edge_book", false, 0.0, 1.0, dcBookReason);
+            NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, GATE_EDGE_BOOK, dcBookReason);
+            continue;
+         }
          if(s.slPrice <= 0 || s.tpPrice <= 0){                          // serve SL/TP valido
             NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, GATE_INVALID_STOPS, "no_sltp");
             continue;

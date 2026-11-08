@@ -35,6 +35,7 @@ Research Mode isolation may still open these for measurement.
 | `NXS_CollectRaw` | Skips strategies outside the active book before they run |
 | `NXS_Profile_Enabled` | Returns false when the book denies the `stratName` |
 | `NXS_OpenTrade` / `NXR_OpenTrade` | Gate before exposure creation |
+| Data Collection loop | Same `stratName` gate before `SafeBuy`/`SafeSell` |
 | WebBridge telemetria | `strategies` = toggle ∧ book; payload include `edge_book` |
 | `NXS_CommonExposurePreflight` | Unchanged; still required |
 | `scripts/edge_freeze_check.py` | Registry ↔ EA default alignment |
