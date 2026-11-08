@@ -1511,6 +1511,11 @@ SNXSSignal NXS_Strat_FVG(){
    } else if(h1 < l3 && g_structH1.trend == -1){
       s.dir = DIR_SELL; s.score = 70; s.reason = "FVG_cont bear (ext)";
    }
+   // Habitat ops lock (InpFvgContBuyOnly): drop bear arm after gap+H1 align.
+   // Default false → identical to pre-9/11 bidirectional confirmatory recipe.
+   if(InpFvgContBuyOnly && s.dir == DIR_SELL){
+      s.dir = DIR_NONE; s.reason = ""; s.score = 0;
+   }
    // v2.4.2: conferma reazione (structure+react engine) -> filtra i gap in cui
    // il prezzo passa senza reagire (causa delle perdite SMC).
    if(s.dir != DIR_NONE && InpUseSMCReactionGate &&

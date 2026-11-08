@@ -1,0 +1,58 @@
+{
+  "schema": "fvg_buy_only_ops_result_v1",
+  "generated_at": "2026-11-08T23:45:27.468646+00:00",
+  "window": [
+    "2026.07.01",
+    "2026.11.07"
+  ],
+  "config": "MQL5/Profiles/NEXUS_EDGE_FVG_BUY_ONLY_OPS_GOLD.ini",
+  "InpFvgContBuyOnly": true,
+  "InpResearchMode": false,
+  "InpStrategySelector": 8,
+  "n_trades": 6,
+  "n_sell": 0,
+  "n_buy": 6,
+  "money_net": 70.15,
+  "wins": 3,
+  "promotable": false,
+  "live_ready": false,
+  "note": "Research-OFF ops hunt for Phase 7.33 arm B filter. Not confirmatory. Not LIVE GO. Compare to bidirectional Research-ON interim ALL -82 / BUY subset +76 (n=3) and FVG-only Research-OFF Jul-Oct +77/20.",
+  "trades": [
+    {
+      "t": "2026.08.05 12:00:00",
+      "side": "BUY",
+      "pnl": 27.03,
+      "exit": "sl 4188.33"
+    },
+    {
+      "t": "2026.08.05 16:00:00",
+      "side": "BUY",
+      "pnl": 61.85,
+      "exit": "NXS:AUTOCLOSE"
+    },
+    {
+      "t": "2026.08.06 03:30:00",
+      "side": "BUY",
+      "pnl": 0.3,
+      "exit": "sl 4274.66"
+    },
+    {
+      "t": "2026.08.07 19:00:00",
+      "side": "BUY",
+      "pnl": -1.35,
+      "exit": "NXS:AUTOCLOSE"
+    },
+    {
+      "t": "2026.08.11 04:30:00",
+      "side": "BUY",
+      "pnl": -9.68,
+      "exit": "sl 4410.20"
+    },
+    {
+      "t": "2026.09.08 11:00:00",
+      "side": "BUY",
+      "pnl": -8.0,
+      "exit": "sl 4384.78"
+    }
+  ]
+}

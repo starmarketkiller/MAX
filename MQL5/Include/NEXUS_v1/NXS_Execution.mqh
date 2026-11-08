@@ -157,6 +157,20 @@ bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR di
       return false;
    }
 
+   // --- (4c) Credit-safe edge book ----------------------------------------
+   // Covers every exposure path that reaches this invariant (primary, NXR,
+   // data-collection callers that pass a real strategy, SL reclaim, etc.).
+   // Synthetic add-on labels (GRID/PYRAMID/INST:*) are not strategy ids —
+   // NXS_StrategyKnown filters them so legs on an already-open shortlist
+   // position are not blocked by name alone. No prior gate is removed.
+   if(NXS_StrategyKnown(stratName) && !NXS_EdgeBook_Allows(stratName)){
+      string bookWhy = NXS_EdgeBook_DenyReason(stratName);
+      NXS_GateTelemetry(route, "edge_book", false, 0.0, 1.0, bookWhy);
+      reason = bookWhy;
+      gateOut = GATE_EDGE_BOOK;
+      return false;
+   }
+
    // --- (5) RiskShield -----------------------------------------------------
    // 02/09 - il breaker Sharpe ora e' PER STRATEGIA (richiesto dall'utente:
    // bloccare solo la strategia responsabile, non l'intero conto). stratName
@@ -341,6 +355,15 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    if(InpUseStrategyProfiles && !NXS_Profile_Enabled(sig.stratName)){
       g_nxsLastOpenFailure = "profile_disabled";
       NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_PROFILE_DISABLED, "");
+      return OPEN_FAIL_PREFLIGHT;
+   }
+   // Credit-safe book: shortlist-only or hard-deny FAILED/DEFECT (NXS_EdgeBook).
+   // Does not bypass NXS_CommonExposurePreflight later in this function.
+   if(!NXS_EdgeBook_Allows(sig.stratName)){
+      string edgeReason = NXS_EdgeBook_DenyReason(sig.stratName);
+      g_nxsLastOpenFailure = edgeReason;
+      NXS_GateTelemetry("open_trade", "edge_book", false, 0.0, 1.0, edgeReason);
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_EDGE_BOOK, edgeReason);
       return OPEN_FAIL_PREFLIGHT;
    }
    // 02/09 - veto di regime (_nxs_regime_veto, NXS_SignalQuality.mqh): esisteva

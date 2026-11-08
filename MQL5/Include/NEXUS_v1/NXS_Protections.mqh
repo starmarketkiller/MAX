@@ -344,6 +344,15 @@ bool NXS_Prot_AccountCapitalFlowValues(ulong ticket, long dealMsc,
       // economic provenance. It can represent an owner deposit/withdrawal,
       // but also a broker correction or another P/L-bearing adjustment.
       // Without a separate trusted attestation we must not neutralize it.
+      //
+      // Exception: Strategy Tester / Optimization always seed equity with a
+      // synthetic DEAL_TYPE_BALANCE (ticket 1 / initial deposit). Treating that
+      // as an unverified live capital flow locked MaxTotalDD on every backtest
+      // (0 trades). Live/demo terminals are unchanged.
+      if(MQLInfoInteger(MQL_TESTER) || MQLInfoInteger(MQL_OPTIMIZATION)){
+         NXS_Prot_AdvanceFlowCursor(dealMsc, ticket);
+         return true;
+      }
       g_maxDDRecoveryRequired = true;
       g_maxDDRecoveryReason = StringFormat("UNVERIFIED_BALANCE_FLOW_TICKET_%I64u", ticket);
       PrintFormat("[NEXUS PROT][ALERT] %s amount=%.2f - new exposure blocked",

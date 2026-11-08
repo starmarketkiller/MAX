@@ -200,6 +200,15 @@ input int      InpDataCollectionMaxOpen= 40;     // tetto posizioni aperte conte
 // gestione post-apertura, il lotto e il multi-TF, con log esplicito per
 // tutto cio' che resta acceso (niente silenzi come ESL/DailyDD prima).
 input bool     InpResearchMode         = false;
+// 08/11 - Book mode (credit-safe edge shortlist). Default FULL = comportamento
+// precedente. EDGE_SHORTLIST limita le aperture allo shortlist del loop
+// credit-safe (docs/EDGE_CREDIT_SAFE_OPERATING_LOOP_V1.md). NON e' un claim
+// di edge validato: Production resta NO-GO finche' il registry non promuove.
+enum ENUM_NXS_BOOK_MODE {
+   NXS_BOOK_FULL           = 0,   // tutti i toggle/profili attuali; hard-deny FAILED/DEFECT
+   NXS_BOOK_EDGE_SHORTLIST = 1    // solo FVG_CONT/LIQ_SWEEP/ORDER_BLOCK/BREAKOUT_ACC/Z_SCORE_BREAKOUT/EMA_PULLBACK
+};
+input ENUM_NXS_BOOK_MODE InpBookMode = NXS_BOOK_EDGE_SHORTLIST;  // credit-safe default; not validated LIVE edge
 // 10/09 - RAW vs RECIPE, ora un enum esplicito (richiesto dopo la scoperta
 // che il RAW iniziale non era davvero RAW - vedi audit MaxHold/MaxLossPerPos/
 // AutoClose sotto). InpUseStrategyProfiles/InpProfileMultiTF (richiesti true
@@ -508,7 +517,7 @@ input bool     InpBollingerUseCandleFilter = false;  // hammer/engulfing (buy), 
 // trascina l'aggregato in perdita) - conferma diretta della scoperta
 // Python del 24/08. Lock di direzione per isolare il numero pulito.
 input bool     InpBollingerBuyOnly         = false;
-input bool     InpStrat_MACD         = true;
+input bool     InpStrat_MACD         = false;  // registry FAILED — off until a powered claim exists
 input bool     InpStrat_SAR          = true;
 input bool     InpSAR_RequireCandleAlign = false;  // 31/08 - vedi NXS_Strat_SAR: filtro trovato analizzando i 112 trade nudi
 input bool     InpSAR_RequirePressureContrary = false;  // 31/08 - vedi NXS_SAR_PressureContrary: non ridondante col filtro candela, si sommano
@@ -543,10 +552,10 @@ input bool     InpStrat_FVG_CONT     = true;
 input bool     InpStrat_BREAKOUT_ACC = true;
 input bool     InpStrat_VolBreakoutConfirmed = false;  // 17/09 - Strategy Foundry Phase 3, mai verificata su MT5 - default OFF
 input bool     InpStrat_LONDON_BO    = true;
-input bool     InpStrat_EMA_PULLBACK = true;
+input bool     InpStrat_EMA_PULLBACK = false; // ops 2026-11-08: shortlist book destroyed by EMA_PB (-1007 on 9 trades); keep research-on via toggle
 input bool     InpStrat_BB_SQUEEZE   = false;   // DEFECT_BLOCKED: cross-TF contamination — keep off until A/B/C measured
 input bool     InpStrat_ICHIMOKU     = true;
-input bool     InpStrat_RSI_DIV      = true;
+input bool     InpStrat_RSI_DIV      = false;  // registry FAILED — off until a powered claim exists
 input bool     InpStrat_ORDER_BLOCK  = true;
 input bool     InpUseStructReact     = true;
 
@@ -1026,6 +1035,12 @@ input double   InpLevelReactRiskPct            = 0.5;   // rischio% per trade
 // "essere veloci nel mettere a be"), da confrontare col default prima di
 // sostituirlo definitivamente.
 input double   InpFvgContBeR                   = 1.5;
+// 09/11 - habitat lock for FVG_CONT ops hunts (Phase 7.33 arm B = BUY-only
+// analysis subset). Default false keeps bidirectional recipe unchanged for
+// confirmatory A and all existing presets. true = drop SELL after the H1
+// bear gap fires (same pattern as InpBollingerBuyOnly). NOT a LIVE promotion
+// and NOT a substitute for min_n=30 confirmatory power.
+input bool     InpFvgContBuyOnly               = false;
 // 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
 // Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
 // sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).

@@ -596,12 +596,13 @@
         }
       ],
       "defect_status": "REMEDIATED",
-      "forward_validation_status": "UNKNOWN",
-      "latest_relevant_note_date": "2026-10-19",
+      "forward_validation_status": "INSUFFICIENT_EVIDENCE",
+      "latest_relevant_note_date": "2026-10-20",
       "validation_notes": [
         "SLReclaim account-protection bypass remediated in code: 50e9ec7 (CheckProtections), 1ac0437 (CommonExposurePreflight + ProfitReclaim twin), a225aa3 (identity/attribution).",
         "Code verified 2026-10-19: NXS_SLReclaim.mqh still calls NXS_CheckProtections then NXS_CommonExposurePreflight before SafeBuy/SafeSell.",
-        "Standalone edge remains CANDIDATE — remediation closes the defect provenance gap only; does not promote edge status."
+        "Standalone edge remains CANDIDATE — remediation closes the defect provenance gap only; does not promote edge status.",
+        "Phase 7.34 confirmatory forward 2026.07.01-2026.10.19 GOLD H4: OPENED=8, decision INSUFFICIENT_EVIDENCE, promotable=false, live_ready=false (server/research_scripts/phase7/phase7_34_fvg_cont_confirmatory/confirmatory_forward_result_v1.json)."
       ]
     },
     {
@@ -1027,7 +1028,7 @@
     {
       "strategy_id": "MACD",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "FAILED",
       "component_value_status": "NOT_EVALUATED",
       "role_in_system": [
@@ -1567,7 +1568,7 @@
     {
       "strategy_id": "RSI_DIV",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "FAILED",
       "component_value_status": "UNKNOWN",
       "role_in_system": [],

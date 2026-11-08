@@ -1,0 +1,160 @@
+{
+  "schema": "fvg_cont_interim_side_split_v1",
+  "generated_at": "2026-11-08T23:19:30.696141+00:00",
+  "hypothesis_id": "FVG-CONT-HABITAT-RM-001",
+  "window": [
+    "2026.07.01",
+    "2026.11.07"
+  ],
+  "source_report": "docs/evidence/nxs_edge_fvg_conf_ext_20260701_20261107.htm",
+  "run_mode": "INTERIM_CONFIRMATORY_EXTENSION",
+  "note": "Observational side split of Research-ON interim extension (CERT opened=11). Arm B BUY-only is analysis subset per phase7_33 prereg \u2014 not a new prereg, not LIVE GO. Still INSUFFICIENT vs min_n=30.",
+  "decision": "INSUFFICIENT_EVIDENCE",
+  "promotable": false,
+  "live_ready": false,
+  "arm_A_all": {
+    "n": 11,
+    "money_net": -82.45,
+    "mean_R": -0.0422,
+    "sum_R": -0.4639,
+    "wins": 2
+  },
+  "arm_B_buy": {
+    "n": 3,
+    "money_net": 76.44,
+    "mean_R": 0.6666,
+    "sum_R": 1.9999,
+    "wins": 1
+  },
+  "arm_sell_drag": {
+    "n": 8,
+    "money_net": -158.89,
+    "mean_R": -0.308,
+    "sum_R": -2.4638,
+    "wins": 1
+  },
+  "trades": [
+    {
+      "open": "2026.07.06 12:00:00",
+      "side": "SELL",
+      "entry": 4150.32,
+      "exit": 4201.23,
+      "pnl": -50.91,
+      "sl": 4201.18,
+      "tp": 3946.89,
+      "R": -1.001,
+      "exit_reason": "sl 4201.18"
+    },
+    {
+      "open": "2026.08.05 15:30:00",
+      "side": "BUY",
+      "entry": 4205.67,
+      "exit": 4388.07,
+      "pnl": 182.4,
+      "sl": 4160.08,
+      "tp": 4388.05,
+      "R": 4.0009,
+      "exit_reason": "tp 4388.05"
+    },
+    {
+      "open": "2026.08.11 04:30:00",
+      "side": "BUY",
+      "entry": 4419.62,
+      "exit": 4366.58,
+      "pnl": -53.04,
+      "sl": 4366.62,
+      "tp": 4631.62,
+      "R": -1.0008,
+      "exit_reason": "sl 4366.62"
+    },
+    {
+      "open": "2026.09.01 16:00:00",
+      "side": "SELL",
+      "entry": 4356.06,
+      "exit": 4427.93,
+      "pnl": -71.87,
+      "sl": 4427.89,
+      "tp": 4068.75,
+      "R": -1.0006,
+      "exit_reason": "sl 4427.89"
+    },
+    {
+      "open": "2026.09.08 11:00:00",
+      "side": "BUY",
+      "entry": 4392.78,
+      "exit": 4339.86,
+      "pnl": -52.92,
+      "sl": 4339.87,
+      "tp": 4604.44,
+      "R": -1.0002,
+      "exit_reason": "sl 4339.87"
+    },
+    {
+      "open": "2026.09.23 15:45:00",
+      "side": "SELL",
+      "entry": 4303.7,
+      "exit": 4117.42,
+      "pnl": 186.28,
+      "sl": 4350.26,
+      "tp": 4117.47,
+      "R": 4.0009,
+      "exit_reason": "tp 4117.47"
+    },
+    {
+      "open": "2026.09.28 18:00:00",
+      "side": "SELL",
+      "entry": 4118.11,
+      "exit": 4172.44,
+      "pnl": -54.33,
+      "sl": 4172.44,
+      "tp": 3900.79,
+      "R": -1.0,
+      "exit_reason": "sl 4172.44"
+    },
+    {
+      "open": "2026.10.14 20:00:00",
+      "side": "SELL",
+      "entry": 4083.27,
+      "exit": 4122.96,
+      "pnl": -39.69,
+      "sl": 4122.89,
+      "tp": 3924.78,
+      "R": -1.0018,
+      "exit_reason": "sl 4122.89"
+    },
+    {
+      "open": "2026.10.26 02:30:00",
+      "side": "SELL",
+      "entry": 3990.11,
+      "exit": 4037.42,
+      "pnl": -47.31,
+      "sl": 4037.38,
+      "tp": 3801.03,
+      "R": -1.0008,
+      "exit_reason": "sl 4037.38"
+    },
+    {
+      "open": "2026.10.30 20:00:00",
+      "side": "SELL",
+      "entry": 3883.42,
+      "exit": 3934.87,
+      "pnl": -51.45,
+      "sl": 3934.67,
+      "tp": 3678.43,
+      "R": -1.0039,
+      "exit_reason": "sl 3934.67"
+    },
+    {
+      "open": "2026.11.06 08:00:00",
+      "side": "SELL",
+      "entry": 4041.68,
+      "exit": 4071.29,
+      "pnl": -29.61,
+      "sl": 4106.53,
+      "tp": 3782.27,
+      "R": -0.4566,
+      "exit_reason": "end of test"
+    }
+  ],
+  "interpretation": "SELL (8) net -158.89 dominates ALL -82.45; BUY (3) net +76.44. Habitat BUY-heavy thesis directionally consistent on this tiny sample; n_B=3 << 30."
+}
