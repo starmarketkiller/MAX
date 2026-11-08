@@ -634,6 +634,9 @@ bool NXS_Profile_HTF(const string name, bool &htf){
 // InpUseStrategyProfiles=false in .set. Vedi vault NEXUS EA - Config Demo
 // 15 Strategie (10-08).
 bool NXS_Profile_Enabled(const string name){
+   // Credit-safe book / hard-deny (NXS_EdgeBook). Research Mode still allows
+   // isolation through NXS_EdgeBook_Allows. Identity is stratName.
+   if(!NXS_EdgeBook_Allows(name))       return false;
    if(name == "BREAKOUT_ACC")           return true;
    // 14/08 - TURTLE_SOUP disattivata: era Tier S (la piu' fidata, doppia
    // conferma MT5+Python) ma il batch di riverifica costi di oggi (dati

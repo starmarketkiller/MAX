@@ -118,7 +118,8 @@ string _StrategiesJSON(){
       string id = NXS_StrategyIdAt(i);
       if(StringLen(id) == 0) continue;
       bool mapped = false;
-      bool on = _NXS_StrategyToggle(id, mapped);
+      // Effective enablement: input toggle AND credit-safe book gate.
+      bool on = _NXS_StrategyToggle(id, mapped) && NXS_EdgeBook_Allows(id);
       if(!mapped) missing++;
       if(i > 0) s += ",";
       s += StringFormat("\"%s\":%s", id, (on ? "true" : "false"));
@@ -130,6 +131,12 @@ string _StrategiesJSON(){
                   "non hanno un interruttore mappato nella telemetria", missing);
    }
    return s;
+}
+
+string _EdgeBookJSON(){
+   string mode = (InpBookMode == NXS_BOOK_EDGE_SHORTLIST) ? "EDGE_SHORTLIST" : "FULL";
+   return StringFormat("{\"mode\":\"%s\",\"research\":%s}",
+                       mode, (InpResearchMode ? "true" : "false"));
 }
 
 void NXS_WebPush(SNXSHTF &htf, SNXSVel &vel, SNXSAMD &amd, SNXSSweep &sw){
@@ -246,6 +253,7 @@ void NXS_WebPush(SNXSHTF &htf, SNXSVel &vel, SNXSAMD &amd, SNXSSweep &sw){
    body += "\"reaction\":"  + _BOOL(InpUseReaction);
    body += "},";
    body += "\"strategies\":" + _StrategiesJSON() + ",";
+   body += "\"edge_book\":" + _EdgeBookJSON() + ",";
    body += "\"positions\":"  + _PositionsJSON();
    body += "}";
 

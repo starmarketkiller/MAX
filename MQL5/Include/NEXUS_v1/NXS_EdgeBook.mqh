@@ -43,10 +43,11 @@ string NXS_EdgeBook_DenyReason(const string name){
    return "";
 }
 
-// Research Mode may isolate a denied name on purpose. Everywhere else the
-// book gate applies. Identity is stratName, never the STRAT_* enum.
+// Research Mode may isolate a denied name on purpose. Uses InpResearchMode
+// directly so this header can load before NXS_Globals.mqh. Identity is
+// stratName, never the STRAT_* enum.
 bool NXS_EdgeBook_Allows(const string name){
-   if(NXS_IsResearchMode()) return true;
+   if(InpResearchMode) return true;
    if(InpBookMode == NXS_BOOK_EDGE_SHORTLIST)
       return NXS_EdgeBook_IsShortlist(name);
    return !NXS_EdgeBook_IsHardDenied(name);
@@ -67,6 +68,13 @@ bool NXS_EdgeBook_Preflight(){
    if(!InpUseStrategyProfiles){
       Print("[EDGE_BOOK][FATAL] NXS_BOOK_EDGE_SHORTLIST richiede "
             "InpUseStrategyProfiles=true");
+      return false;
+   }
+   // PRESET_MVP_v206 (=4) forces Silver Bullet / SH_BMS_RTO — conflicts with
+   // the credit-safe shortlist. Fail closed rather than silently diverge.
+   if(InpRiskProfile == 4){
+      Print("[EDGE_BOOK][FATAL] InpRiskProfile=PRESET_MVP_v206 incompatibile con "
+            "NXS_BOOK_EDGE_SHORTLIST (MVP riattiva strategie defect-blocked)");
       return false;
    }
    if(InpStrat_MACD || InpStrat_RSI_DIV || InpStrat_TSI || InpStrat_BB_SQUEEZE

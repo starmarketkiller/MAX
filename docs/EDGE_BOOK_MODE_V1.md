@@ -33,9 +33,13 @@ Research Mode isolation may still open these for measurement.
 | `InpBookMode` | Tester-visible book switch (default `FULL`) |
 | `NXS_EdgeBook.mqh` | Allow / deny by `stratName` |
 | `NXS_CollectRaw` | Skips strategies outside the active book before they run |
+| `NXS_Profile_Enabled` | Returns false when the book denies the `stratName` |
 | `NXS_OpenTrade` / `NXR_OpenTrade` | Gate before exposure creation |
+| WebBridge telemetria | `strategies` = toggle ∧ book; payload include `edge_book` |
 | `NXS_CommonExposurePreflight` | Unchanged; still required |
 | `scripts/edge_freeze_check.py` | Registry ↔ EA default alignment |
+
+`EDGE_SHORTLIST` refuses `InpRiskProfile=PRESET_MVP_v206` (Silver Bullet / SH_BMS_RTO).
 
 FVG_CONT confirmatory (Phase 7.34) remains `INSUFFICIENT_EVIDENCE` /
 not live-ready — still allowed in the shortlist as a research candidate only.

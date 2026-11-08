@@ -108,6 +108,22 @@ def main() -> int:
             print("FAIL: hard-deny name missing from NXS_EdgeBook.mqh:", name)
             return 1
 
+    profiles = (ROOT / "MQL5" / "Include" / "NEXUS_v1" / "NXS_StrategyProfiles.mqh").read_text(
+        encoding="utf-8"
+    )
+    if "NXS_EdgeBook_Allows(name)" not in profiles:
+        print("FAIL: NXS_Profile_Enabled must call NXS_EdgeBook_Allows")
+        return 1
+
+    ea = (ROOT / "MQL5" / "Experts" / "NEXUS_EA_v2.mq5").read_text(encoding="utf-8")
+    if 'NXS_EdgeBook_Allows("FVG_CONT")' not in ea:
+        print("FAIL: NXS_CollectRaw must gate FVG_CONT through EdgeBook")
+        return 1
+
+    if "InpRiskProfile == 4" not in edge_text:
+        print("FAIL: EdgeBook preflight must refuse PRESET_MVP_v206")
+        return 1
+
     print(
         "OK: freeze/FAILED defaults aligned; FVG_CONT REMEDIATED; "
         "EDGE_SHORTLIST book present"

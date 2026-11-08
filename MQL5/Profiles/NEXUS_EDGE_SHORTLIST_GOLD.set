@@ -3,6 +3,7 @@
 ; Load on a GOLD/XAUUSD chart with Strategy Profiles ON.
 
 InpBookMode=1
+InpRiskProfile=0
 InpUseStrategyProfiles=true
 InpProfileMultiTF=true
 InpUseInstitutionalCore=false

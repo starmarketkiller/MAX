@@ -23,6 +23,7 @@
 // ovunque un gate reale possa bloccare o aprire un segnale.
 #include <NEXUS_v1\NXS_Trace.mqh>
 #include <NEXUS_v1\NXS_Inputs.mqh>
+#include <NEXUS_v1\NXS_EdgeBook.mqh>   // after Inputs: Profile_Enabled + collector/open gates
 #include <NEXUS_v1\NXS_StrategyProfiles.mqh>
 #include <NEXUS_v1\NXS_Globals.mqh>
 // AUD0-PROT-005 / AUD0-HSYNC-003: coda locale durevole per le consegne HTTP
@@ -67,7 +68,6 @@
 #include <NEXUS_v1\NXS_StructuralResearchLog.mqh>
 #include <NEXUS_v1\NXS_Strategies.mqh>
 #include <NEXUS_v1\NXS_ResearchMode.mqh>
-#include <NEXUS_v1\NXS_EdgeBook.mqh>
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
 #include <NEXUS_v1\NXS_TestValidityCertificate.mqh>   // 12/09 - dipende da NXS_ResearchMode.mqh + NXS_BlockerDiagnostics.mqh
 #include <NEXUS_v1\NXS_ElliottFilter.mqh>
