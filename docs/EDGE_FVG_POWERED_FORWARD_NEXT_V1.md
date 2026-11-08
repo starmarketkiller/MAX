@@ -21,3 +21,9 @@ Do **not** reuse Phase 7.32 diagnostic (2023.10–2026.06) as confirmatory.
 ## Non-goals
 
 No soup book for this claim. No EMA_PULLBACK re-enable. No registry LIVE promotion.
+## Interim extension result (2026-11-08)
+
+Window 2026.07.01-2026.11.07, selector=8, Research ON, account 345277936.
+CERT opened=**11**, net **-81.96**, balance 9918.04.
+Still **INSUFFICIENT** vs min_n=30. Does not overturn FVG as strongest candidate; does not support LIVE.
+Artifact: docs/evidence/nxs_fvg_conf_ext_20260701_20261107.htm
