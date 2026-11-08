@@ -36,6 +36,17 @@ from core.context_packet import build_from_task_record  # noqa: E402
 from core.result_packet import build_result_packet, compute_confidence, now_iso  # noqa: E402
 from core import capability as capability_module  # noqa: E402
 
+_PROPOSAL_BINDING_KEYS = ("baselines", "attempt", "newline_policy",
+                          "proposal_sha256", "baseline_sha256")
+
+
+def _stored_proposal(parsed, test_results):
+    patch = {"changes": parsed.get("changes", []), "test_results": test_results}
+    for key in _PROPOSAL_BINDING_KEYS:
+        if key in parsed:
+            patch[key] = parsed[key]
+    return patch
+
 
 @dataclass
 class VerifyResult:
@@ -212,6 +223,12 @@ class Orchestrator:
             return self._escalate(task_id, record, "MANUAL_REVIEW", "TOOLING",
                                  [f"handler mancante per {record['action']}"])
 
+        # A granted coding proposal is applied from the stored patch. It must
+        # not be bridged or sent to a model again.
+        if (record.get("action") == "conversational_programming"
+                and record.get("approval_grant") and record.get("proposed_patch")):
+            return self.apply_approved_coding_proposal(task_id)
+
         # In hosted production localhost is not the operator's workstation.  A
         # configured bridge may transport this *already routed* local job to an
         # outbound polling client.  It does not re-route or select a provider.
@@ -322,8 +339,8 @@ class Orchestrator:
                     # later human REJECT can hand the real content to a
                     # specialist reviewer without re-deriving it (see
                     # core/context_packet.py:build_review_packet).
-                    proposed_patch = {"changes": vr.parsed_output.get("changes", []),
-                                     "test_results": vr.parsed_output.get("test_results", [])}
+                    proposed_patch = _stored_proposal(
+                        vr.parsed_output, vr.parsed_output.get("test_results", []))
                     self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet,
                                          proposed_patch=proposed_patch,
                                          approval_effect="REQUEUE")
@@ -442,12 +459,71 @@ class Orchestrator:
         # Kept on the record, not only referenced by the local-bridge:// path,
         # so a later human REJECT can hand the real content to a specialist
         # reviewer (see core/context_packet.py:build_review_packet).
-        proposed_patch = {"changes": parsed.get("changes", []), "test_results": tests}
+        proposed_patch = _stored_proposal(parsed, tests)
         self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet,
                               local_bridge={"status": "COMPLETED", "bridge_id": bridge_id,
                                             "verification": "PASSED"},
                               proposed_patch=proposed_patch,
                               approval_effect="REQUEUE")
+        return self.queue.get(task_id)
+
+    def apply_approved_coding_proposal(self, task_id):
+        """Apply one stored conversational_programming proposal without a model call.
+
+        Pre-write refusals leave WAITING_APPROVAL unchanged. A failed verification
+        becomes FAILED and is never stored as COMPLETED.
+        """
+        record = self.queue.get(task_id)
+        if record.get("state") == "COMPLETED" and record.get("application_receipt"):
+            return record
+        if record.get("action") != "conversational_programming":
+            raise AssertionError("coding continuation is limited to conversational_programming")
+        handler = self.local_handlers.get(record["action"])
+        if record.get("state") not in {"WAITING_APPROVAL", "RUNNING"}:
+            return record
+        if handler is None or not hasattr(handler, "apply_verified_proposal"):
+            self.queue.annotate(task_id, dispatch_last_error="coding continuation unavailable")
+            return self.queue.get(task_id)
+        outcome = handler.apply_verified_proposal(record)
+        if not outcome["ok"]:
+            reason = outcome["reason"]
+            self.ledger.append("APPROVAL_DENIED", task_id, {
+                "reason": reason, "reason_class": outcome["reason_class"]})
+            if outcome["reason_class"] == "verification_failed" or record["state"] == "RUNNING":
+                packet = build_result_packet(
+                    task_id=task_id, executor=record.get("executor") or "LOCAL_STRONG_MINISTRAL3B",
+                    start_time=record.get("started_at") or now_iso(), end_time=now_iso(),
+                    files_read=[], files_changed=[], tools_or_commands=["approval_continuation"],
+                    artifacts_created=[], tests_ran=True, tests_passed=0, tests_failed=1,
+                    verifier_ran=True, verifier_passed=False, verifier_errors=[reason],
+                    commit=None, push_status="NOT_APPLICABLE", decision="FAILED",
+                    confidence="LOW", limitations=["application rolled back"],
+                    unresolved_issues=[reason], suggested_next_tasks=[],
+                    escalation_needed=False)
+                self.ledger.append("TASK_FAILED", task_id, {"reason": reason})
+                self.queue.transition(task_id, "FAILED", result_packet=packet,
+                                      approval_grant=None, dispatch_last_error=reason)
+            else:
+                self.queue.annotate(task_id, approval_grant=None, dispatch_last_error=reason)
+            return self.queue.get(task_id)
+        files = outcome["files"]
+        tests = outcome["tests"]
+        passed = sum(1 for item in tests if item.get("returncode") == 0)
+        packet = build_result_packet(
+            task_id=task_id, executor=record.get("executor") or "LOCAL_STRONG_MINISTRAL3B",
+            start_time=record.get("started_at") or now_iso(), end_time=now_iso(),
+            files_read=[], files_changed=files, tools_or_commands=["approval_continuation"],
+            artifacts_created=files, tests_ran=bool(tests), tests_passed=passed, tests_failed=0,
+            verifier_ran=True, verifier_passed=True, verifier_errors=[], commit=None,
+            push_status="NOT_APPLICABLE", decision="COMPLETED", confidence="MEDIUM",
+            limitations=[], unresolved_issues=[], suggested_next_tasks=[],
+            escalation_needed=False)
+        self.ledger.append("FILE_CHANGED", task_id, {"files": files})
+        self.ledger.append("TEST_PASSED", task_id, {"handler": record["action"]})
+        self.ledger.append("TASK_COMPLETED", task_id, {"handler": record["action"],
+                          "continuation": "verified_proposal"})
+        self.queue.transition(task_id, "COMPLETED", result_packet=packet,
+                              application_receipt=outcome["receipt"], approval_grant=None)
         return self.queue.get(task_id)
 
     def fail_local_bridge_task(self, task_id, failure_class):

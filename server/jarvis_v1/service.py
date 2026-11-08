@@ -32,7 +32,7 @@ from review_matrix import get_matrix_entry  # noqa: E402
 from .conversation_store import ConversationStore
 from .programming import build_plan, extract_repo_paths, is_programming_request
 from .floor_workflow import FloorWorkflowCoordinator
-from .free_coding_worker import FreeCodingWorkerHandler
+from .free_coding_worker import NEWLINE_POLICY, FreeCodingWorkerHandler
 from .local_bounded_task_handler import BoundedLocalTaskHandler
 from . import ministral_router
 from . import ministral_chat
@@ -1928,6 +1928,72 @@ class JarvisService:
         return self._response(message, "APPROVAL", f"{task_id}: {updated['state']}",
                               task_id=task_id, status=updated["state"])
 
+    def _proposal_binding(self, metadata):
+        try:
+            proposal_sha = str(metadata["proposal_sha256"])
+            baseline_sha = str(metadata["baseline_sha256"])
+            attempt = int(metadata["attempt"])
+        except (KeyError, TypeError, ValueError):
+            return None
+        if not proposal_sha or not baseline_sha:
+            return None
+        return {"attempt": attempt, "proposal_sha256": proposal_sha,
+                "baseline_sha256": baseline_sha}
+
+    def _continue_verified_coding_proposal(self, message, task_id, record):
+        """Apply a stored coding proposal. Other actions keep the generic requeue."""
+        meta = message.get("metadata") or {}
+        binding = self._proposal_binding(meta)
+        receipt = record.get("application_receipt") or {}
+        if record.get("state") == "COMPLETED" and receipt:
+            same = (binding is not None
+                    and binding["attempt"] == int(receipt.get("attempt"))
+                    and binding["proposal_sha256"] == receipt.get("proposal_sha256")
+                    and binding["baseline_sha256"] == receipt.get("baseline_sha256"))
+            if same:
+                return self._response(message, "APPROVAL", f"{task_id}: COMPLETED",
+                                      task_id=task_id, status="COMPLETED")
+            return self._response(message, "ERROR", "Approvazione già conclusa.",
+                                  task_id=task_id, status=record["state"])
+        if record.get("state") != "WAITING_APPROVAL" or record.get("approval_effect") != "REQUEUE":
+            return self._response(message, "ERROR", "La proposta non è applicabile.",
+                                  task_id=task_id, status=record.get("state"))
+        patch = record.get("proposed_patch") or {}
+        try:
+            stored_attempt = int(patch.get("attempt"))
+            retry_count = int(record.get("retry_count") or 0)
+        except (TypeError, ValueError):
+            stored_attempt = None
+            retry_count = None
+        bound = (binding is not None and stored_attempt is not None
+                 and binding["attempt"] == stored_attempt == retry_count
+                 and binding["proposal_sha256"] == patch.get("proposal_sha256")
+                 and binding["baseline_sha256"] == patch.get("baseline_sha256")
+                 and patch.get("newline_policy") == NEWLINE_POLICY)
+        if not bound:
+            self.ledger.append("APPROVAL_DENIED", task_id, {
+                "message_id": message.get("message_id"),
+                "reason": "approval binding mismatch",
+            }, actor="jarvis_gateway")
+            return self._response(message, "ERROR",
+                                  "Approvazione non legata a questa proposta.",
+                                  task_id=task_id, status="WAITING_APPROVAL")
+        self.queue.annotate(task_id, approval_grant={
+            "task_id": task_id, **binding})
+        updated = self.orchestrator.apply_approved_coding_proposal(task_id)
+        self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
+                                       last_action="APPROVE", user_id=str(message["user_id"]))
+        if updated.get("state") == "COMPLETED":
+            self.ledger.append("APPROVAL_GRANTED", task_id, {
+                "message_id": message.get("message_id"),
+                "continuation": "verified_proposal",
+            }, actor="jarvis_gateway")
+            return self._response(message, "APPROVAL", f"{task_id}: COMPLETED",
+                                  task_id=task_id, status="COMPLETED")
+        return self._response(message, "ERROR",
+                              updated.get("dispatch_last_error") or "Applicazione rifiutata.",
+                              task_id=task_id, status=updated.get("state"))
+
     def approval(self, message):
         meta = message.get("metadata", {})
         text = message.get("text") or ""
@@ -1986,6 +2052,13 @@ class JarvisService:
                                   task_id=task_id, status=record["state"])
         if record.get("approval_effect") == "ACCEPT_ONLY":
             return self._decide_accept_only(message, task_id, record, action)
+        # Only a proposal that already carries its binding is applied in place.
+        # Older coding proposals, and every other action, keep APPROVE -> QUEUED.
+        patch = record.get("proposed_patch") or {}
+        if (action == "APPROVE" and record.get("action") == "conversational_programming"
+                and {"proposal_sha256", "baseline_sha256", "newline_policy",
+                     "attempt", "baselines"}.intersection(patch)):
+            return self._continue_verified_coding_proposal(message, task_id, record)
         if record["state"] != "WAITING_APPROVAL":
             # JARVIS_EXECUTIVE_CONVERSATION_V4 (response style): natural
             # phrasing instead of a raw state string, plus what to do next -

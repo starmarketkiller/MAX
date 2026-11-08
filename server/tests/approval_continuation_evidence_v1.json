@@ -1,0 +1,26 @@
+{
+  "experiment": "LOCAL_CODING_APPROVAL_CONTINUATION_01",
+  "base_sha": "8eae2c6ebf25814fdfab8136045e681e4393a22d",
+  "newline_policy": "preserve_proposal_bytes",
+  "fixture": {
+    "source_sha256": "264700c5d857c1edddb95cba17e081e5ab7ada7f1a23a3e41031e3cc7b9f56b4",
+    "source_bytes": 98,
+    "test_sha256": "e98023b76671c81832034ab8dce684ce60f5aadc6766d3b06191e6baa21cb36f",
+    "test_bytes": 600
+  },
+  "proposal_used_by_tests": {
+    "sha256": "feecd4e53946235ac4c35706bd9f28f13419a2425d75fbf057accfcb349a1806",
+    "bytes": 98,
+    "cr_count": 0
+  },
+  "model_calls": 0,
+  "premium_calls": 0,
+  "original_task_mutated": false,
+  "operational_repository_proposal_applied": false,
+  "pytest": {
+    "result": "83 passed",
+    "duration_seconds": 19.86,
+    "command": "python -m pytest tests/test_approval_continuation_v1.py tests/test_proposal_approval_gate_v1.py tests/test_combined_reconciliation_v1.py tests/test_natural_conversation_v3.py::test_no_regression_on_existing_button_driven_approval tests/test_executive_state_and_conversation_v1.py::test_interactive_gate_makes_dispatcher_yield_background_work tests/test_free_coding_worker_routing_v1.py tests/test_dynamic_specialist_review_v1.py tests/test_local_agent_bridge_v1.py tests/test_jarvis_conversational_programming_v1.py -q -p no:cacheprovider"
+  },
+  "red_collection_before_fix": "ImportError: cannot import name NEWLINE_POLICY from jarvis_v1.free_coding_worker"
+}
