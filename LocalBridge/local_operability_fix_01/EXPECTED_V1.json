@@ -1,0 +1,68 @@
+{
+  "task": "LOCAL_OPERABILITY_FIX_01",
+  "written_before_verification": "2026-11-08T14:05:00+01:00",
+  "base_sha": "3aa6670190610d9236422f5f6e6fd93c4e864f3a",
+  "measurements": {
+    "source": "T04 inference.json",
+    "cold_start_seconds": 11.98,
+    "warm_seconds": 0.72,
+    "margin_seconds": 18,
+    "margin_reason": "Un solo campione a freddo di 11,98 s sul modello gia' installato. Il margine di 18 s e' una volta e mezza quel campione, arrotondato perche' 11,98 + 18 fa 30. Non si usa il vecchio 49 s di ministral-3:3b: quel modello non e' installato e non viene scaricato."
+  },
+  "budget_seconds": {
+    "model_gateway_and_warmup": 30,
+    "router_client": 35,
+    "chat_client_already_longer": 60,
+    "retries": 1
+  },
+  "cases": [
+    {
+      "id": "http_installed_model",
+      "expected": "POST /v1/jarvis/chat con NEXUS_PROBE_LOCAL_MODEL=qwen2.5:3b-instruct risponde 200 e un testo non vuoto. Il modello di registry resta ministral-3:3b."
+    },
+    {
+      "id": "http_missing_model",
+      "expected": "Senza override, il modello predefinito assente produce MODEL_NOT_INSTALLED prima di /api/generate. Nessun altro modello viene scelto al suo posto."
+    },
+    {
+      "id": "unknown_override",
+      "expected": "Un nome fuori da KNOWN_MODELS fallisce senza chiamata e senza sostituzione."
+    },
+    {
+      "id": "wrong_auth",
+      "expected": "Bearer errato: 401. Il token di prova non viene scritto nel repository."
+    },
+    {
+      "id": "health_is_not_inference",
+      "expected": "GET /v1/jarvis/health puo' rispondere 200 con liveness true. inference_verified resta false. ollama_reachable e' un campo distinto."
+    },
+    {
+      "id": "warmup",
+      "expected": "La riga warmup ok compare solo dopo una risposta non vuota. Modello assente, timeout o errore producono warmup failed e non contengono warmup ok."
+    },
+    {
+      "id": "budget_success",
+      "expected": "La chiamata HTTP reale termina entro 30 s con un testo non vuoto."
+    },
+    {
+      "id": "budget_exhausted",
+      "expected": "Un peer che non risponde fa fallire il client una sola volta, senza un secondo tentativo."
+    },
+    {
+      "id": "disconnect_restore",
+      "expected": "Con Ollama fermo, liveness resta true e ollama_reachable diventa false. Dopo il riavvio del solo processo di prova, ollama_reachable torna true."
+    },
+    {
+      "id": "idempotent_start",
+      "expected": "La seconda esecuzione trova l'identita' nexus-local-inference-gateway ed esce senza un secondo processo."
+    },
+    {
+      "id": "foreign_listener",
+      "expected": "Una porta occupata da un processo che non risponde come questo gateway non e' un gateway sano e non viene sostituita."
+    },
+    {
+      "id": "not_in_this_task",
+      "expected": "Tunnel, startup persistente, Render e deploy non vengono applicati. Quei due blocchi restano aperti. Il punteggio dei 20 criteri resta al massimo 100."
+    }
+  ]
+}

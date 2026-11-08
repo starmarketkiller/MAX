@@ -164,3 +164,5 @@ def test_default_timeout_has_real_margin_for_a_cold_gateway_call():
     # la prima richiesta reale dopo l'avvio del gateway o dopo che il
     # keep_alive di Ollama scadeva.
     assert ministral_chat.DEFAULT_TIMEOUT_SECONDS >= 30
+    from jarvis_v1 import ministral_router
+    assert ministral_chat.DEFAULT_TIMEOUT_SECONDS >= ministral_router.DEFAULT_TIMEOUT_SECONDS

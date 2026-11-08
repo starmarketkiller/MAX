@@ -60,13 +60,44 @@ def resolve_model(configured):
     return override, None
 
 
+def list_installed_models(timeout=5):
+    """Read /api/tags. A failure is not an empty installation list."""
+    try:
+        response = requests.get(f"{OLLAMA_BASE}/api/tags", timeout=timeout)
+    except Exception as exc:  # noqa: BLE001
+        return None, f"OLLAMA_UNREACHABLE: {exc}"
+    if response.status_code != 200:
+        return None, f"OLLAMA_TAGS_HTTP_{response.status_code}"
+    try:
+        rows = response.json().get("models") or []
+    except ValueError:
+        return None, "OLLAMA_TAGS_NOT_JSON"
+    names = [row.get("name") for row in rows if isinstance(row, dict) and isinstance(row.get("name"), str)]
+    return names, None
+
+
+def model_is_installed(model, names):
+    return any(name == model or name.startswith(model + ":") for name in names)
+
+
 def call_local_model(prompt, model=DEFAULT_MODEL, num_ctx=8192, timeout=180, json_mode=False,
                      ensure_single_resident=True):
     """Un SINGOLO tentativo (nessun retry qui - vedi core/retry_escalation.py).
     Ritorna sempre un dict, mai solleva un'eccezione di rete non gestita
     (un timeout/errore di connessione e' un ESITO, non un crash del
     chiamante - stessa lezione appresa e corretta nel pilot v2 della fase
-    precedente)."""
+    precedente).
+
+    A model that is not already installed returns MODEL_NOT_INSTALLED before
+    /api/generate. Nothing in this function downloads or substitutes a model.
+    """
+    names, listing_error = list_installed_models(timeout=min(5, max(1, int(timeout or 1))))
+    if listing_error:
+        return {"success": False, "response_text": None, "error": listing_error,
+               "wall_seconds": 0, "model": model}
+    if not model_is_installed(model, names):
+        return {"success": False, "response_text": None,
+               "error": f"MODEL_NOT_INSTALLED: {model}", "wall_seconds": 0, "model": model}
     if ensure_single_resident:
         _unload_other_models(model)
 
@@ -82,6 +113,10 @@ def call_local_model(prompt, model=DEFAULT_MODEL, num_ctx=8192, timeout=180, jso
     except Exception as e:  # noqa: BLE001
         return {"success": False, "response_text": None, "error": str(e),
                "wall_seconds": round(time.time() - t0, 2), "model": model}
+    if resp.status_code >= 400 or data.get("error"):
+        return {"success": False, "response_text": None,
+               "error": str(data.get("error") or f"OLLAMA_HTTP_{resp.status_code}"),
+               "wall_seconds": round(wall, 2), "model": model}
 
     eval_count = data.get("eval_count")
     eval_duration_ns = data.get("eval_duration")

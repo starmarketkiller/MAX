@@ -179,6 +179,10 @@ def test_health_endpoint_needs_no_auth(live_server):
     conn.close()
     assert resp.status == 200
     assert payload["ok"] is True
+    assert payload["liveness"] is True
+    assert payload["service"] == "nexus-local-inference-gateway"
+    assert payload["ollama_reachable"] is True
+    assert payload["inference_verified"] is False
 
 
 def test_rate_limit_rejects_after_threshold(live_server, monkeypatch):
@@ -247,27 +251,92 @@ def test_live_chat_endpoint_requires_auth(live_server):
 
 # LOCAL_INFERENCE_CONNECTIVITY_V1 - default timeout + startup warmup -------
 def test_default_timeout_has_real_margin_for_a_cold_model_call():
-    # Misurato direttamente su questa macchina: ~49s a freddo, ~6s a caldo.
-    # Il vecchio default (8s) falliva quasi sempre la prima richiesta reale.
-    assert gw.DEFAULT_TIMEOUT_SECONDS >= 30
+    # T04: 11.98s a freddo e 0.72s a caldo sul modello gia' installato.
+    # Il margine congelato e' 18s, quindi il budget e' 30s.
+    assert gw.MODEL_BUDGET_SECONDS == 30
+    assert gw.MODEL_BUDGET_SECONDS >= gw.MEASURED_COLD_START_SECONDS + gw.COLD_START_MARGIN_SECONDS
+    assert gw.DEFAULT_TIMEOUT_SECONDS >= gw.MODEL_BUDGET_SECONDS
 
 
-def test_warmup_model_calls_ollama_once_and_never_raises(monkeypatch):
+def test_warmup_model_calls_ollama_once_and_never_raises(monkeypatch, capsys):
     calls = []
 
     def _fake_call(prompt, model=None, timeout=None, json_mode=False, ensure_single_resident=True):
         calls.append({"prompt": prompt, "model": model, "json_mode": json_mode})
-        return {"success": True, "wall_seconds": 1.23}
+        return {"success": True, "response_text": "ciao", "wall_seconds": 1.23}
 
     monkeypatch.setattr(gw.ollama_worker, "call_local_model", _fake_call)
     gw._warmup_model()
     assert len(calls) == 1
     assert calls[0]["json_mode"] is False
+    assert "warmup ok" in capsys.readouterr().out
 
 
-def test_warmup_model_never_raises_even_if_ollama_call_fails(monkeypatch):
+def test_warmup_model_never_raises_even_if_ollama_call_fails(monkeypatch, capsys):
     def _raising_call(*a, **kw):
         raise ConnectionError("ollama down")
 
     monkeypatch.setattr(gw.ollama_worker, "call_local_model", _raising_call)
     gw._warmup_model()  # non deve mai propagare - solo loggare
+    output = capsys.readouterr().out
+    assert "warmup failed" in output
+    assert "warmup ok" not in output
+
+
+def test_warmup_empty_or_missing_model_is_not_ok(monkeypatch, capsys):
+    def _empty(*a, **k):
+        return {"success": True, "response_text": "  ", "wall_seconds": 0.01}
+
+    monkeypatch.setattr(gw.ollama_worker, "call_local_model", _empty)
+    gw._warmup_model()
+    assert "warmup ok" not in capsys.readouterr().out
+
+    def _missing(*a, **k):
+        return {"success": False, "error": "MODEL_NOT_INSTALLED: ministral-3:3b", "response_text": None}
+
+    monkeypatch.setattr(gw.ollama_worker, "call_local_model", _missing)
+    gw._warmup_model()
+    output = capsys.readouterr().out
+    assert "warmup failed" in output
+    assert "warmup ok" not in output
+
+
+def test_unknown_process_model_is_refused_before_the_call(monkeypatch):
+    monkeypatch.setenv("NEXUS_PROBE_LOCAL_MODEL", "not-a-known-model")
+    called = []
+
+    def _call(*args, **kwargs):
+        called.append(1)
+        return {"success": True, "response_text": "no"}
+
+    result = gw.chat("ciao", [], call_local_model=_call)
+    assert called == []
+    assert result["ok"] is False
+    assert result["status"] == 409
+    assert "not replaced" in result["error"]
+
+
+def test_explicit_process_model_is_passed_through(monkeypatch):
+    monkeypatch.setenv("NEXUS_PROBE_LOCAL_MODEL", "qwen2.5:3b-instruct")
+    seen = {}
+
+    def _call(prompt, model=None, timeout=None, json_mode=False, ensure_single_resident=True):
+        seen["model"] = model
+        return {"success": True, "response_text": "risposta non vuota"}
+
+    result = gw.chat("ciao", [], call_local_model=_call)
+    assert result["ok"] is True
+    assert seen["model"] == "qwen2.5:3b-instruct"
+
+
+def test_chat_timeout_does_not_retry():
+    calls = []
+
+    def _call(*args, **kwargs):
+        calls.append(1)
+        raise TimeoutError("budget")
+
+    result = gw.chat("ciao", [], call_local_model=_call)
+    assert result["ok"] is False
+    assert result["status"] == 502
+    assert calls == [1]
