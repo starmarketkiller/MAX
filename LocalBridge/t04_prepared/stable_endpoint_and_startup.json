@@ -1,0 +1,51 @@
+{
+  "id": "T04_STABLE_ENDPOINT_AND_STARTUP",
+  "status": "PREPARED_NOT_APPLIED",
+  "applied": false,
+  "windows_changes_applied": false,
+  "render_changes_applied": false,
+  "reboot_certified": false,
+  "remote_connection_certified": false,
+  "source_commit": "ad4939e91222f0535c7ae9bb4e8e1e28dfb4fcd4",
+  "stable_endpoint": {
+    "current_quick_tunnel": "A Cloudflare quick tunnel hostname changes every time cloudflared starts. T04 did not start cloudflared and did not write current_gateway_url.txt.",
+    "not_applied": [
+      {
+        "name": "named_cloudflare_tunnel",
+        "requires": "cloudflared tunnel login, a Cloudflare domain, and tunnel create",
+        "applied": false
+      },
+      {
+        "name": "tailscale_funnel",
+        "requires": "tailscale up and tailscale funnel on the gateway port",
+        "applied": false
+      }
+    ]
+  },
+  "persistent_start": {
+    "existing_script": "LocalBridge/register_startup_task.ps1",
+    "task_name": "NEXUS Local Inference",
+    "executed": false,
+    "reason": "Register-ScheduledTask changes Windows logon state and was not authorized for T04."
+  },
+  "render": {
+    "variables_not_set": ["JARVIS_MINISTRAL_GATEWAY_URL", "JARVIS_MINISTRAL_GATEWAY_TOKEN"],
+    "executed": false
+  },
+  "idempotent_start": {
+    "verified_script": "LocalBridge/start_gateway.ps1",
+    "result": "NOT_IDEMPOTENT",
+    "detail": "A second invocation on an already listening isolated port logged another listen and stayed running until the probe stopped it. start_local_inference.ps1 skips a listening port, and it was not executed because it also starts a public tunnel."
+  },
+  "rollback": {
+    "script": "LocalBridge/t04_prepared/rollback.ps1",
+    "requires_confirm_switch": true,
+    "executed": false,
+    "effects_when_confirmed": [
+      "Unregister scheduled task 'NEXUS Local Inference' only if that task exists",
+      "Leave metatester64, Ollama, and any gateway process running",
+      "Do not read, print, rotate, or clear LocalBridge/.env",
+      "Do not change Render environment variables"
+    ]
+  }
+}
