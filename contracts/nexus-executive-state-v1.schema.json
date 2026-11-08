@@ -21,7 +21,8 @@
     "social",
     "ai_fashion_agency",
     "finance",
-    "infrastructure"
+    "infrastructure",
+    "nucleus_progress"
   ],
   "definitions": {
     "section": {
@@ -191,6 +192,9 @@
     },
     "infrastructure": {
       "$ref": "#/definitions/section"
+    },
+    "nucleus_progress": {
+      "type": "object"
     }
   }
 }

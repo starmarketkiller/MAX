@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NEXUS_NUCLEUS_PROGRESS_V1",
+  "description": "Read-only projection of PROGRESS_V1.json. Criterion score, service availability and verified inference stay separate. overall_progress is not this document.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "criteria",
+    "service_availability",
+    "verified_inference",
+    "blocks",
+    "proposals",
+    "sources"
+  ],
+  "properties": {
+    "schema_version": {"const": "NEXUS_NUCLEUS_PROGRESS_V1"},
+    "criteria": {"type": "object"},
+    "service_availability": {"type": "object"},
+    "verified_inference": {"type": "object"},
+    "blocks": {"type": "array"},
+    "proposals": {"type": "array"},
+    "sources": {"type": "array"}
+  }
+}
