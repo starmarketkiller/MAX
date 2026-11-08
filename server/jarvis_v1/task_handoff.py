@@ -21,8 +21,44 @@ to this module in the first place.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Optional
+
+_SENSITIVE_KEYS = {"token", "password", "api_key", "secret"}
+_BEARER = re.compile(r"(?i)bearer\s+\S+")
+_INLINE = re.compile(r"(?i)(api[_-]?key|token|secret|password)\s*[:=]\s*\S+")
+
+
+def _sensitive_key(key):
+    return str(key).strip().replace("-", "_").lower() in _SENSITIVE_KEYS
+
+
+def redact_text(value):
+    """Redact credential-shaped text inside one string. Not for a JSON document."""
+    if not isinstance(value, str):
+        return value
+    value = _BEARER.sub("Bearer [REDACTED]", value)
+    return _INLINE.sub(lambda match: match.group(1) + "=[REDACTED]", value)
+
+
+def sanitize(value):
+    """Walk the value. Sensitive keys lose their value; strings are redacted in place."""
+    if isinstance(value, dict):
+        return {
+            key: "[REDACTED]" if _sensitive_key(key) else sanitize(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [sanitize(item) for item in value]
+    if isinstance(value, str):
+        return redact_text(value)
+    return value
+
+
+def redact(value):
+    """Structures are sanitized before any caller serializes them."""
+    return sanitize(value)
 
 ARTIFACT_FILENAMES = ("task.md", "result.md", "handoff.md", "verifier_report.json", "execution_log.jsonl")
 
@@ -49,8 +85,15 @@ def _manifest(record: dict) -> dict:
 
 
 def _bullets(items, empty="(nessuno)") -> str:
-    items = [str(i) for i in (items or []) if str(i).strip()]
-    return "\n".join(f"- {i}" for i in items) if items else empty
+    rendered = []
+    for item in items or []:
+        if isinstance(item, (dict, list)):
+            text = json.dumps(sanitize(item), ensure_ascii=False)
+        else:
+            text = redact_text(str(item))
+        if text.strip():
+            rendered.append(text)
+    return "\n".join(f"- {item}" for item in rendered) if rendered else empty
 
 
 def render_task_md(record: dict) -> str:
@@ -94,8 +137,12 @@ def render_handoff_md(record: dict, events: list) -> str:
     escalation = packet.get("escalation_needed") or {}
     lines = [
         f"# Handoff - {record['task_id']}", "",
+        "## Correlazione",
+        f"- task_id: {record['task_id']}",
+        f"- attempt: {(record.get('routing_measurement') or {}).get('attempt')}",
+        f"- sha: {(record.get('routing_measurement') or {}).get('sha')}", "",
         "## Cosa è stato fatto",
-        packet.get("decision") or "(nessuna decisione registrata - task non terminata)", "",
+        redact_text(packet.get("decision") or "(nessuna decisione registrata - task non terminata)"), "",
         "## Input usati / file letti", _bullets(packet.get("files_read")), "",
         "## File prodotti / modificati", _bullets(packet.get("files_changed")), "",
         "## Artifact creati", _bullets(packet.get("artifacts_created")), "",
@@ -139,13 +186,14 @@ def write_task_artifacts(service, task_id: str, out_dir: Optional[Path] = None) 
     # directory grants no write capability to a model or remote process.
     (out / "artifacts").mkdir(exist_ok=True)
 
-    (out / "task.md").write_text(render_task_md(record), encoding="utf-8")
-    (out / "result.md").write_text(render_result_md(record), encoding="utf-8")
-    (out / "handoff.md").write_text(render_handoff_md(record, events), encoding="utf-8")
+    (out / "task.md").write_text(redact_text(render_task_md(record)), encoding="utf-8")
+    (out / "result.md").write_text(redact_text(render_result_md(record)), encoding="utf-8")
+    (out / "handoff.md").write_text(redact_text(render_handoff_md(record, events)), encoding="utf-8")
     (out / "verifier_report.json").write_text(
-        json.dumps(build_verifier_report_json(record), indent=2, ensure_ascii=False), encoding="utf-8")
+        json.dumps(sanitize(build_verifier_report_json(record)), indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8")
     with open(out / "execution_log.jsonl", "w", encoding="utf-8") as f:
         for event in events:
-            f.write(json.dumps(event, ensure_ascii=False) + "\n")
+            f.write(json.dumps(sanitize(event), ensure_ascii=False) + "\n")
 
     return {name: str(out / name) for name in ARTIFACT_FILENAMES}

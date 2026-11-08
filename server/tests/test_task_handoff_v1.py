@@ -134,3 +134,82 @@ def test_write_task_artifacts_is_idempotent_and_reflects_latest_state(service, t
     task_handoff.write_task_artifacts(service, "TASK_EVOLVING", out_dir=out)
     content = (out / "task.md").read_text(encoding="utf-8")
     assert "COMPLETED" in content
+
+
+def test_handoff_redacts_credential_shaped_text(service, tmp_path):
+    task_id = "TASK_SECRET"
+    packet = dict(RESULT_PACKET, task_id=task_id, decision="Bearer abc123token",
+                  limitations=["api_key=supersecretvalue"])
+    service.orchestrator.submit(_manifest(task_id), action="conversational_programming",
+                               action_params={"conversation_id": "c1"})
+    service.queue.transition(task_id, "RUNNING", executor="TIER1_LOCAL_CHEAP")
+    service.queue.transition(task_id, "COMPLETED", result_packet=packet)
+    service.queue.annotate(task_id, routing_measurement={
+        "task_id": task_id, "attempt": 1, "sha": "0b3f484471ffd6651233d07d3c6e74c3de665436",
+    })
+    paths = task_handoff.write_task_artifacts(service, task_id, out_dir=tmp_path / "out")
+    combined = "\n".join(open(path, encoding="utf-8").read() for path in paths.values())
+    assert "abc123token" not in combined
+    assert "supersecretvalue" not in combined
+    assert "Bearer [REDACTED]" in combined
+    assert "api_key=[REDACTED]" in combined
+    handoff = open(paths["handoff.md"], encoding="utf-8").read()
+    assert f"- task_id: {task_id}" in handoff
+    assert "- attempt: 1" in handoff
+    assert "- sha: 0b3f484471ffd6651233d07d3c6e74c3de665436" in handoff
+
+
+def test_structured_secrets_are_redacted_before_serialization(service, tmp_path):
+    import json
+    task_id = "TASK_NESTED"
+    sha = "895bf0c5c08317b0ac3eb17c73413e5909d2be70"
+    nested = {
+        "token": "synth-token-value",
+        "password": {"raw": "synth-password-value"},
+        "api_key": "synth-api-key-value",
+        "note": "prefix Bearer synth-bearer-token",
+        "inner": {"token": "synth-inner-token", "items": ["Bearer synth-list-token"]},
+    }
+    packet = dict(
+        RESULT_PACKET, task_id=task_id,
+        verifier={"ran": True, "passed": True, "errors": [], "nested": nested},
+        decision="Bearer synth-decision-token",
+        limitations=["api_key=synth-inline-secret"],
+    )
+    service.orchestrator.submit(_manifest(task_id), action="conversational_programming",
+                               action_params={"conversation_id": "c1"})
+    service.queue.transition(task_id, "RUNNING", executor="TIER1_LOCAL_CHEAP")
+    service.queue.transition(task_id, "COMPLETED", result_packet=packet)
+    service.queue.annotate(task_id, routing_measurement={
+        "task_id": task_id, "attempt": 1, "sha": sha,
+    })
+    service.ledger.append("TOOL_USED", task_id, {"nested": nested, "note": "Bearer synth-event-token"})
+    before = service.queue.get(task_id)
+    paths = task_handoff.write_task_artifacts(service, task_id, out_dir=tmp_path / "out")
+    assert service.queue.get(task_id) == before
+    assert before["state"] == "COMPLETED"
+    assert before["routing_measurement"]["attempt"] == 1
+    assert before["routing_measurement"]["sha"] == sha
+    report = json.loads(open(paths["verifier_report.json"], encoding="utf-8").read())
+    assert report["state"] == "COMPLETED"
+    assert report["verifier"]["nested"]["token"] == "[REDACTED]"
+    assert report["verifier"]["nested"]["password"] == "[REDACTED]"
+    assert report["verifier"]["nested"]["api_key"] == "[REDACTED]"
+    assert report["verifier"]["nested"]["note"] == "prefix Bearer [REDACTED]"
+    assert report["verifier"]["nested"]["inner"]["token"] == "[REDACTED]"
+    assert report["verifier"]["nested"]["inner"]["items"] == ["Bearer [REDACTED]"]
+    lines = [line for line in open(paths["execution_log.jsonl"], encoding="utf-8").read().splitlines() if line.strip()]
+    parsed = [json.loads(line) for line in lines]
+    assert parsed
+    assert any(event.get("payload", {}).get("nested", {}).get("token") == "[REDACTED]" for event in parsed)
+    combined = "\n".join(open(path, encoding="utf-8").read() for path in paths.values())
+    for secret in (
+        "synth-token-value", "synth-password-value", "synth-api-key-value",
+        "synth-bearer-token", "synth-inner-token", "synth-list-token",
+        "synth-decision-token", "synth-inline-secret", "synth-event-token",
+    ):
+        assert secret not in combined
+    handoff = open(paths["handoff.md"], encoding="utf-8").read()
+    assert f"- task_id: {task_id}" in handoff
+    assert "- attempt: 1" in handoff
+    assert f"- sha: {sha}" in handoff
