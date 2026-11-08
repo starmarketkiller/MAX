@@ -12,6 +12,7 @@ import threading
 import time
 from datetime import datetime, timezone
 
+from . import nucleus_progress
 from . import sections as S
 
 SCHEMA = "NEXUS_EXECUTIVE_STATE_V1"
@@ -204,8 +205,11 @@ class ExecutiveStateBuilder:
         overall_status = ("CRITICAL" if "CRITICAL" in severities else
                           "DEGRADED" if "IMPORTANT" in severities or worst == "RED" else
                           "ATTENTION" if severities & {"WARNING"} else "OK")
+        nucleus = get("nucleus_progress")
+        if not isinstance(nucleus, dict):
+            nucleus = nucleus_progress.unavailable_projection()
         return {"schema_version": SCHEMA, "generated_at": _now(),
                 "overall_status": overall_status, "overall_health": worst,
                 "overall_progress": overall_progress(secs), "alerts": alerts,
                 "decisions_required": approvals, **{d: secs[d] for d in DOMAINS},
-                "provider_errors": errors}
+                "nucleus_progress": nucleus, "provider_errors": errors}
