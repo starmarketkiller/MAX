@@ -1,6 +1,7 @@
 ; NEXUS Edge Book — GOLD shortlist (credit-safe, NOT validated production edge)
 ; InpBookMode=1 → NXS_BOOK_EDGE_SHORTLIST
 ; Load on a GOLD/XAUUSD chart with Strategy Profiles ON.
+; Every non-shortlist toggle that defaults true in NXS_Inputs.mqh is forced false.
 
 InpBookMode=1
 InpRiskProfile=0
@@ -12,6 +13,7 @@ InpResearchMode=false
 InpStrategySelector=0
 InpLiveTradingAuthorized=false
 
+; --- shortlist ON ---
 InpStrat_FVG_CONT=true
 InpStrat_LIQ_SWEEP=true
 InpStrat_ORDER_BLOCK=true
@@ -19,14 +21,56 @@ InpStrat_BREAKOUT_ACC=true
 InpStrat_ZScoreBreakout=true
 InpStrat_EMA_PULLBACK=true
 
+; --- hard-deny / freeze OFF ---
 InpStrat_MACD=false
 InpStrat_RSI_DIV=false
 InpStrat_TSI=false
 InpStrat_BB_SQUEEZE=false
 InpStrat_SH_BMS_RTO=false
+InpStrat_SH_BMS_RTO_V2=false
 InpStrat_SilverBullet=false
-InpStrat_BJORGUM=false
-InpUseStructReact=false
+
+; --- other defaults that are true in NXS_Inputs OFF for a clean shortlist book ---
+InpStrat_ADX_RSI=false
+InpStrat_BOLLINGER=false
 InpStrat_SAR=false
+InpStrat_BJORGUM=false
+InpStrat_VolBreakoutConfirmed=false
 InpStrat_LONDON_BO=false
 InpStrat_ICHIMOKU=false
+InpUseStructReact=false
+InpStrat_TurtleSoup=false
+InpStrat_IFVG=false
+InpStrat_FVG_Mit=false
+InpStrat_FVG_MIT_WINDOW=false
+InpStrat_OB_Mit=false
+InpStrat_SMS_BMS_RTO=false
+InpStrat_AMD_Reversal=false
+InpStrat_OTE_Cont=false
+InpStrat_MalaysianSNR=false
+InpStrat_SwingFalseBreak=false
+InpUseStrat_CISD=false
+InpUseStrat_AMD_Cont=false
+InpUseStrat_Judas=false
+InpUseStrat_LdnReversal=false
+InpUseStrat_NYReversal=false
+InpUseStrat_WeeklyExp=false
+InpUseStrat_PO3=false
+InpUseStrat_LiqVoid=false
+InpUseStrat_DispRebal=false
+InpUseStrat_CRT=false
+InpUseStrat_Elliott=false
+InpUseStrat_RangeFade=false
+InpStrat_BarUpDn=false
+InpStrat_PivotWick=false
+InpStrat_LevelConfluence=false
+InpStrat_LevelConfluenceM5=false
+InpStrat_LevelReaction=false
+InpStrat_LevelReactionM5=false
+InpStrat_PMax=false
+InpStrat_MacdSma200=false
+InpStrat_RsiDivPine=false
+InpStrat_IchimokuHull=false
+InpStrat_3CommasBot=false
+InpStrat_WickSweep=false
+InpStrat_WickSweepReclaim=false
