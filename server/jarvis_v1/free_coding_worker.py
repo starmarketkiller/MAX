@@ -8,6 +8,7 @@ returns a proposal artifact for the existing approval gate.
 from __future__ import annotations
 
 import fnmatch
+import hashlib
 import json
 import os
 import re
@@ -28,6 +29,7 @@ MAX_CHANGED_FILES = 4
 MAX_TOTAL_BYTES = 80_000
 MAX_TEST_COMMANDS = 2
 COMMAND_TIMEOUT_SECONDS = 120
+NEWLINE_POLICY = "preserve_proposal_bytes"
 
 
 def _json_object(text: str) -> dict:
@@ -47,6 +49,51 @@ def _safe_relative(path: str) -> str:
     if candidate.is_absolute() or ".." in candidate.parts or normalized in ("", "."):
         raise ValueError("path outside task workspace")
     return normalized
+
+
+def file_digest(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def proposal_digest(changes: list[dict]) -> str:
+    parts = [item["content"].encode("utf-8")
+             for item in sorted(changes, key=lambda row: row["path"])]
+    return file_digest(b"\0".join(parts))
+
+
+def baseline_digest(baselines: dict) -> str:
+    blob = b"\0".join(
+        f"{path}\0{digest}".encode("utf-8")
+        for path, digest in sorted(baselines.items()))
+    return hashlib.sha256(blob).hexdigest()
+
+
+BINDING_SCHEMA = "approval-continuation-binding-v2"
+
+
+def _binding_material(pairs: list[tuple[str, bytes]]) -> bytes:
+    seen = set()
+    for path, _data in pairs:
+        if path in seen:
+            raise ValueError("duplicate path")
+        seen.add(path)
+    parts = [BINDING_SCHEMA.encode("utf-8")]
+    for path, data in sorted(pairs, key=lambda row: row[0].encode("utf-8")):
+        encoded = path.encode("utf-8")
+        parts.append(len(encoded).to_bytes(4, "big"))
+        parts.append(encoded)
+        parts.append(len(data).to_bytes(8, "big"))
+        parts.append(data)
+    return b"".join(parts)
+
+
+def binding_digest(changes: list[dict]) -> str:
+    return file_digest(_binding_material(
+        [(item["path"], item["content"].encode("utf-8")) for item in changes]))
+
+
+def binding_digest_bytes(pairs: list[tuple[str, bytes]]) -> str:
+    return file_digest(_binding_material(pairs))
 
 
 def _matches(path: str, patterns: list[str]) -> bool:
@@ -216,6 +263,7 @@ class FreeCodingWorkerHandler(LocalTaskHandler):
             parsed["changes"] = changes
             parsed["workspace"] = str(workspace)
             parsed["test_results"] = test_results
+            parsed.update(self._proposal_binding(task_record, changes))
             return VerifyResult(True, parsed_output=parsed)
         except (ValueError, PermissionError, OSError, json.JSONDecodeError,
                 subprocess.SubprocessError) as exc:
@@ -227,6 +275,265 @@ class FreeCodingWorkerHandler(LocalTaskHandler):
         paths = [item["path"] for item in parsed["changes"]]
         return ApplyResult(files_changed=[], artifacts_created=[parsed["workspace"], *paths],
                            touches_real_repo_files=True, proposal_only=True)
+
+    def _proposal_binding(self, task_record, changes) -> dict:
+        baselines = {}
+        root = self.project_root.resolve()
+        for item in changes:
+            raw = root / item["path"]
+            if raw.is_symlink():
+                raise ValueError("symlink baseline")
+            baselines[item["path"]] = (
+                file_digest(raw.read_bytes()) if raw.is_file() else "ABSENT")
+        return {
+            "baselines": baselines,
+            "attempt": int(task_record.get("retry_count") or 0),
+            "newline_policy": NEWLINE_POLICY,
+            "proposal_sha256": proposal_digest(changes),
+            "baseline_sha256": baseline_digest(baselines),
+            "binding_schema": BINDING_SCHEMA,
+            "binding_sha256": binding_digest(changes),
+        }
+
+    def apply_verified_proposal(self, task_record, before_write=None) -> dict:
+        """Write a stored proposal's exact bytes, then rerun the allowlisted tests.
+
+        Every refusal happens before the first write. A failed post-write test
+        restores the captured baseline bytes and does not report success unless
+        the restored bytes were read back. before_write runs after the checks
+        and before the first write, while the caller holds the task lock.
+        """
+        prepared = self._prepare_application(task_record)
+        if not prepared["ok"]:
+            return prepared
+        intent = prepared["intent"]
+        existing = task_record.get("application_intent") or {}
+        if existing and existing.get("binding_sha256") != intent["binding_sha256"]:
+            return {"ok": False, "reason_class": "before_write",
+                    "reason": "stored intent binding mismatch"}
+        if before_write is not None:
+            before_write(intent)
+        planned = prepared["planned"]
+        root = self.project_root.resolve()
+        for path, destination, _data, current in planned:
+            actual = file_digest(current) if current is not None else "ABSENT"
+            if actual != intent["baselines"][path]:
+                return {"ok": False, "reason_class": "before_write", "reason": "baseline changed"}
+        return self._write_prepared(task_record, planned, intent, root)
+
+    def _prepare_application(self, task_record) -> dict:
+        patch = task_record.get("proposed_patch") or {}
+        changes = patch.get("changes") or []
+        baselines = patch.get("baselines") or {}
+        grant = task_record.get("approval_grant") or {}
+        try:
+            attempt = int(patch.get("attempt"))
+            retry_count = int(task_record.get("retry_count") or 0)
+            grant_attempt = int(grant.get("attempt"))
+            expected_binding = binding_digest(changes)
+        except (TypeError, ValueError) as exc:
+            return {"ok": False, "reason_class": "before_write", "reason": str(exc) or "attempt missing"}
+        if (grant.get("task_id") != task_record.get("task_id")
+                or grant_attempt != attempt
+                or grant.get("proposal_sha256") != patch.get("proposal_sha256")
+                or grant.get("baseline_sha256") != patch.get("baseline_sha256")
+                or grant.get("binding_sha256") != patch.get("binding_sha256")
+                or grant.get("binding_schema") != BINDING_SCHEMA
+                or patch.get("binding_schema") != BINDING_SCHEMA
+                or patch.get("binding_sha256") != expected_binding
+                or patch.get("newline_policy") != NEWLINE_POLICY
+                or attempt != retry_count
+                or proposal_digest(changes) != patch.get("proposal_sha256")
+                or baseline_digest(baselines) != patch.get("baseline_sha256")):
+            return {"ok": False, "reason_class": "before_write", "reason": "approval binding mismatch"}
+        manifest = task_record["manifest"]
+        allowed = list(manifest.get("files_allowed") or [])
+        forbidden = list(manifest.get("files_forbidden") or [])
+        root = self.project_root.resolve()
+        planned = []
+        files = []
+        for item in changes:
+            if not isinstance(item, dict) or not isinstance(item.get("content"), str):
+                return {"ok": False, "reason_class": "before_write", "reason": "change content missing"}
+            try:
+                path = _safe_relative(item.get("path", ""))
+            except ValueError as exc:
+                return {"ok": False, "reason_class": "before_write", "reason": str(exc)}
+            if not allowed or not _matches(path, allowed) or _matches(path, forbidden):
+                return {"ok": False, "reason_class": "before_write", "reason": f"path not allowed: {path}"}
+            raw = root / path
+            if raw.is_symlink():
+                return {"ok": False, "reason_class": "before_write", "reason": "symlink destination"}
+            try:
+                destination = raw.resolve()
+                if destination != root and root not in destination.parents:
+                    raise ValueError("path escaped project")
+            except (OSError, ValueError) as exc:
+                return {"ok": False, "reason_class": "before_write", "reason": str(exc)}
+            current = raw.read_bytes() if raw.is_file() else None
+            actual = file_digest(current) if current is not None else "ABSENT"
+            if actual != baselines.get(path):
+                return {"ok": False, "reason_class": "before_write", "reason": "baseline changed"}
+            data = item["content"].encode("utf-8")
+            planned.append((path, destination, data, current))
+            files.append({"path": path, "baseline_sha256": actual,
+                          "proposal_content_sha256": file_digest(data)})
+        if not planned:
+            return {"ok": False, "reason_class": "before_write", "reason": "empty proposal"}
+        intent = {
+            "binding_schema": BINDING_SCHEMA,
+            "task_id": task_record.get("task_id"),
+            "attempt": attempt,
+            "newline_policy": NEWLINE_POLICY,
+            "proposal_sha256": patch["proposal_sha256"],
+            "binding_sha256": expected_binding,
+            "baseline_sha256": patch["baseline_sha256"],
+            "baselines": baselines,
+            "files": files,
+        }
+        return {"ok": True, "planned": planned, "intent": intent, "root": root}
+
+    def _write_prepared(self, task_record, planned, intent, root) -> dict:
+        written = []
+        try:
+            for path, destination, data, _current in planned:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(data)
+                written.append(path)
+                if destination.read_bytes() != data:
+                    raise OSError("applied bytes diverged")
+            verified = self._run_allowlisted(task_record, written, root)
+            if not verified["ok"]:
+                raise PermissionError(verified["reason"])
+            test_results = verified["tests"]
+        except (OSError, PermissionError, ValueError, subprocess.SubprocessError) as exc:
+            report = self._restore_baseline(planned)
+            verified_rollback = all(item["restored"] is True for item in report)
+            return {"ok": False,
+                    "reason_class": "verification_failed" if verified_rollback else "rollback_unverified",
+                    "reason": str(exc), "files": report, "rollback_verified": verified_rollback}
+        read_back = [(path, destination.read_bytes()) for path, destination, _data, _current in planned]
+        return {"ok": True, "files": [path for path, _destination, _data, _current in planned],
+                "tests": test_results, "receipt": self._receipt(intent, read_back)}
+
+    def _run_allowlisted(self, task_record, paths, root) -> dict:
+        commands = self._trusted_test_commands(task_record, paths)
+        if not commands:
+            return {"ok": False, "reason": "verifier missing", "tests": []}
+        test_results = []
+        for command in commands:
+            completed = self.command_runner(
+                [sys.executable, *command[1:]], cwd=root, capture_output=True,
+                text=True, timeout=COMMAND_TIMEOUT_SECONDS, shell=False)
+            test_results.append({"argv": ["PYTHON", *command[1:]],
+                                 "returncode": completed.returncode,
+                                 "stdout": (completed.stdout or "")[-2000:],
+                                 "stderr": (completed.stderr or "")[-1000:]})
+            if completed.returncode != 0:
+                return {"ok": False, "reason": "allowlisted test failed", "tests": test_results}
+        return {"ok": True, "tests": test_results}
+
+    def _receipt(self, intent, read_back) -> dict:
+        ordered = sorted(read_back, key=lambda row: row[0])
+        return {
+            "newline_policy": NEWLINE_POLICY,
+            "binding_schema": BINDING_SCHEMA,
+            "proposal_sha256": intent["proposal_sha256"],
+            "applied_sha256": file_digest(b"\0".join(data for _path, data in ordered)),
+            "binding_sha256": intent["binding_sha256"],
+            "applied_binding_sha256": binding_digest_bytes(ordered),
+            "baseline_sha256": intent["baseline_sha256"],
+            "attempt": intent["attempt"],
+            "paths": [path for path, _data in ordered],
+        }
+
+    def observe_application(self, task_record) -> list[dict]:
+        intent = task_record.get("application_intent") or {}
+        observations = []
+        root = self.project_root.resolve()
+        for item in intent.get("files") or []:
+            path = item.get("path")
+            observation = {"path": path, "observed_sha256": None, "residual": "UNKNOWN",
+                           "restored": False}
+            try:
+                raw = root / path
+                if raw.is_symlink():
+                    observation["residual"] = "UNKNOWN"
+                elif not raw.exists():
+                    observation["residual"] = "BASELINE" if item.get("baseline_sha256") == "ABSENT" else "ABSENT"
+                    observation["restored"] = observation["residual"] == "BASELINE"
+                elif raw.is_file():
+                    observed = file_digest(raw.read_bytes())
+                    observation["observed_sha256"] = observed
+                    if observed == item.get("proposal_content_sha256"):
+                        observation["residual"] = "PROPOSAL"
+                    elif observed == item.get("baseline_sha256"):
+                        observation["residual"] = "BASELINE"
+                        observation["restored"] = True
+                    else:
+                        observation["residual"] = "OTHER"
+                else:
+                    observation["residual"] = "UNKNOWN"
+            except OSError:
+                observation["residual"] = "UNKNOWN"
+            observations.append(observation)
+        return observations
+
+    def verify_observed_proposal(self, task_record) -> dict:
+        intent = task_record.get("application_intent") or {}
+        root = self.project_root.resolve()
+        paths = [item["path"] for item in intent.get("files") or []]
+        try:
+            verified = self._run_allowlisted(task_record, paths, root)
+        except (OSError, PermissionError, ValueError, subprocess.SubprocessError) as exc:
+            return {"ok": False, "reason": str(exc), "tests": []}
+        if not verified["ok"]:
+            return verified
+        read_back = []
+        for path in paths:
+            raw = root / path
+            try:
+                read_back.append((path, raw.read_bytes()))
+            except OSError:
+                return {"ok": False, "reason": "applied bytes unreadable", "tests": verified["tests"]}
+        receipt = self._receipt(intent, read_back)
+        if receipt["applied_binding_sha256"] != intent.get("binding_sha256"):
+            return {"ok": False, "reason": "read-back binding mismatch", "tests": verified["tests"],
+                    "receipt": receipt}
+        return {"ok": True, "tests": verified["tests"], "files": paths, "receipt": receipt}
+
+    def _restore_baseline(self, planned) -> list[dict]:
+        report = []
+        for path, destination, _data, current in planned:
+            item = {"path": path, "observed_sha256": None, "residual": "UNKNOWN", "restored": False}
+            try:
+                if current is None:
+                    if destination.exists() and not destination.is_symlink():
+                        destination.unlink()
+                    if destination.exists():
+                        item["residual"] = "PRESENT"
+                        if destination.is_file() and not destination.is_symlink():
+                            item["observed_sha256"] = file_digest(destination.read_bytes())
+                    else:
+                        item["residual"] = "ABSENT"
+                        item["restored"] = True
+                else:
+                    destination.write_bytes(current)
+                    observed = destination.read_bytes()
+                    item["observed_sha256"] = file_digest(observed)
+                    item["restored"] = observed == current
+                    item["residual"] = "BASELINE" if observed == current else "OTHER"
+            except OSError:
+                try:
+                    if destination.is_file() and not destination.is_symlink():
+                        item["observed_sha256"] = file_digest(destination.read_bytes())
+                        item["residual"] = "OTHER"
+                except OSError:
+                    item["observed_sha256"] = None
+                    item["residual"] = "UNKNOWN"
+                item["restored"] = False
+            report.append(item)
+        return report
 
     def verify_bridge_submission(self, task_record, response_text, verification) -> VerifyResult:
         """Validate a client-side bounded verification receipt without executing commands.
@@ -253,8 +560,9 @@ class FreeCodingWorkerHandler(LocalTaskHandler):
                     raise PermissionError("non-allowlisted test receipt")
                 if any(part in {"git", "push", "deploy", ";", "&&", "|"} for part in argv):
                     raise PermissionError("forbidden operation in test receipt")
-            return VerifyResult(True, parsed_output={"summary": parsed["summary"],
-                                "changes": changes, "test_results": tests})
+            stored = {"summary": parsed["summary"], "changes": changes, "test_results": tests}
+            stored.update(self._proposal_binding(task_record, changes))
+            return VerifyResult(True, parsed_output=stored)
         except (ValueError, PermissionError, json.JSONDecodeError) as exc:
             return VerifyResult(False, errors=[f"{type(exc).__name__}: {exc}"],
                                 is_logic_error=True)
