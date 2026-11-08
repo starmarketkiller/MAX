@@ -16,6 +16,7 @@ Credit-safe book only. Not a confirmatory edge claim. Production remains NO-GO.
 - Do **not** launch `/config` against a live terminal data folder (skill §13).
 - Prefer a dedicated tester terminal / portable copy with its own `MQL5` tree synced to this branch.
 - Sync `Include\NEXUS_v1` before compile (skill §12).
+- **Junction gotcha:** `C:\MT5-Tester\MQL5\Include\NEXUS_v1` currently junctions to `ClaudeWork\MAX\...`, **not** agent worktrees. Compiling Edge Book for a worktree requires retargeting that junction temporarily **or** an isolated `/portable` MetaEditor tree (see `docs/EDGE_BOOK_COMPILE_EVIDENCE_V1.md`). Do not retarget while metatester is mid-run.
 
 ## Manual smoke steps
 

@@ -78,6 +78,8 @@ yarn-error.log*
 # I .ex5 compilati non vanno versionati: l'artefatto di rilascio è prodotto
 # dalla pipeline e referenziato per digest (NEXUS-STRAT-002).
 *.ex5
+# Isolated portable MetaEditor tree used for Edge Book compile evidence.
+_mt5_edge_compile/
 
 # --- log e output di build --------------------------------------------------
 *.log

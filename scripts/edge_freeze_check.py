@@ -131,9 +131,25 @@ def main() -> int:
         print("FAIL: CommonExposurePreflight must honor EdgeBook for known strategies")
         return 1
 
+    set_check = ROOT / "scripts" / "edge_book_set_check.py"
+    if set_check.is_file():
+        import subprocess
+
+        completed = subprocess.run(
+            [sys.executable, str(set_check)],
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+        )
+        if completed.returncode != 0:
+            print(completed.stdout)
+            print(completed.stderr)
+            print("FAIL: edge_book_set_check.py")
+            return 1
+
     print(
         "OK: freeze/FAILED defaults aligned; FVG_CONT REMEDIATED; "
-        "EDGE_SHORTLIST book present"
+        "EDGE_SHORTLIST book present; GOLD .set complete"
     )
     return 0
 

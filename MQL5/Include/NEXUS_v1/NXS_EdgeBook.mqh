@@ -78,7 +78,8 @@ bool NXS_EdgeBook_Preflight(){
       return false;
    }
    if(InpStrat_MACD || InpStrat_RSI_DIV || InpStrat_TSI || InpStrat_BB_SQUEEZE
-      || InpStrat_SH_BMS_RTO || InpStrat_SilverBullet || InpUseStructReact
+      || InpStrat_SH_BMS_RTO || InpStrat_SH_BMS_RTO_V2 || InpStrat_SilverBullet
+      || InpUseStrat_CRT || InpUseStructReact
       || InpStrat_SAR || InpStrat_LONDON_BO || InpStrat_ICHIMOKU){
       Print("[EDGE_BOOK][WARN] toggles outside shortlist are still true; "
             "collector/open gates will ignore them in EDGE_SHORTLIST");

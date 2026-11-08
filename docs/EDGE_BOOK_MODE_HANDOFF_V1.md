@@ -30,11 +30,16 @@ Base: `cursor/nexus-desktop-agent-plan-v11-b2b8`
 - `python scripts/edge_freeze_check.py`
 - `pytest server/tests/test_edge_freeze_check_v1.py server/tests/test_edge_book_matrix_v1.py`
 
+## Compile evidence
+
+Isolated portable MetaEditor: **0 errors, 2 warnings** — `docs/EDGE_BOOK_COMPILE_EVIDENCE_V1.md`  
+(`NXS_EdgeBook.mqh` included; SHA256 recorded; metatester PIDs left alone).
+
 ## Tester smoke (manuale)
 
 Runbook: `docs/EDGE_BOOK_TESTER_RUNBOOK_V1.md`  
 `.set` completo + `NEXUS_EDGE_SHORTLIST_GOLD_SMOKE.ini` (2026.10.01–2026.10.19).  
-Validazione statica: `python scripts/edge_book_set_check.py`.  
+Validazione statica: `python scripts/edge_book_set_check.py` (also invoked from `edge_freeze_check.py`).  
 Non avviare un secondo Tester sulla stessa data folder live; non terminare `metatester64` esistenti.
 
 ## Fuori scope / non fatto
