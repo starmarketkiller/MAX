@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 from datetime import datetime, timezone
 
 ORCH_DIR = os.path.join(os.path.dirname(__file__), "..", "orchestrator_v1")
@@ -160,3 +161,40 @@ def test_dispatch_error_is_sanitized_and_survives_claim_release(tmp_path):
 
 def test_sanitized_error_has_no_raw_bearer_value():
     assert "abc123" not in _sanitized_error(RuntimeError("Bearer abc123"))
+
+
+def test_second_consumer_refuses_without_blocking_live_work(tmp_path):
+    orch, first = build(tmp_path)
+    second = DurableQueueDispatcher(orch, poll_seconds=0.01, lease_seconds=30,
+                                    shutdown_timeout_seconds=1)
+    submit_deterministic(orch, "TASK_LIVE")
+    submit_deterministic(orch, "TASK_OTHER")
+    entered = threading.Event()
+    release = threading.Event()
+
+    def slow(task_id, claim_token=None):
+        orch.queue.assert_claim(task_id, claim_token)
+        orch.queue.transition(task_id, "RUNNING", executor="deterministic_worker")
+        entered.set()
+        assert release.wait(3)
+        orch.queue.transition(task_id, "COMPLETED", result_packet={"decision": "COMPLETED"})
+        return orch.queue.get(task_id)
+
+    orch.process_task = slow
+    box = {}
+
+    def run_first():
+        box["first"] = first.run_once()
+
+    thread = threading.Thread(target=run_first)
+    thread.start()
+    assert entered.wait(3)
+    assert second.start() is False
+    assert orch.queue.get("TASK_LIVE")["state"] == "RUNNING"
+    assert second.run_once() is False
+    assert orch.queue.get("TASK_OTHER")["state"] == "QUEUED"
+    release.set()
+    thread.join(5)
+    assert box["first"] is True
+    assert orch.queue.get("TASK_LIVE")["state"] == "COMPLETED"
+    assert any(event["event_type"] == "DISPATCH_REFUSED" for event in orch.ledger.read_all())
