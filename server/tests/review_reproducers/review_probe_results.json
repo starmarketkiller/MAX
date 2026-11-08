@@ -1,0 +1,303 @@
+{
+  "model_calls": 0,
+  "results": [
+    {
+      "name": "fixture hashes match the evidence file",
+      "expected": {
+        "source": [
+          "264700c5d857c1edddb95cba17e081e5ab7ada7f1a23a3e41031e3cc7b9f56b4",
+          98
+        ],
+        "test": [
+          "e98023b76671c81832034ab8dce684ce60f5aadc6766d3b06191e6baa21cb36f",
+          600
+        ],
+        "proposal": [
+          "feecd4e53946235ac4c35706bd9f28f13419a2425d75fbf057accfcb349a1806",
+          98,
+          0
+        ]
+      },
+      "observed": {
+        "source": [
+          "264700c5d857c1edddb95cba17e081e5ab7ada7f1a23a3e41031e3cc7b9f56b4",
+          98
+        ],
+        "test": [
+          "e98023b76671c81832034ab8dce684ce60f5aadc6766d3b06191e6baa21cb36f",
+          600
+        ],
+        "proposal": [
+          "feecd4e53946235ac4c35706bd9f28f13419a2425d75fbf057accfcb349a1806",
+          98,
+          0
+        ]
+      },
+      "passed": true,
+      "refs": [
+        "server/tests/approval_continuation_evidence_v1.json"
+      ]
+    },
+    {
+      "name": "swapped path/content association with the original proposal hash",
+      "expected": "identical baselines, different digest, refusal before any write",
+      "observed": {
+        "identical_baselines": true,
+        "digest_differs": true,
+        "status": "WAITING_APPROVAL",
+        "state": "WAITING_APPROVAL",
+        "bytes_unchanged": true
+      },
+      "passed": true,
+      "refs": [
+        "server/jarvis_v1/free_coding_worker.py:58",
+        "server/jarvis_v1/free_coding_worker.py:290",
+        "server/jarvis_v1/service.py:1968"
+      ]
+    },
+    {
+      "name": "proposal digest distinguishes path/content associations",
+      "expected": "different path/content maps have different proposal hashes",
+      "observed": {
+        "equal": true,
+        "associations_differ": true,
+        "digest": "53ed652b4592f06630f82d6b58598aa4d93bc479897bf5d85faf43b57d4b6b2b"
+      },
+      "passed": false,
+      "refs": [
+        "server/jarvis_v1/free_coding_worker.py:58"
+      ]
+    },
+    {
+      "name": "NUL-joined digest applied to the other association",
+      "expected": "approval of the shared hash does not write a different path/content map",
+      "observed": {
+        "status": "COMPLETED",
+        "state": "COMPLETED",
+        "written_a": "b'AAA'",
+        "written_b": "b'BBB\\x00CCC'",
+        "receipt_hashes_equal": true
+      },
+      "passed": false,
+      "refs": [
+        "server/jarvis_v1/free_coding_worker.py:58",
+        "server/jarvis_v1/free_coding_worker.py:353"
+      ]
+    },
+    {
+      "name": "two files with identical baselines apply through canonical pytest",
+      "expected": "both files changed, source has no CR, state COMPLETED, no model call",
+      "observed": {
+        "status": "COMPLETED",
+        "state": "COMPLETED",
+        "a": "alpha = 1\n",
+        "b": "beta = 2\n",
+        "source_cr": false,
+        "model_calls": 0
+      },
+      "passed": true,
+      "refs": [
+        "server/jarvis_v1/free_coding_worker.py:323"
+      ]
+    },
+    {
+      "name": "cross-task hash and partial binding",
+      "expected": "both stay WAITING_APPROVAL and the file stays at the baseline",
+      "observed": {
+        "cross_status": "WAITING_APPROVAL",
+        "cross_state": "WAITING_APPROVAL",
+        "file": true,
+        "partial_status": "WAITING_APPROVAL",
+        "partial_state": "WAITING_APPROVAL"
+      },
+      "passed": true,
+      "refs": [
+        "server/jarvis_v1/service.py:1968",
+        "server/jarvis_v1/service.py:2058"
+      ]
+    },
+    {
+      "name": "two concurrent approvals of the same task",
+      "expected": "one COMPLETED application remains and a failing sibling does not roll it back",
+      "observed": {
+        "outcomes": [
+          [
+            "two",
+            "WAITING_APPROVAL",
+            null
+          ],
+          [
+            "one",
+            "COMPLETED",
+            null
+          ]
+        ],
+        "snapshot": {
+          "state": "COMPLETED",
+          "decision": "COMPLETED",
+          "receipt": {
+            "newline_policy": "preserve_proposal_bytes",
+            "proposal_sha256": "feecd4e53946235ac4c35706bd9f28f13419a2425d75fbf057accfcb349a1806",
+            "applied_sha256": "feecd4e53946235ac4c35706bd9f28f13419a2425d75fbf057accfcb349a1806",
+            "baseline_sha256": "3ed827f57d611bcc7c22f085c9fca6338a0403856dfe62caac0db1f37b056086",
+            "attempt": 0,
+            "paths": [
+              "protocol_a_fixture/sample_counter.py"
+            ]
+          },
+          "dispatch_last_error": "baseline changed",
+          "events": [
+            "TASK_CREATED",
+            "TASK_QUEUED",
+            "FILE_CHANGED",
+            "APPROVAL_DENIED",
+            "TEST_PASSED",
+            "TASK_COMPLETED",
+            "APPROVAL_GRANTED"
+          ],
+          "file_sha256": "feecd4e53946235ac4c35706bd9f28f13419a2425d75fbf057accfcb349a1806"
+        },
+        "final_is_proposal": true,
+        "final_is_baseline": false,
+        "runner_calls": 1
+      },
+      "passed": false,
+      "refs": [
+        "server/jarvis_v1/service.py:1981",
+        "server/jarvis_v1/free_coding_worker.py:345",
+        "server/orchestrator_v1/core/orchestrator.py:487"
+      ]
+    },
+    {
+      "name": "concurrent approvals of two tasks",
+      "expected": "the passing task stays applied and the failing task rolls back only its own file",
+      "observed": {
+        "results": {
+          "TASK_BAD": "FAILED",
+          "TASK_GOOD": "COMPLETED"
+        },
+        "good_state": "COMPLETED",
+        "bad_state": "FAILED",
+        "source_is_proposal": true,
+        "other_is_baseline": true
+      },
+      "passed": true,
+      "refs": [
+        "server/jarvis_v1/free_coding_worker.py:364"
+      ]
+    },
+    {
+      "name": "ledger failure after the file write",
+      "expected": "reopening the store shows file, task and audit reconciled without a model call",
+      "observed": {
+        "error": "OSError: injected after FILE_CHANGED",
+        "snapshot": {
+          "state": "WAITING_APPROVAL",
+          "decision": "PATCH_READY_AWAITING_APPROVAL",
+          "receipt": null,
+          "dispatch_last_error": null,
+          "events": [
+            "TASK_CREATED",
+            "TASK_QUEUED",
+            "FILE_CHANGED",
+            "TEST_PASSED"
+          ],
+          "file_sha256": "feecd4e53946235ac4c35706bd9f28f13419a2425d75fbf057accfcb349a1806"
+        },
+        "retry_status": "WAITING_APPROVAL",
+        "retry_error": null,
+        "after_retry": {
+          "state": "WAITING_APPROVAL",
+          "decision": "PATCH_READY_AWAITING_APPROVAL",
+          "receipt": null,
+          "dispatch_last_error": "baseline changed",
+          "events": [
+            "TASK_CREATED",
+            "TASK_QUEUED",
+            "FILE_CHANGED",
+            "TEST_PASSED",
+            "APPROVAL_DENIED"
+          ],
+          "file_sha256": "feecd4e53946235ac4c35706bd9f28f13419a2425d75fbf057accfcb349a1806"
+        },
+        "file_is_proposal": true,
+        "model_calls": 0
+      },
+      "passed": false,
+      "refs": [
+        "server/orchestrator_v1/core/orchestrator.py:521"
+      ]
+    },
+    {
+      "name": "queue transition failure after TASK_COMPLETED is appended",
+      "expected": "file, WAITING task and TASK_COMPLETED audit are not left contradictory",
+      "observed": {
+        "error": "OSError: injected transition",
+        "snapshot": {
+          "state": "WAITING_APPROVAL",
+          "decision": "PATCH_READY_AWAITING_APPROVAL",
+          "receipt": null,
+          "dispatch_last_error": null,
+          "events": [
+            "TASK_CREATED",
+            "TASK_QUEUED",
+            "FILE_CHANGED",
+            "TEST_PASSED",
+            "TASK_COMPLETED"
+          ],
+          "file_sha256": "feecd4e53946235ac4c35706bd9f28f13419a2425d75fbf057accfcb349a1806"
+        },
+        "file_is_proposal": true
+      },
+      "passed": false,
+      "refs": [
+        "server/orchestrator_v1/core/orchestrator.py:521"
+      ]
+    },
+    {
+      "name": "failure during the second file write",
+      "expected": "FAILED, no receipt, both files back at their baseline, residual named in the record",
+      "observed": {
+        "status": "FAILED",
+        "error": null,
+        "state": "FAILED",
+        "decision": "FAILED",
+        "receipt": null,
+        "error_field": "injected write failure",
+        "a": "b'a = 0\\n'",
+        "source": "b'def next_value(current):\\r\\n    \"\"\"Return the integer that follows current.\"\"\"\\r\\n    return current\\r\\n'"
+      },
+      "passed": true,
+      "refs": [
+        "server/jarvis_v1/free_coding_worker.py:345",
+        "server/orchestrator_v1/core/orchestrator.py:492"
+      ]
+    },
+    {
+      "name": "failure during rollback",
+      "expected": "no COMPLETED, and any leftover proposal bytes are named on the reopened record",
+      "observed": {
+        "status": null,
+        "error": "OSError: injected rollback failure",
+        "snapshot": {
+          "state": "WAITING_APPROVAL",
+          "decision": "PATCH_READY_AWAITING_APPROVAL",
+          "receipt": null,
+          "dispatch_last_error": null,
+          "events": [
+            "TASK_CREATED",
+            "TASK_QUEUED"
+          ],
+          "file_sha256": "feecd4e53946235ac4c35706bd9f28f13419a2425d75fbf057accfcb349a1806"
+        },
+        "file_is_proposal": true,
+        "file_is_baseline": false
+      },
+      "passed": false,
+      "refs": [
+        "server/jarvis_v1/free_coding_worker.py:364",
+        "server/orchestrator_v1/core/orchestrator.py:487"
+      ]
+    }
+  ]
+}

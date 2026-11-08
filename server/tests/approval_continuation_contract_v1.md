@@ -33,3 +33,7 @@ Un `process_task` successivo entra in `_run_local` e chiama di nuovo il modello.
 7. `COMPLETED` arriva solo dopo scrittura e pytest consentito, con ricevuta persistita. Un errore non è un completamento.
 
 La continuazione vale solo per `conversational_programming` quando `proposed_patch` contiene già il legame (`proposal_sha256`, `baseline_sha256`, `newline_policy`, `attempt`, `baselines`). Gli altri tipi di task, e le proposte di coding persistite prima di questo legame, restano sul `REQUEUE` esistente. Un legame parziale viene rifiutato prima della scrittura.
+
+Il binding che autorizza la scrittura è `approval-continuation-binding-v2`: schema, percorso e contenuto di ogni file, con lunghezze esplicite. `proposal_sha256` resta il digest del solo contenuto. Un'approvazione che porta solo quel digest non scrive; serve un messaggio nuovo con lo schema v2.
+
+Nello stesso processo un lock copre controllo, scrittura, verifica, rollback e finalizzazione del task. Due processi distinti non condividono quel lock. Il recupero dopo un riavvio usa `application_intent` sulla coda, non una seconda coda, e non chiama un modello.

@@ -12,7 +12,8 @@ import pytest
 
 from executive_v1.priority import InteractiveGate
 from jarvis_v1.free_coding_worker import (
-    NEWLINE_POLICY, FreeCodingWorkerHandler, baseline_digest, file_digest, proposal_digest)
+    BINDING_SCHEMA, NEWLINE_POLICY, FreeCodingWorkerHandler, baseline_digest, binding_digest,
+    file_digest, proposal_digest)
 from jarvis_v1.gateway import JarvisGateway
 from jarvis_v1.service import JarvisService
 from orchestrator_v1.core.dispatcher import DurableQueueDispatcher
@@ -87,6 +88,8 @@ def _patch(content, source_bytes, *, attempt=0):
         "newline_policy": NEWLINE_POLICY,
         "proposal_sha256": proposal_digest(changes),
         "baseline_sha256": baseline_digest(baselines),
+        "binding_schema": BINDING_SCHEMA,
+        "binding_sha256": binding_digest(changes),
     }
 
 
@@ -105,6 +108,7 @@ def _message(task_id, patch, **extra):
         "task_id": task_id, "approval_action": "APPROVE",
         "attempt": patch["attempt"], "proposal_sha256": patch["proposal_sha256"],
         "baseline_sha256": patch["baseline_sha256"],
+        "binding_schema": patch["binding_schema"], "binding_sha256": patch["binding_sha256"],
     }
     metadata.update(extra)
     return {
@@ -208,6 +212,9 @@ def test_approved_proposal_is_applied_without_a_model_call(tmp_path, monkeypatch
     assert receipt["proposal_sha256"] == patch["proposal_sha256"]
     assert receipt["applied_sha256"] == file_digest(applied)
     assert receipt["proposal_sha256"] == receipt["applied_sha256"]
+    assert receipt["binding_schema"] == BINDING_SCHEMA
+    assert receipt["binding_sha256"] == binding_digest(patch["changes"])
+    assert receipt["applied_binding_sha256"] == receipt["binding_sha256"]
     assert receipt["baseline_sha256"] == patch["baseline_sha256"]
     assert receipt["attempt"] == 0
     assert receipt["proposal_sha256"] != file_digest(before)
@@ -272,6 +279,8 @@ def test_queued_grant_applies_the_stored_proposal(tmp_path, monkeypatch):
         "task_id": "TASK_RESUME", "attempt": patch["attempt"],
         "proposal_sha256": patch["proposal_sha256"],
         "baseline_sha256": patch["baseline_sha256"],
+        "binding_schema": patch["binding_schema"],
+        "binding_sha256": patch["binding_sha256"],
     })
     service.queue.transition("TASK_RESUME", "QUEUED")
     updated = service.orchestrator.process_task("TASK_RESUME")

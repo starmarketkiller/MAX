@@ -67,3 +67,31 @@ La card tardiva con `expected_state` `WAITING_APPROVAL`, a task già `COMPLETED`
 ## Fuori dal perimetro
 
 Il repository operativo e i file estranei del checkout `MAX` non sono stati modificati. `metatester64` risulta ancora presente con PID 5380 e 15776. Nessun merge, deploy o attivazione remota. I criteri C01–C20 non sono stati modificati. La proposta non è stata applicata al repository di lavoro.
+
+## LOCAL_CODING_APPROVAL_CONTINUATION_FIX_01
+
+Partenza `b0a55c622dd3730f81def1f8dba2d01b7f229182`. Review distinta richiesta: i quattro finding, non il resto della PR.
+
+I riproduttori originali sono conservati in `server/tests/review_reproducers/`. Rieseguiti sul checkout congelato `MAX_approval_review_b0a55c6`, restano rossi: non sono la prova di chiusura. La chiusura è `tests/test_approval_continuation_fix_v1.py` sul worktree corretto. Protocollo scritto prima delle modifiche: `approval_continuation_recovery_protocol_v1.md`.
+
+`proposal_sha256` resta il digest del solo contenuto. Il binding che autorizza è `approval-continuation-binding-v2`, con percorso e contenuto di ogni file. Un'approvazione che porta solo il digest vecchio non scrive. Una proposta già in coda senza schema v2 viene applicata solo se il messaggio nuovo porta l'hash v2 ricalcolato su quei cambiamenti.
+
+Nello stesso processo il lock del task copre controllo, scrittura, verifica, rollback e finalizzazione. Due processi distinti non condividono quel lock.
+
+L'intento è annotato sulla coda prima della prima scrittura. Il ledger `TOOL_USED` con tool `approval_continuation_intent` è solo audit. Dopo la riapertura non si chiama un modello. File tutti alla proposta: pytest e poi ricevuta. File tutti alla baseline: stesso intento. Residuo misto, diverso o `UNKNOWN`: `FAILED`, `application_recovery=BLOCKED`, nessun retry automatico. Un rollback è `ROLLED_BACK` solo se la rilettura coincide con la baseline.
+
+Suite del worktree corretto, 8 novembre 2026, `PYTHONDONTWRITEBYTECODE=1`: 94 passed in 30.50s. Comprende la suite precedente da 83 e il file nuovo. `model_calls` 0. La proposta della fixture è riusata, non generata.
+
+Prove del file nuovo:
+
+- intento presente prima di `write_bytes`
+- percorsi duplicati e digest vecchio rifiutati prima della scrittura
+- collisione NUL: l'hash v2 dell'altra associazione non scrive; l'hash v2 giusto scrive `AAA` e `BBB\0CCC`
+- due approvazioni simultanee, un solo pytest, file finale uguale alla proposta, nessun `TASK_FAILED`
+- errore di ledger dopo la scrittura, riapertura, retry fino a `COMPLETED` con ricevuta
+- errore di transizione dopo `TASK_COMPLETED`, stessa riapertura e stesso esito
+- rollback illeggibile registrato `UNKNOWN`, `rollback_verified` false, retry non applica
+- rollback osservabile registrato `OTHER` con l'hash della proposta ancora sul disco
+- processo figlio ucciso dopo la scrittura e prima della finalizzazione, poi riapertura e `COMPLETED` solo con pytest e ricevuta
+
+`metatester64` PID 5380 e 15776 ancora presenti. Nessun merge, deploy o modifica di C01–C20.

@@ -22,5 +22,35 @@
     "duration_seconds": 19.86,
     "command": "python -m pytest tests/test_approval_continuation_v1.py tests/test_proposal_approval_gate_v1.py tests/test_combined_reconciliation_v1.py tests/test_natural_conversation_v3.py::test_no_regression_on_existing_button_driven_approval tests/test_executive_state_and_conversation_v1.py::test_interactive_gate_makes_dispatcher_yield_background_work tests/test_free_coding_worker_routing_v1.py tests/test_dynamic_specialist_review_v1.py tests/test_local_agent_bridge_v1.py tests/test_jarvis_conversational_programming_v1.py -q -p no:cacheprovider"
   },
-  "red_collection_before_fix": "ImportError: cannot import name NEWLINE_POLICY from jarvis_v1.free_coding_worker"
+  "red_collection_before_fix": "ImportError: cannot import name NEWLINE_POLICY from jarvis_v1.free_coding_worker",
+  "fix_01": {
+    "experiment": "LOCAL_CODING_APPROVAL_CONTINUATION_FIX_01",
+    "start_sha": "b0a55c622dd3730f81def1f8dba2d01b7f229182",
+    "binding_schema": "approval-continuation-binding-v2",
+    "proposal_sha256_role": "legacy content digest, not the authorization binding",
+    "in_process_lock": "threading.Lock per task, held across check, write, verify, rollback and finalization",
+    "cross_process_exclusion": false,
+    "model_calls": 0,
+    "original_reproducers_on_frozen_checkout": {
+      "checkout": "C:\\Users\\User\\ClaudeWork\\MAX_approval_review_b0a55c6",
+      "independent_review_probe_failed": [
+        "proposal digest distinguishes path/content associations",
+        "NUL-joined digest applied to the other association",
+        "two concurrent approvals of the same task",
+        "ledger failure after the file write",
+        "queue transition failure after TASK_COMPLETED is appended",
+        "failure during rollback"
+      ],
+      "race_barrier": {
+        "state": "COMPLETED",
+        "file_sha256": "264700c5d857c1edddb95cba17e081e5ab7ada7f1a23a3e41031e3cc7b9f56b4",
+        "second_error": "AssertionError: Transizione non permessa: COMPLETED -> FAILED (task TASK_FORCE)"
+      }
+    },
+    "pytest": {
+      "result": "94 passed",
+      "duration_seconds": 30.50,
+      "added_file": "tests/test_approval_continuation_fix_v1.py"
+    }
+  }
 }

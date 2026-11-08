@@ -32,7 +32,8 @@ from review_matrix import get_matrix_entry  # noqa: E402
 from .conversation_store import ConversationStore
 from .programming import build_plan, extract_repo_paths, is_programming_request
 from .floor_workflow import FloorWorkflowCoordinator
-from .free_coding_worker import NEWLINE_POLICY, FreeCodingWorkerHandler
+from .free_coding_worker import (
+    BINDING_SCHEMA, NEWLINE_POLICY, FreeCodingWorkerHandler, binding_digest, proposal_digest)
 from .local_bounded_task_handler import BoundedLocalTaskHandler
 from . import ministral_router
 from . import ministral_chat
@@ -1932,13 +1933,16 @@ class JarvisService:
         try:
             proposal_sha = str(metadata["proposal_sha256"])
             baseline_sha = str(metadata["baseline_sha256"])
+            binding_sha = str(metadata["binding_sha256"])
+            schema = str(metadata["binding_schema"])
             attempt = int(metadata["attempt"])
         except (KeyError, TypeError, ValueError):
             return None
-        if not proposal_sha or not baseline_sha:
+        if not proposal_sha or not baseline_sha or not binding_sha or schema != BINDING_SCHEMA:
             return None
         return {"attempt": attempt, "proposal_sha256": proposal_sha,
-                "baseline_sha256": baseline_sha}
+                "baseline_sha256": baseline_sha, "binding_sha256": binding_sha,
+                "binding_schema": schema}
 
     def _continue_verified_coding_proposal(self, message, task_id, record):
         """Apply a stored coding proposal. Other actions keep the generic requeue."""
@@ -1949,7 +1953,9 @@ class JarvisService:
             same = (binding is not None
                     and binding["attempt"] == int(receipt.get("attempt"))
                     and binding["proposal_sha256"] == receipt.get("proposal_sha256")
-                    and binding["baseline_sha256"] == receipt.get("baseline_sha256"))
+                    and binding["baseline_sha256"] == receipt.get("baseline_sha256")
+                    and binding["binding_sha256"] == receipt.get("binding_sha256")
+                    and binding["binding_schema"] == receipt.get("binding_schema"))
             if same:
                 return self._response(message, "APPROVAL", f"{task_id}: COMPLETED",
                                       task_id=task_id, status="COMPLETED")
@@ -1959,17 +1965,31 @@ class JarvisService:
             return self._response(message, "ERROR", "La proposta non è applicabile.",
                                   task_id=task_id, status=record.get("state"))
         patch = record.get("proposed_patch") or {}
+        changes = patch.get("changes") or []
         try:
             stored_attempt = int(patch.get("attempt"))
             retry_count = int(record.get("retry_count") or 0)
-        except (TypeError, ValueError):
+            expected_binding = binding_digest(changes)
+            expected_proposal = proposal_digest(changes)
+        except (TypeError, ValueError, KeyError):
             stored_attempt = None
             retry_count = None
-        bound = (binding is not None and stored_attempt is not None
+            expected_binding = None
+            expected_proposal = None
+        stored_schema = patch.get("binding_schema")
+        stored_binding_ok = (stored_schema == BINDING_SCHEMA
+                             and patch.get("binding_sha256") == expected_binding)
+        legacy_content_ok = (stored_schema != BINDING_SCHEMA
+                             and patch.get("proposal_sha256") == expected_proposal)
+        bound = (binding is not None and stored_attempt is not None and expected_binding is not None
                  and binding["attempt"] == stored_attempt == retry_count
+                 and binding["proposal_sha256"] == expected_proposal
                  and binding["proposal_sha256"] == patch.get("proposal_sha256")
                  and binding["baseline_sha256"] == patch.get("baseline_sha256")
-                 and patch.get("newline_policy") == NEWLINE_POLICY)
+                 and binding["binding_sha256"] == expected_binding
+                 and binding["binding_schema"] == BINDING_SCHEMA
+                 and patch.get("newline_policy") == NEWLINE_POLICY
+                 and (stored_binding_ok or legacy_content_ok))
         if not bound:
             self.ledger.append("APPROVAL_DENIED", task_id, {
                 "message_id": message.get("message_id"),
@@ -1978,6 +1998,11 @@ class JarvisService:
             return self._response(message, "ERROR",
                                   "Approvazione non legata a questa proposta.",
                                   task_id=task_id, status="WAITING_APPROVAL")
+        if not stored_binding_ok:
+            promoted = dict(patch)
+            promoted["binding_schema"] = BINDING_SCHEMA
+            promoted["binding_sha256"] = expected_binding
+            self.queue.annotate(task_id, proposed_patch=promoted)
         self.queue.annotate(task_id, approval_grant={
             "task_id": task_id, **binding})
         updated = self.orchestrator.apply_approved_coding_proposal(task_id)

@@ -19,6 +19,7 @@ scrivere il file reale, anche se il worker locale ha gia' prodotto e
 verificato (in sandbox) una patch corretta."""
 import os
 import sys
+import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
@@ -86,6 +87,9 @@ class Orchestrator:
         self.ledger = EventLedger(path=ledger_path)
         self.local_handlers = {}  # action -> LocalTaskHandler
         self.local_bridge = None
+        # In-process only. Two OS processes do not share this lock.
+        self._apply_guard = threading.Lock()
+        self._apply_locks = {}
 
     def register_local_handler(self, action, handler: LocalTaskHandler):
         self.local_handlers[action] = handler
@@ -226,7 +230,9 @@ class Orchestrator:
         # A granted coding proposal is applied from the stored patch. It must
         # not be bridged or sent to a model again.
         if (record.get("action") == "conversational_programming"
-                and record.get("approval_grant") and record.get("proposed_patch")):
+                and record.get("proposed_patch")
+                and (record.get("approval_grant") or record.get("application_intent")
+                     or record.get("application_recovery") == "BLOCKED")):
             return self.apply_approved_coding_proposal(task_id)
 
         # In hosted production localhost is not the operator's workstation.  A
@@ -467,15 +473,35 @@ class Orchestrator:
                               approval_effect="REQUEUE")
         return self.queue.get(task_id)
 
-    def apply_approved_coding_proposal(self, task_id):
-        """Apply one stored conversational_programming proposal without a model call.
+    def _apply_lock(self, task_id):
+        with self._apply_guard:
+            lock = self._apply_locks.get(task_id)
+            if lock is None:
+                lock = threading.Lock()
+                self._apply_locks[task_id] = lock
+            return lock
 
-        Pre-write refusals leave WAITING_APPROVAL unchanged. A failed verification
-        becomes FAILED and is never stored as COMPLETED.
-        """
-        record = self.queue.get(task_id)
-        if record.get("state") == "COMPLETED" and record.get("application_receipt"):
-            return record
+    def apply_approved_coding_proposal(self, task_id):
+        """Apply one stored coding proposal. The lock covers one process only."""
+        with self._apply_lock(task_id):
+            record = self.queue.get(task_id)
+            if record.get("state") == "COMPLETED" and record.get("application_receipt"):
+                return record
+            if record.get("application_recovery") == "BLOCKED":
+                return self._stop_blocked_application(task_id, record)
+            if (record.get("application_intent") and record.get("state") in {"WAITING_APPROVAL", "RUNNING"}
+                    and record.get("application_phase") in {"INTENT_PERSISTED", "WRITTEN_UNFINALIZED"}):
+                return self._reconcile_application_locked(task_id, record)
+            return self._apply_fresh_locked(task_id, record)
+
+    def _stop_blocked_application(self, task_id, record):
+        if record.get("state") == "RUNNING":
+            self._fail_application(task_id, record, record.get("dispatch_last_error") or "application blocked",
+                                   record.get("application_residuals") or [],
+                                   "ambiguous application is not retried", verified_rollback=False)
+        return self.queue.get(task_id)
+
+    def _apply_fresh_locked(self, task_id, record):
         if record.get("action") != "conversational_programming":
             raise AssertionError("coding continuation is limited to conversational_programming")
         handler = self.local_handlers.get(record["action"])
@@ -484,47 +510,117 @@ class Orchestrator:
         if handler is None or not hasattr(handler, "apply_verified_proposal"):
             self.queue.annotate(task_id, dispatch_last_error="coding continuation unavailable")
             return self.queue.get(task_id)
-        outcome = handler.apply_verified_proposal(record)
+
+        def persist_intent(intent):
+            self.queue.annotate(task_id, application_intent=intent, application_phase="INTENT_PERSISTED",
+                                application_recovery=None)
+            try:
+                self.ledger.append("TOOL_USED", task_id, {
+                    "tool": "approval_continuation_intent",
+                    "binding_schema": intent.get("binding_schema"),
+                    "binding_sha256": intent.get("binding_sha256"),
+                    "paths": [item["path"] for item in intent.get("files", [])]})
+            except OSError:
+                pass
+
+        record = self.queue.get(task_id)
+        outcome = handler.apply_verified_proposal(record, before_write=persist_intent)
+        return self._finish_application(task_id, outcome)
+
+    def _reconcile_application_locked(self, task_id, record):
+        handler = self.local_handlers.get(record["action"])
+        if handler is None or not hasattr(handler, "observe_application"):
+            self.queue.annotate(task_id, application_recovery="BLOCKED",
+                                dispatch_last_error="coding continuation unavailable")
+            return self.queue.get(task_id)
+        observations = handler.observe_application(record)
+        self.queue.annotate(task_id, application_observations=observations)
+        residuals = {item["residual"] for item in observations}
+        if residuals == {"PROPOSAL"}:
+            verified = handler.verify_observed_proposal(record)
+            if verified.get("ok"):
+                return self._finish_application(task_id, verified)
+            self._fail_application(task_id, record, verified.get("reason") or "verification failed",
+                                   observations, "observed proposal failed verification",
+                                   verified_rollback=False)
+            return self.queue.get(task_id)
+        if residuals == {"BASELINE"}:
+            return self._apply_fresh_locked(task_id, self.queue.get(task_id))
+        self._fail_application(task_id, record, "application residual is ambiguous",
+                               observations, "no automatic retry", verified_rollback=False)
+        return self.queue.get(task_id)
+
+    def _finish_application(self, task_id, outcome):
+        record = self.queue.get(task_id)
         if not outcome["ok"]:
             reason = outcome["reason"]
-            self.ledger.append("APPROVAL_DENIED", task_id, {
-                "reason": reason, "reason_class": outcome["reason_class"]})
-            if outcome["reason_class"] == "verification_failed" or record["state"] == "RUNNING":
-                packet = build_result_packet(
-                    task_id=task_id, executor=record.get("executor") or "LOCAL_STRONG_MINISTRAL3B",
-                    start_time=record.get("started_at") or now_iso(), end_time=now_iso(),
-                    files_read=[], files_changed=[], tools_or_commands=["approval_continuation"],
-                    artifacts_created=[], tests_ran=True, tests_passed=0, tests_failed=1,
-                    verifier_ran=True, verifier_passed=False, verifier_errors=[reason],
-                    commit=None, push_status="NOT_APPLICABLE", decision="FAILED",
-                    confidence="LOW", limitations=["application rolled back"],
-                    unresolved_issues=[reason], suggested_next_tasks=[],
-                    escalation_needed=False)
-                self.ledger.append("TASK_FAILED", task_id, {"reason": reason})
-                self.queue.transition(task_id, "FAILED", result_packet=packet,
-                                      approval_grant=None, dispatch_last_error=reason)
-            else:
+            verified_rollback = outcome.get("rollback_verified")
+            residuals = outcome.get("files") or []
+            try:
+                self.ledger.append("APPROVAL_DENIED", task_id, {
+                    "reason": reason, "reason_class": outcome["reason_class"],
+                    "rollback_verified": verified_rollback})
+            except OSError:
+                pass
+            if outcome["reason_class"] == "before_write" and record["state"] != "RUNNING":
                 self.queue.annotate(task_id, approval_grant=None, dispatch_last_error=reason)
+                return self.queue.get(task_id)
+            limitation = ("application rolled back" if verified_rollback is True
+                          else "rollback not verified")
+            self._fail_application(task_id, record, reason, residuals, limitation,
+                                   verified_rollback=verified_rollback)
             return self.queue.get(task_id)
-        files = outcome["files"]
-        tests = outcome["tests"]
-        passed = sum(1 for item in tests if item.get("returncode") == 0)
+        self.queue.annotate(task_id, application_phase="WRITTEN_UNFINALIZED")
+        try:
+            files = outcome["files"]
+            tests = outcome["tests"]
+            passed = sum(1 for item in tests if item.get("returncode") == 0)
+            packet = build_result_packet(
+                task_id=task_id, executor=record.get("executor") or "LOCAL_STRONG_MINISTRAL3B",
+                start_time=record.get("started_at") or now_iso(), end_time=now_iso(),
+                files_read=[], files_changed=files, tools_or_commands=["approval_continuation"],
+                artifacts_created=files, tests_ran=bool(tests), tests_passed=passed, tests_failed=0,
+                verifier_ran=True, verifier_passed=True, verifier_errors=[], commit=None,
+                push_status="NOT_APPLICABLE", decision="COMPLETED", confidence="MEDIUM",
+                limitations=[], unresolved_issues=[], suggested_next_tasks=[],
+                escalation_needed=False)
+            self.ledger.append("FILE_CHANGED", task_id, {"files": files})
+            self.ledger.append("TEST_PASSED", task_id, {"handler": record["action"]})
+            self.ledger.append("TASK_COMPLETED", task_id, {"handler": record["action"],
+                              "continuation": "verified_proposal"})
+            self.queue.transition(task_id, "COMPLETED", result_packet=packet,
+                                  application_receipt=outcome["receipt"], approval_grant=None,
+                                  application_phase="FINALIZED", application_recovery=None)
+        except OSError as exc:
+            self.queue.annotate(task_id, application_phase="WRITTEN_UNFINALIZED",
+                                dispatch_last_error=str(exc))
+        return self.queue.get(task_id)
+
+    def _fail_application(self, task_id, record, reason, residuals, limitation, *, verified_rollback):
+        issues = [reason]
+        for item in residuals:
+            issues.append(f"{item.get('path')} {item.get('residual')} {item.get('observed_sha256')}")
         packet = build_result_packet(
             task_id=task_id, executor=record.get("executor") or "LOCAL_STRONG_MINISTRAL3B",
             start_time=record.get("started_at") or now_iso(), end_time=now_iso(),
-            files_read=[], files_changed=files, tools_or_commands=["approval_continuation"],
-            artifacts_created=files, tests_ran=bool(tests), tests_passed=passed, tests_failed=0,
-            verifier_ran=True, verifier_passed=True, verifier_errors=[], commit=None,
-            push_status="NOT_APPLICABLE", decision="COMPLETED", confidence="MEDIUM",
-            limitations=[], unresolved_issues=[], suggested_next_tasks=[],
-            escalation_needed=False)
-        self.ledger.append("FILE_CHANGED", task_id, {"files": files})
-        self.ledger.append("TEST_PASSED", task_id, {"handler": record["action"]})
-        self.ledger.append("TASK_COMPLETED", task_id, {"handler": record["action"],
-                          "continuation": "verified_proposal"})
-        self.queue.transition(task_id, "COMPLETED", result_packet=packet,
-                              application_receipt=outcome["receipt"], approval_grant=None)
-        return self.queue.get(task_id)
+            files_read=[], files_changed=[], tools_or_commands=["approval_continuation"],
+            artifacts_created=[], tests_ran=True, tests_passed=0, tests_failed=1,
+            verifier_ran=True, verifier_passed=False, verifier_errors=[reason],
+            commit=None, push_status="NOT_APPLICABLE", decision="FAILED",
+            confidence="LOW", limitations=[limitation], unresolved_issues=issues,
+            suggested_next_tasks=[], escalation_needed=False)
+        recovery = "ROLLED_BACK" if verified_rollback is True else "BLOCKED"
+        phase = "ROLLED_BACK" if verified_rollback is True else "ROLLBACK_UNVERIFIED"
+        try:
+            self.ledger.append("TASK_FAILED", task_id, {
+                "reason": reason, "rollback_verified": verified_rollback is True})
+        except OSError:
+            pass
+        if record.get("state") in {"WAITING_APPROVAL", "RUNNING"}:
+            self.queue.transition(task_id, "FAILED", result_packet=packet, approval_grant=None,
+                                  dispatch_last_error=reason, application_residuals=residuals,
+                                  rollback_verified=verified_rollback is True,
+                                  application_recovery=recovery, application_phase=phase)
 
     def fail_local_bridge_task(self, task_id, failure_class):
         record = self.queue.get(task_id)
