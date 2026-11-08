@@ -36,6 +36,7 @@ Research Mode isolation may still open these for measurement.
 | `NXS_Profile_Enabled` | Returns false when the book denies the `stratName` |
 | `NXS_OpenTrade` / `NXR_OpenTrade` | Gate before exposure creation |
 | Data Collection loop | Same `stratName` gate before `SafeBuy`/`SafeSell` |
+| `NXS_CommonExposurePreflight` | Book gate when `stratName` is a known strategy (covers SL reclaim); GRID/PYRAMID labels skipped |
 | WebBridge telemetria | `strategies` = toggle ∧ book; payload include `edge_book` |
 | `NXS_CommonExposurePreflight` | Unchanged; still required |
 | `scripts/edge_freeze_check.py` | Registry ↔ EA default alignment |

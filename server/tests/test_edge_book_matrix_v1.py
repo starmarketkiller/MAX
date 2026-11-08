@@ -85,6 +85,23 @@ def test_collect_raw_every_push_is_book_gated():
         assert "NXS_EdgeBook_Allows(" in line, line
 
 
+def test_common_exposure_preflight_is_book_gated():
+    from pathlib import Path
+
+    text = (
+        Path(__file__).resolve().parents[2]
+        / "MQL5"
+        / "Include"
+        / "NEXUS_v1"
+        / "NXS_Execution.mqh"
+    ).read_text(encoding="utf-8")
+    assert "NXS_StrategyKnown(stratName) && !NXS_EdgeBook_Allows(stratName)" in text
+    assert "GATE_EDGE_BOOK" in text
+    # Invariant still present after the book insert.
+    assert "NXS_RS_BlockEntry" in text
+    assert "NXS_AccountGuard_EntryAllowed" in text
+
+
 def test_data_collection_path_is_book_gated():
     from pathlib import Path
 

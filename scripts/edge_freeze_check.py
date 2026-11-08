@@ -124,6 +124,13 @@ def main() -> int:
         print("FAIL: EdgeBook preflight must refuse PRESET_MVP_v206")
         return 1
 
+    execution = (ROOT / "MQL5" / "Include" / "NEXUS_v1" / "NXS_Execution.mqh").read_text(
+        encoding="utf-8"
+    )
+    if "NXS_StrategyKnown(stratName) && !NXS_EdgeBook_Allows(stratName)" not in execution:
+        print("FAIL: CommonExposurePreflight must honor EdgeBook for known strategies")
+        return 1
+
     print(
         "OK: freeze/FAILED defaults aligned; FVG_CONT REMEDIATED; "
         "EDGE_SHORTLIST book present"

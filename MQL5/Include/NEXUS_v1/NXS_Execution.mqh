@@ -157,6 +157,20 @@ bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR di
       return false;
    }
 
+   // --- (4c) Credit-safe edge book ----------------------------------------
+   // Covers every exposure path that reaches this invariant (primary, NXR,
+   // data-collection callers that pass a real strategy, SL reclaim, etc.).
+   // Synthetic add-on labels (GRID/PYRAMID/INST:*) are not strategy ids —
+   // NXS_StrategyKnown filters them so legs on an already-open shortlist
+   // position are not blocked by name alone. No prior gate is removed.
+   if(NXS_StrategyKnown(stratName) && !NXS_EdgeBook_Allows(stratName)){
+      string bookWhy = NXS_EdgeBook_DenyReason(stratName);
+      NXS_GateTelemetry(route, "edge_book", false, 0.0, 1.0, bookWhy);
+      reason = bookWhy;
+      gateOut = GATE_EDGE_BOOK;
+      return false;
+   }
+
    // --- (5) RiskShield -----------------------------------------------------
    // 02/09 - il breaker Sharpe ora e' PER STRATEGIA (richiesto dall'utente:
    // bloccare solo la strategia responsabile, non l'intero conto). stratName
