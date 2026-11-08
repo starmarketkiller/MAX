@@ -198,3 +198,43 @@ def test_second_consumer_refuses_without_blocking_live_work(tmp_path):
     assert box["first"] is True
     assert orch.queue.get("TASK_LIVE")["state"] == "COMPLETED"
     assert any(event["event_type"] == "DISPATCH_REFUSED" for event in orch.ledger.read_all())
+
+
+def test_undrained_stop_keeps_ownership_until_consumer_exits(tmp_path):
+    orch, first = build(tmp_path)
+    second = DurableQueueDispatcher(orch, poll_seconds=0.01, lease_seconds=30,
+                                    shutdown_timeout_seconds=1)
+    submit_deterministic(orch, "TASK_LIVE")
+    submit_deterministic(orch, "TASK_OTHER")
+    entered = threading.Event()
+    release = threading.Event()
+
+    def slow(task_id, claim_token=None):
+        orch.queue.assert_claim(task_id, claim_token)
+        orch.queue.transition(task_id, "RUNNING", executor="deterministic_worker")
+        if task_id != "TASK_LIVE":
+            orch.queue.transition(task_id, "COMPLETED", result_packet={"decision": "COMPLETED"})
+            return orch.queue.get(task_id)
+        entered.set()
+        assert release.wait(5)
+        orch.queue.transition(task_id, "COMPLETED", result_packet={"decision": "COMPLETED"})
+        return orch.queue.get(task_id)
+
+    orch.process_task = slow
+    assert first.start() is True
+    assert entered.wait(3)
+    assert first.stop() is False
+    assert first.running is True
+    assert second.start() is False
+    assert second.run_once() is False
+    live = orch.queue.get("TASK_LIVE")
+    assert live["state"] == "RUNNING"
+    assert live.get("recovery") is None
+    assert orch.queue.get("TASK_OTHER")["state"] == "QUEUED"
+    release.set()
+    first._thread.join(5)
+    assert first.running is False
+    assert second.run_once() is True
+    assert orch.queue.get("TASK_LIVE")["state"] == "COMPLETED"
+    assert orch.queue.get("TASK_LIVE").get("recovery") is None
+    assert orch.queue.get("TASK_OTHER")["state"] == "COMPLETED"

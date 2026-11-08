@@ -15,7 +15,9 @@ import time
 import uuid
 
 # One consumer per queue inside this process. The lock guards the map only;
-# task execution stays outside it. Another process is outside this guard.
+# task execution stays outside it. Ownership lasts until that consumer thread
+# has exited, including after stop() times out. Another process is outside
+# this guard.
 _CONSUMERS = {}
 _CONSUMERS_GUARD = threading.Lock()
 
@@ -117,25 +119,31 @@ class DurableQueueDispatcher:
         if self._thread and self._thread is not threading.current_thread():
             self._thread.join(timeout=self.shutdown_timeout_seconds)
         drained = not self.running
-        self._release_consumer()
+        # A timed-out consumer can still finish the task it already entered.
+        # Releasing here would let a second start() orphan that live work.
+        if drained:
+            self._release_consumer()
         self.ledger.append("DISPATCHER_STOPPED", None,
             {"owner_id": self.owner_id, "drained": drained}, actor="durable_queue_dispatcher_v1")
         return drained
 
     def _run_loop(self):
-        backoff = self.poll_seconds
-        while not self._stop.is_set():
-            try:
-                worked = self.run_once()
-                backoff = self.poll_seconds
-                if not worked:
-                    self._stop.wait(self.poll_seconds)
-            except Exception as exc:  # loop infrastructure failure, no secret/payload logging
-                self.ledger.append("TASK_DISPATCH_RETRY", None,
-                    {"failure_class": type(exc).__name__, "backoff_seconds": round(backoff, 2)},
-                    actor="durable_queue_dispatcher_v1")
-                self._stop.wait(backoff)
-                backoff = min(self.max_backoff_seconds, max(1, backoff * 2))
+        try:
+            backoff = self.poll_seconds
+            while not self._stop.is_set():
+                try:
+                    worked = self.run_once()
+                    backoff = self.poll_seconds
+                    if not worked:
+                        self._stop.wait(self.poll_seconds)
+                except Exception as exc:  # loop infrastructure failure, no secret/payload logging
+                    self.ledger.append("TASK_DISPATCH_RETRY", None,
+                        {"failure_class": type(exc).__name__, "backoff_seconds": round(backoff, 2)},
+                        actor="durable_queue_dispatcher_v1")
+                    self._stop.wait(backoff)
+                    backoff = min(self.max_backoff_seconds, max(1, backoff * 2))
+        finally:
+            self._release_consumer()
 
     def run_once(self):
         if self.yield_predicate and self.yield_predicate():
