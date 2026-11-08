@@ -35,12 +35,18 @@ Base: `cursor/nexus-desktop-agent-plan-v11-b2b8`
 Isolated portable MetaEditor: **0 errors, 2 warnings** — `docs/EDGE_BOOK_COMPILE_EVIDENCE_V1.md`  
 (`NXS_EdgeBook.mqh` included; SHA256 recorded; metatester PIDs left alone).
 
+## Tester — operazioni visibili sull’account collegato
+
+Account **345277936 / XMGlobal-MT5 10** (Strategy Tester, UI lasciata aperta).  
+**8 trade / 16 deal / +46.07 USD** su GOLD H4 2026.07.01–2026.10.19 — `docs/EDGE_BOOK_TESTER_VISIBLE_OPS_V1.md`.  
+Fix collaterale: deposito sintetico Tester non deve più lockare MaxTotalDD (`NXS_Protections.mqh`).
+
 ## Tester smoke (manuale)
 
 Runbook: `docs/EDGE_BOOK_TESTER_RUNBOOK_V1.md`  
 `.set` completo + `NEXUS_EDGE_SHORTLIST_GOLD_SMOKE.ini` (2026.10.01–2026.10.19).  
 Validazione statica: `python scripts/edge_book_set_check.py` (also invoked from `edge_freeze_check.py`).  
-Non avviare un secondo Tester sulla stessa data folder live; non terminare `metatester64` esistenti.
+Non terminare `metatester64` di sessione 0 (servizi).
 
 ## Fuori scope / non fatto
 
