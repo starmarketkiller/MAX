@@ -134,3 +134,26 @@ def test_write_task_artifacts_is_idempotent_and_reflects_latest_state(service, t
     task_handoff.write_task_artifacts(service, "TASK_EVOLVING", out_dir=out)
     content = (out / "task.md").read_text(encoding="utf-8")
     assert "COMPLETED" in content
+
+
+def test_handoff_redacts_credential_shaped_text(service, tmp_path):
+    task_id = "TASK_SECRET"
+    packet = dict(RESULT_PACKET, task_id=task_id, decision="Bearer abc123token",
+                  limitations=["api_key=supersecretvalue"])
+    service.orchestrator.submit(_manifest(task_id), action="conversational_programming",
+                               action_params={"conversation_id": "c1"})
+    service.queue.transition(task_id, "RUNNING", executor="TIER1_LOCAL_CHEAP")
+    service.queue.transition(task_id, "COMPLETED", result_packet=packet)
+    service.queue.annotate(task_id, routing_measurement={
+        "task_id": task_id, "attempt": 1, "sha": "0b3f484471ffd6651233d07d3c6e74c3de665436",
+    })
+    paths = task_handoff.write_task_artifacts(service, task_id, out_dir=tmp_path / "out")
+    combined = "\n".join(open(path, encoding="utf-8").read() for path in paths.values())
+    assert "abc123token" not in combined
+    assert "supersecretvalue" not in combined
+    assert "Bearer [REDACTED]" in combined
+    assert "api_key=[REDACTED]" in combined
+    handoff = open(paths["handoff.md"], encoding="utf-8").read()
+    assert f"- task_id: {task_id}" in handoff
+    assert "- attempt: 1" in handoff
+    assert "- sha: 0b3f484471ffd6651233d07d3c6e74c3de665436" in handoff

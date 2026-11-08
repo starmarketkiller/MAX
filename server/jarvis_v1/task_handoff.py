@@ -21,8 +21,20 @@ to this module in the first place.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Optional
+
+_SECRET = re.compile(
+    r"(?i)(bearer\s+)\S+|((?:api[_-]?key|token|secret|password)\s*[:=]\s*)\S+"
+)
+
+
+def redact(value):
+    """Drop credential-shaped text from a rendered artifact. The queue is unchanged."""
+    if not isinstance(value, str):
+        return value
+    return _SECRET.sub(lambda match: (match.group(1) or match.group(2)) + "[REDACTED]", value)
 
 ARTIFACT_FILENAMES = ("task.md", "result.md", "handoff.md", "verifier_report.json", "execution_log.jsonl")
 
@@ -49,7 +61,7 @@ def _manifest(record: dict) -> dict:
 
 
 def _bullets(items, empty="(nessuno)") -> str:
-    items = [str(i) for i in (items or []) if str(i).strip()]
+    items = [redact(str(i)) for i in (items or []) if str(i).strip()]
     return "\n".join(f"- {i}" for i in items) if items else empty
 
 
@@ -94,8 +106,12 @@ def render_handoff_md(record: dict, events: list) -> str:
     escalation = packet.get("escalation_needed") or {}
     lines = [
         f"# Handoff - {record['task_id']}", "",
+        "## Correlazione",
+        f"- task_id: {record['task_id']}",
+        f"- attempt: {(record.get('routing_measurement') or {}).get('attempt')}",
+        f"- sha: {(record.get('routing_measurement') or {}).get('sha')}", "",
         "## Cosa è stato fatto",
-        packet.get("decision") or "(nessuna decisione registrata - task non terminata)", "",
+        redact(packet.get("decision") or "(nessuna decisione registrata - task non terminata)"), "",
         "## Input usati / file letti", _bullets(packet.get("files_read")), "",
         "## File prodotti / modificati", _bullets(packet.get("files_changed")), "",
         "## Artifact creati", _bullets(packet.get("artifacts_created")), "",
@@ -139,13 +155,14 @@ def write_task_artifacts(service, task_id: str, out_dir: Optional[Path] = None) 
     # directory grants no write capability to a model or remote process.
     (out / "artifacts").mkdir(exist_ok=True)
 
-    (out / "task.md").write_text(render_task_md(record), encoding="utf-8")
-    (out / "result.md").write_text(render_result_md(record), encoding="utf-8")
-    (out / "handoff.md").write_text(render_handoff_md(record, events), encoding="utf-8")
+    (out / "task.md").write_text(redact(render_task_md(record)), encoding="utf-8")
+    (out / "result.md").write_text(redact(render_result_md(record)), encoding="utf-8")
+    (out / "handoff.md").write_text(redact(render_handoff_md(record, events)), encoding="utf-8")
     (out / "verifier_report.json").write_text(
-        json.dumps(build_verifier_report_json(record), indent=2, ensure_ascii=False), encoding="utf-8")
+        redact(json.dumps(build_verifier_report_json(record), indent=2, ensure_ascii=False)),
+        encoding="utf-8")
     with open(out / "execution_log.jsonl", "w", encoding="utf-8") as f:
         for event in events:
-            f.write(json.dumps(event, ensure_ascii=False) + "\n")
+            f.write(redact(json.dumps(event, ensure_ascii=False)) + "\n")
 
     return {name: str(out / name) for name in ARTIFACT_FILENAMES}
