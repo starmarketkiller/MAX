@@ -60,7 +60,9 @@ enum ENUM_NXS_GATE_REASON {
    GATE_STATE_UNCERTAIN,
    // NEXUS-ACCT-001: conto non DEMO senza autorizzazione LIVE (in coda: i
    // valori numerici precedenti restano invariati).
-   GATE_ACCOUNT_MODE
+   GATE_ACCOUNT_MODE,
+   // Credit-safe / EDGE_SHORTLIST book gate (appended: prior ordinals stay).
+   GATE_EDGE_BOOK
 };
 
 string NXS_GateReasonName(ENUM_NXS_GATE_REASON g){
@@ -86,6 +88,7 @@ string NXS_GateReasonName(ENUM_NXS_GATE_REASON g){
       case GATE_LICENSE:           return "LICENSE";
       case GATE_STATE_UNCERTAIN:   return "STATE_UNCERTAIN";
       case GATE_ACCOUNT_MODE:      return "ACCOUNT_MODE";
+      case GATE_EDGE_BOOK:         return "EDGE_BOOK";
       default:                     return "UNKNOWN";
    }
 }
@@ -134,7 +137,7 @@ long NXS_Trace_NextId(){
 // stampa la riga - stesso punto causale, nessuna doppia fonte di verità.
 long g_certGenerated = 0, g_certBlocked = 0, g_certOpenAttempt = 0,
      g_certOpened = 0, g_certBrokerReject = 0;
-long g_certGateCount[20];   // indicizzato da ENUM_NXS_GATE_REASON
+long g_certGateCount[24];   // indicizzato da ENUM_NXS_GATE_REASON (room for ACCOUNT/EDGE)
 long g_certOpenedMissingPositionId = 0;   // invariante: ogni OPENED deve avere position_id
 long g_certBrokerRejectMissingReason = 0; // invariante: ogni broker reject deve avere reason
 // per il controllo "source TF mismatch": prima strategia/TF visti in GENERATED,
@@ -160,7 +163,7 @@ datetime g_certPeriodEnd   = 0;
 void NXS_Trace_ResetCert(){
    g_certGenerated = 0; g_certBlocked = 0; g_certOpenAttempt = 0;
    g_certOpened = 0; g_certBrokerReject = 0;
-   for(int i = 0; i < 20; i++) g_certGateCount[i] = 0;
+   for(int i = 0; i < 24; i++) g_certGateCount[i] = 0;
    g_certOpenedMissingPositionId = 0;
    g_certBrokerRejectMissingReason = 0;
    g_certFirstStrategy = ""; g_certSourceTFSeen = false; g_certSourceTFMismatch = false;
@@ -208,7 +211,7 @@ void NXS_Trace_Emit(long decisionId, long signalId, string strategy,
          break;
       case TRACE_BLOCKED:
          g_certBlocked++;
-         if((int)gate >= 0 && (int)gate < 20) g_certGateCount[(int)gate]++;
+         if((int)gate >= 0 && (int)gate < 24) g_certGateCount[(int)gate]++;
          break;
       case TRACE_OPEN_ATTEMPT:
          g_certOpenAttempt++;
@@ -219,7 +222,7 @@ void NXS_Trace_Emit(long decisionId, long signalId, string strategy,
          break;
       case TRACE_BROKER_REJECT:
          g_certBrokerReject++;
-         if((int)gate >= 0 && (int)gate < 20) g_certGateCount[(int)gate]++;
+         if((int)gate >= 0 && (int)gate < 24) g_certGateCount[(int)gate]++;
          if(StringLen(detail) == 0) g_certBrokerRejectMissingReason++;
          break;
    }
@@ -274,6 +277,7 @@ ENUM_NXS_GATE_REASON NXS_GateReasonFromFailure(const string r){
    if(StringFind(r, "indicators_degraded") >= 0)   return GATE_STATE_UNCERTAIN;
    if(StringFind(r, "vsl_persist_unhealthy") >= 0) return GATE_STATE_UNCERTAIN;
    if(StringFind(r, "account_mode")      >= 0)     return GATE_ACCOUNT_MODE;
+   if(StringFind(r, "edge_book")         >= 0)     return GATE_EDGE_BOOK;
    if(StringFind(r, "license")           >= 0)     return GATE_LICENSE;
    if(StringFind(r, "regime_veto")       >= 0)     return GATE_PROTECTIONS;
    if(StringFind(r, "invalid_sl_distance") >= 0)   return GATE_INVALID_STOPS;

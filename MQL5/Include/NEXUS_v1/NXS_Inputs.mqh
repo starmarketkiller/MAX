@@ -200,6 +200,15 @@ input int      InpDataCollectionMaxOpen= 40;     // tetto posizioni aperte conte
 // gestione post-apertura, il lotto e il multi-TF, con log esplicito per
 // tutto cio' che resta acceso (niente silenzi come ESL/DailyDD prima).
 input bool     InpResearchMode         = false;
+// 08/11 - Book mode (credit-safe edge shortlist). Default FULL = comportamento
+// precedente. EDGE_SHORTLIST limita le aperture allo shortlist del loop
+// credit-safe (docs/EDGE_CREDIT_SAFE_OPERATING_LOOP_V1.md). NON e' un claim
+// di edge validato: Production resta NO-GO finche' il registry non promuove.
+enum ENUM_NXS_BOOK_MODE {
+   NXS_BOOK_FULL           = 0,   // tutti i toggle/profili attuali; hard-deny FAILED/DEFECT
+   NXS_BOOK_EDGE_SHORTLIST = 1    // solo FVG_CONT/LIQ_SWEEP/ORDER_BLOCK/BREAKOUT_ACC/Z_SCORE_BREAKOUT/EMA_PULLBACK
+};
+input ENUM_NXS_BOOK_MODE InpBookMode = NXS_BOOK_FULL;
 // 10/09 - RAW vs RECIPE, ora un enum esplicito (richiesto dopo la scoperta
 // che il RAW iniziale non era davvero RAW - vedi audit MaxHold/MaxLossPerPos/
 // AutoClose sotto). InpUseStrategyProfiles/InpProfileMultiTF (richiesti true
@@ -508,7 +517,7 @@ input bool     InpBollingerUseCandleFilter = false;  // hammer/engulfing (buy), 
 // trascina l'aggregato in perdita) - conferma diretta della scoperta
 // Python del 24/08. Lock di direzione per isolare il numero pulito.
 input bool     InpBollingerBuyOnly         = false;
-input bool     InpStrat_MACD         = true;
+input bool     InpStrat_MACD         = false;  // registry FAILED — off until a powered claim exists
 input bool     InpStrat_SAR          = true;
 input bool     InpSAR_RequireCandleAlign = false;  // 31/08 - vedi NXS_Strat_SAR: filtro trovato analizzando i 112 trade nudi
 input bool     InpSAR_RequirePressureContrary = false;  // 31/08 - vedi NXS_SAR_PressureContrary: non ridondante col filtro candela, si sommano
@@ -546,7 +555,7 @@ input bool     InpStrat_LONDON_BO    = true;
 input bool     InpStrat_EMA_PULLBACK = true;
 input bool     InpStrat_BB_SQUEEZE   = false;   // DEFECT_BLOCKED: cross-TF contamination — keep off until A/B/C measured
 input bool     InpStrat_ICHIMOKU     = true;
-input bool     InpStrat_RSI_DIV      = true;
+input bool     InpStrat_RSI_DIV      = false;  // registry FAILED — off until a powered claim exists
 input bool     InpStrat_ORDER_BLOCK  = true;
 input bool     InpUseStructReact     = true;
 

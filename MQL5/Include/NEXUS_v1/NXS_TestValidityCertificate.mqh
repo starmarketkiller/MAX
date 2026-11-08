@@ -285,7 +285,7 @@ void NXS_Cert_Generate(){
       FileWrite(hTxt, "--- Funnel ---");
       FileWrite(hTxt, StringFormat("GENERATED=%d BLOCKED=%d OPEN_ATTEMPT=%d OPENED=%d BROKER_REJECT=%d",
                        in.generated, in.blocked, in.openAttempt, in.opened, in.brokerReject));
-      for(int g = 0; g < 20; g++){
+      for(int g = 0; g < 24; g++){
          if(g_certGateCount[g] == 0) continue;
          FileWrite(hTxt, StringFormat("  gate_reason=%s count=%d",
                           NXS_GateReasonName((ENUM_NXS_GATE_REASON)g), g_certGateCount[g]));
@@ -310,7 +310,7 @@ void NXS_Cert_Generate(){
    int hJson = FileOpen(jsonPath, FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_COMMON);
    if(hJson != INVALID_HANDLE){
       string gates = "";
-      for(int g = 0; g < 20; g++){
+      for(int g = 0; g < 24; g++){
          if(g_certGateCount[g] == 0) continue;
          if(StringLen(gates) > 0) gates += ",";
          gates += StringFormat("\"%s\":%d", NXS_GateReasonName((ENUM_NXS_GATE_REASON)g), g_certGateCount[g]);

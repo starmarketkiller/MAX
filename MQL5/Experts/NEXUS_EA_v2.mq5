@@ -67,6 +67,7 @@
 #include <NEXUS_v1\NXS_StructuralResearchLog.mqh>
 #include <NEXUS_v1\NXS_Strategies.mqh>
 #include <NEXUS_v1\NXS_ResearchMode.mqh>
+#include <NEXUS_v1\NXS_EdgeBook.mqh>
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
 #include <NEXUS_v1\NXS_TestValidityCertificate.mqh>   // 12/09 - dipende da NXS_ResearchMode.mqh + NXS_BlockerDiagnostics.mqh
 #include <NEXUS_v1\NXS_ElliottFilter.mqh>
@@ -788,6 +789,10 @@ int OnInit(){
    // InpResearchMode=false.
    if(!NXS_ResearchPreflight()){
       Alert("NEXUS: Research Mode - configurazione non valida, EA non avviato (vedi log)");
+      return INIT_FAILED;
+   }
+   if(!NXS_EdgeBook_Preflight()){
+      Alert("NEXUS: Edge Book - configurazione non valida, EA non avviato (vedi log)");
       return INIT_FAILED;
    }
 

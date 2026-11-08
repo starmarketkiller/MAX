@@ -343,6 +343,15 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_PROFILE_DISABLED, "");
       return OPEN_FAIL_PREFLIGHT;
    }
+   // Credit-safe book: shortlist-only or hard-deny FAILED/DEFECT (NXS_EdgeBook).
+   // Does not bypass NXS_CommonExposurePreflight later in this function.
+   if(!NXS_EdgeBook_Allows(sig.stratName)){
+      string edgeReason = NXS_EdgeBook_DenyReason(sig.stratName);
+      g_nxsLastOpenFailure = edgeReason;
+      NXS_GateTelemetry("open_trade", "edge_book", false, 0.0, 1.0, edgeReason);
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_EDGE_BOOK, edgeReason);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    // 02/09 - veto di regime (_nxs_regime_veto, NXS_SignalQuality.mqh): esisteva
    // gia' ma era agganciato SOLO al modello istituzionale (InpUseInstitutionalCore,
    // off di default, mai usato in nessun test isolato di stanotte). Richiesto

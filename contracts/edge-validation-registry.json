@@ -1027,7 +1027,7 @@
     {
       "strategy_id": "MACD",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "FAILED",
       "component_value_status": "NOT_EVALUATED",
       "role_in_system": [
@@ -1567,7 +1567,7 @@
     {
       "strategy_id": "RSI_DIV",
       "implementation_status": "ACTIVE",
-      "default_enabled": true,
+      "default_enabled": false,
       "standalone_edge_status": "FAILED",
       "component_value_status": "UNKNOWN",
       "role_in_system": [],

@@ -1,0 +1,31 @@
+; NEXUS Edge Book — GOLD shortlist (credit-safe, NOT validated production edge)
+; InpBookMode=1 → NXS_BOOK_EDGE_SHORTLIST
+; Load on a GOLD/XAUUSD chart with Strategy Profiles ON.
+
+InpBookMode=1
+InpUseStrategyProfiles=true
+InpProfileMultiTF=true
+InpUseInstitutionalCore=false
+InpDataCollectionMode=false
+InpResearchMode=false
+InpStrategySelector=0
+InpLiveTradingAuthorized=false
+
+InpStrat_FVG_CONT=true
+InpStrat_LIQ_SWEEP=true
+InpStrat_ORDER_BLOCK=true
+InpStrat_BREAKOUT_ACC=true
+InpStrat_ZScoreBreakout=true
+InpStrat_EMA_PULLBACK=true
+
+InpStrat_MACD=false
+InpStrat_RSI_DIV=false
+InpStrat_TSI=false
+InpStrat_BB_SQUEEZE=false
+InpStrat_SH_BMS_RTO=false
+InpStrat_SilverBullet=false
+InpStrat_BJORGUM=false
+InpUseStructReact=false
+InpStrat_SAR=false
+InpStrat_LONDON_BO=false
+InpStrat_ICHIMOKU=false

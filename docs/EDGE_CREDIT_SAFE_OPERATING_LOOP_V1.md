@@ -44,6 +44,10 @@ Keep mental/agent focus on ≤6:
 
 Everything else: research-only until a defect is closed and power allows a claim.
 
+EA enforcement (2026-11-08): `InpBookMode=NXS_BOOK_EDGE_SHORTLIST` in
+`NXS_EdgeBook.mqh` / `docs/EDGE_BOOK_MODE_V1.md`. Credit-safe book only —
+not a validated production edge.
+
 ## Freeze applied in this change
 
 | Strategy | Action |

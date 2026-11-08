@@ -1759,6 +1759,13 @@ ENUM_NXS_OPEN_RC NXR_OpenTrade(SNXSSignal &sig, long magic,
                   sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
+   // Same credit-safe book gate as NXS_OpenTrade (stratName identity).
+   if(!NXS_EdgeBook_Allows(sig.stratName)){
+      string edgeReason = NXS_EdgeBook_DenyReason(sig.stratName);
+      g_nxsLastOpenFailure = edgeReason;
+      NXS_GateTelemetry("nxr_open_trade", "edge_book", false, 0.0, 1.0, edgeReason);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    // v2.0.26 — one fresh entry per direction per bar (see NXS_OpenTrade for
    // the full rationale — this is the path InpNXR_Enable actually routes
    // live signals through, plus the independent NXR_ProcessPendingM5Trigger
