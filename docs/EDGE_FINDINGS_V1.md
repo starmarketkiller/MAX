@@ -8,7 +8,7 @@
 
 | Rank | Strategy | Scientific status | Latest quantitative signal | Verdict |
 |---|---|---|---|---|
-| 1 | FVG_CONT | CANDIDATE; fwd INSUFFICIENT_EVIDENCE; defect REMEDIATED | Phase 7.32: n=82, mean R≈0.30, SAMPLE_READY_FOR_EDGE_PREREG. Phase 7.34 confirmatory: n=8, mean R≈0.25, INSUFFICIENT. Ops shortlist 2026.07–10: **+139 / +3.64R on 27 closes** | STRONGEST_CANDIDATE |
+| 1 | FVG_CONT | CANDIDATE; fwd INSUFFICIENT_EVIDENCE; defect REMEDIATED | Phase 7.32: n=82, mean R≈0.30, SAMPLE_READY_FOR_EDGE_PREREG. Phase 7.34 confirmatory: n=8 then interim n=11 still INSUFFICIENT. Interim side split: BUY n=3 **+76** / SELL n=8 **−159**. Ops FVG-only Research OFF Jul–Oct: **+77 on 20**. | STRONGEST_CANDIDATE |
 | 2 | BREAKOUT_ACC | FORWARD_REQUIRED; CI includes 0 | Ops: +54 on n=2 | WEAK / underpowered |
 | 3 | LIQ_SWEEP | CANDIDATE; fwd NEGATIVE_INSUFFICIENT | Phase 7.30 OPENED=0. Ops: −128 on 11 | WEAK / regime-conditional |
 | 4 | ORDER_BLOCK | FORWARD_REQUIRED | Ops: 0 opens | WEAK |
@@ -43,6 +43,10 @@ Same window GOLD H4 2026.07.01–2026.10.19, account 345277936:
 Artifacts: docs/evidence/nxs_edge_fvg_only_ops_20260701_20261019.htm, MQL5/Profiles/NEXUS_EDGE_FVG_ONLY_OPS_GOLD.ini.
 
 Still not LIVE GO (n=20 underpowered vs Power Gate). Directionally: isolate FVG_CONT; keep EMA_PULLBACK off.
+
+## BUY-only ops (Research OFF, Jul–Nov7)
+
+`InpFvgContBuyOnly=true`: **6 BUY / 0 SELL, +70.15**. Confirms SELL filter; still INSUFFICIENT for promotion. See EDGE_FVG_POWERED_FORWARD_NEXT_V1.md.
 
 ## Ranking concurrence
 

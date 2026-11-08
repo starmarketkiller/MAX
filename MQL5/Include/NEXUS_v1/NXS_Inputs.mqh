@@ -1035,6 +1035,12 @@ input double   InpLevelReactRiskPct            = 0.5;   // rischio% per trade
 // "essere veloci nel mettere a be"), da confrontare col default prima di
 // sostituirlo definitivamente.
 input double   InpFvgContBeR                   = 1.5;
+// 09/11 - habitat lock for FVG_CONT ops hunts (Phase 7.33 arm B = BUY-only
+// analysis subset). Default false keeps bidirectional recipe unchanged for
+// confirmatory A and all existing presets. true = drop SELL after the H1
+// bear gap fires (same pattern as InpBollingerBuyOnly). NOT a LIVE promotion
+// and NOT a substitute for min_n=30 confirmatory power.
+input bool     InpFvgContBuyOnly               = false;
 // 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
 // Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
 // sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).
