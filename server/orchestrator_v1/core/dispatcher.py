@@ -14,6 +14,13 @@ import threading
 import time
 import uuid
 
+# One consumer per queue inside this process. The lock guards the map only;
+# task execution stays outside it. Ownership lasts until that consumer thread
+# has exited, including after stop() times out. Another process is outside
+# this guard.
+_CONSUMERS = {}
+_CONSUMERS_GUARD = threading.Lock()
+
 
 def _sanitized_error(exc):
     """Useful diagnostic without filesystem paths, bearer values or long payloads."""
@@ -48,11 +55,46 @@ class DurableQueueDispatcher:
     def running(self):
         return bool(self._thread and self._thread.is_alive())
 
+    def _queue_key(self):
+        return os.path.abspath(self.queue.path)
+
+    def _holds_consumer(self):
+        with _CONSUMERS_GUARD:
+            return _CONSUMERS.get(self._queue_key()) == self.owner_id
+
+    def _acquire_consumer(self):
+        with _CONSUMERS_GUARD:
+            key = self._queue_key()
+            owner = _CONSUMERS.get(key)
+            if owner is None:
+                _CONSUMERS[key] = self.owner_id
+                return True
+            return owner == self.owner_id
+
+    def _release_consumer(self):
+        with _CONSUMERS_GUARD:
+            key = self._queue_key()
+            if _CONSUMERS.get(key) == self.owner_id:
+                del _CONSUMERS[key]
+
+    def _refuse_second_consumer(self):
+        self.ledger.append("DISPATCH_REFUSED", None, {
+            "reason": "SINGLE_CONSUMER", "owner_id": self.owner_id,
+            "detail": "another dispatcher already owns this queue in this process",
+        }, actor="durable_queue_dispatcher_v1")
+
     def start(self):
         if self.running:
             return False
+        if not self._acquire_consumer():
+            self._refuse_second_consumer()
+            return False
         self._stop.clear()
-        orphaned = self.queue.recover_orphaned_running(self.owner_id)
+        try:
+            orphaned = self.queue.recover_orphaned_running(self.owner_id)
+        except Exception:
+            self._release_consumer()
+            raise
         for task_id in orphaned:
             self.ledger.append("TASK_ORPHANED", task_id,
                 {"classification": "ORPHANED_RUNNING_AFTER_RESTART",
@@ -65,7 +107,11 @@ class DurableQueueDispatcher:
              "orphaned_running_count": len(orphaned)}, actor="durable_queue_dispatcher_v1")
         self._thread = threading.Thread(target=self._run_loop,
                                         name="nexus-durable-dispatcher", daemon=True)
-        self._thread.start()
+        try:
+            self._thread.start()
+        except Exception:
+            self._release_consumer()
+            raise
         return True
 
     def stop(self):
@@ -73,28 +119,48 @@ class DurableQueueDispatcher:
         if self._thread and self._thread is not threading.current_thread():
             self._thread.join(timeout=self.shutdown_timeout_seconds)
         drained = not self.running
+        # A timed-out consumer can still finish the task it already entered.
+        # Releasing here would let a second start() orphan that live work.
+        if drained:
+            self._release_consumer()
         self.ledger.append("DISPATCHER_STOPPED", None,
             {"owner_id": self.owner_id, "drained": drained}, actor="durable_queue_dispatcher_v1")
         return drained
 
     def _run_loop(self):
-        backoff = self.poll_seconds
-        while not self._stop.is_set():
-            try:
-                worked = self.run_once()
-                backoff = self.poll_seconds
-                if not worked:
-                    self._stop.wait(self.poll_seconds)
-            except Exception as exc:  # loop infrastructure failure, no secret/payload logging
-                self.ledger.append("TASK_DISPATCH_RETRY", None,
-                    {"failure_class": type(exc).__name__, "backoff_seconds": round(backoff, 2)},
-                    actor="durable_queue_dispatcher_v1")
-                self._stop.wait(backoff)
-                backoff = min(self.max_backoff_seconds, max(1, backoff * 2))
+        try:
+            backoff = self.poll_seconds
+            while not self._stop.is_set():
+                try:
+                    worked = self.run_once()
+                    backoff = self.poll_seconds
+                    if not worked:
+                        self._stop.wait(self.poll_seconds)
+                except Exception as exc:  # loop infrastructure failure, no secret/payload logging
+                    self.ledger.append("TASK_DISPATCH_RETRY", None,
+                        {"failure_class": type(exc).__name__, "backoff_seconds": round(backoff, 2)},
+                        actor="durable_queue_dispatcher_v1")
+                    self._stop.wait(backoff)
+                    backoff = min(self.max_backoff_seconds, max(1, backoff * 2))
+        finally:
+            self._release_consumer()
 
     def run_once(self):
         if self.yield_predicate and self.yield_predicate():
             return False
+        acquired_here = False
+        if not self._holds_consumer():
+            if not self._acquire_consumer():
+                self._refuse_second_consumer()
+                return False
+            acquired_here = True
+        try:
+            return self._dispatch_once()
+        finally:
+            if acquired_here:
+                self._release_consumer()
+
+    def _dispatch_once(self):
         record = self.queue.claim_next(self.owner_id, lease_seconds=self.lease_seconds)
         if record is None:
             return self.provider_connector.run_once() if self.provider_connector else False
