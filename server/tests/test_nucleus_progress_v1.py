@@ -15,14 +15,20 @@ NUCLEUS_SCHEMA = json.loads((ROOT / "contracts/nexus-nucleus-progress-v1.schema.
 EXECUTIVE_SCHEMA = json.loads((ROOT / "contracts/nexus-executive-state-v1.schema.json").read_text(encoding="utf-8"))
 NOW = datetime(2026, 11, 8, 6, 0, tzinfo=timezone.utc)
 EVIDENCE = ["staging/nexus_operational_core_v1/T04_LOCAL_OPS_ad4939e/evidence/gateway_health.json"]
+AUTOMATED_BLOB = {"server/tests/test_nucleus_progress_v1.py": "blob-c04"}
 
 
 def register(points=90, previous=85, delta=5, valid_until="2026-11-09T05:35:31+01:00", status="PASS"):
     return {
+        "frozen": True,
+        "baseline_status": "FROZEN_V1",
+        "denominator": 20,
+        "points_per_pass": 5,
         "score": {"points": points, "percent": points, "delta_points": delta, "previous_points": previous},
         "criteria": {
             "C01": {"status": status, "points": 5, "valid_until": valid_until, "proof_class": "LOCAL_RUNTIME"},
-            "C04": {"status": "PASS", "points": 5, "valid_until": None, "proof_class": "AUTOMATED_TEST"},
+            "C04": {"status": "PASS", "points": 5, "valid_until": None, "proof_class": "AUTOMATED_TEST",
+                    "blob_shas": dict(AUTOMATED_BLOB)},
         },
     }
 
@@ -66,10 +72,14 @@ def test_missing_register_is_unavailable_not_a_number():
 
 def test_recent_score_stays_separate_from_closed_ports_and_past_inference():
     document = project(register=register(), service_observations=services(False),
-                       inference=inference(), local_operations=t04(), now=NOW)
+                       inference=inference(), local_operations=t04(), now=NOW,
+                       current_blobs=AUTOMATED_BLOB)
     assert validate(document, NUCLEUS_SCHEMA) == []
     assert document["criteria"]["state"] == "CURRENT"
     assert document["criteria"]["current_points"] == 10
+    assert document["criteria"]["current_percent"] == 10
+    assert document["criteria"]["register_points"] == 90
+    assert document["criteria"]["register_percent"] == 90
     assert document["criteria"]["reads_as_completion"] is False
     assert document["service_availability"]["any_online"] is False
     assert {item["availability"] for item in document["service_availability"]["services"]} == {"OFFLINE"}
@@ -110,9 +120,13 @@ def test_stale_observation_does_not_become_a_number_or_online():
 
 def test_regression_is_not_completion():
     document = project(register=register(points=80, previous=90, delta=-10),
-                       service_observations=services(False), now=NOW)
+                       service_observations=services(False), now=NOW,
+                       current_blobs=AUTOMATED_BLOB)
     assert document["criteria"]["state"] == "REGRESSION"
     assert document["criteria"]["current_points"] == 10
+    assert document["criteria"]["current_percent"] == 10
+    assert document["criteria"]["register_points"] == 80
+    assert document["criteria"]["register_percent"] == 80
     assert document["criteria"]["reads_as_completion"] is False
     assert states_are_distinct(document)
 
@@ -157,6 +171,8 @@ def test_isolated_sink_persists_consultation_and_refuses_network(tmp_path):
     assert path.exists()
     loaded = json.loads(path.read_text(encoding="utf-8"))
     assert loaded["text"] == saved["text"]
+    assert loaded["timestamp"] == document["criteria"]["generated_at"]
+    assert loaded["source"] == "PROGRESS_V1.json"
     assert "porta 11434: OFFLINE" in loaded["text"]
 
     class NetworkSink:
@@ -176,7 +192,8 @@ def test_executive_projection_keeps_overall_progress_and_defaults_to_unavailable
     assert validate(state, EXECUTIVE_SCHEMA) == []
     assert state["nucleus_progress"] == unavailable_projection()
     assert "MATURITY_WEIGHTS" in state["overall_progress"]["method"]
-    projected = project(register=register(), service_observations=services(False), now=NOW)
+    projected = project(register=register(), service_observations=services(False), now=NOW,
+                        current_blobs=AUTOMATED_BLOB)
     wired = ExecutiveStateBuilder({"nucleus_progress": lambda: projected}).build()
     assert wired["nucleus_progress"]["criteria"]["current_points"] == 10
     assert wired["overall_progress"]["value"] == overall_progress({
@@ -184,3 +201,100 @@ def test_executive_projection_keeps_overall_progress_and_defaults_to_unavailable
         "ai_fashion_agency": wired["ai_fashion_agency"], "social": wired["social"],
     })["value"]
     assert wired["overall_progress"]["value"] != 90
+
+
+def _final_register():
+    criteria = {}
+    blobs = {}
+    for index in range(1, 21):
+        cid = f"C{index:02d}"
+        if cid == "C20":
+            criteria[cid] = {"status": "UNKNOWN", "points": 0, "valid_until": None, "proof_class": None}
+            continue
+        if cid in {"C01", "C02", "C09"}:
+            criteria[cid] = {"status": "PASS", "points": 5, "proof_class": "LOCAL_RUNTIME",
+                             "valid_until": "2026-11-09T05:35:31+01:00"}
+        else:
+            path = f"server/tests/{cid}.py"
+            blobs[path] = f"hash-{cid}"
+            criteria[cid] = {"status": "PASS", "points": 5, "proof_class": "AUTOMATED_TEST",
+                             "valid_until": None, "blob_shas": {path: blobs[path]}}
+    return {
+        "frozen": True, "baseline_status": "FROZEN_V1", "denominator": 20, "points_per_pass": 5,
+        "score": {"points": 95, "percent": 95, "delta_points": 5, "previous_points": 90},
+        "criteria": criteria,
+    }, blobs
+
+
+def test_final_register_with_c19_pass_consults_95_when_others_remain_valid(tmp_path):
+    data, blobs = _final_register()
+    document = project(register=data, service_observations=services(False),
+                       inference=inference(), local_operations=t04(), now=NOW, current_blobs=blobs)
+    assert document["criteria"]["current_points"] == 95
+    assert document["criteria"]["current_percent"] == 95
+    assert document["criteria"]["register_points"] == 95
+    assert [block["code"] for block in document["blocks"]][:7] == [
+        "HEALTH_NOT_INFERENCE", "HTTP_DEFAULT_MODEL_FAILED", "WARMUP_OK_WITHOUT_GENERATION",
+        "ROUTER_TIMEOUT_SHORTER_THAN_COLD_START", "GATEWAY_START_NOT_IDEMPOTENT",
+        "STABLE_ENDPOINT_PREPARED_NOT_APPLIED", "REMOTE_CONNECTION_UNCERTIFIED",
+    ]
+    path = tmp_path / "consultation.json"
+    deliver_consultation(document, IsolatedConsultationSink(path))
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["timestamp"] == NOW.isoformat()
+    assert loaded["source"] == "PROGRESS_V1.json"
+    assert "punti correnti: 95" in loaded["text"]
+    assert "percentuale corrente: 95" in loaded["text"]
+    assert "punti storici di registro: 95" in loaded["text"]
+    assert states_are_distinct(document)
+
+
+def test_one_runtime_expiry_drops_points_and_percent_together():
+    data, blobs = _final_register()
+    data["criteria"]["C01"]["valid_until"] = "2026-11-08T05:00:00+00:00"
+    document = project(register=data, now=NOW, current_blobs=blobs)
+    assert document["criteria"]["current_points"] == 90
+    assert document["criteria"]["current_percent"] == 90
+    assert document["criteria"]["register_points"] == 95
+    assert document["criteria"]["register_percent"] == 95
+    assert document["criteria"]["historical_label"] == "valori storici memorizzati nel registro"
+    text = render_consultation(document)
+    assert "punti correnti: 90" in text
+    assert "percentuale corrente: 90" in text
+    assert "punti storici di registro: 95" in text
+    assert states_are_distinct(document)
+
+
+def test_pending_or_unfrozen_register_has_no_current_percent():
+    data, blobs = _final_register()
+    pending = dict(data, baseline_status="BASELINE_PENDING")
+    unfrozen = dict(data, frozen=False)
+    for item in (pending, unfrozen):
+        document = project(register=item, now=NOW, current_blobs=blobs)
+        assert document["criteria"]["current_points"] is None
+        assert document["criteria"]["current_percent"] is None
+        assert document["criteria"]["register_points"] == 95
+        assert document["criteria"]["register_percent"] == 95
+        text = render_consultation(document)
+        assert "percentuale corrente: non disponibile" in text
+        assert "percentuale storica di registro: 95" in text
+        assert states_are_distinct(document)
+
+
+def test_automated_validity_is_conditional_on_cited_blobs():
+    data, blobs = _final_register()
+    matched = project(register=data, now=NOW, current_blobs=blobs)
+    assert matched["criteria"]["items"][3]["validity"] == "condizionata ai blob citati"
+    drifted = dict(blobs)
+    drifted["server/tests/C04.py"] = "changed"
+    document = project(register=data, now=NOW, current_blobs=drifted)
+    c04 = next(item for item in document["criteria"]["items"] if item["id"] == "C04")
+    assert c04["effective_status"] == "STALE"
+    assert c04["points_counted"] == 0
+    assert document["criteria"]["current_points"] == 90
+    assert document["criteria"]["current_percent"] == 90
+    assert document["criteria"]["register_points"] == 95
+    text = render_consultation(document)
+    assert "senza scadenza" not in text
+    assert "condizionata ai blob citati" in text
+    assert states_are_distinct(document)

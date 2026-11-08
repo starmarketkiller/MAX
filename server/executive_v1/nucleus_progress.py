@@ -12,6 +12,9 @@ from datetime import datetime, timezone
 
 SCHEMA = "NEXUS_NUCLEUS_PROGRESS_V1"
 TELEMETRY_MAX_AGE_SECONDS = 600
+FROZEN_DENOMINATOR = 20
+FROZEN_POINTS_PER_PASS = 5
+FROZEN_MAX_POINTS = FROZEN_DENOMINATOR * FROZEN_POINTS_PER_PASS
 
 BLOCK_ACTIONS = {
     "HEALTH_NOT_INFERENCE": "tenere health e inferenza su campi distinti; un 200 non certifica una generazione",
@@ -28,8 +31,11 @@ BLOCK_ACTIONS = {
 def unavailable_projection():
     return {
         "schema_version": SCHEMA,
-        "criteria": {"state": "UNAVAILABLE", "current_points": None, "percent": None,
-                     "items": [], "reads_as_completion": False},
+        "criteria": {"state": "UNAVAILABLE", "current_points": None, "current_percent": None,
+                     "register_points": None, "register_percent": None,
+                     "historical_label": "valori storici memorizzati nel registro",
+                     "denominator": FROZEN_DENOMINATOR, "points_per_pass": FROZEN_POINTS_PER_PASS,
+                     "items": [], "reads_as_completion": False, "source": "PROGRESS_V1.json"},
         "service_availability": {"state": "UNAVAILABLE", "any_online": None, "services": []},
         "verified_inference": {"state": "UNAVAILABLE", "historical_success": None,
                                "currently_available": None, "evidence_refs": []},
@@ -60,14 +66,58 @@ def _fresh(observed_at, now):
     return age is not None and 0 <= age <= TELEMETRY_MAX_AGE_SECONDS
 
 
-def _criteria(register, now):
+def _current_percent(points):
+    if points is None:
+        return None
+    return (points * 100) // FROZEN_MAX_POINTS
+
+
+def _historical(score):
+    if not isinstance(score, dict):
+        return {"register_points": None, "register_percent": None}
+    points = score.get("points")
+    percent = score.get("percent")
+    return {
+        "register_points": points if isinstance(points, int) else None,
+        "register_percent": percent if isinstance(percent, int) else None,
+    }
+
+
+def _no_current(score):
+    return {
+        "state": "UNAVAILABLE", "current_points": None, "current_percent": None,
+        "denominator": FROZEN_DENOMINATOR, "points_per_pass": FROZEN_POINTS_PER_PASS,
+        "historical_label": "valori storici memorizzati nel registro",
+        "items": [], "reads_as_completion": False, "source": "PROGRESS_V1.json",
+        **_historical(score),
+    }
+
+
+def _automated_blobs_match(item, current_blobs):
+    cited = item.get("blob_shas") or {}
+    if not cited or not isinstance(current_blobs, dict):
+        return False
+    return all(current_blobs.get(path) == digest for path, digest in cited.items())
+
+
+def _validity(item, effective):
+    if item.get("proof_class") == "AUTOMATED_TEST":
+        if effective == "STALE":
+            return "condizionata ai blob citati, non piu' coincidente"
+        return "condizionata ai blob citati"
+    if item.get("valid_until"):
+        return f"fino a {item['valid_until']}"
+    return "validita' runtime non determinata"
+
+
+def _criteria(register, now, current_blobs):
     if not isinstance(register, dict) or not isinstance(register.get("score"), dict):
-        return {"state": "UNAVAILABLE", "current_points": None, "percent": None,
-                "items": [], "reads_as_completion": False}
+        return _no_current({})
     score = register["score"]
+    if register.get("frozen") is False or register.get("baseline_status") == "BASELINE_PENDING":
+        return _no_current(score)
     if not isinstance(score.get("points"), int):
-        return {"state": "UNAVAILABLE", "current_points": None, "percent": None,
-                "items": [], "reads_as_completion": False}
+        return _no_current(score)
     items = []
     counted = 0
     for cid, item in (register.get("criteria") or {}).items():
@@ -75,6 +125,8 @@ def _criteria(register, now):
         valid_until = item.get("valid_until")
         expires = _parse_time(valid_until)
         stale = expires is not None and expires < now
+        if item.get("proof_class") == "AUTOMATED_TEST" and not _automated_blobs_match(item, current_blobs):
+            stale = True
         effective = "STALE" if stale else stored
         points = item.get("points") if isinstance(item.get("points"), int) else 0
         counted_points = points if effective == "PASS" else 0
@@ -83,9 +135,10 @@ def _criteria(register, now):
             "id": cid, "stored_status": stored, "effective_status": effective,
             "points_stored": points, "points_counted": counted_points,
             "valid_until": valid_until, "proof_class": item.get("proof_class"),
+            "validity": _validity(item, effective),
         })
-    delta = score.get("delta_points")
     previous = score.get("previous_points")
+    delta = score.get("delta_points")
     regression = (isinstance(delta, int) and delta < 0) or (
         isinstance(previous, int) and score["points"] < previous)
     all_stale = bool(items) and all(item["effective_status"] == "STALE" for item in items)
@@ -99,13 +152,16 @@ def _criteria(register, now):
     return {
         "state": state,
         "current_points": counted,
-        "register_points": score["points"],
-        "percent": score.get("percent"),
+        "current_percent": _current_percent(counted),
+        "denominator": FROZEN_DENOMINATOR,
+        "points_per_pass": FROZEN_POINTS_PER_PASS,
+        "historical_label": "valori storici memorizzati nel registro",
         "previous_points": previous,
         "delta_points": delta,
         "items": items,
         "reads_as_completion": False,
         "source": "PROGRESS_V1.json",
+        **_historical(score),
     }
 
 
@@ -220,9 +276,10 @@ def _inference(inference, services, operations):
 
 
 def project(*, register=None, service_observations=None, inference=None,
-            local_operations=None, delivery=None, now=None):
+            local_operations=None, delivery=None, now=None, current_blobs=None):
     now = now or datetime.now(timezone.utc)
-    criteria = _criteria(register, now)
+    criteria = _criteria(register, now, current_blobs)
+    criteria["generated_at"] = now.isoformat()
     services = _services(service_observations, now)
     inferred = _inference(inference, services, local_operations)
     blocks = _operations_blocks(local_operations)
@@ -249,7 +306,13 @@ def states_are_distinct(document):
     criteria = document["criteria"]
     services = document["service_availability"]
     inferred = document["verified_inference"]
-    if criteria["state"] == "UNAVAILABLE" and isinstance(criteria["current_points"], (int, float)):
+    points = criteria.get("current_points")
+    percent = criteria.get("current_percent")
+    if (points is None) != (percent is None):
+        return False
+    if isinstance(points, int) and percent != (points * 100) // FROZEN_MAX_POINTS:
+        return False
+    if criteria["state"] == "UNAVAILABLE" and isinstance(points, (int, float)):
         return False
     for item in services["services"]:
         if item["listening"] is False and item["availability"] == "ONLINE":
@@ -281,17 +344,21 @@ def render_consultation(document):
     services = document["service_availability"]
     inferred = document["verified_inference"]
     lines = ["Punteggio criteri"]
-    if criteria["state"] == "UNAVAILABLE":
-        lines.append("stato: UNAVAILABLE")
+    if criteria["current_points"] is None:
+        lines.append(f"stato: {criteria['state']}")
         lines.append("punti correnti: non disponibili")
+        lines.append("percentuale corrente: non disponibile")
     else:
         lines.append(f"stato: {criteria['state']}")
         lines.append(f"punti correnti: {criteria['current_points']}")
-        lines.append(f"punti di registro: {criteria.get('register_points')}")
+        lines.append(f"percentuale corrente: {criteria['current_percent']}")
         lines.append("completamento: no")
-        for item in criteria["items"]:
-            lines.append(
-                f"{item['id']}: {item['effective_status']} fino a {item['valid_until'] or 'senza scadenza'}")
+    if criteria.get("register_points") is not None:
+        lines.append(f"punti storici di registro: {criteria['register_points']}")
+        lines.append(f"percentuale storica di registro: {criteria.get('register_percent')}")
+        lines.append(criteria.get("historical_label") or "valori storici memorizzati nel registro")
+    for item in criteria["items"]:
+        lines.append(f"{item['id']}: {item['effective_status']}, {item['validity']}")
     lines.extend(["", "Disponibilita servizi"])
     if services["state"] == "UNAVAILABLE":
         lines.append("stato: UNAVAILABLE")
@@ -333,7 +400,12 @@ class IsolatedConsultationSink:
     def deliver(self, document):
         if not states_are_distinct(document):
             raise RuntimeError("consultation refused: executive surfaces are not distinct")
-        record = {"text": render_consultation(document), "projection": document}
+        record = {
+            "timestamp": document["criteria"].get("generated_at"),
+            "source": document["criteria"].get("source"),
+            "text": render_consultation(document),
+            "projection": document,
+        }
         self.records.append(record)
         self.path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return record
