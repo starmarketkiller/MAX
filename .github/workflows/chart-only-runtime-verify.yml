@@ -1,0 +1,50 @@
+# CHART-ONLY-DEPLOY-READY-01 / GATE 02 - verifica runtime dell'immagine Docker effettiva su Linux (runner ubuntu con Docker).
+#
+# Si avvia SOLO su richiesta (workflow_dispatch) o con push su rami `infra/**`: NON e' agganciato a `main`, non fa deploy, non usa secret, non tocca Render.
+# (Il workflow `Safe Deploy` parte soltanto da CI su `main`; i rami `infra/**` non attivano nemmeno `CI`.)
+# Esegue tools/docker_runtime_verify.sh con una fixture SINTETICA: build dell'immagine, cgroup 512 MiB, health check /api/ready, login, store, paginazione,
+# concorrenza, tentativi di modifica dell'autorita' come utente applicativo, revoca/ripristino, restart x2, redeploy, upgrade dal layout storico, fail-closed, memoria.
+name: Chart-only runtime verify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["infra/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chart-only-runtime-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-runtime:
+    name: Docker runtime (512 MiB, permessi autorita', restart)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Informazioni ambiente (cgroup, docker)
+        run: |
+          docker version --format '{{.Server.Version}}' || true
+          stat -fc %T /sys/fs/cgroup || true
+          uname -a
+
+      - name: Verifica runtime Chart-only (fixture sintetica)
+        env:
+          IMG: nexus-backend:chartonly
+        run: bash tools/docker_runtime_verify.sh
+
+      - name: Carica evidenze
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chart-only-runtime-evidence
+          path: docker_verify_out
+          if-no-files-found: warn

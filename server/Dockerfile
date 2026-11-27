@@ -114,6 +114,14 @@ ENV NEXUS_DB_PATH=/data/nexus.db \
 RUN mkdir -p /data && chown -R nexus:nexus /app /data \
  && chmod +x docker-entrypoint.sh
 
+# CHART-ONLY-DEPLOY-READY-01 / GATE 01: entrypoint e strumento dell'autorita' installati FUORI da /app (che e' di nexus) e di proprieta' di root:
+# il processo applicativo non puo' alterare lo script che gira come root all'avvio ne' lo strumento operatore.
+COPY server/docker-entrypoint.sh /usr/local/sbin/docker-entrypoint.sh
+COPY server/chart_authority_ctl.py /usr/local/sbin/chart-authority
+RUN chown root:root /usr/local/sbin/docker-entrypoint.sh /usr/local/sbin/chart-authority \
+ && chmod 0755 /usr/local/sbin/docker-entrypoint.sh /usr/local/sbin/chart-authority \
+ && sed -i 's/\r$//' /usr/local/sbin/docker-entrypoint.sh /usr/local/sbin/chart-authority
+
 EXPOSE 8001
 
 # AUD0-DEP-005: nessun healthcheck. Si usa /api/ready (database + migrazioni +
@@ -124,7 +132,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 # Resta root fino all'entrypoint: serve per il chown del volume montato a
 # runtime. L'entrypoint droppa a nexus (uid 10001) via su prima di eseguire
 # il comando applicativo — il processo servito non gira mai come root.
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/sbin/docker-entrypoint.sh"]
 
 # Il cloud (Render/Railway) inietta la variabile PORT; in locale usa 8001.
 CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8001}"]
