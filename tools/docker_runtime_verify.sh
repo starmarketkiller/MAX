@@ -156,7 +156,7 @@ docker rm -f "$NAME" >/dev/null 2>&1
 
 # ---------------------------------------------------------------- 4. SCENARIO B: upgrade dal layout storico (tutto nexus, record modificabile dall'app)
 docker volume create "$VOL2" >/dev/null
-docker run --rm -v "$VOL2:/data" -v "$PWD/$RECORD:/rec.json:ro" --entrypoint sh "$IMG" -c 'mkdir -p /data/chart_auth /data/chart_store && cp /rec.json /data/chart_auth/chart_authorization.json && echo "{}" > /data/nexus.db && chown -R nexus:nexus /data' >/dev/null 2>&1
+docker run --rm -v "$VOL2:/data" -v "$PWD/$RECORD:/rec.json:ro" --entrypoint sh "$IMG" -c 'mkdir -p /data/chart_auth /data/chart_store && cp /rec.json /data/chart_auth/chart_authorization.json && chown -R nexus:nexus /data' >/dev/null 2>&1
 run_container "$VOL2" > "$OUT/container_id_legacy.txt" 2>&1
 wait_ready && ok B_healthy_after_legacy_upgrade || bad B_healthy_after_legacy_upgrade
 docker exec "$NAME" ls -la /data/chart_auth > "$OUT/B_auth_dir.txt" 2>&1

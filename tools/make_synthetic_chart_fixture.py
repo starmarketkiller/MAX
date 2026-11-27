@@ -25,9 +25,10 @@ def main(out: str) -> None:
     store = os.path.join(out, "store")
     t0 = int(dt.datetime(2026, 11, 16, 1, 0, tzinfo=dt.timezone.utc).timestamp())
     rows = []
+    end = int(dt.datetime(2026, 11, 20, 22, 0, tzinfo=dt.timezone.utc).timestamp())      # dentro la finestra autorizzata (come l'export XM reale: ultimo minuto 2026-11-20 21:59)
     for i in range(5 * 1440):
         m = i % 1440
-        if 1380 <= m < 1440:
+        if 1380 <= m < 1440 or t0 + i * 60 >= end:
             continue
         p = 3500.0 + ((i * 37) % 997) * 0.05
         rows.append({"time": t0 + i * 60, "open": round(p, 2), "high": round(p + 0.4, 2), "low": round(p - 0.4, 2), "close": round(p + 0.1, 2)})
