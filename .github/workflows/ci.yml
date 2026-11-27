@@ -13,7 +13,7 @@ name: CI
 
 on:
   push:
-    branches: ["main", "claude/**", "feature/**", "infra/**"]   # TEMPORANEO (branch infra/chart-only-deploy-ready-01): da rimuovere dopo la verifica
+    branches: ["main", "claude/**", "feature/**"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
@@ -174,33 +174,3 @@ jobs:
         env:
           CI: "false"   # i warning ESLint non devono bloccare la build CRA
         run: npm run build
-
-  # TEMPORANEO - CHART-ONLY-LINUX-RUNTIME-VERIFY-01: stessa verifica di `chart-only-runtime-verify.yml`, eseguita dentro il workflow CI gia' registrato perche'
-  # il workflow nuovo non e' stato avviato dal push. Solo per i rami infra/**; nessun secret, nessun deploy (Safe Deploy e' disabilitato e vincolato a `main`).
-  chart-only-runtime:
-    name: Chart-only runtime (Docker 512 MiB, permessi autorita', restart)
-    if: startsWith(github.ref, 'refs/heads/infra/')
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Informazioni ambiente
-        run: |
-          docker version --format '{{.Server.Version}}' || true
-          stat -fc %T /sys/fs/cgroup || true
-          uname -a
-          nproc; free -m; df -h /
-      - name: Verifica runtime Chart-only (fixture sintetica)
-        env:
-          IMG: nexus-backend:chartonly
-        run: bash tools/docker_runtime_verify.sh
-      - name: Carica evidenze
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: chart-only-runtime-evidence
-          path: docker_verify_out
-          if-no-files-found: warn
