@@ -7347,32 +7347,37 @@ def calendar_upcoming(user: str = Depends(require_user)):
     return calendar(user)
 
 
-# ---- chart OHLC + markers (demo sintetico) ----
+# ---- chart OHLC + markers: dati REALI (store verificato + guardia di partizione) o stato UNAVAILABLE ----
+# CHART-REAL-DATA-V1: nessun fallback sintetico silenzioso. La demo sintetica esiste solo con
+# NEXUS_CHART_DEMO=1 e source=SYNTHETIC_DEMO (vedi chart_api.demo_ohlc).
+@app.get("/api/chart/sources")
+def chart_sources(user: str = Depends(require_user)):
+    import chart_api
+    return chart_api.sources()
+
+
 @app.get("/api/chart/ohlc")
 def chart_ohlc(symbol: str = "XAUUSD", tf: str = "M15", limit: int = 300,
+               source: str = "", before: Optional[int] = None,
                user: str = Depends(require_user)):
-    import math
-    base = 2350.0 if symbol.startswith("XAU") else 1.10
-    step = base * 0.001
-    candles, price = [], base
-    t0 = int(now()) - limit * 900
-    for i in range(limit):
-        drift = math.sin(i / 9.0) * step * 3 + ((i * 53) % 7 - 3) * step
-        o = price
-        c = price + drift
-        h = max(o, c) + abs(drift) * 0.5
-        low = min(o, c) - abs(drift) * 0.5
-        candles.append({"time": t0 + i * 900, "open": round(o, 3), "high": round(h, 3),
-                        "low": round(low, 3), "close": round(c, 3)})
-        price = c
-    return {"symbol": symbol, "tf": tf, "candles": candles, "bars": candles,
-            "source": "SYNTHETIC_DATA", "provenance": "SYNTHETIC_DATA", "demo": True}
+    import chart_api
+    if source == "SYNTHETIC_DEMO":
+        if not chart_api.demo_enabled():
+            raise HTTPException(403, detail={"code": "DEMO_DISABLED"})
+        return chart_api.demo_ohlc(symbol, tf, max(1, min(int(limit), 1000)))
+    return chart_api.ohlc(source, symbol, tf, limit, before)
 
 
 @app.get("/api/chart/markers")
 def chart_markers(symbol: str = "XAUUSD", user: str = Depends(require_user)):
-    trades = [t for t in _ledger_trades_with_meta(200) if t.get("symbol") == symbol]
-    markers = [{"time": t.get("closeTime"), "price": t.get("closePrice"),
+    # alias dello stesso strumento (il broker XM chiama l'oro GOLD, il Chart usa XAUUSD)
+    aliases = {"XAUUSD", "GOLD"} if symbol.upper() in ("XAUUSD", "GOLD") else {symbol.upper()}
+    try:
+        trades = [t for t in _ledger_trades_with_meta(200) if str(t.get("symbol", "")).upper() in aliases]
+    except sqlite3.OperationalError:
+        trades = []     # ledger non ancora inizializzato (database nuovo): nessun marker, mai marker inventati
+    # `closeTime` e' il campo che il frontend legge; `time` resta per compatibilita'.
+    markers = [{"time": t.get("closeTime"), "closeTime": t.get("closeTime"), "price": t.get("closePrice"),
                 "side": t.get("side"), "pnl": t.get("pnl"), "ticket": t.get("ticket")}
                for t in trades if t.get("closePrice")]
     return {"markers": markers, "trades": markers, "open": [], "shadows": [],

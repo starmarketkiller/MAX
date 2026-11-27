@@ -3,6 +3,7 @@ const STYLES = {
   RESEARCH: "border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300",
   DERIVED: "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-400",
   CACHED: "border-cyan-500/25 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
+  HISTORICAL: "border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-300",
   DEMO: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
   UNAVAILABLE: "border-border bg-secondary/50 text-muted-foreground",
 };
@@ -14,6 +15,7 @@ export function normalizeDataProvenance(source) {
   if (DATA_PROVENANCE.includes(value)) return value;
   if (value.includes("RESEARCH")) return "RESEARCH";
   if (value.includes("DEMO") || value.includes("SYNTHETIC")) return "DEMO";
+  if (value.includes("HISTORICAL")) return "HISTORICAL";
   if (value.includes("CACHE") || value.includes("STALE")) return "CACHED";
   if (value.includes("DERIVED") || value.includes("LEDGER") || value.includes("RECONSTRUCTED")) return "DERIVED";
   if (value.includes("LIVE") || value.includes("OBSERVED") || value === "EA_PUSH") return "LIVE";

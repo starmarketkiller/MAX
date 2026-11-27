@@ -1,0 +1,31 @@
+{
+ "schema": "NEXUS_CHART_AUTHORIZATION_V1",
+ "authorized_by": "owner",
+ "decision_ref": "NEXUS-CHART-MASTER-01 CONTINUATION 02, decision D2 (2026-11-27): only partitions explicitly classified and authorized as discovery/research; sealed partitions never; no inference from dates",
+ "bound_manifests": {
+  "partition_manifest_v1.json": "1427e6bf6774ae74c9f618963b13de9aa917749935da7e828bcdd71da7ff6e8a",
+  "final_holdout_seal_v1.json": "ce96f1c7b884a1017dd5349d245fcf10263fbd37ff379a13bd017df3a16d41ca",
+  "partition_contract_v2.json": "03aa1cfe8f17e04fa793ad1bb5b0036281fdd076b1bd977cb65a16f54fb70d8c"
+ },
+ "datasets": {
+  "DUKASCOPY_XAUUSD_PHASE7": {
+   "kind": "PHASE7_PARTITIONS",
+   "allowed_segment_names": [
+    "development_discovery"
+   ],
+   "note": "development_internal_validation is DEVELOPMENT per partition_contract_v2 but is NOT listed here: not explicitly authorized by D2; add only with an explicit owner decision. locked_validation and final_holdout are never authorizable."
+  },
+  "XM-GOLD-2026-11-16-20": {
+   "kind": "EXPLICIT_WINDOWS",
+   "windows_utc": [
+    [
+     "2026-11-16T00:00:00Z",
+     "2026-11-20T22:00:00Z"
+    ]
+   ],
+   "purpose": "STRUCTURAL_VALIDATION_ONLY",
+   "outcome_labels_allowed": false,
+   "note": "XM export already authorized for chart use (CHART-INT-03); window from the dataset manifest window_requested_utc"
+  }
+ }
+}
