@@ -9,7 +9,7 @@ name: Chart-only runtime verify
 on:
   workflow_dispatch:
   push:
-    branches: ["infra/**"]
+    branches: ["infra/**", "infra/chart-only-deploy-ready-01"]
 
 permissions:
   contents: read
