@@ -212,9 +212,12 @@ def test_boot_upgrade_from_legacy_layout_quarantines_the_app_modifiable_record_a
     rec = fs.lstat(AUTH)
     assert (rec.uid, rec.gid, rec.mode) == (0, 0, 0o644)
     assert json.loads(fs.read_bytes(AUTH))["datasets"] == {}                       # il vecchio record (app-modificabile) NON e' piu' autorita': DENY-ALL
-    q = [p for p in fs.n if ".untrusted-" in p]
-    assert q and fs.lstat(q[0]).mode == 0o600 and fs.lstat(q[0]).uid == 0
-    assert (fs.lstat(STORE).uid, fs.lstat(STORE + "/manifest.json").uid) == (0, 0)  # anche lo store torna di root
+    q = [p for p in fs.n if ".untrusted-" in p and p.startswith("/data/chart_auth.untrusted-") and p.count("/") == 2]
+    assert q and fs.lstat(q[0]).mode == 0o700 and fs.lstat(q[0]).uid == 0          # tombstone: l'intera directory, non leggibile dall'app
+    assert all(v.uid == 0 for p, v in ((p, fs.lstat(p)) for p in fs.n if p.startswith(q[0])))
+    # anche lo store (modificabile dall'app prima dell'upgrade) NON e' piu' fidato: in quarantena, ne nasce uno vuoto root-owned da reinstallare con `install-store`
+    assert fs.lstat(STORE + "/manifest.json") is None and any(p.startswith(STORE + ".untrusted-") for p in fs.n)
+    assert (fs.lstat(STORE).uid, fs.lstat(STORE).mode) == (0, 0o755)
     assert all(not evaluate_boundary(ctl.chain_for(fs, t), APP) for t in (AUTH, STORE))
 
 
@@ -250,13 +253,16 @@ def test_boot_installs_record_from_operator_env_and_it_survives_the_next_boot():
 @pytest.mark.parametrize("b64", ["!!!notbase64!!!", base64.b64encode(b"{not json").decode(), base64.b64encode(json.dumps({"schema": "X"}).encode()).decode(),
                                  base64.b64encode(json.dumps({"schema": ctl.SCHEMA, "authorized_by": "owner", "datasets": {"A": {"kind": "PHASE7_PARTITIONS"}}}).encode()).decode(),
                                  base64.b64encode(json.dumps({"schema": ctl.SCHEMA, "authorized_by": "owner", "datasets": {"A": {"kind": "EXPLICIT_WINDOWS", "windows_utc": [["2026-11-20T00:00:00Z", "2026-11-16T00:00:00Z"]]}}}).encode()).decode()])
-def test_boot_invalid_operator_record_installs_deny_all(b64):
+def test_boot_invalid_operator_record_is_ignored_never_opens_and_never_erases_a_trusted_record(b64):
     fs = hardened_fs()
     fs.add("/data/chart_auth", "dir", 0, 0, 0o755)
-    fs.add(AUTH, "file", 0, 0, 0o644, good_record())                                # esisteva un record valido
+    fs.add(AUTH, "file", 0, 0, 0o644, good_record())                                # autorita' valida E fidata (gerarchia root, /data non sostituibile)
     res = ctl.boot(fs, dict(ENV, CHART_AUTHORITY_B64=b64), APP, kernel_probe=probe_ok)
-    assert not res.deny
-    assert json.loads(fs.read_bytes(AUTH))["datasets"] == {}                        # fail-closed: nessun contenuto precedente sopravvive a una configurazione invalida
+    assert not res.deny and res.b64["allowed"] is False and res.b64["reason"].startswith("INVALID_RECORD")
+    assert fs.read_bytes(AUTH) == good_record()                                     # una configurazione invalida non cancella un'autorita' fidata (e non ne crea una)
+    fresh = hardened_fs()
+    ctl.boot(fresh, dict(ENV, CHART_AUTHORITY_B64=b64), APP, kernel_probe=probe_ok)
+    assert fresh.lstat(AUTH) is None                                                # su volume vergine: nessun grant (assente = nega)
 
 
 def test_boot_removes_planted_symlinks_and_special_files():

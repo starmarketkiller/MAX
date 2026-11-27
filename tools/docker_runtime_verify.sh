@@ -24,7 +24,8 @@ ok() { rec "$1" PASS "${2:-}"; }
 bad() { rec "$1" FAIL "${2:-}"; }
 expect_ok() { local n="$1"; shift; if "$@" >"$OUT/$n.log" 2>&1; then ok "$n"; else bad "$n" "rc=$?"; fi; }
 expect_fail() { local n="$1"; shift; if "$@" >"$OUT/$n.log" 2>&1; then bad "$n" "ATTESO FALLIMENTO ma riuscito"; else ok "$n"; fi; }
-cleanup() { docker rm -f "$NAME" >/dev/null 2>&1 || true; docker volume rm -f "$VOL" "$VOL2" >/dev/null 2>&1 || true; }
+LIVE_SRC="$(mktemp -d)/live_src"      # FUORI da $OUT: l'artifact di evidenze non include il checkout storico
+cleanup() { docker rm -f "$NAME" >/dev/null 2>&1 || true; docker volume rm -f "$VOL" "$VOL2" "${VOL}_c1" "${VOL}_c2" >/dev/null 2>&1 || true; git worktree remove --force "$LIVE_SRC" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 cleanup
 
@@ -59,6 +60,11 @@ wait_ready() {      # health check del Dockerfile (/api/ready) deve diventare he
 http() { python3 tools/docker_runtime_http.py "$BASE" "$EXPECTED" --phase "$1" --out "$OUT/http_$1.json" "${@:2}" >"$OUT/http_$1.log" 2>&1 && ok "http_$1" || bad "http_$1" "vedi http_$1.json"; }
 as_app() { docker exec -u nexus "$NAME" "$@"; }
 as_root() { docker exec -u 0 "$NAME" "$@"; }
+stage_files() {   # un container ricreato ha /tmp pulito: ricopia inbox, manifest e record
+  docker exec -u 0 "$NAME" rm -rf /tmp/inbox >/dev/null 2>&1
+  docker cp "$FIXSTORE/." "$NAME:/tmp/inbox" >/dev/null 2>&1; docker cp "$TRANSFER" "$NAME:/tmp/transfer_manifest.json" >/dev/null 2>&1; docker cp "$RECORD" "$NAME:/tmp/record.json" >/dev/null 2>&1
+}
+logs_have() { docker logs "$NAME" 2>&1 | grep -q "$1"; }
 
 boundary_checks() {   # $1 = etichetta di fase
   local p="$1"
@@ -139,6 +145,38 @@ expect_ok A_publish_as_root as_root /usr/local/sbin/chart-authority publish --fi
 http A_restored
 expect_fail A_publish_invalid_record_rejected as_root sh -c 'echo "{broken" > /tmp/bad.json && /usr/local/sbin/chart-authority publish --file /tmp/bad.json'
 
+# ---------------------------------------------------------------- 2b. B64 MONOUSO e revoca persistente (CHART-INFRA-FIX-02)
+python3 - "$RECORD" "$OUT/record_v2.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); d["decision_ref"] = "SYNTHETIC RUNTIME FIXTURE v2 (contenuto nuovo)"
+open(sys.argv[2], "w").write(json.dumps(d, indent=1, sort_keys=True))
+PY
+B64V2="$(base64 -w0 "$OUT/record_v2.json")"; H2="$(sha256sum "$OUT/record_v2.json" | cut -d' ' -f1)"
+expect_ok A2_revoke_as_root as_root /usr/local/sbin/chart-authority revoke
+docker restart "$NAME" >/dev/null 2>&1; wait_ready && ok A2_healthy_after_restart_with_stale_b64 || bad A2_healthy_after_restart_with_stale_b64
+logs_have 'IGNORATA: ALREADY_CONSUMED' && ok A2_log_b64_already_consumed || bad A2_log_b64_already_consumed
+http A2_revoke_survives_restart_with_stale_b64 --expect-denied
+docker rm -f "$NAME" >/dev/null 2>&1; run_container "$VOL" > "$OUT/container_id_nob64.txt" 2>&1
+wait_ready && ok A2_healthy_with_b64_removed || bad A2_healthy_with_b64_removed
+http A2_revoke_survives_with_b64_removed --expect-denied
+docker rm -f "$NAME" >/dev/null 2>&1; run_container "$VOL" -e CHART_AUTHORITY_B64="$B64V2" > "$OUT/container_id_b64v2.txt" 2>&1
+wait_ready && ok A2_healthy_with_updated_b64 || bad A2_healthy_with_updated_b64
+logs_have 'IGNORATA: NO_ACK' && ok A2_log_updated_b64_needs_ack || bad A2_log_updated_b64_needs_ack
+http A2_updated_b64_without_ack_does_not_undo_revocation --expect-denied
+docker rm -f "$NAME" >/dev/null 2>&1; run_container "$VOL" -e CHART_AUTHORITY_B64="$B64V2" -e CHART_AUTHORITY_REPUBLISH_ACK="$H2" > "$OUT/container_id_b64v2ack.txt" 2>&1
+wait_ready && ok A2_healthy_with_b64_and_ack || bad A2_healthy_with_b64_and_ack
+logs_have 'EXPLICIT_REPUBLISH_ACK' && ok A2_log_explicit_republish || bad A2_log_explicit_republish
+http A2_updated_b64_with_ack_republishes
+docker restart "$NAME" >/dev/null 2>&1; wait_ready && ok A2_healthy_pair_still_configured || bad A2_healthy_pair_still_configured
+http A2_pair_is_one_shot_authorized_after_restart
+stage_files
+expect_ok A2_second_revoke as_root /usr/local/sbin/chart-authority revoke
+docker restart "$NAME" >/dev/null 2>&1; wait_ready && ok A2_healthy_after_second_restart || bad A2_healthy_after_second_restart
+http A2_second_revocation_survives_restart_with_pair_configured --expect-denied
+stage_files
+expect_ok A2_publish_as_root as_root /usr/local/sbin/chart-authority publish --file /tmp/record.json
+http A2_published_again
+
 # ---------------------------------------------------------------- 3. restart x2 e redeploy sullo stesso volume (nessun B64: il record persistente deve sopravvivere)
 for i in 1 2; do
   docker restart "$NAME" >/dev/null 2>&1
@@ -156,9 +194,9 @@ memory_sample D_after_redeploy
 docker rm -f "$NAME" >/dev/null 2>&1
 
 # ---------------------------------------------------------------- 3b. ROLLBACK in ambiente isolato: immagine LIVE (16eff18b) sullo STESSO volume, poi roll-forward
-if git worktree add --detach "$OUT/live_src" "$LIVE_REF" >"$OUT/live_worktree.log" 2>&1; then
+if git worktree add --detach "$LIVE_SRC" "$LIVE_REF" >"$OUT/live_worktree.log" 2>&1; then
   ok RB_live_ref_checked_out "$LIVE_REF"
-  expect_ok RB_build_live_image docker build -f "$OUT/live_src/server/Dockerfile" -t "$LIVE_IMG" "$OUT/live_src"
+  expect_ok RB_build_live_image docker build -f "$LIVE_SRC/server/Dockerfile" -t "$LIVE_IMG" "$LIVE_SRC"
   docker image inspect --format '{{.Id}}' "$LIVE_IMG" > "$OUT/live_image_id.txt" 2>&1
   RUN_IMG="$LIVE_IMG" run_container "$VOL" > "$OUT/container_id_rollback.txt" 2>&1
   wait_ready && ok RB_live_image_healthy_on_new_layout_volume || bad RB_live_image_healthy_on_new_layout_volume
@@ -182,13 +220,33 @@ PY
   # roll-forward: il boot trova i namespace ceduti a nexus dall'entrypoint storico => quarantena del record + DENY-ALL; poi pubblicazione operatore
   run_container "$VOL" > "$OUT/container_id_rollforward.txt" 2>&1
   wait_ready && ok RB_rollforward_healthy || bad RB_rollforward_healthy
-  docker exec "$NAME" ls -la /data/chart_auth > "$OUT/RB_rollforward_auth_dir.txt" 2>&1
-  grep -q 'untrusted-' "$OUT/RB_rollforward_auth_dir.txt" && ok RB_rollforward_quarantines_app_owned_record || bad RB_rollforward_quarantines_app_owned_record
+  docker exec "$NAME" ls -la /data > "$OUT/RB_rollforward_auth_dir.txt" 2>&1
+  grep -q 'chart_auth.untrusted-' "$OUT/RB_rollforward_auth_dir.txt" && ok RB_rollforward_quarantines_app_owned_record || bad RB_rollforward_quarantines_app_owned_record
+  docker exec "$NAME" ls -la /data > "$OUT/RB_rollforward_data_dir.txt" 2>&1
+  grep -q 'chart_store.untrusted-' "$OUT/RB_rollforward_data_dir.txt" && ok RB_rollforward_quarantines_app_owned_store || bad RB_rollforward_quarantines_app_owned_store
   http RB_rollforward_denied_until_operator_publishes --expect-denied
-  docker cp "$RECORD" "$NAME:/tmp/record.json" >/dev/null 2>&1
+  stage_files
+  expect_ok RB_rollforward_install_store as_root /usr/local/sbin/chart-authority install-store --from /tmp/inbox --manifest /tmp/transfer_manifest.json --manifest-sha256 "$TSHA"
+  http RB_rollforward_store_reinstalled_still_denied_until_publish --expect-denied
   expect_ok RB_rollforward_publish_as_root as_root /usr/local/sbin/chart-authority publish --file /tmp/record.json
   http RB_rollforward_authorized
   boundary_checks RB
+  docker rm -f "$NAME" >/dev/null 2>&1
+  # secondo rollback + roll-forward con la coppia (B64, ACK) STANTIA ancora configurata: non deve ripristinare nulla
+  RUN_IMG="$LIVE_IMG" run_container "$VOL" > "$OUT/container_id_rollback2.txt" 2>&1
+  wait_ready && ok RB2_live_image_healthy_again || bad RB2_live_image_healthy_again
+  docker rm -f "$NAME" >/dev/null 2>&1
+  run_container "$VOL" -e CHART_AUTHORITY_B64="$B64V2" -e CHART_AUTHORITY_REPUBLISH_ACK="$H2" > "$OUT/container_id_rollforward2.txt" 2>&1
+  wait_ready && ok RB2_rollforward_healthy || bad RB2_rollforward_healthy
+  logs_have 'LEDGER_UNTRUSTED' && ok RB2_log_ledger_untrusted_blocks_env || bad RB2_log_ledger_untrusted_blocks_env
+  http RB2_stale_pair_after_second_rollback_denied --expect-denied
+  docker restart "$NAME" >/dev/null 2>&1; wait_ready && ok RB2_healthy_after_restart || bad RB2_healthy_after_restart
+  logs_have 'IGNORATA: ALREADY_CONSUMED' && ok RB2_log_already_consumed_after_restart || bad RB2_log_already_consumed_after_restart
+  http RB2_stale_pair_still_denied_after_restart --expect-denied
+  stage_files
+  expect_ok RB2_install_store as_root /usr/local/sbin/chart-authority install-store --from /tmp/inbox --manifest /tmp/transfer_manifest.json --manifest-sha256 "$TSHA"
+  expect_ok RB2_publish_as_root as_root /usr/local/sbin/chart-authority publish --file /tmp/record.json
+  http RB2_authorized_after_explicit_operator_publication
   docker rm -f "$NAME" >/dev/null 2>&1
 else
   bad RB_live_ref_checked_out "git worktree add fallito (serve fetch-depth: 0)"
@@ -199,12 +257,34 @@ docker volume create "$VOL2" >/dev/null
 docker run --rm -v "$VOL2:/data" -v "$PWD/$RECORD:/rec.json:ro" --entrypoint sh "$IMG" -c 'mkdir -p /data/chart_auth /data/chart_store && cp /rec.json /data/chart_auth/chart_authorization.json && chown -R nexus:nexus /data' >/dev/null 2>&1
 run_container "$VOL2" > "$OUT/container_id_legacy.txt" 2>&1
 wait_ready && ok B_healthy_after_legacy_upgrade || bad B_healthy_after_legacy_upgrade
-docker exec "$NAME" ls -la /data/chart_auth > "$OUT/B_auth_dir.txt" 2>&1
-grep -q 'untrusted-' "$OUT/B_auth_dir.txt" && ok B_app_modifiable_record_quarantined || bad B_app_modifiable_record_quarantined
+docker exec "$NAME" ls -la /data > "$OUT/B_auth_dir.txt" 2>&1
+grep -q 'chart_auth.untrusted-' "$OUT/B_auth_dir.txt" && ok B_app_modifiable_record_quarantined || bad B_app_modifiable_record_quarantined
 as_root rm -rf /tmp/inbox; docker cp "$FIXSTORE/." "$NAME:/tmp/inbox" >/dev/null 2>&1; docker cp "$TRANSFER" "$NAME:/tmp/transfer_manifest.json" >/dev/null 2>&1
 expect_ok B_install_store as_root /usr/local/sbin/chart-authority install-store --from /tmp/inbox --manifest /tmp/transfer_manifest.json --manifest-sha256 "$TSHA"
+grep -q 'chart_store.untrusted-' "$OUT/B_auth_dir.txt" && ok B_app_modifiable_store_quarantined || bad B_app_modifiable_store_quarantined
 http B_legacy_record_is_not_authority --expect-denied     # lo store e' presente: l'unica causa del diniego e' l'autorita' (DENY-ALL dopo la quarantena)
 docker rm -f "$NAME" >/dev/null 2>&1
+
+# ---------------------------------------------------------------- 4b. SCENARIO C: record ROOT-owned ma in una gerarchia che l'app poteva sostituire (finding INFRA-01)
+legacy_case() {   # $1 = etichetta, $2 = volume, $3 = comandi di seed (eseguiti come root nell'immagine)
+  docker volume create "$2" >/dev/null
+  docker run --rm -v "$2:/data" -v "$PWD/$RECORD:/rec.json:ro" --entrypoint sh "$IMG" -c "mkdir -p /data/chart_auth && cp /rec.json /data/chart_auth/chart_authorization.json && $3" >/dev/null 2>&1
+  run_container "$2" > "$OUT/container_id_$1.txt" 2>&1
+  wait_ready && ok "$1_healthy" || bad "$1_healthy"
+  docker exec "$NAME" ls -la /data > "$OUT/$1_data_dir.txt" 2>&1
+  grep -q 'chart_auth.untrusted-' "$OUT/$1_data_dir.txt" && ok "$1_root_owned_record_quarantined_by_ancestor_trust" || bad "$1_root_owned_record_quarantined_by_ancestor_trust"
+  stage_files
+  expect_ok "$1_install_store" as_root /usr/local/sbin/chart-authority install-store --from /tmp/inbox --manifest /tmp/transfer_manifest.json --manifest-sha256 "$TSHA"
+  http "$1_old_grant_is_not_authority" --expect-denied
+  boundary_checks "$1"
+  expect_ok "$1_publish_as_root" as_root /usr/local/sbin/chart-authority publish --file /tmp/record.json
+  http "$1_authorized_after_explicit_publication"
+  docker rm -f "$NAME" >/dev/null 2>&1
+}
+# C1: la directory del record e' dell'app, il record e' root (l'app poteva rinominare un vecchio grant sul record senza scriverne l'inode)
+legacy_case C1 "${VOL}_c1" "chown nexus:nexus /data /data/chart_auth && chown root:root /data/chart_auth/chart_authorization.json"
+# C2: directory e record sono root, ma /data (antenato) e' dell'app e senza sticky: poteva sostituire l'intera directory
+legacy_case C2 "${VOL}_c2" "chown nexus:nexus /data && chmod 755 /data && chown -R root:root /data/chart_auth"
 
 # ---------------------------------------------------------------- 5. fail-closed: strumento assente / percorso non protetto (il backend deve partire, il Chart nega)
 run_container "$VOL" -e CHART_AUTHORITY_CTL=/nonexistent > "$OUT/container_id_noctl.txt" 2>&1

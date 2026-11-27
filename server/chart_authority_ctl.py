@@ -253,6 +253,8 @@ class Result:
     actions: list = dataclasses.field(default_factory=list)
     violations: list = dataclasses.field(default_factory=list)
     notes: list = dataclasses.field(default_factory=list)
+    provenance: list = dataclasses.field(default_factory=list)      # per namespace: esiste, fidato (provenienza PRE-boot), motivi
+    b64: dict = dataclasses.field(default_factory=dict)             # decisione sul bootstrap CHART_AUTHORITY_B64 (monouso)
 
     def act(self, msg: str) -> None:
         self.actions.append(msg)
@@ -275,10 +277,39 @@ def _set_owner_mode(fs, node: Node, uid: int, gid: int, mode: int, res: Result) 
         res.act("chmod %s %o -> %o" % (node.path, cur.mode, mode))
 
 
-def normalize_protected_dir(fs, path: str, res: Result) -> dict:
-    """Rende `path` (figlio diretto di /data) una directory root:root 0755 il cui contenuto e' tutto root:root, regolare, 0644/0755.
-    Ogni symlink/file speciale e' rimosso. Restituisce info sul record trovato in precedenza con proprieta' non fidata."""
-    info = {"untrusted": []}
+LEDGER_NAME = ".chart_authority_ledger"
+IGNORED_FOR_PROVENANCE = ("APP_CANNOT_READ_TARGET",)       # un file illeggibile dall'app (es. tombstone 0600) non e' un problema di provenienza
+
+
+def assess_node(fs, path: str, app: App) -> list:
+    """Provenienza di UN nodo nello stato PRE-boot: violazioni dell'intera catena `/ -> ... -> nodo` rispetto all'app (proprieta', scrivibilita', sostituibilita' degli antenati, symlink)."""
+    return [v for v in evaluate_boundary(chain_for(fs, path), app) if not v.startswith(IGNORED_FOR_PROVENANCE)]
+
+
+def assess_namespace(fs, path: str, app: App) -> list:
+    """Provenienza di una directory protetta e di TUTTI i suoi discendenti, valutata PRIMA di qualunque correzione di proprieta'/permessi.
+    La fiducia NON si ricava dallo stato finale (proprietario attuale): un record root-owned in una directory che l'app poteva sostituire e' NON fidato."""
+    reasons = []
+    for p, node in fs.walk(path):
+        for v in assess_node(fs, p, app):
+            if v not in reasons:
+                reasons.append(v)
+        if node.kind in ("symlink", "other") and ("KIND:" + p) not in reasons:
+            reasons.append("KIND:" + p)
+    return reasons
+
+
+def _unique_tomb(fs, path: str, ts: int) -> str:
+    cand, i = "%s.untrusted-%d" % (path, ts), 0
+    while fs.lstat(cand) is not None:
+        i += 1
+        cand = "%s.untrusted-%d-%d" % (path, ts, i)
+    return cand
+
+
+def normalize_protected_dir(fs, path: str, res: Result, restricted: bool = False) -> None:
+    """Rende `path` (figlio diretto di /data) una directory root:root il cui contenuto e' tutto root:root e regolare (symlink/file speciali rimossi).
+    `restricted` = tombstone di quarantena: modi 0700/0600 (non leggibili dall'app). NON decide la fiducia: quella e' stabilita prima (assess_namespace)."""
     n = fs.lstat(path)
     if n is not None and n.kind != "dir":
         fs.unlink(path)
@@ -288,28 +319,32 @@ def normalize_protected_dir(fs, path: str, res: Result) -> dict:
         fs.mkdir(path, DIR_MODE)
         fs.lchown(path, 0, 0)
         res.act("creata directory protetta %s root:root %o" % (path, DIR_MODE))
-        return info
+        return
     for p, node in list(fs.walk(path)):
         if node.kind in ("symlink", "other"):
             fs.unlink(p)
             res.act("rimosso %s (%s non ammesso nel namespace protetto)" % (p, node.kind))
             continue
-        if p != path and (node.uid != 0 or node.mode & 0o022):
-            info["untrusted"].append(p)                                    # modificabile da non-root prima del boot => contenuto non fidato
-        _set_owner_mode(fs, node, 0, 0, DIR_MODE if node.kind == "dir" else FILE_MODE, res)
-    return info
+        want = (0o700 if node.kind == "dir" else 0o600) if restricted else (DIR_MODE if node.kind == "dir" else FILE_MODE)
+        _set_owner_mode(fs, node, 0, 0, want, res)
 
 
-def _quarantine(fs, path: str, res: Result) -> None:
-    dst = "%s.untrusted-%d" % (path, int(time.time()))
-    fs.rename(path, dst)
-    fs.lchown(dst, 0, 0)
-    fs.chmod(dst, 0o600)                                                   # non piu' leggibile come autorita'
-    res.act("quarantena di %s -> %s (proprieta'/permessi non fidati prima del boot)" % (path, dst))
+def _parse_ledger(raw: bytes) -> set:
+    try:
+        doc = json.loads(raw.decode("utf-8"))
+        return {str(e["sha256"]).lower() for e in doc.get("consumed", []) if isinstance(e, dict) and "sha256" in e}
+    except Exception:                                                       # noqa: BLE001
+        return set()
+
+
+def _ledger_bytes(hashes: dict) -> bytes:
+    return (json.dumps({"schema": "NEXUS_CHART_AUTHORITY_LEDGER_V1", "consumed": [{"sha256": h, **meta} for h, meta in sorted(hashes.items())]}, indent=1, sort_keys=True) + "\n").encode()
 
 
 def boot(fs, env: dict, app: App, kernel_probe=None, data: str = DATA_ROOT) -> Result:
-    """Stabilisce e verifica il confine. Idempotente: due boot consecutivi non cambiano nulla."""
+    """Stabilisce e verifica il confine. Idempotente: due boot consecutivi su uno stato fidato non cambiano nulla.
+    Fasi: 0 valutazione di PROVENIENZA in sola lettura; 1 quarantena per rinomina (prima mutazione: sicura a interruzione); 2 radice/proprieta'/namespace;
+    3 record e bootstrap B64 monouso; 4 canary e verifica (modello + probe di kernel). Vedi AUTHORITY_TRUST_AND_BOOTSTRAP_CONTRACT.md."""
     res = Result()
     auth = env.get("NEXUS_CHART_AUTH_FILE", "").strip()
     store = env.get("NEXUS_CHART_STORE_ROOT", "").strip()
@@ -333,20 +368,56 @@ def boot(fs, env: dict, app: App, kernel_probe=None, data: str = DATA_ROOT) -> R
     if pp.dirname(auth) not in protected:
         res.fail("AUTH_NAMESPACE_NOT_PROTECTABLE")
         return res
-    names = {pp.basename(p) for p in protected} | {CANARY_NAME}
+    auth_dir = pp.dirname(auth)
+    ledger = pp.join(data, LEDGER_NAME)
+    names = {pp.basename(p) for p in protected} | {CANARY_NAME, LEDGER_NAME}
 
     def is_protected_name(n: str) -> bool:
         return n in names or any(n.startswith(x + ".") for x in names)
-    # 1) radice del volume: root:nexus 01770 (sticky: nexus non puo' rinominare/cancellare cio' che non possiede)
-    _set_owner_mode(fs, d, 0, app.gid, DATA_MODE, res)
-    # 2) proprieta' selettiva: tutto tranne i namespace protetti resta/torna a nexus (nessuna modifica ai permessi interni oltre alla proprieta')
+    ts = int(time.time())
+
+    # ---- FASE 0: provenienza (SOLA LETTURA, prima di toccare qualunque proprietario/permesso)
+    verdict = {}
+    for p in protected:
+        n = fs.lstat(p)
+        if n is not None:
+            verdict[p] = ["KIND:" + n.kind] if n.kind != "dir" else assess_namespace(fs, p, app)
+    ledger_node = fs.lstat(ledger)
+    ledger_reasons = []
+    hints: set = set()
+    if ledger_node is not None:
+        ledger_reasons = assess_node(fs, ledger, app) + (["KIND:" + ledger_node.kind] if ledger_node.kind != "file" else [])
+        if ledger_node.kind == "file":
+            try:
+                hints = _parse_ledger(fs.read_bytes(ledger))                # anche se non fidato resta un'evidenza NEGATIVA (hash gia' consumati: mai riabilitati)
+            except Exception:                                               # noqa: BLE001
+                ledger_reasons.append("LEDGER_UNREADABLE")
+    for p in protected:
+        res.provenance.append({"path": p, "exists": p in verdict, "trusted": p not in verdict or not verdict[p], "reasons": verdict.get(p, [])[:8]})
+    res.provenance.append({"path": ledger, "exists": ledger_node is not None, "trusted": ledger_node is None or not ledger_reasons, "reasons": ledger_reasons[:8]})
+
+    # ---- FASE 1: quarantena per RINOMINA, prima di ogni altra mutazione (se il boot si interrompe, l'albero non fidato non puo' riemergere come fidato)
+    quarantined = []
+    for p in protected:
+        if verdict.get(p):
+            tomb = _unique_tomb(fs, p, ts)
+            fs.rename(p, tomb)
+            quarantined.append(p)
+            res.act("quarantena di %s -> %s (provenienza non verificabile: %s)" % (p, tomb, ", ".join(verdict[p][:3])))
+    ledger_untrusted = ledger_node is not None and bool(ledger_reasons)
+    if ledger_untrusted:
+        tomb = _unique_tomb(fs, ledger, ts)
+        fs.rename(ledger, tomb)
+        res.act("quarantena del registro bootstrap %s -> %s (non fidato; gli hash restano come evidenza negativa)" % (ledger, tomb))
+
+    # ---- FASE 2: radice del volume, proprieta' selettiva, namespace protetti
+    _set_owner_mode(fs, d, 0, app.gid, DATA_MODE, res)                      # root:nexus 01770 (sticky: nexus non rinomina/cancella cio' che non possiede)
     for name in fs.listdir(data):
         if is_protected_name(name):
             continue
         for p, node in list(fs.walk(pp.join(data, name))):
             if (node.uid, node.gid) != (app.uid, app.gid):
                 fs.lchown(p, app.uid, app.gid)
-    # 3) namespace protetti (e i loro fratelli .old-/.staging-/.untrusted-, mai assegnati a nexus); residui del canary rimossi
     siblings = [pp.join(data, n) for n in fs.listdir(data) if n not in names and is_protected_name(n)]
     for sib in siblings:
         if sib.startswith(pp.join(data, CANARY_NAME) + "."):
@@ -354,37 +425,79 @@ def boot(fs, env: dict, app: App, kernel_probe=None, data: str = DATA_ROOT) -> R
                 (fs.rmdir if node.kind == "dir" else fs.unlink)(p)
             res.act("rimosso residuo del canary " + sib)
     siblings = [x for x in siblings if fs.lstat(x) is not None]
-    untrusted_record = False
-    for p in protected + [pp.join(data, CANARY_NAME)] + siblings:
-        info = normalize_protected_dir(fs, p, res)
-        if p == pp.dirname(auth) and pp.basename(auth) in [pp.basename(x) for x in info["untrusted"]]:
-            untrusted_record = True
-    # 4) record
-    b64 = env.get("CHART_AUTHORITY_B64", "").strip()
+    for p in protected + [pp.join(data, CANARY_NAME)]:
+        normalize_protected_dir(fs, p, res)
+    for sib in siblings:
+        n = fs.lstat(sib)
+        if n.kind == "dir":
+            normalize_protected_dir(fs, sib, res, restricted=True)
+        elif n.kind == "file":
+            _set_owner_mode(fs, n, 0, 0, 0o600, res)
+        else:
+            fs.unlink(sib)
+    # tombstone gia' presenti (di avvii precedenti) o appena create: una quarantena SI RICORDA
+    tomb_prefixes = (pp.basename(auth_dir) + ".untrusted-", LEDGER_NAME + ".untrusted-")
+    tombstones = [n for n in fs.listdir(data) if n.startswith(tomb_prefixes)]
+    try:
+        tombstones += [n for n in fs.listdir(auth_dir) if ".untrusted-" in n]
+    except Exception:                                                       # noqa: BLE001
+        pass
+
+    # ---- FASE 3: record e bootstrap
     record = fs.lstat(auth)
-    if untrusted_record and record is not None:
-        _quarantine(fs, auth, res)
+    if pp.dirname(auth) in quarantined and record is None:
         fs.write_atomic(auth, deny_record_bytes(), 0, 0, FILE_MODE)
-        res.act("installato record DENY-ALL (il record precedente era modificabile dall'app)")
+        res.act("installato record DENY-ALL (autorita' precedente non fidata: nessuna autorizzazione fino a pubblicazione esplicita dell'operatore)")
         record = fs.lstat(auth)
+    carried = {h: {"action": "carried_over_advisory", "at": ts} for h in hints}
+    if fs.lstat(ledger) is not None:
+        try:
+            for h in _parse_ledger(fs.read_bytes(ledger)):
+                carried.setdefault(h, {"action": "ledger", "at": ts})
+        except Exception:                                                   # noqa: BLE001
+            pass
+    b64 = env.get("CHART_AUTHORITY_B64", "").strip()
+    ack = env.get("CHART_AUTHORITY_REPUBLISH_ACK", "").strip().lower()
+    decision = {"present": bool(b64)}
     if b64:
         try:
             raw = base64.b64decode(b64, validate=True)
             ok, why, _ = validate_record_bytes(raw)
         except (binascii.Error, ValueError):
             ok, why, raw = False, "BASE64_INVALID", b""
-        if ok:
-            fs.write_atomic(auth, raw, 0, 0, FILE_MODE)
-            res.act("record installato da CHART_AUTHORITY_B64 sha256=%s" % hashlib.sha256(raw).hexdigest())
+        h = hashlib.sha256(raw).hexdigest()
+        decision["sha256"] = h
+        virgin = record is None and not carried and not tombstones and not quarantined and not ledger_untrusted and fs.lstat(ledger) is None
+        if not ok:
+            allowed, reason = False, "INVALID_RECORD:" + why                 # una configurazione invalida non apre nulla e non cancella un'autorita' fidata gia' presente
+        elif ledger_untrusted:
+            allowed, reason = False, "LEDGER_UNTRUSTED"
+        elif h in carried:
+            allowed, reason = False, "ALREADY_CONSUMED"
+        elif virgin:
+            allowed, reason = True, "INITIAL_BOOTSTRAP"
+        elif ack == h:
+            allowed, reason = True, "EXPLICIT_REPUBLISH_ACK"
         else:
-            fs.write_atomic(auth, deny_record_bytes(), 0, 0, FILE_MODE)
-            res.act("CHART_AUTHORITY_B64 non valido (%s): installato DENY-ALL" % why)
-        record = fs.lstat(auth)
+            allowed, reason = False, "NO_ACK (autorita' gia' inizializzata/quarantenata: imposta CHART_AUTHORITY_REPUBLISH_ACK=%s oppure usa `chart-authority publish`)" % h
+        decision.update(allowed=allowed, reason=reason)
+        if allowed:
+            carried[h] = {"action": "bootstrap" if reason == "INITIAL_BOOTSTRAP" else "republish", "at": ts}
+            fs.write_atomic(ledger, _ledger_bytes(carried), 0, 0, 0o600)    # PRIMA si consuma l'hash, POI si concede (un'interruzione puo' lasciare "consumato ma non applicato", mai l'inverso)
+            fs.write_atomic(auth, raw, 0, 0, FILE_MODE)
+            res.act("record installato da CHART_AUTHORITY_B64 (%s) sha256=%s" % (reason, h))
+            record = fs.lstat(auth)
+        else:
+            res.act("CHART_AUTHORITY_B64 IGNORATA: %s" % reason)
+    if fs.lstat(ledger) is None and carried:
+        fs.write_atomic(ledger, _ledger_bytes(carried), 0, 0, 0o600)       # registro fidato ricostruito (evidenza negativa conservata)
+        res.act("registro bootstrap ricostruito (%d hash consumati)" % len(carried))
+    res.b64 = decision
     # canary (specchio dei namespace protetti: i probe distruttivi colpiscono solo lui)
     canary_dir = pp.join(data, CANARY_NAME)
     canary_file = pp.join(canary_dir, "canary.txt")
     fs.write_atomic(canary_file, b"chart-authority canary\n", 0, 0, FILE_MODE)
-    # 5-6) verifica del modello su dati reali + probe di kernel (funzione separata: `verify` la usa SENZA mutare nulla)
+    # ---- FASE 4: verifica del modello su dati reali + probe di kernel (funzione separata: `verify` la usa SENZA mutare nulla)
     verify_boundary(fs, env, app, kernel_probe, data, res)
     return res
 
@@ -514,7 +627,7 @@ def app_identity() -> App:
 
 
 # --------------------------------------------------------------------------- comandi operatore
-def cmd_publish(fs, env, raw: bytes, label: str) -> int:
+def cmd_publish(fs, env, raw: bytes, label: str, app: App | None = None) -> int:
     ok, why, _ = validate_record_bytes(raw)
     if not ok:
         log("record RIFIUTATO: " + why)
@@ -527,6 +640,9 @@ def cmd_publish(fs, env, raw: bytes, label: str) -> int:
     if d is None or d.kind != "dir" or d.uid != 0 or d.mode & 0o022:
         log("la directory dell'autorita' non e' protetta (esegui `chart-authority boot` o riavvia): rifiuto")
         return 6
+    if app is not None and assess_node(fs, pp.dirname(auth), app):
+        log("la catena degli antenati dell'autorita' non e' fidata (esegui `chart-authority boot` o riavvia): rifiuto")
+        return 6
     fs.write_atomic(auth, raw, 0, 0, FILE_MODE)
     print(json.dumps({"published": auth, "label": label, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}))
     return 0
@@ -537,7 +653,10 @@ def cmd_status(fs, env, app: App) -> int:
     rec = fs.lstat(auth) if auth else None
     raw = fs.read_bytes(auth) if rec is not None and rec.kind == "file" else None
     chain = chain_for(fs, auth) if auth else []
-    out = {"auth_file": auth, "record": dataclasses.asdict(rec) if rec else None, "sha256": hashlib.sha256(raw).hexdigest() if raw is not None else None,
+    led = fs.lstat(pp.join(DATA_ROOT, LEDGER_NAME))
+    toms = [n for n in fs.listdir(DATA_ROOT) if ".untrusted-" in n] if fs.lstat(DATA_ROOT) is not None else []
+    out = {"ledger": {"exists": led is not None, "trusted": led is not None and not assess_node(fs, pp.join(DATA_ROOT, LEDGER_NAME), app)}, "tombstones": toms,
+           "auth_file": auth, "record": dataclasses.asdict(rec) if rec else None, "sha256": hashlib.sha256(raw).hexdigest() if raw is not None else None,
            "record_valid": validate_record_bytes(raw)[:2] if raw is not None else None, "boundary_violations": evaluate_boundary(chain, app) if chain else ["NO_CHAIN"]}
     print(json.dumps(out, indent=1))
     return 0 if not out["boundary_violations"] and (raw is None or out["record_valid"][0]) else 7
@@ -635,9 +754,9 @@ def main(argv=None) -> int:
     if a.cmd == "status":
         return cmd_status(fs, env, app)
     if a.cmd == "revoke":
-        return cmd_publish(fs, env, deny_record_bytes(), "REVOKE")
+        return cmd_publish(fs, env, deny_record_bytes(), "REVOKE", app)
     if a.cmd == "publish":
-        return cmd_publish(fs, env, fs.read_bytes(a.file), a.file)
+        return cmd_publish(fs, env, fs.read_bytes(a.file), a.file, app)
     if a.cmd == "install-store":
         return cmd_install_store(fs, env, a.src, a.manifest, a.manifest_sha256)
     return 1

@@ -29,7 +29,7 @@ legacy_chown() {
 selective_chown_fallback() {
     # usato solo se `chart-authority boot` fallisce: l'app deve poter scrivere DB/Jarvis, i namespace protetti non vengono MAI ceduti a nexus
     find /data -mindepth 1 -maxdepth 1 \
-        ! -name chart_auth ! -name 'chart_auth.*' ! -name chart_store ! -name 'chart_store.*' ! -name '.chart_boundary_canary*' \
+        ! -name chart_auth ! -name 'chart_auth.*' ! -name chart_store ! -name 'chart_store.*' ! -name '.chart_boundary_canary*' ! -name '.chart_authority_ledger*' \
         -exec chown -R "$APP_USER:$APP_USER" {} + || true
 }
 
