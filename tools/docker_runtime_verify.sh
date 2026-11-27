@@ -17,6 +17,7 @@ export CO_TEST_USER="tester-${RANDOM}@local"
 CO_TEST_PASS="$(python3 -c 'import secrets;print(secrets.token_urlsafe(18))')"; export CO_TEST_PASS
 BASE="http://127.0.0.1:$PORT"
 DS="XM-GOLD-2026-11-16-20"
+LIVE_REF="${LIVE_REF:-16eff18b8dd570e780e8bbafba6e7fbc8b88530a}"; LIVE_IMG="${LIVE_IMG:-nexus-backend:live16eff18b}"
 
 rec() { printf '%s\t%s\t%s\n' "$1" "$2" "${3:-}" >> "$RESULTS"; echo "[$2] $1 ${3:-}"; }
 ok() { rec "$1" PASS "${2:-}"; }
@@ -47,7 +48,7 @@ run_container() {   # configurazione equivalente a Render (limiti cgroup, volume
     -e NEXUS_DB_PATH=/data/nexus.db -e JARVIS_STATE_DIR=/data/jarvis -e NEXUS_DUKASCOPY_AUTOFETCH=false -e NEXUS_SEED_ON_START=false \
     -e NEXUS_QUEUE_DISPATCHER_ENABLED=false -e NEXUS_LOCAL_OPERATIONS_ENABLED=false -e NEXUS_REVENUE_AUTOMATION_ENABLED=false \
     -e NEXUS_CHART_STORE_ROOT=/data/chart_store -e NEXUS_CHART_AUTH_FILE=/data/chart_auth/chart_authorization.json -e NEXUS_CHART_DEFAULT_SOURCE="$DS" \
-    "${@:2}" "$IMG"
+    "${@:2}" "${RUN_IMG:-$IMG}"
 }
 wait_ready() {      # health check del Dockerfile (/api/ready) deve diventare healthy
   local i
@@ -154,6 +155,45 @@ boundary_checks D
 memory_sample D_after_redeploy
 docker rm -f "$NAME" >/dev/null 2>&1
 
+# ---------------------------------------------------------------- 3b. ROLLBACK in ambiente isolato: immagine LIVE (16eff18b) sullo STESSO volume, poi roll-forward
+if git worktree add --detach "$OUT/live_src" "$LIVE_REF" >"$OUT/live_worktree.log" 2>&1; then
+  ok RB_live_ref_checked_out "$LIVE_REF"
+  expect_ok RB_build_live_image docker build -f "$OUT/live_src/server/Dockerfile" -t "$LIVE_IMG" "$OUT/live_src"
+  docker image inspect --format '{{.Id}}' "$LIVE_IMG" > "$OUT/live_image_id.txt" 2>&1
+  RUN_IMG="$LIVE_IMG" run_container "$VOL" > "$OUT/container_id_rollback.txt" 2>&1
+  wait_ready && ok RB_live_image_healthy_on_new_layout_volume || bad RB_live_image_healthy_on_new_layout_volume
+  expect_ok RB_db_sentinel_readable_and_writable_by_live_code docker exec -u nexus "$NAME" python -c "import sqlite3;c=sqlite3.connect('/data/nexus.db');assert c.execute('select count(*) from _verify').fetchone()[0]>=1;c.execute('insert into _verify values (2)');c.commit()"
+  python3 - "$BASE" "$CO_TEST_USER" "$CO_TEST_PASS" > "$OUT/RB_live_api.json" 2>&1 <<'PY' && ok RB_live_login_and_old_chart_endpoint || bad RB_live_login_and_old_chart_endpoint "vedi RB_live_api.json"
+import json, sys, urllib.request
+base, u, p = sys.argv[1:4]
+def call(path, tok=None, body=None):
+    h = {"Content-Type": "application/json"}
+    if tok: h["Authorization"] = "Bearer " + tok
+    r = urllib.request.Request(base + path, data=json.dumps(body).encode() if body is not None else None, headers=h, method="POST" if body is not None else "GET")
+    with urllib.request.urlopen(r, timeout=60) as resp: return json.loads(resp.read())
+tok = call("/api/auth/login", body={"email": u, "password": p})["token"]
+j = call("/api/chart/ohlc?symbol=XAUUSD&tf=M15&limit=3", tok)
+print(json.dumps({"source": j.get("source"), "bars": len(j.get("bars", []))}))
+assert j.get("source") == "SYNTHETIC_DATA" and len(j.get("bars", [])) == 3      # comportamento precedente della live: ritorno effettivo al codice vecchio
+PY
+  docker exec "$NAME" stat -c '%U:%G %a %n' /data /data/chart_auth /data/chart_auth/chart_authorization.json /data/chart_store > "$OUT/RB_perms_after_legacy_entrypoint.txt" 2>&1
+  expect_ok RB_chart_data_preserved_after_rollback docker exec "$NAME" sh -c "test -f /data/chart_store/$DS/manifest.json && test -f /data/chart_auth/chart_authorization.json"
+  docker rm -f "$NAME" >/dev/null 2>&1
+  # roll-forward: il boot trova i namespace ceduti a nexus dall'entrypoint storico => quarantena del record + DENY-ALL; poi pubblicazione operatore
+  run_container "$VOL" > "$OUT/container_id_rollforward.txt" 2>&1
+  wait_ready && ok RB_rollforward_healthy || bad RB_rollforward_healthy
+  docker exec "$NAME" ls -la /data/chart_auth > "$OUT/RB_rollforward_auth_dir.txt" 2>&1
+  grep -q 'untrusted-' "$OUT/RB_rollforward_auth_dir.txt" && ok RB_rollforward_quarantines_app_owned_record || bad RB_rollforward_quarantines_app_owned_record
+  http RB_rollforward_denied_until_operator_publishes --expect-denied
+  docker cp "$RECORD" "$NAME:/tmp/record.json" >/dev/null 2>&1
+  expect_ok RB_rollforward_publish_as_root as_root /usr/local/sbin/chart-authority publish --file /tmp/record.json
+  http RB_rollforward_authorized
+  boundary_checks RB
+  docker rm -f "$NAME" >/dev/null 2>&1
+else
+  bad RB_live_ref_checked_out "git worktree add fallito (serve fetch-depth: 0)"
+fi
+
 # ---------------------------------------------------------------- 4. SCENARIO B: upgrade dal layout storico (tutto nexus, record modificabile dall'app)
 docker volume create "$VOL2" >/dev/null
 docker run --rm -v "$VOL2:/data" -v "$PWD/$RECORD:/rec.json:ro" --entrypoint sh "$IMG" -c 'mkdir -p /data/chart_auth /data/chart_store && cp /rec.json /data/chart_auth/chart_authorization.json && chown -R nexus:nexus /data' >/dev/null 2>&1
@@ -161,7 +201,9 @@ run_container "$VOL2" > "$OUT/container_id_legacy.txt" 2>&1
 wait_ready && ok B_healthy_after_legacy_upgrade || bad B_healthy_after_legacy_upgrade
 docker exec "$NAME" ls -la /data/chart_auth > "$OUT/B_auth_dir.txt" 2>&1
 grep -q 'untrusted-' "$OUT/B_auth_dir.txt" && ok B_app_modifiable_record_quarantined || bad B_app_modifiable_record_quarantined
-http B_legacy_record_is_not_authority --expect-denied
+as_root rm -rf /tmp/inbox; docker cp "$FIXSTORE/." "$NAME:/tmp/inbox" >/dev/null 2>&1; docker cp "$TRANSFER" "$NAME:/tmp/transfer_manifest.json" >/dev/null 2>&1
+expect_ok B_install_store as_root /usr/local/sbin/chart-authority install-store --from /tmp/inbox --manifest /tmp/transfer_manifest.json --manifest-sha256 "$TSHA"
+http B_legacy_record_is_not_authority --expect-denied     # lo store e' presente: l'unica causa del diniego e' l'autorita' (DENY-ALL dopo la quarantena)
 docker rm -f "$NAME" >/dev/null 2>&1
 
 # ---------------------------------------------------------------- 5. fail-closed: strumento assente / percorso non protetto (il backend deve partire, il Chart nega)
