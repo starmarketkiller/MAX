@@ -64,7 +64,7 @@ stage_files() {   # un container ricreato ha /tmp pulito: ricopia inbox, manifes
   docker exec -u 0 "$NAME" rm -rf /tmp/inbox >/dev/null 2>&1
   docker cp "$FIXSTORE/." "$NAME:/tmp/inbox" >/dev/null 2>&1; docker cp "$TRANSFER" "$NAME:/tmp/transfer_manifest.json" >/dev/null 2>&1; docker cp "$RECORD" "$NAME:/tmp/record.json" >/dev/null 2>&1
 }
-logs_have() { docker logs "$NAME" 2>&1 | grep -q "$1"; }
+logs_have() { docker logs "$NAME" > "$OUT/.logs_tmp" 2>&1; grep -q "$1" "$OUT/.logs_tmp"; }   # niente pipe: `grep -q` + pipefail darebbe falsi negativi (SIGPIPE)
 
 boundary_checks() {   # $1 = etichetta di fase
   local p="$1"
@@ -224,10 +224,9 @@ PY
   grep -q 'chart_auth.untrusted-' "$OUT/RB_rollforward_auth_dir.txt" && ok RB_rollforward_quarantines_app_owned_record || bad RB_rollforward_quarantines_app_owned_record
   docker exec "$NAME" ls -la /data > "$OUT/RB_rollforward_data_dir.txt" 2>&1
   grep -q 'chart_store.untrusted-' "$OUT/RB_rollforward_data_dir.txt" && ok RB_rollforward_quarantines_app_owned_store || bad RB_rollforward_quarantines_app_owned_store
-  http RB_rollforward_denied_until_operator_publishes --expect-denied
   stage_files
   expect_ok RB_rollforward_install_store as_root /usr/local/sbin/chart-authority install-store --from /tmp/inbox --manifest /tmp/transfer_manifest.json --manifest-sha256 "$TSHA"
-  http RB_rollforward_store_reinstalled_still_denied_until_publish --expect-denied
+  http RB_rollforward_denied_until_operator_publishes --expect-denied      # store presente: l'unica causa del diniego e' l'autorita' (DENY-ALL)
   expect_ok RB_rollforward_publish_as_root as_root /usr/local/sbin/chart-authority publish --file /tmp/record.json
   http RB_rollforward_authorized
   boundary_checks RB
@@ -239,12 +238,13 @@ PY
   run_container "$VOL" -e CHART_AUTHORITY_B64="$B64V2" -e CHART_AUTHORITY_REPUBLISH_ACK="$H2" > "$OUT/container_id_rollforward2.txt" 2>&1
   wait_ready && ok RB2_rollforward_healthy || bad RB2_rollforward_healthy
   logs_have 'LEDGER_UNTRUSTED' && ok RB2_log_ledger_untrusted_blocks_env || bad RB2_log_ledger_untrusted_blocks_env
+  stage_files
+  expect_ok RB2_install_store as_root /usr/local/sbin/chart-authority install-store --from /tmp/inbox --manifest /tmp/transfer_manifest.json --manifest-sha256 "$TSHA"
   http RB2_stale_pair_after_second_rollback_denied --expect-denied
   docker restart "$NAME" >/dev/null 2>&1; wait_ready && ok RB2_healthy_after_restart || bad RB2_healthy_after_restart
   logs_have 'IGNORATA: ALREADY_CONSUMED' && ok RB2_log_already_consumed_after_restart || bad RB2_log_already_consumed_after_restart
   http RB2_stale_pair_still_denied_after_restart --expect-denied
   stage_files
-  expect_ok RB2_install_store as_root /usr/local/sbin/chart-authority install-store --from /tmp/inbox --manifest /tmp/transfer_manifest.json --manifest-sha256 "$TSHA"
   expect_ok RB2_publish_as_root as_root /usr/local/sbin/chart-authority publish --file /tmp/record.json
   http RB2_authorized_after_explicit_operator_publication
   docker rm -f "$NAME" >/dev/null 2>&1
