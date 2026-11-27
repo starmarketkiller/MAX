@@ -1,6 +1,6 @@
 # CHART-ONLY-DEPLOY-READY-01 / GATE 02 - verifica runtime dell'immagine Docker effettiva su Linux (runner ubuntu con Docker).
 #
-# Si avvia SOLO su richiesta (workflow_dispatch) o con push su rami `infra/**`: NON e' agganciato a `main`, non fa deploy, non usa secret, non tocca Render.
+# (retrigger 1: nessun run partito dal primo push) Si avvia SOLO su richiesta (workflow_dispatch) o con push su rami `infra/**`: NON e' agganciato a `main`, non fa deploy, non usa secret, non tocca Render.
 # (Il workflow `Safe Deploy` parte soltanto da CI su `main`; i rami `infra/**` non attivano nemmeno `CI`.)
 # Esegue tools/docker_runtime_verify.sh con una fixture SINTETICA: build dell'immagine, cgroup 512 MiB, health check /api/ready, login, store, paginazione,
 # concorrenza, tentativi di modifica dell'autorita' come utente applicativo, revoca/ripristino, restart x2, redeploy, upgrade dal layout storico, fail-closed, memoria.
