@@ -25,6 +25,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # serve il commit live 16eff18b per la prova di rollback (immagine precedente sullo stesso volume)
 
       - uses: actions/setup-python@v5
         with:
