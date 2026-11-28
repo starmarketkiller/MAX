@@ -26,7 +26,7 @@ export default function DiscoveryWorkspace() {
   const Disc = useDiscovery(S.sessionId);
   const [sources, setSources] = useState([]);
   const [source, setSource] = useState("");
-  const [symbol, setSymbol] = useState("GOLD");
+  const [symbolSel, setSymbol] = useState("GOLD");
   const [count, setCount] = useState(1);
   const [panes, setPanes] = useState(["H4", "M15", "M5", "H1"].map((tf) => ({ tf, linked: true })));
   const [paneSymbols, setPaneSymbols] = useState(["GOLD", "GOLD", "GOLD", "GOLD"]);
@@ -52,13 +52,17 @@ export default function DiscoveryWorkspace() {
   const registry = useRef({});
   const st = useRef({});
   const lastRange = useRef(null);
+  const suppressUntil = useRef(0);          // dopo 'vai all'evento' ogni scala tiene la SUA finestra: la propagazione fra pane collegati e' sospesa finche' i caricamenti ancorati sono finiti
   const structOrigin = useRef(null);
   const pendingFocus = useRef(null);
   const restored = useRef(null);
   const saveTimer = useRef(null);
   const cur = sources.find((s) => s.dataset_id === source);
   const tfs = cur?.timeframes || [];
+  // valori EFFETTIVI coerenti col dataset, calcolati in modo sincrono: nessuna richiesta con un alias o un timeframe che il dataset non contiene
+  const symbol = cur && !cur.symbol_aliases.includes(symbolSel) ? cur.symbol_aliases[0] : symbolSel;
   const symbols = cur?.symbol_aliases || [symbol];
+  const effTf = (t) => (!tfs.length || tfs.includes(t) ? t : (tfs.includes("H4") ? "H4" : tfs[tfs.length - 1]));
   st.current = { panes, sync, count, tfs, selectedEventId, eventWindow };
 
   // ---- fonti autorizzate
@@ -74,8 +78,8 @@ export default function DiscoveryWorkspace() {
     return () => { off = true; };
   }, []);
   useEffect(() => {
-    if (cur && !cur.symbol_aliases.includes(symbol)) setSymbol(cur.symbol_aliases[0]);
-  }, [cur, symbol]);
+    if (cur && symbolSel !== symbol) setSymbol(symbol);
+  }, [cur, symbolSel, symbol]);
   // il pane puo' usare solo timeframe del dataset: altrimenti ripiega sul piu' vicino disponibile (nessuna richiesta fuori copertura)
   useEffect(() => {
     if (!tfs.length) return;
@@ -112,6 +116,7 @@ export default function DiscoveryWorkspace() {
   // ---- sincronizzazione selettiva (finestra temporale e crosshair), con guardie anti-eco nei pane
   const onRange = useCallback((pid, r) => {
     lastRange.current = r;
+    if (Date.now() < suppressUntil.current) return;
     const { panes: ps, sync: sy, count: n } = st.current;
     const i = PANE_IDS.indexOf(pid);
     if (!sy.time_range || !ps[i]?.linked) return;
@@ -126,6 +131,7 @@ export default function DiscoveryWorkspace() {
 
   const goTo = useCallback((ev, { pre = st.current.eventWindow.pre, post = st.current.eventWindow.post } = {}) => {
     const t = ev.pivot.t;
+    suppressUntil.current = Date.now() + 4000;
     for (let i = 0; i < st.current.count; i += 1) {
       const reg = registry.current[PANE_IDS[i]];
       const w = TF_SECONDS[st.current.panes[i].tf] || 900;
@@ -172,7 +178,7 @@ export default function DiscoveryWorkspace() {
   }, []);
   const onLinked = useCallback((i, v) => setPanes((ps) => ps.map((p, k) => (k === i ? { ...p, linked: v } : p))), []);
   const onPaneSymbol = useCallback((i, s) => setPaneSymbols((a) => a.map((x, k) => (k === i ? s : x))), []);
-  const symOf = (i) => (sync.symbol ? symbol : paneSymbols[i] || symbol);
+  const symOf = (i) => (sync.symbol ? symbol : (symbols.includes(paneSymbols[i]) ? paneSymbols[i] : symbol));
 
   // ---- punti scelti sul grafico per le schede evento / strutture
   const onPick = useCallback((t, a, info) => {
@@ -269,7 +275,7 @@ export default function DiscoveryWorkspace() {
         {[1, 2, 3, 4].map((n) => <button key={n} type="button" className={`${btn} ${count === n ? "bg-primary text-primary-foreground" : ""}`} data-testid={`ws-layout-${n}`} onClick={() => setCount(n)}>{n}</button>)}
         <span>Sync:</span>
         {[["time_range", "finestra"], ["crosshair", "crosshair"], ["symbol", "simbolo"]].map(([k, l]) => (
-          <label key={k} className="flex items-center gap-1"><input type="checkbox" checked={sync[k]} data-testid={`ws-sync-${k}`} onChange={(e) => setSync({ ...sync, [k]: e.target.checked })} />{l}</label>
+          <label key={k} className="flex items-center gap-1"><input type="checkbox" checked={sync[k]} data-testid={`ws-sync-${k}`} onChange={(e) => { setSync({ ...sync, [k]: e.target.checked }); if (k === "symbol" && !e.target.checked) setPaneSymbols((a) => a.map(() => symbol)); }} />{l}</label>
         ))}
         <input className={`${sel} w-36`} placeholder="vai a AAAA-MM-GG HH:MM" value={gotoVal} data-testid="ws-goto-input" onChange={(e) => setGotoVal(e.target.value)} />
         <button type="button" className={btn} data-testid="ws-goto" onClick={gotoTime}>Vai</button>
@@ -283,7 +289,7 @@ export default function DiscoveryWorkspace() {
       <div className="flex-1 min-h-0 flex">
         <div className={`flex-1 min-w-0 min-h-0 grid gap-1.5 p-1.5 ${gridCls}`} data-testid="ws-grid">
           {PANE_IDS.slice(0, count).map((pid, i) => (
-            <ChartPane key={pid} paneId={pid} index={i} source={source} symbol={symOf(i)} tf={panes[i].tf} tfs={tfs} onTf={onTf} symbols={symbols} onSymbol={onPaneSymbol}
+            <ChartPane key={pid} paneId={pid} index={i} source={source} symbol={symOf(i)} tf={effTf(panes[i].tf)} tfs={tfs} onTf={onTf} symbols={symbols} onSymbol={onPaneSymbol}
               symbolLocked={sync.symbol} linked={panes[i].linked} onLinked={onLinked} dark={theme === "dark"} registry={registry} onRange={onRange} onCrosshair={onCrosshair}
               onLoaded={onLoaded} shared={shared} onPick={onPick} />
           ))}

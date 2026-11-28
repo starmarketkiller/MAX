@@ -12,7 +12,7 @@ class Client:
     def __init__(self, base, user, password):
         self.base = base.rstrip("/")
         self.op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
-        s, _, _ = self.get("/api/ready")
+        self.get("/api/ready")
         data = json.dumps({"email": user, "password": password}).encode()
         req = urllib.request.Request(self.base + "/api/auth/login", data=data, method="POST", headers={"Content-Type": "application/json", "Origin": self.base})
         with self.op.open(req, timeout=30) as r:

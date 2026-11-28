@@ -170,6 +170,8 @@ export default function ChartPane({ paneId, index, source, symbol, tf, tfs, onTf
     const series = seriesRef.current, chart = chartRef.current;
     if (!series || !chart) return;
     series.setData(bars.map(toSeriesBar));
+    const host = containerRef.current && containerRef.current.parentElement;
+    if (host) { host.dataset.first = bars.length ? String(bars[0].time) : ""; host.dataset.last = bars.length ? String(bars[bars.length - 1].time) : ""; host.dataset.n = String(bars.length); }     // diagnostica di sola lettura
     if (!bars.length) return;
     const p = pendingRef.current;
     ignoreRange.current = Date.now() + 400;
@@ -205,9 +207,16 @@ export default function ChartPane({ paneId, index, source, symbol, tf, tfs, onTf
         };
         const lastT = () => barsRef.current[barsRef.current.length - 1].time + step();
         if (barsRef.current.length && anchorRef.current != null && r.to > lastT()) return reanchor();
-        for (let i = 0; i < 4 && barsRef.current.length && barsRef.current[0].time > r.from && hasMoreRef.current; i += 1) { if ((await pageRef.current()) === 0) break; }
+        let paged = 0;
+        for (let i = 0; i < 4 && barsRef.current.length && barsRef.current[0].time > r.from && hasMoreRef.current; i += 1) { if ((await pageRef.current()) === 0) break; paged += 1; }
         if (barsRef.current.length && barsRef.current[0].time > r.from && hasMoreRef.current) return reanchor();
         if (!barsRef.current.length) { pendingRef.current = { kind: "range", range: r }; return true; }
+        if (paged) {                                      // le barre prepese sono nello stato React ma non ancora nella serie: l'intervallo va applicato DOPO il setData (effetto sui dati), poi confermato
+          pendingRef.current = { kind: "range", range: r };
+          await new Promise((res) => setTimeout(res, 160));
+          pendingRef.current = { kind: "keep" };
+          return setRange(r);
+        }
         pendingRef.current = { kind: "keep" };
         return setRange(r);
       },

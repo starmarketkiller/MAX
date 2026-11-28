@@ -1,0 +1,115 @@
+# CHART-HISTORICAL-EXPANSION-01 / Fase 07 - verifica Linux/Docker del CANDIDATO CUMULATIVO (FIX-02 + Geometry-01 + Multiscale-Discovery-01 + Historical-Expansion-01).
+#
+# PREPARATO, NON ESEGUITO. Si avvia SOLO con push su rami `infra/chart-cumulative/**` (o su richiesta, se il file e' sul ramo predefinito). NON e' agganciato a `main`,
+# non fa deploy, non usa secret, non tocca Render. `CI` parte solo su main/claude/**/feature/**; `Safe Deploy` solo da `CI` su `main` (ed e' disabilitato).
+# Nota: un ramo `infra/chart-cumulative/...` corrisponde anche a `infra/**`, quindi parte ANCHE `Chart-only runtime verify` (approvato, invariato): e' voluto, serve a mostrare che
+# l'infrastruttura approvata non regredisce sul codice cumulativo.
+# Dati: SOLO fixture SINTETICHE. I dati storici reali (Dukascopy) non lasciano il PC e non entrano mai nel repository ne' nei runner.
+# Tre prove: (1) lo script approvato, invariato, sulla fixture standard; (2) lo STESSO script su una fixture sintetica di SCALA (~530k M1) con cgroup 512 MiB;
+# (3) smoke API delle geometrie/Discovery attraverso restart e ridistribuzione sullo stesso volume.
+name: Chart cumulative runtime verify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["infra/chart-cumulative/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chart-cumulative-runtime-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  approved-script-standard:
+    name: Script approvato (fixture standard, 512 MiB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verifica runtime (script approvato, invariato)
+        env:
+          IMG: nexus-backend:cumulative
+          OUT: docker_verify_out_standard
+        run: bash tools/docker_runtime_verify.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cumulative-standard-evidence
+          path: docker_verify_out_standard
+          if-no-files-found: warn
+
+  approved-script-scale:
+    name: Script approvato su fixture sintetica di SCALA (547 giorni M1, 512 MiB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Genera la fixture di scala (SINTETICA)
+        run: python3 tools/make_scale_fixture.py "$RUNNER_TEMP/scale_fixture" 547
+      - name: Verifica runtime (stesso script, store di scala)
+        env:
+          IMG: nexus-backend:cumulative-scale
+          OUT: docker_verify_out_scale
+          REAL_STORE_DIR: ${{ runner.temp }}/scale_fixture/store
+          REAL_TRANSFER_MANIFEST: ${{ runner.temp }}/scale_fixture/transfer_manifest.json
+          REAL_EXPECTED: ${{ runner.temp }}/scale_fixture/expected.json
+          REAL_RECORD: ${{ runner.temp }}/scale_fixture/authorization_record.json
+        run: bash tools/docker_runtime_verify.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cumulative-scale-evidence
+          path: docker_verify_out_scale
+          if-no-files-found: warn
+
+  geometry-discovery-smoke:
+    name: Smoke geometrie/Discovery attraverso restart e ridistribuzione (512 MiB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Immagine
+        run: docker build -f server/Dockerfile -t nexus-backend:cumulative .
+      - name: Avvio, scrittura, restart, ridistribuzione, verifica
+        run: |
+          set -uo pipefail
+          mkdir -p smoke_out
+          U="smoke-${RANDOM}@local"; P="$(python3 -c 'import secrets;print(secrets.token_urlsafe(18))')"
+          run_c() { docker run -d --name smoke -m 512m --memory-swap 512m --cpus 0.5 -p 18002:8001 -v smoke_data:/data \
+            -e NEXUS_ENV=DEV -e NEXUS_COOKIE_SECURE=false -e NEXUS_ADMIN_USER="$U" -e NEXUS_ADMIN_PASSWORD="$P" -e NEXUS_DB_PATH=/data/nexus.db -e JARVIS_STATE_DIR=/data/jarvis \
+            -e NEXUS_DUKASCOPY_AUTOFETCH=false -e NEXUS_SEED_ON_START=false -e NEXUS_QUEUE_DISPATCHER_ENABLED=false -e NEXUS_LOCAL_OPERATIONS_ENABLED=false \
+            -e NEXUS_REVENUE_AUTOMATION_ENABLED=false nexus-backend:cumulative; }
+          ready() { for i in $(seq 1 90); do curl -fsS http://127.0.0.1:18002/api/ready >/dev/null 2>&1 && return 0; sleep 2; done; return 1; }
+          rc=0
+          run_c && ready || rc=1
+          python3 tools/linux_geometry_smoke.py write --base http://127.0.0.1:18002 --user "$U" --password "$P" --state smoke_out/state.json > smoke_out/write.json || rc=1
+          docker restart smoke >/dev/null && ready || rc=1
+          python3 tools/linux_geometry_smoke.py verify --base http://127.0.0.1:18002 --user "$U" --password "$P" --state smoke_out/state.json > smoke_out/verify_after_restart.json || rc=1
+          docker rm -f smoke >/dev/null; run_c && ready || rc=1                 # ridistribuzione della stessa immagine sullo stesso volume
+          python3 tools/linux_geometry_smoke.py verify --base http://127.0.0.1:18002 --user "$U" --password "$P" --state smoke_out/state.json > smoke_out/verify_after_redeploy.json || rc=1
+          docker stats --no-stream --format '{{.MemUsage}} {{.MemPerc}}' smoke > smoke_out/memory.txt 2>&1 || true
+          docker exec smoke sh -c 'cat /sys/fs/cgroup/memory.peak /sys/fs/cgroup/memory.max 2>/dev/null' >> smoke_out/memory.txt 2>&1 || true
+          docker logs smoke > smoke_out/container.log 2>&1 || true
+          docker rm -f smoke >/dev/null 2>&1; docker volume rm -f smoke_data >/dev/null 2>&1
+          exit $rc
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cumulative-smoke-evidence
+          path: smoke_out
+          if-no-files-found: warn
