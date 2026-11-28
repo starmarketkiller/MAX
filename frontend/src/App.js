@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import LiveChartPage from "@/pages/LiveChartPage";
+import DiscoveryWorkspace from "@/pages/DiscoveryWorkspace";
 
 // The immersive 3D landing pulls in three.js — lazy-load so it never ships to
 // authenticated users who go straight to the dashboard.
@@ -94,6 +95,7 @@ export default function App() {
                 <Route path="/chain" element={<Protected><Dashboard section="chain" /></Protected>} />
                 <Route path="/local-bridge" element={<Protected><Dashboard section="local-bridge" /></Protected>} />
                 <Route path="/chart" element={<Protected><LiveChartPage /></Protected>} />
+                <Route path="/discovery" element={<Protected><DiscoveryWorkspace /></Protected>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>

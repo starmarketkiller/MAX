@@ -2,10 +2,11 @@
 // Canonico = (tempo, prezzo) dei dati. Il canvas e' una proiezione ricalcolata a ogni zoom/pan/resize/cambio timeframe.
 // Una geometria e' un'annotazione dell'utente: NON e' un segnale e non crea ordini.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import useGeometrySession, { errText } from "@/lib/geometry/useGeometrySession";
 import {
   TOOLS, ANCHORS_REQUIRED, SEMANTIC_CLASSES, semanticOptionsFor, TF_SECONDS, buildScene, sceneDistance, hitHandle, snapAnchor,
-  translateAnchors, unproject, project, linearTimeAxis, fmtPrice, fmtTime, nearestBar, candleAnchor, freeAnchor, sameInstrument, OHLC,
+  translateAnchors, unproject, project, linearTimeAxis, defaultUnits, fmtPrice, fmtTime, nearestBar, candleAnchor, freeAnchor, sameInstrument, OHLC,
 } from "@/lib/geometry/geometryMath";
 
 const SWATCHES = ["#2962ff", "#ef4444", "#16a34a", "#f59e0b", "#a855f7", "#06b6d4", "#e5e7eb", "#111827"];
@@ -27,16 +28,37 @@ function Field({ label, children }) {
 const inputCls = "mt-0.5 w-full rounded border border-border bg-background px-1.5 py-0.5 text-[11px] font-mono text-foreground";
 const btnCls = "rounded border border-border bg-card px-1.5 py-0.5 text-[11px] hover:bg-muted disabled:opacity-40";
 
-export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol, tf, source, epoch, dark = false }) {
-  const S = useGeometrySession({ enabled: true });
+const LS_UNITS = "nexus.chart.units.";
+function loadUnits(symbol) {
+  try {
+    const raw = window.localStorage.getItem(LS_UNITS + String(symbol).toUpperCase());
+    if (raw) return { ...defaultUnits(symbol), ...JSON.parse(raw) };
+  } catch (err) { void err; }
+  return defaultUnits(symbol);
+}
+const Portal = ({ el, children }) => (el ? createPortal(children, el) : children);
+
+/** `shared` (opzionale): stato e sessione condivisi fra piu' grafici { S, tool, setTool, snapMode, setSnapMode, selectedId, setSelectedId,
+ *  activeLayer, setActiveLayer, units, setUnits, toolbarEl, panelEl, hint }. `chrome=false`: il grafico non mostra toolbar/pannello e non ascolta la tastiera.
+ *  `onPick(tool, anchor, info)`: gestisce gli strumenti "pick:*" (selezione di punti per le schede evento) al posto del disegno. */
+export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol, tf, source, epoch, dark = false, shared = null, chrome = true, onPick = null, paneId = "main" }) {
+  const Local = useGeometrySession({ enabled: !shared });
+  const S = shared ? shared.S : Local;
   const { geoms, layers } = S;
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
-  const [tool, setTool] = useState("select");
-  const [snapMode, setSnapMode] = useState("free");
-  const [selectedId, setSelectedId] = useState(null);
-  const [panelOpen, setPanelOpen] = useState(true);
-  const [activeLayer, setActiveLayer] = useState("default");
+  const [toolL, setToolL] = useState("select");
+  const [snapL, setSnapL] = useState("free");
+  const [selL, setSelL] = useState(null);
+  const [layerL, setLayerL] = useState("default");
+  const [unitsL, setUnitsL] = useState(() => loadUnits(symbol));
+  const tool = shared ? shared.tool : toolL, setTool = shared ? shared.setTool : setToolL;
+  const snapMode = shared ? shared.snapMode : snapL, setSnapMode = shared ? shared.setSnapMode : setSnapL;
+  const selectedId = shared ? shared.selectedId : selL, setSelectedId = shared ? shared.setSelectedId : setSelL;
+  const activeLayer = shared ? shared.activeLayer : layerL, setActiveLayer = shared ? shared.setActiveLayer : setLayerL;
+  const units = shared ? shared.units : unitsL;
+  const setUnits = (u) => { if (shared) shared.setUnits(u); else { setUnitsL(u); try { window.localStorage.setItem(LS_UNITS + String(symbol).toUpperCase(), JSON.stringify(u)); } catch (err) { void err; } } };
+  const [panelOpen, setPanelOpen] = useState(false);       // pannello chiuso di default: si apre da solo selezionando un oggetto
   const [note, setNote] = useState(null);
   const [tick, setTick] = useState(0);
   const [newName, setNewName] = useState("");
@@ -44,7 +66,8 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
 
   // ---- stato corrente leggibile dai gestori nativi (che vivono fuori dal ciclo di render) ----
   const R = useRef({});
-  R.current = { tool, snapMode, selectedId, geoms, layers, bars, meta, symbol, tf, source, activeLayer, S };
+  R.current = { tool, snapMode, selectedId, geoms, layers, bars, meta, symbol, tf, source, activeLayer, S, onPick, paneId, chrome, pipSize: units?.pip_size || null };
+  useEffect(() => { if (selectedId && chrome) setPanelOpen(true); }, [selectedId, chrome]);
   const draftRef = useRef(null);          // { tool, anchors:[], cursor, downXY, down }
   const dragRef = useRef(null);           // { gid, mode:'handle'|'move', i, start, base }
   const overrideRef = useRef({});         // gid -> anchors in anteprima durante il trascinamento
@@ -56,7 +79,7 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
   const dark_ = useRef(dark); dark_.current = dark;
 
   const dirty = () => { dirtyRef.current = true; };
-  useEffect(dirty, [geoms, layers, selectedId, tool, tick, bars, dark]);   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(dirty, [geoms, layers, selectedId, tool, tick, bars, dark, units?.pip_size]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   const layerState = useMemo(() => Object.fromEntries(layers.map((l) => [l.layer_id, l])), [layers]);
   const visibleGeoms = useMemo(() => geoms.filter((g) => g.status === "ACTIVE" && g.style?.visible !== false
@@ -76,7 +99,7 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
     const axis = linearTimeAxis(ts.logicalToCoordinate(0), ts.logicalToCoordinate(1));   // scala lineare: vedi linearTimeAxis
     if (!axis) return null;
     return {
-      bars: b, tfSec: TF_SECONDS[R.current.tf] || 900, width, height,
+      bars: b, tfSec: TF_SECONDS[R.current.tf] || 900, width, height, pipSize: R.current.pipSize,
       xOf: axis.xOf, idxOf: axis.idxOf,
       yOf: (p) => series.priceToCoordinate(p), priceOf: (y) => series.coordinateToPrice(y),
     };
@@ -140,7 +163,8 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
       drawGeom(gg, c, k, { selected: g.geometry_id === R.current.selectedId });
       if (proj.length < 60) proj.push({ id: g.geometry_id, type: g.type, pts: gg.anchors.map((a) => { const p = project(a, c); return p ? [Math.round(p.x * 10) / 10, Math.round(p.y * 10) / 10] : null; }) });
     }
-    canvas.dataset.dbg = JSON.stringify({ w: c.width, h: c.height, n: c.bars.length, tf: R.current.tf, x0: c.xOf(0), x100: c.xOf(100), vr: (() => { try { return chartRef.current.timeScale().getVisibleLogicalRange(); } catch (err) { return null; } })() });
+    canvas.dataset.dbg = JSON.stringify({ w: c.width, h: c.height, n: c.bars.length, tf: R.current.tf, x0: c.xOf(0), x100: c.xOf(100), y1000: c.yOf(1000), y3000: c.yOf(3000), vr: (() => { try { return chartRef.current.timeScale().getVisibleLogicalRange(); } catch (err) { return null; } })() });
+    canvas.dataset.rulers = JSON.stringify(visibleRef.current.filter((g) => g.type === "ruler").map((g) => ({ id: g.geometry_id, text: (buildScene(g, c).prims.find((p) => p.kind === "label") || {}).text })));
     canvas.dataset.proj = JSON.stringify(proj);       // proiezione corrente (diagnostica di sola lettura, usata dalla verifica nel browser)
     const d = draftRef.current;
     if (d) {
@@ -234,6 +258,12 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
       const { x, y } = local(e);
       if (x < 0 || y < 0 || x > c.width || y > c.height) return;
       const t = R.current.tool;
+      if (t.startsWith("pick:")) {                              // selezione di un punto per la scheda evento (nessun disegno)
+        interceptRef.current = true; stop(e);
+        const a = snapAnchor(x, y, c, "ohlc", 60);
+        if (a && R.current.onPick) R.current.onPick(t, a, { paneId: R.current.paneId, tf: R.current.tf, bars: R.current.bars, meta: R.current.meta });
+        return;
+      }
       if (t !== "select") {
         interceptRef.current = true; stop(e);
         const a = snapAnchor(x, y, c, R.current.snapMode);
@@ -276,7 +306,7 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
         return;
       }
       if (t !== "select" && inside) {
-        const a = snapAnchor(x, y, c, R.current.snapMode);
+        const a = snapAnchor(x, y, c, t.startsWith("pick:") ? "ohlc" : R.current.snapMode, t.startsWith("pick:") ? 60 : 16);
         hoverRef.current = { x, y, anchor: a };
         const d = draftRef.current;
         if (d && d.tool === t) d.cursor = a;
@@ -333,7 +363,7 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
     host.addEventListener("pointerup", onUp, true);
     host.addEventListener("pointercancel", onUp, true);
     ["mousedown", "mouseup", "touchstart", "click"].forEach((n) => host.addEventListener(n, eat, true));
-    window.addEventListener("keydown", onKey);
+    if (R.current.chrome) window.addEventListener("keydown", onKey);
     return () => {
       host.removeEventListener("pointerdown", onDown, true); host.removeEventListener("pointermove", onMove, true);
       host.removeEventListener("pointerup", onUp, true); host.removeEventListener("pointercancel", onUp, true);
@@ -388,7 +418,7 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" data-testid="geometry-canvas" />
       </div>
 
-      <div className="absolute top-10 left-2 z-30 flex flex-col gap-0.5 rounded-md border border-border bg-card/95 p-1 shadow" data-geo-ui data-testid="geometry-toolbar">
+      {chrome && <Portal el={shared?.toolbarEl}><div className={`${shared?.toolbarEl ? "flex flex-wrap" : "absolute top-10 left-2 z-30 flex flex-col"} gap-0.5 rounded-md border border-border bg-card/95 p-1 shadow`} data-geo-ui data-testid="geometry-toolbar">
         {TOOLS.map((t) => (
           <button key={t.id} type="button" title={t.label} aria-label={t.label} aria-pressed={tool === t.id} data-testid={`geo-tool-${t.id}`}
             className={`h-7 min-w-7 px-1 rounded text-[11px] font-bold ${tool === t.id ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
@@ -401,16 +431,21 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
           onClick={(e) => { e.stopPropagation(); S.redo().catch((er) => setNote(errText(er))); }}>↷</button>
         <button type="button" className="h-7 rounded text-[11px] hover:bg-muted" title="Pannello geometrie" data-testid="geo-panel-toggle"
           onClick={(e) => { e.stopPropagation(); setPanelOpen((v) => !v); }}>☷</button>
-      </div>
+      </div></Portal>}
 
-      {tool !== "select" && (
+      {tool.startsWith("pick:") && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 rounded bg-primary text-primary-foreground border border-border px-2 py-0.5 text-[11px] font-mono" data-geo-ui data-testid={`geo-pick-hint-${paneId}`}>
+          {shared?.hint || "Clic su una candela"} · Esc annulla
+        </div>
+      )}
+      {tool !== "select" && !tool.startsWith("pick:") && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 rounded bg-card/95 border border-border px-2 py-0.5 text-[11px] font-mono" data-geo-ui data-testid="geo-hint">
           {TOOLS.find((t) => t.id === tool)?.label}: {ANCHORS_REQUIRED[tool]} {ANCHORS_REQUIRED[tool] === 1 ? "clic" : "ancoraggi (clic-clic o trascina)"} · Esc annulla · snap: {SNAP_MODES.find((s) => s[0] === snapMode)?.[1]}
         </div>
       )}
 
-      {panelOpen && (
-        <div className="absolute top-10 right-16 z-30 w-[300px] max-h-[calc(100%-3rem)] overflow-y-auto rounded-md border border-border bg-card/95 p-2 text-[11px] shadow" data-geo-ui data-testid="geometry-panel"
+      {chrome && panelOpen && (
+        <Portal el={shared?.panelEl}><div className={shared?.panelEl ? "w-full rounded-md border border-border bg-card/95 p-2 text-[11px]" : "absolute top-10 right-16 z-30 w-[300px] max-h-[calc(100%-3rem)] overflow-y-auto rounded-md border border-border bg-card/95 p-2 text-[11px] shadow"} data-geo-ui data-testid="geometry-panel"
           onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between gap-1">
             <b className="tracking-wide">GEOMETRIE · memoria grafica</b>
@@ -440,6 +475,17 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
               {SNAP_MODES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </Field>
+
+          <div className="mt-2 font-bold">Unità (separate)</div>
+          <div className="grid grid-cols-3 gap-1" data-testid="geo-units">
+            {[["pip_size", "pip"], ["point", "point"], ["tick_size", "tick"]].map(([k, lbl]) => (
+              <label key={k} className="text-[10px] text-muted-foreground">{lbl}
+                <input className={inputCls} data-testid={`geo-units-${k}`} inputMode="decimal" defaultValue={units?.[k] ?? ""} placeholder="n/d"
+                  onBlur={(e) => { const v = e.target.value.trim() === "" ? null : Number(e.target.value); if (v === null || (Number.isFinite(v) && v > 0)) setUnits({ ...units, [k]: v }); }} />
+              </label>
+            ))}
+          </div>
+          <div className="text-[10px] text-muted-foreground">Prezzo, pip, point e tick size non si convertono tra loro. Ricerca XAUUSD: 1 pip = 0,10 di prezzo (modificabile).</div>
 
           <div className="mt-2 font-bold">Livelli</div>
           {layers.map((l) => (
@@ -526,7 +572,7 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
                 onClick={() => S.archive(selected.geometry_id).then(() => setSelectedId(null)).catch((er) => setNote(errText(er)))}>Elimina (annullabile)</button>
             </div>
           )}
-        </div>
+        </div></Portal>
       )}
     </>
   );

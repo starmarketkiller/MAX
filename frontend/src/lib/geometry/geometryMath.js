@@ -150,11 +150,20 @@ export function formatDuration(sec) {
   const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
   return `${sec < 0 ? "-" : ""}${d ? d + "g " : ""}${h || d ? h + "h " : ""}${m}m`.trim();
 }
-export function rulerMetrics(a1, a2, bars, tfSec) {
+/** Unita' di ricerca: prezzo, pip, point e tick size restano grandezze SEPARATE. Convenzione iniziale XAUUSD/GOLD: 1 pip = 0,10 di prezzo. */
+export function defaultUnits(symbol) {
+  const gold = sameInstrument(symbol, "XAUUSD");
+  return { pip_size: gold ? 0.1 : null, point: null, tick_size: null };
+}
+export function toPips(priceDelta, pipSize) {
+  return pipSize && Number.isFinite(pipSize) && pipSize > 0 ? priceDelta / pipSize : null;
+}
+export function rulerMetrics(a1, a2, bars, tfSec, pipSize = null) {
   const dp = a2.price - a1.price;
   const i1 = timeToIndex(bars, a1.t, tfSec), i2 = timeToIndex(bars, a2.t, tfSec);
   return {
     dPrice: dp,
+    dPips: toPips(dp, pipSize),
     dPct: a1.price ? (dp / a1.price) * 100 : null,
     dBars: i1 == null || i2 == null ? null : Math.round(i2 - i1),
     dSeconds: a2.t - a1.t,
@@ -254,11 +263,11 @@ export function buildScene(g, ctx) {
     }
     case "ruler": {
       if (!pts[0] || !pts[1]) break;
-      const m = rulerMetrics(g.anchors[0], g.anchors[1], ctx.bars, ctx.tfSec);
+      const m = rulerMetrics(g.anchors[0], g.anchors[1], ctx.bars, ctx.tfSec, ctx.pipSize);
       prims.push({ kind: "line", x1: pts[0].x, y1: pts[0].y, x2: pts[1].x, y2: pts[1].y, dashed: true });
       prims.push({ kind: "rect", x: Math.min(pts[0].x, pts[1].x), y: Math.min(pts[0].y, pts[1].y), w: Math.abs(pts[1].x - pts[0].x), h: Math.abs(pts[1].y - pts[0].y), fill: true });
       label(Math.max(pts[0].x, pts[1].x) + 6, (pts[0].y + pts[1].y) / 2,
-        `Δ ${fmtPrice(m.dPrice)} (${m.dPct == null ? "—" : m.dPct.toFixed(2)}%) · ${m.dBars ?? "—"} barre · ${formatDuration(m.dSeconds)}`);
+        `Δ ${fmtPrice(m.dPrice)}${m.dPips == null ? "" : ` = ${Number(m.dPips.toFixed(1))} pip`} (${m.dPct == null ? "—" : m.dPct.toFixed(2)}%) · ${m.dBars ?? "—"} barre · ${formatDuration(m.dSeconds)}`);
       break;
     }
     default: break;

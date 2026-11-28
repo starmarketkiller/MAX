@@ -12,8 +12,8 @@ export const PRIMARY_WORKSPACES = Object.freeze([
   {
     id: "market", label: "Market", to: "/market", icon: CandlestickChart,
     summary: "Observed price action, operational context and scheduled events.",
-    routes: ["/market", "/chart", "/calendar"],
-    tabs: [{ label: "Workspace", to: "/market" }, { label: "Live chart", to: "/chart" }, { label: "Calendar", to: "/calendar" }],
+    routes: ["/market", "/chart", "/discovery", "/calendar"],
+    tabs: [{ label: "Workspace", to: "/market" }, { label: "Live chart", to: "/chart" }, { label: "Discovery Lab", to: "/discovery" }, { label: "Calendar", to: "/calendar" }],
   },
   {
     id: "research", label: "Research", to: "/research", icon: FlaskConical,

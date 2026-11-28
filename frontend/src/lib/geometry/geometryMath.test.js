@@ -1,7 +1,7 @@
 import {
   timeToIndex, indexToTime, project, unproject, snapAnchor, candleAnchor, freeAnchor, nearestBar,
   fibRetracementPrices, fibExtensionPrices, rulerMetrics, clipParametric, buildScene, sceneDistance, hitHandle,
-  translateAnchors, linearTimeAxis, semanticOptionsFor, sameInstrument, fmtTime, fmtPrice, ANCHORS_REQUIRED, formatDuration,
+  translateAnchors, linearTimeAxis, defaultUnits, toPips, semanticOptionsFor, sameInstrument, fmtTime, fmtPrice, ANCHORS_REQUIRED, formatDuration,
 } from "./geometryMath";
 
 const T0 = 1760000000;
@@ -233,5 +233,32 @@ describe("vocabolario e formattazione", () => {
     expect(sameInstrument("GOLD", "xauusd")).toBe(true); expect(sameInstrument("EURUSD", "GOLD")).toBe(false);
     expect(fmtTime(T0, "UTC")).toMatch(/UTC$/); expect(fmtTime(T0, "TERMINAL_EEST")).toMatch(/\(terminal\)$/);
     expect(fmtPrice(2650.123456789)).toBe("2650.12346"); expect(fmtPrice(null)).toBe("—");
+  });
+});
+
+
+describe("unita' e pip configurabili (prezzo, pip, point, tick restano separati)", () => {
+  test("convenzione iniziale XAUUSD/GOLD: 1 pip = 0,10 di prezzo; altri strumenti: nessun pip inventato", () => {
+    expect(defaultUnits("GOLD")).toEqual({ pip_size: 0.1, point: null, tick_size: null });
+    expect(defaultUnits("xauusd").pip_size).toBe(0.1);
+    expect(defaultUnits("EURUSD")).toEqual({ pip_size: null, point: null, tick_size: null });
+  });
+  test("toPips: configurabile, null se il pip non e' noto o non valido", () => {
+    expect(toPips(1.25, 0.1)).toBeCloseTo(12.5, 9);
+    expect(toPips(1.25, 0.01)).toBeCloseTo(125, 9);
+    expect(toPips(1.25, null)).toBeNull(); expect(toPips(1.25, 0)).toBeNull(); expect(toPips(1.25, -1)).toBeNull();
+  });
+  test("righello: i pip dipendono dalla configurazione, il prezzo no", () => {
+    const bars = mkBars(30);
+    const a1 = { t: T0, price: 2650 }, a2 = { t: T0 + 8 * TF, price: 2665 };
+    expect(rulerMetrics(a1, a2, bars, TF, 0.1).dPips).toBeCloseTo(150, 9);
+    expect(rulerMetrics(a1, a2, bars, TF, 0.01).dPips).toBeCloseTo(1500, 9);
+    expect(rulerMetrics(a1, a2, bars, TF, null).dPips).toBeNull();
+    expect(rulerMetrics(a1, a2, bars, TF, 0.1).dPrice).toBe(15);
+  });
+  test("etichetta del righello con pip", () => {
+    const ctx = mkCtx(mkBars(30), TF, { pipSize: 0.1 });
+    const sc = buildScene({ type: "ruler", clock_basis: "", style: {}, anchors: [{ t: T0 + 2 * TF, price: 2650 }, { t: T0 + 8 * TF, price: 2665 }] }, ctx);
+    expect(sc.prims.find((p) => p.kind === "label").text).toMatch(/^Δ 15 = 150 pip \(0\.57%\) · 6 barre · 1h 30m$/);
   });
 });
