@@ -133,7 +133,7 @@ try {
   for (let i = 0; i < 3; i++) await B.clickId(`pane-linked-${i}`);
   await sleep(300);
   const tTarget = P.time - 5 * 3600;
-  await B.setInput("ws-goto-input", fmtUtc(tTarget)); await B.clickId("ws-goto"); await sleep(1500);
+  await B.setInput("ws-goto-input", fmtUtc(tTarget)); await B.clickId("ws-goto"); await sleep(4500);   // oltre i 4 s di sospensione della propagazione dopo una navigazione (Historical-Expansion-01)
   const r2 = await ranges();
   check("05b sincronizzazione per timestamp: tutti i pane linked centrati sull'istante richiesto", r2.every((r, i) => Math.abs((r.from + r.to) / 2 - tTarget) < (r.to - r.from) * 0.15), r2.map((r) => fmtUtc((r.from + r.to) / 2)));
   const c0 = await B.ev("(() => { const r = document.querySelector('[data-testid=pane-canvas-1]').getBoundingClientRect(); return [r.x + r.width * 0.4, r.y + r.height * 0.88]; })()");
