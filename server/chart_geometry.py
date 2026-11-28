@@ -57,8 +57,20 @@ class GeometryError(Exception):
         self.code, self.message, self.status = code, message, status
 
 
+def _norm(o: Any) -> Any:
+    """Forma numerica canonica: un float di valore intero e' un intero (Python serializza 2.0, JavaScript 2).
+    Senza questo, un export che passa dal browser non rispetta piu' lo sha256 calcolato dal server."""
+    if isinstance(o, float) and o.is_integer() and abs(o) < 2 ** 53:
+        return int(o)
+    if isinstance(o, dict):
+        return {k: _norm(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [_norm(v) for v in o]
+    return o
+
+
 def canonical(obj: Any) -> str:
-    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+    return json.dumps(_norm(obj), sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
 
 
 def sha256_of(obj: Any) -> str:
@@ -430,8 +442,13 @@ class GeometryStore:
         existing = {k: cur[k] for k in TOP_KEYS if k in cur}
         # un oggetto bloccato accetta solo lo sblocco (style.locked=false) e cambi di stato/visibilita'
         if cur["style"].get("locked") and cur["status"] != "ARCHIVED":
-            allowed = {"style"}
-            if set(patch) - allowed or set(patch.get("style", {})) - {"locked", "visible"}:
+            # conta solo cio' che cambia davvero: un patch completo che ripete i valori attuali (undo/redo) non e' una modifica
+            changed = {k for k, v in patch.items() if k != "style" and _norm(cur.get(k)) != _norm(v)}
+            ps = patch.get("style") or {}
+            if not isinstance(ps, dict):
+                raise GeometryError("INVALID_STYLE", "style deve essere un oggetto")
+            changed |= {"style." + k for k, v in ps.items() if _norm(cur["style"].get(k)) != _norm(v)}
+            if changed - {"style.locked", "style.visible"}:
                 raise GeometryError("OBJECT_LOCKED", "oggetto bloccato: sbloccarlo prima di modificarlo", 423)
         merged_style = dict(cur["style"])
         if "style" in patch:

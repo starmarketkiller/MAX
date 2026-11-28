@@ -9,6 +9,19 @@ const pick = (g) => {
   PATCH_FIELDS.forEach((k) => { if (g[k] !== undefined) o[k] = JSON.parse(JSON.stringify(g[k])); });
   return o;
 };
+/** Patch minimo da `from` a `to`: solo i campi cambiati (per `style`, solo le chiavi cambiate). Evita di rimandare valori invariati. */
+export function diffPatch(from, to) {
+  const patch = {};
+  PATCH_FIELDS.forEach((k) => {
+    if (JSON.stringify(from[k]) === JSON.stringify(to[k])) return;
+    if (k === "style" && from.style && to.style) {
+      const st = {};
+      Object.keys(to.style).forEach((sk) => { if (JSON.stringify(from.style[sk]) !== JSON.stringify(to.style[sk])) st[sk] = to.style[sk]; });
+      if (Object.keys(st).length) patch.style = st;
+    } else if (to[k] !== undefined) patch[k] = to[k];
+  });
+  return patch;
+}
 export function errText(e) {
   const d = e?.response?.data?.detail;
   if (d && typeof d === "object") return `${d.code || "ERRORE"}${d.message ? `: ${d.message}` : ""}`;
@@ -113,6 +126,14 @@ export default function useGeometrySession({ enabled = true } = {}) {
     upsertLocal(data);
     return { before: pick(cur), after: pick(data), data };
   };
+  // undo/redo: riporta l'oggetto allo stato `target` inviando solo la differenza rispetto allo stato corrente
+  const restoreTo = async (gid, target) => {
+    const cur = geomsRef.current.find((g) => g.geometry_id === gid);
+    if (!cur) throw new Error("oggetto non presente");
+    const patch = diffPatch(pick(cur), target);
+    if (!Object.keys(patch).length) return cur;
+    return (await patchNow(gid, patch)).data;
+  };
 
   const update = useCallback((gid, patch, { record = true } = {}) => enqueue(async () => {
     try {
@@ -145,7 +166,7 @@ export default function useGeometrySession({ enabled = true } = {}) {
     try {
       if (op.kind === "create") await statusNow(op.gid, "archive");
       else if (op.kind === "archive") await statusNow(op.gid, "restore");
-      else await patchNow(op.gid, op.before);
+      else await restoreTo(op.gid, op.before);
       redoRef.current.push(op); bump(); ok();
       return op;
     } catch (e) { undoRef.current.push(op); bump(); return fail(e); }
@@ -157,7 +178,7 @@ export default function useGeometrySession({ enabled = true } = {}) {
     try {
       if (op.kind === "create") await statusNow(op.gid, "restore");
       else if (op.kind === "archive") await statusNow(op.gid, "archive");
-      else await patchNow(op.gid, op.after);
+      else await restoreTo(op.gid, op.after);
       undoRef.current.push(op); bump(); ok();
       return op;
     } catch (e) { redoRef.current.push(op); bump(); return fail(e); }

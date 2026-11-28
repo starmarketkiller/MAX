@@ -1,7 +1,7 @@
 import {
   timeToIndex, indexToTime, project, unproject, snapAnchor, candleAnchor, freeAnchor, nearestBar,
   fibRetracementPrices, fibExtensionPrices, rulerMetrics, clipParametric, buildScene, sceneDistance, hitHandle,
-  translateAnchors, semanticOptionsFor, sameInstrument, fmtTime, fmtPrice, ANCHORS_REQUIRED, formatDuration,
+  translateAnchors, linearTimeAxis, semanticOptionsFor, sameInstrument, fmtTime, fmtPrice, ANCHORS_REQUIRED, formatDuration,
 } from "./geometryMath";
 
 const T0 = 1760000000;
@@ -70,6 +70,27 @@ describe("proiezione dati <-> schermo", () => {
   });
   test("scala non pronta (null) -> nessuna proiezione, nessun crash", () => {
     expect(project({ t: T0, price: 1 }, mkCtx(bars, TF, { yOf: () => null }))).toBeNull();
+  });
+});
+
+describe("asse temporale lineare (regressione: logicalToCoordinate frazionario = 0 nel browser reale)", () => {
+  test("proiezione e inversione continue, esatte anche per indici frazionari", () => {
+    const ax = linearTimeAxis(4.78, 16.34);
+    expect(ax.xOf(0)).toBeCloseTo(4.78, 9); expect(ax.xOf(1)).toBeCloseTo(16.34, 9);
+    expect(ax.xOf(83.75)).toBeCloseTo(4.78 + 83.75 * 11.56, 9);
+    for (const i of [0, 0.25, 7.5, 88, 99.25, -3.4, 250.75]) expect(ax.idxOf(ax.xOf(i))).toBeCloseTo(i, 9);
+  });
+  test("round trip tempo -> x -> tempo senza quantizzazione alla barra (clic libero esatto)", () => {
+    const bars = mkBars(120, 3600), ax = linearTimeAxis(4.78, 16.34);
+    const ctx = mkCtx(bars, 3600, { xOf: ax.xOf, idxOf: ax.idxOf });
+    for (const t of [T0 + 83.75 * 3600, T0 + 91 * 3600 + 1234, T0 + 100.25 * 3600]) {
+      const p = project({ t, price: 2650 }, ctx);
+      expect(p.x).toBeGreaterThan(900);
+      expect(unproject(p.x, p.y, ctx).t).toBe(t);
+    }
+  });
+  test("scala degenere o non pronta -> null (nessun disegno, nessun crash)", () => {
+    expect(linearTimeAxis(null, 5)).toBeNull(); expect(linearTimeAxis(5, 5)).toBeNull(); expect(linearTimeAxis(NaN, 1)).toBeNull(); expect(linearTimeAxis(10, 4)).toBeNull();
   });
 });
 

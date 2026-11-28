@@ -69,6 +69,16 @@ export function indexToTime(bars, idx, tfSec) {
   return Math.round(bars[i].time + f * (bars[i + 1].time - bars[i].time));
 }
 
+/** Asse temporale lineare dall'indice logico alla coordinata x, ricavato da DUE punti interi (x(0), x(1)).
+ *  Necessario perche' logicalToCoordinate() di lightweight-charts e' affidabile solo per indici interi
+ *  (per i frazionari restituisce 0) e coordinateToLogical() restituisce indici interi: la scala e' lineare, quindi
+ *  la proiezione continua (e il clic libero esatto) si ottengono qui. */
+export function linearTimeAxis(x0, x1) {
+  const step = x1 - x0;
+  if (!Number.isFinite(x0) || !Number.isFinite(x1) || !(step > 0)) return null;
+  return { xOf: (idx) => x0 + idx * step, idxOf: (x) => (x - x0) / step, step };
+}
+
 // ctx = { bars, tfSec, xOf(idx)->px|null, yOf(price)->px|null, idxOf(px)->idx|null, priceOf(px)->price|null, width, height }
 export function project(anchor, ctx) {
   const idx = timeToIndex(ctx.bars, anchor.t, ctx.tfSec);

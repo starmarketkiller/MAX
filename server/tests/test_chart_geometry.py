@@ -212,6 +212,18 @@ def test_lock_blocks_edit_and_delete_but_allows_unlock(store, sess):
     assert store.update_object("alice", sess, gid, {"name": "n"}, 2)["name"] == "n"
 
 
+def test_lock_allows_full_style_patch_that_changes_only_lock_or_visibility(store, sess):
+    """Regressione trovata nel browser reale: redo di uno sblocco rimanda l'intero stile; non e' una modifica."""
+    o = store.create_object("alice", sess, diag(style={"locked": True, "width": 3}))
+    full_unlock = dict(o["style"], locked=False)
+    u = store.update_object("alice", sess, o["geometry_id"], {"style": full_unlock, "name": o["name"]}, 1)
+    assert u["style"]["locked"] is False
+    relock = store.update_object("alice", sess, o["geometry_id"], {"style": dict(u["style"], locked=True)}, 2)
+    with pytest.raises(cg.GeometryError) as e:
+        store.update_object("alice", sess, o["geometry_id"], {"style": dict(relock["style"], width=5)}, 3)
+    assert e.value.code == "OBJECT_LOCKED"
+
+
 def test_links_between_geometries_and_relation_vocabulary(store, sess):
     a = store.create_object("alice", sess, diag(name="a"))
     b = store.create_object("alice", sess, diag(name="b", links=[{"geometry_id": a["geometry_id"], "relation": "PAIRED_WITH"}]))
@@ -309,6 +321,29 @@ def test_import_rejects_tampered_files_and_leaves_no_residue(store, sess):
     assert len(store.list_sessions("alice")) == n and before + 1 == n
     with pytest.raises(cg.GeometryError):
         store.import_session("alice", {"schema": "x"})
+
+
+def js_roundtrip(doc):
+    """Simula il passaggio dal browser: JSON.parse/stringify serializza 2.0 come 2."""
+    def fix(o):
+        if isinstance(o, float) and o.is_integer():
+            return int(o)
+        if isinstance(o, dict):
+            return {k: fix(v) for k, v in o.items()}
+        if isinstance(o, list):
+            return [fix(v) for v in o]
+        return o
+    return fix(doc)
+
+
+def test_export_hash_survives_javascript_number_serialization(store, sess):
+    """Regressione trovata nel browser reale: width 2.0 -> 2 cambiava lo sha256 e l'import veniva rifiutato."""
+    store.create_object("alice", sess, diag(style={"width": 2, "fill_opacity": 0}))
+    store.create_object("alice", sess, diag(type="fib_retracement", anchors=[anchor(T0, 2650), anchor(T0 + 600, 2670)], fib_levels=[0, 0.5, 1]))
+    exp = store.export_session("alice", sess)
+    assert cg.sha256_of({k: v for k, v in js_roundtrip(exp).items() if k != "sha256"}) == exp["sha256"]
+    meta = store.import_session("alice", js_roundtrip(exp), name="via browser")
+    assert cg.comparable(store.export_session("alice", meta["session_id"])["geometries"]) == cg.comparable(exp["geometries"])
 
 
 def test_import_into_other_owner_is_isolated(store, sess):

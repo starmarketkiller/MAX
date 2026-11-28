@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useGeometrySession, { errText } from "@/lib/geometry/useGeometrySession";
 import {
   TOOLS, ANCHORS_REQUIRED, SEMANTIC_CLASSES, semanticOptionsFor, TF_SECONDS, buildScene, sceneDistance, hitHandle, snapAnchor,
-  translateAnchors, unproject, fmtPrice, fmtTime, nearestBar, candleAnchor, freeAnchor, sameInstrument, OHLC,
+  translateAnchors, unproject, project, linearTimeAxis, fmtPrice, fmtTime, nearestBar, candleAnchor, freeAnchor, sameInstrument, OHLC,
 } from "@/lib/geometry/geometryMath";
 
 const SWATCHES = ["#2962ff", "#ef4444", "#16a34a", "#f59e0b", "#a855f7", "#06b6d4", "#e5e7eb", "#111827"];
@@ -73,9 +73,11 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
     let width = el.clientWidth, height = el.clientHeight;
     try { const w = ts.width(); if (w > 0) width = w; } catch (err) { void err; }
     try { const p = chart.paneSize ? chart.paneSize(0) : null; if (p && p.height > 0) height = p.height; } catch (err) { void err; }
+    const axis = linearTimeAxis(ts.logicalToCoordinate(0), ts.logicalToCoordinate(1));   // scala lineare: vedi linearTimeAxis
+    if (!axis) return null;
     return {
       bars: b, tfSec: TF_SECONDS[R.current.tf] || 900, width, height,
-      xOf: (i) => ts.logicalToCoordinate(i), idxOf: (x) => ts.coordinateToLogical(x),
+      xOf: axis.xOf, idxOf: axis.idxOf,
       yOf: (p) => series.priceToCoordinate(p), priceOf: (y) => series.coordinateToPrice(y),
     };
   }, [chartRef, seriesRef]);
@@ -131,10 +133,15 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
     const c = getCtx();
     if (!c) return;
     k.save(); k.beginPath(); k.rect(0, 0, c.width, c.height); k.clip();
+    const proj = [];
     for (const g of visibleRef.current) {
       const ov = overrideRef.current[g.geometry_id];
-      drawGeom(ov ? { ...g, anchors: ov } : g, c, k, { selected: g.geometry_id === R.current.selectedId });
+      const gg = ov ? { ...g, anchors: ov } : g;
+      drawGeom(gg, c, k, { selected: g.geometry_id === R.current.selectedId });
+      if (proj.length < 60) proj.push({ id: g.geometry_id, type: g.type, pts: gg.anchors.map((a) => { const p = project(a, c); return p ? [Math.round(p.x * 10) / 10, Math.round(p.y * 10) / 10] : null; }) });
     }
+    canvas.dataset.dbg = JSON.stringify({ w: c.width, h: c.height, n: c.bars.length, tf: R.current.tf, x0: c.xOf(0), x100: c.xOf(100), vr: (() => { try { return chartRef.current.timeScale().getVisibleLogicalRange(); } catch (err) { return null; } })() });
+    canvas.dataset.proj = JSON.stringify(proj);       // proiezione corrente (diagnostica di sola lettura, usata dalla verifica nel browser)
     const d = draftRef.current;
     if (d) {
       const anchors = d.cursor ? [...d.anchors, d.cursor] : d.anchors;
@@ -166,7 +173,7 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
         try {
           const r = chart.timeScale().getVisibleLogicalRange();
           const b = R.current.bars;
-          sig = [el.clientWidth, el.clientHeight, r ? r.from.toFixed(3) : "", r ? r.to.toFixed(3) : "", series.priceToCoordinate(1000), series.priceToCoordinate(3000), b.length, b.length ? b[b.length - 1].time : 0, R.current.tf, epoch].join("|");
+          sig = [el.clientWidth, el.clientHeight, r ? r.from.toFixed(3) : "", r ? r.to.toFixed(3) : "", series.priceToCoordinate(1000), series.priceToCoordinate(3000), chart.timeScale().logicalToCoordinate(0), chart.timeScale().logicalToCoordinate(100), b.length, b.length ? b[b.length - 1].time : 0, R.current.tf, epoch].join("|");
         } catch (err) { sig = "err"; }
       }
       if (sig !== sigRef.current || dirtyRef.current) { sigRef.current = sig; dirtyRef.current = false; draw(); }
