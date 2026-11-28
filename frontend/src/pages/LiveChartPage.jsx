@@ -8,6 +8,7 @@ import api from "@/lib/api";
 import { useVisiblePolling } from "@/lib/useVisiblePolling";
 import CoachLiveWidget from "@/components/CoachLiveWidget";
 import DataProvenanceBadge from "@/components/DataProvenanceBadge";
+import GeometryLayer from "@/components/GeometryLayer";
 import { useTheme } from "@/lib/theme";
 
 const TF_OPTIONS = ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN1"];
@@ -822,6 +823,8 @@ export default function LiveChartPage({ embedded = false }) {
 
       <div className="relative flex-1 min-h-0">
         <div ref={containerRef} className="absolute inset-x-0 top-0 bottom-1" data-testid="chart-canvas" />
+        {/* CHART-GEOMETRY-01: strumenti geometrici manuali + memoria grafica persistente (non tocca dati, markers ne' guardia) */}
+        <GeometryLayer chartRef={chartRef} seriesRef={candleSeriesRef} bars={bars} meta={meta} symbol={symbol} tf={tf} source={source} epoch={epoch} dark={theme === "dark"} />
 
         {hover && (
           <div className="absolute top-2 left-2 z-20 rounded-md bg-card/90 border border-border px-2 py-1 text-[11px] font-mono pointer-events-none" data-testid="chart-ohlc-readout">

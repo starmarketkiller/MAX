@@ -43,7 +43,7 @@ SEMANTIC_SHAPES = {
     "INNER_SPACE": {"rectangle", "price_band"}, "REACTION_ZONE": {"rectangle", "price_band"},
     "CONTINUATION_ZONE": {"rectangle", "price_band"},
 }
-TOP_KEYS = {"type", "symbol", "dataset_id", "source", "timeframe_origin", "anchors", "semantic", "name",
+TOP_KEYS = {"type", "symbol", "dataset_id", "source", "clock_basis", "timeframe_origin", "anchors", "semantic", "name",
             "description", "style", "text", "links", "evidence", "status", "fib_levels"}
 STYLE_KEYS = {"color", "width", "dash", "visible", "locked", "layer", "fill_opacity", "extend", "show_labels"}
 DEFAULT_STYLE = {"color": "#2962ff", "width": 2, "dash": "solid", "visible": True, "locked": False,
@@ -205,6 +205,7 @@ def validate_body(body: Any, *, existing: Optional[Dict[str, Any]] = None) -> Di
         "type": ttype, "symbol": symbol.upper(), "timeframe_origin": tf, "anchors": anchors, "semantic": out_sem,
         "dataset_id": _str(merged.get("dataset_id", ""), "dataset_id", 200),
         "source": _str(merged.get("source", ""), "source", 80),
+        "clock_basis": _str(merged.get("clock_basis", ""), "clock_basis", 120),     # orologio degli orari originali degli ancoraggi
         "name": _str(merged.get("name", ""), "name", MAX_NAME),
         "description": _str(merged.get("description", ""), "description", MAX_TEXT),
         "style": validate_style(merged.get("style")),

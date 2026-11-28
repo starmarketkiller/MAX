@@ -280,6 +280,7 @@ test("richieste annullate: il cambio di contesto aborta le richieste in volo (si
   api.get.mockImplementation(async (url, opts) => {
     if (url.startsWith("/chart/sources")) return { data: { status: "AVAILABLE", sources: [SOURCE, DS2], default_source: "DS1" } };
     if (url.startsWith("/chart/markers")) return { data: { trades: [], open: [], shadows: [], visuals: [] } };
+    if (url.startsWith("/chart/geometry")) return { data: { sessions: [] } };   // CHART-GEOMETRY-01: la memoria grafica non e' una richiesta OHLC
     signals.push(opts?.signal);
     return new Promise(() => {});
   });
