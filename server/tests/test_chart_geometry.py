@@ -505,3 +505,48 @@ def test_stored_geometry_carries_the_causal_and_provenance_fields_the_future_rep
     for k in ("created_at", "available_at", "revision", "timeframe_origin", "dataset_id", "clock_basis", "links", "evidence", "origin", "author"):
         assert k in o
     assert o["anchors"][0]["ref"]["projection_id"] is None
+
+
+# ---------------------------------------------------------------- ADDENDUM: Reverse Discovery Lab (solo contratto)
+RDL = json.loads((SERVER / "reverse_discovery_lab_contract_v1.json").read_text(encoding="utf-8"))
+
+
+def test_rdl_three_modes_are_strictly_separated():
+    m = RDL["modes"]
+    assert set(m) == {"RETROSPECTIVE_DISCOVERY", "CAUSAL_REPLAY", "EMPIRICAL_VALIDATION"}
+    assert m["RETROSPECTIVE_DISCOVERY"]["future_visible"] is True and m["CAUSAL_REPLAY"]["future_visible"] is False
+    assert any("available_at <= simulated_t" in m["CAUSAL_REPLAY"]["visibility_rule"] for _ in [0])
+    assert any("RETROSPECTIVE" in x for x in m["CAUSAL_REPLAY"]["must_not"])               # niente futuro dalla retrospettiva al replay
+    assert any("holdout" in x for x in m["EMPIRICAL_VALIDATION"]["must_not"])
+    assert any("preregistrazione" in x for x in m["EMPIRICAL_VALIDATION"]["preconditions"])
+    assert any("disgiunta" in x for x in m["EMPIRICAL_VALIDATION"]["preconditions"])
+    assert not (set(m["RETROSPECTIVE_DISCOVERY"]["may_write"]) & {"statistical_measurements", "validation_verdicts"})
+
+
+def test_rdl_levels_do_not_promote_each_other_and_cover_the_twelve_capabilities():
+    assert set(RDL["epistemic_levels"]) == {"GEOMETRIC_ASSOCIATION", "CAUSAL_EXPLANATION_CANDIDATE", "PREDICTIVE_EDGE_VALIDATED"}
+    assert "EMPIRICAL_VALIDATION" in RDL["modes"] and "11_analog_no_reversal_cases" in RDL["capabilities"]
+    assert len(RDL["capabilities"]) == 12 and RDL["status"] == "CONTRACT_ONLY_NOT_IMPLEMENTED"
+    assert RDL["capabilities"]["7_manual_explanations"]["level_default"] == "CAUSAL_EXPLANATION_CANDIDATE"
+    assert any("holdout" in x for x in RDL["invariants"])
+
+
+def test_rdl_reserved_fields_are_not_writable_geometry_fields_and_geometry_has_no_mode():
+    reserved = set(RDL["geometry_01_compatibility"]["reserved_not_writable_now"])
+    assert reserved and not (reserved & cg.TOP_KEYS)
+    assert reserved <= set(FUTURE["rejected_geometry_fields"])
+    assert "epistemic_mode" not in cg.VOCAB and "epistemic_mode" not in cg.TOP_KEYS
+
+
+@pytest.mark.parametrize("field", ["epistemic_mode", "discovery_session_id", "move_id", "explanation", "hypothesis_id", "preregistration_hash"])
+def test_api_rejects_discovery_fields_so_a_geometry_cannot_claim_a_mode(store, sess, field):
+    with pytest.raises(cg.GeometryError) as e:
+        store.create_object("alice", sess, diag(**{field: "CAUSAL_REPLAY"}))
+    assert e.value.code == "UNKNOWN_FIELD"
+
+
+def test_current_available_at_fails_safe_for_a_future_causal_replay(store, sess):
+    """Una geometria disegnata ora (available_at = adesso) non e' visibile in un replay a tempo simulato passato."""
+    o = store.create_object("alice", sess, diag())
+    simulated_t = T0                                   # istante di mercato passato
+    assert o["available_at"] > simulated_t

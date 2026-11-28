@@ -1,0 +1,69 @@
+{
+  "schema": "NEXUS_REVERSE_DISCOVERY_LAB_CONTRACT_V1",
+  "status": "CONTRACT_ONLY_NOT_IMPLEMENTED",
+  "mission": "NEXUS-REVERSE-DISCOVERY-LAB-01 (missione dedicata, successiva alla disponibilita' di geometrie, memoria e navigazione multiscala sincronizzata)",
+  "method": "Osservare uno storico H4 completo, identificare i cambi di direzione piu' significativi, tornare alle origini e investigare geometrie, strutture e fenomeni presenti PRIMA dell'evento.",
+  "modes": {
+    "RETROSPECTIVE_DISCOVERY": {
+      "future_visible": true,
+      "purpose": "individuare fenomeni e formulare ipotesi",
+      "data_scope": "solo intervalli autorizzati e classificati come discovery/sviluppo (stessa guardia di partizione della Chart)",
+      "may_write": ["move_catalog", "reversal_points", "pre_event_geometry_links", "explanations_as_hypotheses", "strategy_knowledge_links", "evidence_archive", "analog_cases"],
+      "must_not": ["produrre statistiche presentate come validazione", "marcare un'ipotesi come causale o predittiva", "alimentare direttamente CAUSAL_REPLAY con coordinate, soglie o parametri tarati sul futuro"],
+      "output_label": "DISCOVERY_ONLY"
+    },
+    "CAUSAL_REPLAY": {
+      "future_visible": false,
+      "purpose": "simulare cio' che era conoscibile al timestamp simulato",
+      "visibility_rule": "un oggetto e' visibile solo se available_at <= simulated_t; barre solo se chiuse a simulated_t",
+      "may_write": ["geometries_with_available_at_equal_simulated_time", "replay_decisions_as_notes"],
+      "must_not": ["leggere dati con tempo > simulated_t", "mostrare geometrie, annotazioni, catalogo movimenti o spiegazioni create in RETROSPECTIVE_DISCOVERY (hanno visto il futuro)", "retrodatare available_at"],
+      "output_label": "REPLAY_ONLY"
+    },
+    "EMPIRICAL_VALIDATION": {
+      "future_visible": "solo nella valutazione, mai nella formulazione dell'ipotesi",
+      "purpose": "valutare ipotesi preregistrate su dati autorizzati, con controlli e separazione temporale",
+      "preconditions": ["preregistrazione immutabile (hash) di definizione, metrica, soglie, controlli e dataset PRIMA dell'accesso ai dati di valutazione", "finestra di valutazione disgiunta e successiva a quella di scoperta", "controlli negativi e casi analoghi privi di inversione inclusi", "denominatore dichiarato e correzione per prove multiple"],
+      "may_write": ["statistical_measurements", "validation_verdicts"],
+      "must_not": ["modificare l'ipotesi dopo aver visto i risultati", "riusare la finestra di scoperta come validazione", "accedere a locked_validation o final_holdout"],
+      "output_label": "VALIDATION_RESULT"
+    }
+  },
+  "invariants": [
+    "flusso di informazione a senso unico: RETROSPECTIVE -> (testo dell'ipotesi, preregistrato) -> EMPIRICAL_VALIDATION; mai RETROSPECTIVE -> CAUSAL_REPLAY come dati",
+    "nessuna modalita' accede a holdout o partizioni sigillate: vale la guardia di partizione esistente, non una regola dell'interfaccia",
+    "ogni record porta epistemic_mode immutabile e available_at; il cambio di modalita' non riclassifica record esistenti",
+    "associazione geometrica, spiegazione causale ed edge predittivo sono livelli distinti e non si promuovono a vicenda"
+  ],
+  "epistemic_levels": {
+    "GEOMETRIC_ASSOCIATION": "una geometria/struttura era presente prima dell'evento (descrittivo)",
+    "CAUSAL_EXPLANATION_CANDIDATE": "ipotesi di meccanismo formulata dall'utente (non verificata)",
+    "PREDICTIVE_EDGE_VALIDATED": "solo il risultato di EMPIRICAL_VALIDATION con preregistrazione e controlli superati"
+  },
+  "capabilities": {
+    "1_authorized_interval_selection": {"depends_on": "guardia di partizione e finestre autorizzate della Chart", "geometry_01": "riuso"},
+    "2_move_catalog": {"entity": "MoveCatalogEntry", "sources": ["MANUAL", "AUTO(futuro, detector_version)"], "geometry_01": "predisposto: geometrie manuali ancorate a (t, price)"},
+    "3_classification": {"axes": ["amplitude", "duration", "structural_scale"], "note": "soglie e scale NON definite: da definire dall'owner (cfr. tre scale geometriche NOT_DEFINED)"},
+    "4_reversal_navigation": {"entity": "ReversalPoint", "geometry_01": "predisposto: go-to di tempo/prezzo gia' presente nella Chart"},
+    "5_pre_event_geometry_analysis": {"entity": "PreEventGeometryLink", "geometry_01": "predisposto: links[] con relation, geometry_id, available_at"},
+    "6_multiscale_sync": {"prerequisite_mission": true, "geometry_01": "predisposto: stessi (t, price) su ogni timeframe; sincronizzazione non implementata"},
+    "7_manual_explanations": {"entity": "Explanation", "level_default": "CAUSAL_EXPLANATION_CANDIDATE", "geometry_01": "predisposto: description/annotation testuali, NON causali"},
+    "8_strategy_knowledge_comparison": {"entity": "StrategyKnowledgeLink", "source": "contracts/strategy-registry.json (83 strategie, 0 validate)", "rule": "solo riferimento di lettura; una strategia non convalida una spiegazione e viceversa"},
+    "9_causal_replay": {"prerequisite_mission": true, "geometry_01": "predisposto: available_at, created_at; regola di visibilita' definita qui"},
+    "10_evidence_archive": {"entity": "EvidenceArchiveItem", "geometry_01": "predisposto: evidence[] e export/import con sha256"},
+    "11_analog_no_reversal_cases": {"entity": "AnalogCase", "rule": "ogni caso con inversione richiede la raccolta dei casi analoghi senza inversione con la stessa regola di selezione, definita prima", "geometry_01": "nessuno"},
+    "12_statistical_measurement": {"entity": "StatisticalMeasurement", "mode": "EMPIRICAL_VALIDATION", "geometry_01": "nessuno"}
+  },
+  "entities_reserved": ["MoveCatalogEntry", "ReversalPoint", "PreEventGeometryLink", "Explanation", "StrategyKnowledgeLink", "EvidenceArchiveItem", "AnalogCase", "Preregistration", "StatisticalMeasurement"],
+  "geometry_01_compatibility": {
+    "already_provided": ["coordinate di dato (t, price)", "available_at e created_at", "origin MANUAL", "links[] fra geometrie", "evidence[]", "revisioni append-only", "export/import con hash", "isolamento per utente", "memory_domain GRAPHICAL separato"],
+    "reserved_not_writable_now": ["epistemic_mode", "discovery_session_id", "move_id", "reversal_id", "explanation", "hypothesis_id", "preregistration_hash"],
+    "required_when_implemented": [
+      "epistemic_mode (RETROSPECTIVE_DISCOVERY | CAUSAL_REPLAY | EMPIRICAL_VALIDATION) immutabile su ogni geometria creata in una sessione di discovery",
+      "in CAUSAL_REPLAY il caricatore esclude per costruzione ogni record con epistemic_mode RETROSPECTIVE_DISCOVERY",
+      "in CAUSAL_REPLAY available_at = tempo simulato di creazione (mai il tempo reale)"
+    ],
+    "current_safe_default": "available_at coincide con il tempo reale di creazione: una geometria disegnata oggi su dati passati risulterebbe non visibile in un replay a tempo simulato passato (fallimento sicuro, non perdita di futuro)"
+  },
+  "sequencing": "Missione dedicata DOPO: geometrie (fatto, in review), memoria (fatto, in review), navigazione multiscala sincronizzata (da fare), replay causale (da fare). Prima di avviarla servono le decisioni dell'owner su soglie di ampiezza/durata/scala e sulle sei proiezioni delle candele."
+}

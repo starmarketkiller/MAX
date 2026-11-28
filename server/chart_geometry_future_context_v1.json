@@ -9,7 +9,11 @@
   "geometric_scales": {
     "status": "NOT_DEFINED",
     "reserved_field": "scale",
-    "values": ["SCALE_1", "SCALE_2", "SCALE_3"],
+    "values": [
+      "SCALE_1",
+      "SCALE_2",
+      "SCALE_3"
+    ],
     "note": "Le tre scale geometriche non hanno confini definiti nel repository: nessuna soglia e' imposta. Il campo e' riservato e non scrivibile finche' l'owner non definisce le scale (cfr. MULTISCALE_GEOMETRY_SPEC)."
   },
   "multitimeframe": {
@@ -25,14 +29,40 @@
   },
   "causal_replay": {
     "status": "FIELDS_PRESENT",
-    "fields": ["created_at", "available_at"],
+    "fields": [
+      "created_at",
+      "available_at"
+    ],
     "rule": "available_at e' l'istante da cui l'oggetto e' conoscibile; in replay una geometria non deve essere visibile prima di available_at (la UI di replay non e' parte di questa consegna).",
     "reserved_field": "replay_bar_close"
   },
   "contact_events": {
     "status": "RESERVED_EMPIRICAL_DOMAIN",
-    "event_types": ["APPROACH", "CONTACT", "PENETRATION", "RECOVERY", "REACTION", "BREAK", "RETEST", "ROLE_CHANGED", "INVALIDATED"],
-    "event_record_fields": ["event_id", "geometry_id", "geometry_revision", "event_type", "bar_t", "price", "dataset_id", "timeframe", "available_at", "observed_by", "engine_version", "definition_ref"],
+    "event_types": [
+      "APPROACH",
+      "CONTACT",
+      "PENETRATION",
+      "RECOVERY",
+      "REACTION",
+      "BREAK",
+      "RETEST",
+      "ROLE_CHANGED",
+      "INVALIDATED"
+    ],
+    "event_record_fields": [
+      "event_id",
+      "geometry_id",
+      "geometry_revision",
+      "event_type",
+      "bar_t",
+      "price",
+      "dataset_id",
+      "timeframe",
+      "available_at",
+      "observed_by",
+      "engine_version",
+      "definition_ref"
+    ],
     "rules": [
       "observed_by e' sempre un motore causale (ENGINE) con engine_version e definition_ref: mai l'utente tramite l'API delle geometrie",
       "gli eventi sono append-only e si riferiscono a (geometry_id, geometry_revision): modificare una geometria non riscrive gli eventi passati",
@@ -52,5 +82,29 @@
       "ogni interpretazione e' un record separato con autore JARVIS, evidenze e available_at, mai un campo della geometria"
     ]
   },
-  "rejected_geometry_fields": ["scale", "projected_scale_links", "replay_bar_close", "events", "interaction_history", "interpretation", "signal", "order", "side", "lots", "sl", "tp", "role", "consumption", "observed_by"]
+  "rejected_geometry_fields": [
+    "consumption",
+    "discovery_session_id",
+    "epistemic_mode",
+    "events",
+    "explanation",
+    "hypothesis_id",
+    "interaction_history",
+    "interpretation",
+    "lots",
+    "move_id",
+    "observed_by",
+    "order",
+    "preregistration_hash",
+    "projected_scale_links",
+    "replay_bar_close",
+    "reversal_id",
+    "role",
+    "scale",
+    "side",
+    "signal",
+    "sl",
+    "tp"
+  ],
+  "reverse_discovery_lab": "vedi reverse_discovery_lab_contract_v1.json"
 }
