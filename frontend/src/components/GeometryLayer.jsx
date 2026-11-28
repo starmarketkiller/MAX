@@ -66,7 +66,7 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
 
   // ---- stato corrente leggibile dai gestori nativi (che vivono fuori dal ciclo di render) ----
   const R = useRef({});
-  R.current = { tool, snapMode, selectedId, geoms, layers, bars, meta, symbol, tf, source, activeLayer, S, onPick, paneId, chrome, pipSize: units?.pip_size || null };
+  R.current = { tool, snapMode, selectedId, geoms, layers, bars, meta, symbol, tf, source, activeLayer, S, onPick, paneId, chrome, pipSize: units?.pip_size || null, marks: shared?.marks || null };
   useEffect(() => { if (selectedId && chrome) setPanelOpen(true); }, [selectedId, chrome]);
   const draftRef = useRef(null);          // { tool, anchors:[], cursor, downXY, down }
   const dragRef = useRef(null);           // { gid, mode:'handle'|'move', i, start, base }
@@ -79,7 +79,7 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
   const dark_ = useRef(dark); dark_.current = dark;
 
   const dirty = () => { dirtyRef.current = true; };
-  useEffect(dirty, [geoms, layers, selectedId, tool, tick, bars, dark, units?.pip_size]);   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(dirty, [geoms, layers, selectedId, tool, tick, bars, dark, units?.pip_size, shared?.marks]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   const layerState = useMemo(() => Object.fromEntries(layers.map((l) => [l.layer_id, l])), [layers]);
   const visibleGeoms = useMemo(() => geoms.filter((g) => g.status === "ACTIVE" && g.style?.visible !== false
@@ -164,6 +164,22 @@ export default function GeometryLayer({ chartRef, seriesRef, bars, meta, symbol,
       if (proj.length < 60) proj.push({ id: g.geometry_id, type: g.type, pts: gg.anchors.map((a) => { const p = project(a, c); return p ? [Math.round(p.x * 10) / 10, Math.round(p.y * 10) / 10] : null; }) });
     }
     canvas.dataset.dbg = JSON.stringify({ w: c.width, h: c.height, n: c.bars.length, tf: R.current.tf, x0: c.xOf(0), x100: c.xOf(100), y1000: c.yOf(1000), y3000: c.yOf(3000), vr: (() => { try { return chartRef.current.timeScale().getVisibleLogicalRange(); } catch (err) { return null; } })() });
+    // marcatori delle schede evento (pivot): triangolo pieno = inversione, vuoto = caso senza inversione; arancione = scheda in studio
+    const marks = [];
+    for (const m of R.current.marks || []) {
+      if (!sameInstrument(m.symbol, R.current.symbol)) continue;
+      const p = project({ t: m.t, price: m.price }, c);
+      if (!p) continue;
+      marks.push({ id: m.id, x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10 });
+      k.save();
+      const col = m.selected ? "#f59e0b" : "#a855f7", up = m.kind === "LOW", s0 = up ? 4 : -4, s1 = up ? 15 : -15;
+      k.beginPath(); k.moveTo(p.x, p.y + s0); k.lineTo(p.x - 6, p.y + s1); k.lineTo(p.x + 6, p.y + s1); k.closePath();
+      k.lineWidth = 2; k.strokeStyle = col; k.fillStyle = col;
+      if (m.outcome === "NO_REVERSAL") k.stroke(); else k.fill();
+      if (m.selected && m.name) { k.font = "bold 10px ui-monospace, Menlo, monospace"; k.textAlign = "left"; k.lineWidth = 3; k.strokeStyle = dark_.current ? "#0b0f19" : "#ffffff"; k.strokeText(m.name, p.x + 9, p.y + s1); k.fillText(m.name, p.x + 9, p.y + s1); }
+      k.restore();
+    }
+    canvas.dataset.marks = JSON.stringify(marks);
     canvas.dataset.rulers = JSON.stringify(visibleRef.current.filter((g) => g.type === "ruler").map((g) => ({ id: g.geometry_id, text: (buildScene(g, c).prims.find((p) => p.kind === "label") || {}).text })));
     canvas.dataset.proj = JSON.stringify(proj);       // proiezione corrente (diagnostica di sola lettura, usata dalla verifica nel browser)
     const d = draftRef.current;

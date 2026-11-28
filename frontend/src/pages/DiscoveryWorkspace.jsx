@@ -206,7 +206,8 @@ export default function DiscoveryWorkspace() {
     return ev;
   }, [draft, Disc, source, symbol, units]);
 
-  const shared = { S, tool, setTool, snapMode, setSnapMode, selectedId, setSelectedId, activeLayer, setActiveLayer, units, setUnits, toolbarEl, panelEl,
+  const marks = useMemo(() => Disc.events.map((e) => ({ id: e.event_id, t: e.pivot.t, price: e.pivot.price, kind: e.pivot.kind, name: e.name, outcome: e.outcome, symbol: e.symbol, selected: e.event_id === selectedEventId })), [Disc.events, selectedEventId]);
+  const shared = { S, marks, tool, setTool, snapMode, setSnapMode, selectedId, setSelectedId, activeLayer, setActiveLayer, units, setUnits, toolbarEl, panelEl,
     hint: tool === "pick:pivot" ? "Clic sul massimo o minimo significativo (candela)" : tool === "pick:origin" ? "Clic sull'origine del movimento" : tool === "pick:destination" ? "Clic sulla destinazione"
       : tool === "pick:struct_origin" ? "Struttura: clic sull'origine" : tool === "pick:struct_dest" ? "Struttura: clic sulla destinazione" : "" };
 

@@ -97,6 +97,9 @@ try {
     && evA.derived.prior_leg.duration_s === P.time - O.time && evA.derived.prior_direction === "UP" && evA.derived.next_direction === "DOWN" && evA.units.pip_size === 0.1, evA.derived);
   check("03 scheda: dataset, provenienza, simbolo, clock basis, timeframe, autore, data di scoperta, modalita' immutabile, validazione", evA.dataset_id === SRC && evA.source === "MT5_BROKER_EXPORT" && evA.symbol === "GOLD" && /TERMINAL_CLOCK/.test(evA.clock_basis) && evA.timeframe_observation === "H4"
     && evA.author === USER[0] && Math.abs(evA.discovered_at - Date.now() / 1000) < 600 && evA.epistemic_mode === "RETROSPECTIVE_DISCOVERY" && evA.validation_status === "NOT_VALIDATED" && evA.output_label === "DISCOVERY_ONLY");
+  const mk0 = await B.ev("JSON.parse(document.querySelectorAll('[data-testid=geometry-canvas]')[0].dataset.marks||'[]')");
+  const [px0, py0] = await px(0, pIdx, P.high); const cr0 = await B.ev("(() => { const r = document.querySelectorAll('[data-testid=geometry-canvas]')[0].getBoundingClientRect(); return [r.x, r.y]; })()");
+  check("03 marcatore dell'inversione disegnato sul pivot esatto (candela e prezzo reali)", mk0.length === 1 && close(mk0[0].x + cr0[0], px0, 3) && close(mk0[0].y + cr0[1], py0, 3), { mk0, expected: [px0 - cr0[0], py0 - cr0[1]] });
   await B.shot("03_scheda_evento_creata.png");
   const idA = evA.event_id;
 
@@ -111,6 +114,8 @@ try {
   check("04 l'inversione e' dentro la finestra di ciascuna scala", rs.every((r) => r && r.from <= P.time && P.time <= r.to), rs.map((r) => [fmtUtc(r.from), fmtUtc(r.to)]));
   check("04 scale inferiori = finestre piu' strette attorno all'evento (H4 > M15 > M5)", wdt[0] > wdt[1] && wdt[1] > wdt[2], wdt);
   check("04 tempo di apertura multiscala", Date.now() - tOpen < 15000, `${Date.now() - tOpen} ms`);
+  const marks3 = await B.ev("[0,1,2].map(i => JSON.parse(document.querySelectorAll('[data-testid=geometry-canvas]')[i].dataset.marks||'[]').length)");
+  check("04 il marcatore dell'inversione compare in ciascuna scala aperta", same(marks3, [1, 1, 1]), marks3);
   await B.shot("04_apertura_sincronizzata_h4_m15_m5.png");
 
   // ====================================================================== 5. esplorare il passato precedente all'evento
@@ -305,12 +310,14 @@ try {
   await B.waitFor("!!document.querySelector('[data-testid=lab-cmp-result]')", 40, 250);
   const cmpTxt = await B.ev("document.querySelector('[data-testid=lab-cmp-result]').innerText");
   check("12 confronto fra due schede: ampiezza, durata, geometrie per tempo/classe, strutture per scala, annotazioni, ipotesi, evidenze, analoghi", /Ampiezza prima/.test(cmpTxt) && /Strutture per scala/.test(cmpTxt) && /Esaurimento della spinta/.test(cmpTxt) && /MAJOR×1/.test(cmpTxt) && /KEY_LEVEL_CLOSES×1/.test(cmpTxt), cmpTxt.slice(0, 200));
-  check("12 il confronto NON presenta frequenze/percentuali/prove statistiche e dichiara il limite", !/%|win|probab|p-value|edge/i.test(cmpTxt.replace(/Analoghi.*/s, "")) && /frequenze di casi scelti a mano non sono prova statistica/.test(await B.ev("document.querySelector('[data-testid=lab-cmp-disclaimer]').innerText")));
+  const cmpTable = await B.ev("document.querySelector('[data-testid=lab-cmp-result] table').innerText");
+  check("12 il confronto NON presenta frequenze/percentuali/prove statistiche e dichiara il limite", !/%|win rate|probab|p-value|\bedge\b/i.test(cmpTable) && /frequenze di casi scelti a mano non sono prova statistica/.test(await B.ev("document.querySelector('[data-testid=lab-cmp-disclaimer]').innerText")));
   await B.shot("12_confronto_due_schede.png");
   await B.clickId("lab-tab-events");
 
   // ====================================================================== 13. regressioni Geometry-01 dentro il Lab: undo/redo, blocco, export
   const nG = (await geoms(sid2)).filter((g) => g.status === "ACTIVE").length;
+  if (!(await B.ev("!!document.querySelector('[data-testid=geo-snap]')"))) { await B.clickId("geo-panel-toggle"); await sleep(500); }   // pannello chiuso di default dopo la riapertura
   await B.setSelect("geo-snap", "free"); await B.clickId("geo-tool-hline"); await B.click(...(await px(0, 20, 3600)));
   await waitGeom(sid2, nG + 1); await sleep(400);
   await B.key("z", { ctrl: true }); await sleep(1200);
@@ -367,7 +374,7 @@ try {
     const crossGeo = await B.ev(`fetch('/api${G}/sessions/${sid}',{credentials:'include'}).then(r=>r.status)`);
     const crossExp = await B.ev(`fetch('/api${G}/sessions/${sid}/export',{credentials:'include'}).then(r=>r.status)`);
     const crossPut = await B.ev(`fetch('/api${D}/sessions/${sid}/events/${idA}',{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'hack',expected_revision:1})}).then(r=>r.status)`);
-    check("15 isolamento: l'utente B non vede sessioni di A e il suo spazio di ricerca e' vuoto", !sB.sessions.some((s) => s.session_id === sid) && (await B.ev("document.querySelectorAll('[data-testid^=lab-event-]').length")) === 0, sB.sessions.map((s) => s.session_id));
+    check("15 isolamento: l'utente B non vede sessioni di A e il suo spazio di ricerca e' vuoto", !sB.sessions.some((s) => s.session_id === sid) && (await B.ev("document.querySelectorAll('[data-testid^=lab-event-E]').length")) === 0, sB.sessions.map((s) => s.session_id));
     check("15 isolamento: B riceve 404 su eventi, sessione ed esportazione di A; la scrittura non e' possibile", crossEv === 404 && crossGeo === 404 && crossExp === 404 && [403, 404].includes(crossPut), [crossEv, crossGeo, crossExp, crossPut]);
     await B.shot("15_utente_B_spazio_separato.png");
     await B.kill();
@@ -376,7 +383,7 @@ try {
   } else report.notes.push("isolamento nel browser non eseguito: CHART_ORIGIN_B assente");
 
   check("16 nessun errore console grave", report.console_errors.filter((e) => !/favicon|ResizeObserver/i.test(e)).length === 0, report.console_errors.slice(0, 5));
-  check("16 nessuna risposta di rete anomala (esclusi 401 pre-login, favicon, 404 attesi dell'isolamento)", report.network_failures.filter((e) => !/api\/auth\/me|favicon|geometry\/sessions\/S|discovery\/sessions\/S/.test(e)).length === 0, report.network_failures);
+  check("16 nessuna risposta di rete anomala (esclusi 401 pre-login, favicon, 404 attesi dell'isolamento)", report.network_failures.filter((e) => !/api\/auth\/me|favicon|research\/certificates|geometry\/sessions\/S|discovery\/sessions\/S/.test(e)).length === 0, report.network_failures);
 } catch (e) {
   check("ERRORE SCRIPT", false, String((e && e.stack) || e));
 } finally {

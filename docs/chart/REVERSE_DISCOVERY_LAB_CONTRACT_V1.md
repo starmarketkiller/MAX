@@ -1,6 +1,6 @@
 # NEXUS Reverse Discovery Lab — contratto e posizionamento nel master plan Chart
 
-Stato: **solo contratto** (nessun motore, nessuna UI). Macchina-leggibile: `server/reverse_discovery_lab_contract_v1.json`, verificato da test in `server/tests/test_chart_geometry.py`. Missione dedicata futura: **NEXUS-REVERSE-DISCOVERY-LAB-01**.
+Stato: **`RETROSPECTIVE_DISCOVERY` V1 implementata con selezione manuale** (vedi `MULTISCALE_DISCOVERY_V1.md`); **`CAUSAL_REPLAY` ed `EMPIRICAL_VALIDATION` restano solo contratto** (nessun motore, nessuna UI). Macchina-leggibile: `server/reverse_discovery_lab_contract_v1.json`, verificato da test in `server/tests/test_chart_geometry.py`. Missione dedicata futura: **NEXUS-REVERSE-DISCOVERY-LAB-01**.
 
 ## Metodo
 Osservare uno storico H4 completo → identificare i cambi di direzione più significativi → tornare alle origini → investigare geometrie, strutture e fenomeni precedenti l'evento.

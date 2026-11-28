@@ -60,7 +60,10 @@ async function openBrowser(tag) {
   const key = (k, mods = {}) => ev(`window.dispatchEvent(new KeyboardEvent('keydown',{key:${JSON.stringify(k)},bubbles:true,cancelable:true,ctrlKey:${!!mods.ctrl},shiftKey:${!!mods.shift}}))`);
   const proj = async () => JSON.parse(await ev("document.querySelector('[data-testid=geometry-canvas]')?.dataset.proj || '[]'"));
   const rect = () => ev(`(() => { const r = document.querySelector('[data-testid=chart-canvas]').getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; })()`);
-  const sid = () => ev("document.querySelector('[data-testid=geo-session-select]')?.value || ''");
+  const sid = async () => {
+    if (!(await ev("!!document.querySelector('[data-testid=geo-session-select]')"))) { await clickId("geo-panel-toggle"); await delay(500); }
+    return ev("document.querySelector('[data-testid=geo-session-select]')?.value || ''");
+  };
   const session = async () => api(`/chart/geometry/sessions/${await sid()}`);
   const login = async () => {
     await cdp("Page.navigate", { url: `${origin}/app/login` });
@@ -71,8 +74,8 @@ async function openBrowser(tag) {
   };
   const openChart = async () => {
     await cdp("Page.navigate", { url: `${origin}/app/chart` });
-    const ok = await waitFor(`(document.querySelector('[data-testid=chart-dataset-strip]')?.innerText||'').includes('XM-GOLD') && !!document.querySelector('[data-testid=geo-session-select]')?.value`, 160, 250);
-    await delay(600);
+    const ok = await waitFor(`(document.querySelector('[data-testid=chart-dataset-strip]')?.innerText||'').includes('XM-GOLD')`, 160, 250);
+    await delay(900);
     return ok;
   };
   const strip = () => ev("document.querySelector('[data-testid=chart-dataset-strip]')?.innerText || ''");
@@ -93,8 +96,9 @@ try {
   check("01 grafico XM autorizzato aperto", opened, await B.strip());
   const stripTxt = await B.strip();
   check("01 nessun dato sintetico", !(await B.ev("document.body.innerText.toUpperCase().includes('SYNTHETIC')")));
-  check("01 toolbar e pannello geometrie presenti", await B.ev("!!document.querySelector('[data-testid=geometry-toolbar]') && !!document.querySelector('[data-testid=geometry-panel]')"));
+  check("01 toolbar presente e pannello geometrie CHIUSO di default", await B.ev("!!document.querySelector('[data-testid=geometry-toolbar]') && !document.querySelector('[data-testid=geometry-panel]')"));
   const sidA = await B.sid();
+  check("01 il pannello si apre dal pulsante ☷", await B.ev("!!document.querySelector('[data-testid=geometry-panel]')"));
   const R0 = await B.rect();
   const ohlc = await B.api(`/chart/ohlc?source=${SOURCE}&symbol=GOLD&tf=M15&limit=1500`);
   const bars = ohlc.bars || ohlc.data || [];
@@ -288,6 +292,7 @@ try {
   check("09 importazione crea una nuova sessione con le stesse 3 geometrie", sidC !== sidB && snap3.geometries.length === 3);
   const strip = (arr) => arr.map((g) => ({ ...cmp(g), id: g.geometry_id, rev: undefined }));
   check("09 geometrie importate identiche (ancoraggi, stile, semantica, timestamp di creazione/disponibilita')", same(strip(snap3.geometries), strip(snap2.geometries)));
+  check("09 import: autore dichiarato conservato ma NON autenticato; importatore effettivo registrato a parte", snap3.geometries.every((g) => g.imported_by === "chart-geo@local" && g.author_verified === false && g.author === "chart-geo@local") && snap2.geometries.every((g) => g.author_verified === true && g.imported_by === null));
   const tampered = JSON.parse(JSON.stringify(doc)); tampered.geometries[0].anchors[0].price += 1;
   const tfile = resolve(out, "..", "session_export_TAMPERED.json");
   await writeFile(tfile, JSON.stringify(tampered));
@@ -361,6 +366,60 @@ try {
   const pj12 = await B.proj();
   check("12 ricarica pagina: tutte le geometrie ridisegnate con ancoraggi proiettati", pj12.length === 15 && pj12.every((p) => p.pts.every(Boolean)), pj12.length);
   await B.shot("13_dopo_ricarica_15_geometrie.png");
+  // =========================================================== 13. chiusura Geometry: tutti i timeframe, pan, zoom, trascinamento, pip configurabili
+  await B.clickId("geo-tool-select");
+  const tfBtns = await B.ev("[...document.querySelectorAll('[data-testid^=chart-tf-]')].filter(b => !b.disabled).map(b => b.dataset.testid.replace('chart-tf-', ''))");
+  const nObjs = (await B.session()).geometries.filter((g) => g.status === "ACTIVE").length;
+  const rowsTf = [];
+  for (const tf of tfBtns) {
+    const t1 = Date.now();
+    await B.clickId(`chart-tf-${tf}`);
+    const okTf = await B.waitFor(`(document.querySelector('[data-testid=chart-dataset-strip]')?.innerText||'').includes('GOLD ${tf}')`, 80, 250);
+    await delay(1000);
+    const pjT = await B.proj();
+    const errT = await B.ev("document.querySelector('[data-testid=chart-error]')?.innerText || null");
+    rowsTf.push({ tf, ok: okTf, ms: Date.now() - t1, error: errT, projected: pjT.length, finite: pjT.every((p) => p.pts.every((pt) => pt && Number.isFinite(pt[0]) && Number.isFinite(pt[1]))), bars: Number(((await B.strip()).match(/(\d+) barre/) || [])[1] || 0) });
+    await B.shot(`13_timeframe_${tf}.png`);
+  }
+  report.notes.push("timeframe: " + JSON.stringify(rowsTf));
+  check(`13 tutti i timeframe disponibili (${tfBtns.join(", ")}): dati reali, nessun errore, geometrie proiettate con coordinate finite`, rowsTf.length === tfBtns.length && rowsTf.every((r) => r.ok && !r.error && r.finite && r.bars > 0 && r.projected === nObjs), rowsTf);
+  await B.clickId("chart-tf-M15"); await B.waitFor("(document.querySelector('[data-testid=chart-dataset-strip]')?.innerText||'').includes('GOLD M15')", 80, 250); await delay(1200);
+  // pan col trascinamento del grafico (livello nascosto per avere un'area libera): le geometrie seguono il dato di dx pixel esatti
+  const layersAll = (await B.session()).layers;
+  const pjBefore = await B.proj();
+  const dataPan0 = (await B.session()).geometries.map(cmp);
+  for (const l of layersAll) await B.clickId(`geo-layer-vis-${l.layer_id}`);      // nascondo i livelli: area libera per il trascinamento
+  await delay(700);
+  const R1 = await B.rect();
+  await B.drag(R1.x + R1.w * 0.45, R1.y + R1.h * 0.5, R1.x + R1.w * 0.45 + 140, R1.y + R1.h * 0.5, 12);
+  await delay(700);
+  for (const l of layersAll) await B.clickId(`geo-layer-vis-${l.layer_id}`);      // li riattivo
+  await delay(900);
+  const pjAfter = await B.proj();
+  const dxs = pjAfter.map((p, i) => p.pts[0][0] - pjBefore[i].pts[0][0]);
+  const dys = pjAfter.map((p, i) => p.pts[0][1] - pjBefore[i].pts[0][1]);
+  check("13 pan col trascinamento del grafico: tutte le geometrie traslano orizzontalmente dello stesso valore (+-1 px, 100..145 px: il trascinamento e' limitato dal bordo dei dati); la scala dei prezzi e' automatica e puo' variare; dati invariati", pjAfter.length === pjBefore.length && dxs.every((d) => Math.abs(d - dxs[0]) <= 1) && dxs[0] >= 100 && dxs[0] <= 145 && same((await B.session()).geometries.map(cmp), dataPan0), { dxs, dys });
+  await B.shot("13_pan_trascinamento.png");
+  // zoom con la rotella verso fuori e verso dentro: la proiezione cambia, i dati no
+  const dataB = (await B.session()).geometries.map(cmp);
+  await B.mouse("mouseWheel", R1.x + R1.w * 0.5, R1.y + R1.h * 0.5, { deltaX: 0, deltaY: 400 }); await delay(900);
+  const pjOut = await B.proj();
+  await B.mouse("mouseWheel", R1.x + R1.w * 0.5, R1.y + R1.h * 0.5, { deltaX: 0, deltaY: -800 }); await delay(900);
+  const pjIn = await B.proj();
+  check("13 zoom (fuori e dentro): proiezione ricalcolata e finita, dati invariati", !same(pjOut, pjIn) && pjIn.every((p) => p.pts.every((pt) => pt && Number.isFinite(pt[0]))) && same((await B.session()).geometries.map(cmp), dataB));
+  await B.shot("13_zoom.png");
+  // righello con pip configurabili
+  const rulerTxt = async () => B.ev("JSON.parse(document.querySelector('[data-testid=geometry-canvas]').dataset.rulers || '[]')[0]?.text || ''");
+  const rt1 = await rulerTxt();
+  const dPrice = Number((rt1.match(/Δ (-?[\d.]+)/) || [])[1]), dPip = Number((rt1.match(/= (-?[\d.]+) pip/) || [])[1]);
+  check("13 righello: pip (convenzione iniziale XAUUSD 1 pip = 0,10 di prezzo)", rt1.includes("pip") && Math.abs(dPip - dPrice / 0.1) < 0.2, rt1);
+  await B.setInput("geo-units-pip_size", "0.01"); await delay(900);
+  const rt2 = await rulerTxt();
+  check("13 pip configurabile: con 0,01 i pip diventano 10x e il prezzo non cambia", Math.abs(Number((rt2.match(/= (-?[\d.]+) pip/) || [])[1]) - dPrice / 0.01) < 2 && Math.abs(Number((rt2.match(/Δ (-?[\d.]+)/) || [])[1]) - dPrice) < 1e-9, rt2);
+  await B.setInput("geo-units-pip_size", ""); await delay(700);
+  const rt3 = await rulerTxt();
+  check("13 pip non noto: il righello non inventa i pip", !rt3.includes("pip"), rt3);
+  await B.setInput("geo-units-pip_size", "0.1"); await delay(700);
   check("11 nessun errore console grave", report.console_errors.filter((e) => !/favicon|ResizeObserver/i.test(e)).length === 0, report.console_errors.slice(0, 5));
   check("11 nessuna risposta di rete >= 400 (escluso il rifiuto atteso dell'import manomesso)", report.network_failures.filter((e) => !/geometry\/import|\/api\/auth\/me|favicon|research\/certificates/.test(e)).length === 0, report.network_failures);
 } catch (e) {
