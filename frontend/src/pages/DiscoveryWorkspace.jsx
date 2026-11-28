@@ -5,6 +5,7 @@ import api from "@/lib/api";
 import { useTheme } from "@/lib/theme";
 import ChartPane from "@/components/ChartPane";
 import DiscoveryPanel from "@/components/DiscoveryPanel";
+import OverviewStrip from "@/components/OverviewStrip";
 import useGeometrySession, { errText } from "@/lib/geometry/useGeometrySession";
 import useDiscovery, { pivotKindFromAnchor } from "@/lib/geometry/useDiscovery";
 import { TF_SECONDS, defaultUnits } from "@/lib/geometry/geometryMath";
@@ -43,6 +44,8 @@ export default function DiscoveryWorkspace() {
   const [interval, setIntervalState] = useState(null);
   const [gotoVal, setGotoVal] = useState("");
   const [note, setNote] = useState(null);
+  const [eventWindow, setEventWindow] = useState({ pre: 70, post: 30 });      // default modificabile: NON e' una regola di ricerca
+  const [viewRange, setViewRange] = useState(null);
   const [loads, setLoads] = useState([]);
   const [error, setError] = useState(null);
 
@@ -56,7 +59,7 @@ export default function DiscoveryWorkspace() {
   const cur = sources.find((s) => s.dataset_id === source);
   const tfs = cur?.timeframes || [];
   const symbols = cur?.symbol_aliases || [symbol];
-  st.current = { panes, sync, count, tfs, selectedEventId };
+  st.current = { panes, sync, count, tfs, selectedEventId, eventWindow };
 
   // ---- fonti autorizzate
   useEffect(() => {
@@ -87,6 +90,7 @@ export default function DiscoveryWorkspace() {
     if (r) {
       if (r.layout) { setCount(r.layout.count); setPanes(PANE_IDS.map((_, i) => r.layout.charts[i] || { tf: "H4", linked: true })); setSync(r.layout.sync); }
       if (r.units) setUnits(r.units);
+      if (r.event_window) setEventWindow(r.event_window);
       if (r.dataset_id && sources.some((s) => s.dataset_id === r.dataset_id)) setSource(r.dataset_id);
       if (r.symbol) setSymbol(r.symbol);
       if (r.interval) setIntervalState(r.interval);
@@ -99,11 +103,11 @@ export default function DiscoveryWorkspace() {
     if (!S.sessionId || restored.current !== S.sessionId || !source) return undefined;
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      Disc.saveResearch({ name: S.session?.name || "", dataset_id: source, symbol, interval, units,
+      Disc.saveResearch({ name: S.session?.name || "", dataset_id: source, symbol, interval, units, event_window: eventWindow,
         layout: { count, charts: panes.slice(0, count).map((p) => ({ tf: p.tf, linked: p.linked })), sync }, focus_event_id: selectedEventId }).catch(() => {});
     }, 500);
     return () => clearTimeout(saveTimer.current);
-  }, [count, panes, sync, units, interval, source, symbol, selectedEventId, S.sessionId, restored.current]);   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [count, panes, sync, units, interval, source, symbol, selectedEventId, eventWindow, S.sessionId, restored.current]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- sincronizzazione selettiva (finestra temporale e crosshair), con guardie anti-eco nei pane
   const onRange = useCallback((pid, r) => {
@@ -120,7 +124,7 @@ export default function DiscoveryWorkspace() {
     for (let k = 0; k < n; k += 1) if (k !== i && ps[k].linked) registry.current[PANE_IDS[k]]?.setCrosshairTime(t);
   }, []);
 
-  const goTo = useCallback((ev, { pre = 70, post = 30 } = {}) => {
+  const goTo = useCallback((ev, { pre = st.current.eventWindow.pre, post = st.current.eventWindow.post } = {}) => {
     const t = ev.pivot.t;
     for (let i = 0; i < st.current.count; i += 1) {
       const reg = registry.current[PANE_IDS[i]];
@@ -224,17 +228,34 @@ export default function DiscoveryWorkspace() {
     registry.current[PANE_IDS[0]]?.focusRange({ from: f, to: t });
     setNote(null);
   };
-  const gotoTime = () => {
-    const t = parseUtc(gotoVal);
-    if (t == null) { setNote("Data non valida (AAAA-MM-GG HH:MM UTC)."); return; }
-    for (let i = 0; i < count; i += 1) {
-      if (!panes[i].linked) continue;
+  const goToEpoch = useCallback((t) => {
+    const { panes: ps, count: n } = st.current;
+    for (let i = 0; i < n; i += 1) {
+      if (!ps[i].linked) continue;
       const reg = registry.current[PANE_IDS[i]];
       const r = reg?.getRange();
-      const w = r ? r.to - r.from : 100 * (TF_SECONDS[panes[i].tf] || 900);
+      const w = r ? r.to - r.from : 100 * (TF_SECONDS[ps[i].tf] || 900);
       reg?.focusRange({ from: t - w / 2, to: t + w / 2 });
     }
     setNote(null);
+  }, []);
+  const gotoTime = () => {
+    const t = parseUtc(gotoVal);
+    if (t == null) { setNote("Data non valida (AAAA-MM-GG HH:MM UTC)."); return; }
+    goToEpoch(t);
+  };
+  // intervallo visibile del primo grafico (per la banda della vista generale): lettura leggera a intervalli
+  useEffect(() => {
+    const id = setInterval(() => {
+      const r = registry.current[PANE_IDS[0]]?.getRange();
+      if (r) setViewRange((p) => (p && p.from === r.from && p.to === r.to ? p : { from: r.from, to: r.to }));
+    }, 500);
+    return () => clearInterval(id);
+  }, []);
+  const selectFromOverview = (id) => {
+    setSelectedEventId(id);
+    const ev = Disc.events.find((e) => e.event_id === id);
+    if (ev) goTo(ev);
   };
 
   const gridCls = count === 1 ? "grid-cols-1" : count === 2 ? "grid-cols-2" : count === 3 ? "grid-cols-3" : "grid-cols-2 grid-rows-2";
@@ -258,6 +279,7 @@ export default function DiscoveryWorkspace() {
       </div>
       {note && <div className="shrink-0 px-3 py-0.5 text-[11px] text-amber-700 dark:text-amber-400 border-b border-border" role="status" data-testid="ws-note">{note}</div>}
       {error && <div className="shrink-0 px-3 py-1 text-[11px] text-rose-600" role="alert" data-testid="ws-error">{error}</div>}
+      <OverviewStrip source={source} symbol={symbol} tfs={tfs} marks={marks} viewRange={viewRange} onGoto={goToEpoch} onSelectEvent={selectFromOverview} dark={theme === "dark"} />
       <div className="flex-1 min-h-0 flex">
         <div className={`flex-1 min-w-0 min-h-0 grid gap-1.5 p-1.5 ${gridCls}`} data-testid="ws-grid">
           {PANE_IDS.slice(0, count).map((pid, i) => (
@@ -270,7 +292,7 @@ export default function DiscoveryWorkspace() {
           <div ref={setToolbarEl} data-testid="geo-toolbar-slot" />
           <DiscoveryPanel events={Disc.events} selectedEventId={selectedEventId} setSelectedEventId={setSelectedEventId} draft={draft} setDraft={setDraft} tool={tool} setTool={setTool}
             units={units} symbol={symbol} createFromDraft={createFromDraft} update={Disc.updateEvent} archive={Disc.archiveEvent} nav={nav} geoms={S.geoms} selectedGeomId={selectedId}
-            structForm={structForm} setStructForm={setStructForm} compare={Disc.compare} status={Disc.status} note={note} setNote={setNote} />
+            structForm={structForm} setStructForm={setStructForm} eventWindow={eventWindow} setEventWindow={setEventWindow} compare={Disc.compare} status={Disc.status} note={note} setNote={setNote} />
           <div ref={setPanelEl} data-testid="geo-panel-slot" />
         </aside>
       </div>

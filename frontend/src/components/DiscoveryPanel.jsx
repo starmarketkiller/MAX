@@ -26,7 +26,7 @@ function AddText({ placeholder, onAdd, testid, extra }) {
 }
 
 export default function DiscoveryPanel({ events, selectedEventId, setSelectedEventId, draft, setDraft, tool, setTool, units, symbol, createFromDraft, update, archive,
-  nav, geoms, selectedGeomId, structForm, setStructForm, compare, status, note, setNote, hasPivotTool = true }) {
+  nav, geoms, selectedGeomId, structForm, setStructForm, eventWindow = { pre: 70, post: 30 }, setEventWindow = () => {}, compare, status, note, setNote, hasPivotTool = true }) {
   const [tab, setTab] = useState("events");
   const [name, setName] = useState("");
   const [outcome, setOutcome] = useState("REVERSAL");
@@ -119,7 +119,12 @@ export default function DiscoveryPanel({ events, selectedEventId, setSelectedEve
             </div>
 
             <H>Navigazione</H>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground" data-testid="lab-window">
+              finestra attorno all'evento (barre di ciascuna scala; default modificabile, non una regola):
+              <input className={`${inp} !w-14`} type="number" min="1" max="2000" value={eventWindow.pre} data-testid="lab-win-pre" onChange={(e) => setEventWindow({ ...eventWindow, pre: Math.max(1, Math.min(2000, Number(e.target.value) || 1)) })} /> prima
+              <input className={`${inp} !w-14`} type="number" min="0" max="2000" value={eventWindow.post} data-testid="lab-win-post" onChange={(e) => setEventWindow({ ...eventWindow, post: Math.max(0, Math.min(2000, Number(e.target.value) || 0)) })} /> dopo
+            </div>
+            <div className="mt-1 flex flex-wrap gap-1">
               <button type="button" className={btn} data-testid="lab-go" onClick={() => nav.goTo(ev)}>Vai all'inversione</button>
               <button type="button" className={btn} data-testid="lab-open-multiscale" onClick={() => nav.openMultiscale(ev)}>Apri sulle scale inferiori</button>
               <button type="button" className={btn} data-testid="lab-back" onClick={() => nav.back()}>◀ Passato prima dell'evento</button>
@@ -149,6 +154,16 @@ export default function DiscoveryPanel({ events, selectedEventId, setSelectedEve
                 <span className="font-mono truncate flex-1">{s.kind === "IMPULSE" ? "impulso" : s.kind === "CORRECTION" ? "correzione" : "gruppo"} {s.derived.direction === "UP" ? "↑" : s.derived.direction === "DOWN" ? "↓" : "·"} {pips(s.derived)}{s.parent_id ? ` (figlio di ${s.parent_id.slice(-4)})` : ""}</span>
                 <select className={`${inp} !w-32`} value={s.scale} data-testid={`lab-struct-scale-${s.id}`} onChange={(e) => upd({ structures: ev.structures.map((x) => (x.id === s.id ? { ...x, scale: e.target.value } : x)) })}>{SC.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
                 <button type="button" className={btn} onClick={() => upd({ structures: ev.structures.filter((x) => x.id !== s.id && x.parent_id !== s.id) })}>×</button>
+              </div>
+            ))}
+            {ev.structures.map((s) => (
+              <div key={`g${s.id}`} className="mt-0.5 flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground" style={{ paddingLeft: depth[s.id] * 10 }} data-testid={`lab-struct-geoms-${s.id}`}>
+                geometrie della struttura {s.id.slice(-4)}: {(s.geometry_ids || []).length === 0 ? "nessuna" : (s.geometry_ids || []).map((gid) => (
+                  <span key={gid} className="rounded border border-border px-1" data-testid={`lab-struct-geom-${s.id}-${gid}`}>{TOOLS.find((t) => t.id === geoms.find((g) => g.geometry_id === gid)?.type)?.label || gid}
+                    <button type="button" className="ml-1" aria-label="scollega" onClick={() => upd({ structures: ev.structures.map((x) => (x.id === s.id ? { ...x, geometry_ids: x.geometry_ids.filter((q) => q !== gid) } : x)) })}>×</button></span>
+                ))}
+                <button type="button" className={btn} data-testid={`lab-struct-link-${s.id}`} disabled={!selectedGeomId || !geoms.some((g) => g.geometry_id === selectedGeomId) || (s.geometry_ids || []).includes(selectedGeomId)}
+                  onClick={() => upd({ structures: ev.structures.map((x) => (x.id === s.id ? { ...x, geometry_ids: [...(x.geometry_ids || []), selectedGeomId] } : x)) })}>collega la geometria selezionata</button>
               </div>
             ))}
             <div className="mt-1 grid grid-cols-3 gap-1">

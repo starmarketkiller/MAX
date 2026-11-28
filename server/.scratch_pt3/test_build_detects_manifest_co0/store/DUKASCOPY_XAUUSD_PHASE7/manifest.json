@@ -1,0 +1,188 @@
+{
+ "authorization": {
+  "record": "server/chart_authorization.json"
+ },
+ "broker_server": null,
+ "builder": "chart_store.v1",
+ "built_at": "2026-11-28T17:54:03+00:00",
+ "calendar": {
+  "basis": "INFERRED_FROM_DATA_RECURRENCE",
+  "rules": [],
+  "status": "UNVERIFIED"
+ },
+ "clock_basis": "UTC (timestamp epoch del downloader; non verificato in modo indipendente)",
+ "completeness_counts": {
+  "D1": {
+   "COMPLETE": 0,
+   "GAP": 3,
+   "PARTIAL": 0
+  },
+  "H1": {
+   "COMPLETE": 0,
+   "GAP": 5,
+   "PARTIAL": 0
+  },
+  "H4": {
+   "COMPLETE": 0,
+   "GAP": 4,
+   "PARTIAL": 0
+  },
+  "M1": {
+   "COMPLETE": 8,
+   "GAP": 0,
+   "PARTIAL": 0
+  },
+  "M15": {
+   "COMPLETE": 0,
+   "GAP": 5,
+   "PARTIAL": 0
+  },
+  "M30": {
+   "COMPLETE": 0,
+   "GAP": 5,
+   "PARTIAL": 0
+  },
+  "M5": {
+   "COMPLETE": 0,
+   "GAP": 4,
+   "PARTIAL": 1
+  },
+  "MN1": {
+   "COMPLETE": 0,
+   "GAP": 1,
+   "PARTIAL": 0
+  },
+  "W1": {
+   "COMPLETE": 0,
+   "GAP": 1,
+   "PARTIAL": 0
+  }
+ },
+ "coverage": {
+  "first_t": 1675641600,
+  "last_end_t": 1675814760
+ },
+ "dataset_id": "DUKASCOPY_XAUUSD_PHASE7",
+ "feed_kind": "DUKASCOPY",
+ "instrument_spec": {
+  "digits": 3,
+  "price_unit": "USD per troy ounce"
+ },
+ "label": "Dukascopy XAUUSD (Phase 7, partizione development_discovery 2023-02-06..2023-02-08)",
+ "live": false,
+ "n_m1": 8,
+ "price_scale": 1000,
+ "provenance": "Dukascopy tick decoded (bid) 2023-02-06..2023-02-08, 3 file; NON e' il feed MT5 del broker; data manifest sha256=406ad5770951ca0df7342060637fa84e800e86e65ff1fdac355cde73748a9a7e",
+ "purpose": "RESEARCH_DISCOVERY_PARTITION",
+ "quality_verdict": "PASS_WITH_NOTES (new_dataset_integrity_report_v1)",
+ "record": "<qiiiiHHBB",
+ "schema": "NEXUS_CHART_STORE_V1",
+ "segments": {
+  "D1": [
+   {
+    "bytes": 90,
+    "first_t": 1675641600,
+    "last_t": 1675814400,
+    "month": "2023-02",
+    "n": 3,
+    "sha256": "7864cf33b267dca8178027fd27974c546bf3ae50d28152cc86b837c48e7f8e96"
+   }
+  ],
+  "H1": [
+   {
+    "bytes": 150,
+    "first_t": 1675641600,
+    "last_t": 1675814400,
+    "month": "2023-02",
+    "n": 5,
+    "sha256": "81b47262169de74daef432947c78906b10b794208a545fe11abc441c5b3423ef"
+   }
+  ],
+  "H4": [
+   {
+    "bytes": 120,
+    "first_t": 1675641600,
+    "last_t": 1675814400,
+    "month": "2023-02",
+    "n": 4,
+    "sha256": "eb650297d6f36dd00c62002e1da817ac019e98ba303cce168ea10a0e528d5ce5"
+   }
+  ],
+  "M1": [
+   {
+    "bytes": 240,
+    "first_t": 1675641600,
+    "last_t": 1675814700,
+    "month": "2023-02",
+    "n": 8,
+    "sha256": "c9e02cc5cda1afb0e3c010fc4eb88737ceaef3d33eae1fd47977f341bfb1898b"
+   }
+  ],
+  "M15": [
+   {
+    "bytes": 150,
+    "first_t": 1675641600,
+    "last_t": 1675814400,
+    "month": "2023-02",
+    "n": 5,
+    "sha256": "547e001bd3044f212e51ad4b7d3697d77ff2ab13a343d3e5fd45b9b63fa8f009"
+   }
+  ],
+  "M30": [
+   {
+    "bytes": 150,
+    "first_t": 1675641600,
+    "last_t": 1675814400,
+    "month": "2023-02",
+    "n": 5,
+    "sha256": "f1a415bbb21630c7f594aec8c7619f0527e4153e899d61a1ccbc33897636ad23"
+   }
+  ],
+  "M5": [
+   {
+    "bytes": 150,
+    "first_t": 1675641600,
+    "last_t": 1675814700,
+    "month": "2023-02",
+    "n": 5,
+    "sha256": "097da1836916a27a2848b1e7a4c13146556bfb8c2a89dab4cc8b1ae3a97ce2cb"
+   }
+  ],
+  "MN1": [
+   {
+    "bytes": 30,
+    "first_t": 1675209600,
+    "last_t": 1675209600,
+    "month": "2023-02",
+    "n": 1,
+    "sha256": "953b77bdd15e2d7f747352ee5209d35c653fdafb9cbd7d1252380a1c1f5ce1ad"
+   }
+  ],
+  "W1": [
+   {
+    "bytes": 30,
+    "first_t": 1675641600,
+    "last_t": 1675641600,
+    "month": "2023-02",
+    "n": 1,
+    "sha256": "114ba084b2d3f98d2c742770d3e6025ad6bd2f01f6469498143504de7d923449"
+   }
+  ]
+ },
+ "source_sha256": "35a56c1bb615a3505fc9919b2b755599a6a223b9f1549339052dddf5ea7ccbb6",
+ "symbol_actual": "XAUUSD",
+ "symbol_aliases": [
+  "XAUUSD"
+ ],
+ "tf_available": [
+  "M1",
+  "M5",
+  "M15",
+  "M30",
+  "H1",
+  "H4",
+  "D1",
+  "W1",
+  "MN1"
+ ]
+}

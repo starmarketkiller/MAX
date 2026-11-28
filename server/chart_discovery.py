@@ -33,7 +33,7 @@ VALIDATION_STATUS = "NOT_VALIDATED"          # unico valore ammesso in RETROSPEC
 EVENT_KEYS = {"name", "dataset_id", "source", "symbol", "clock_basis", "timeframe_observation", "outcome", "pivot", "origin", "destination",
               "units", "classification", "size_class", "geometries", "structures", "annotations", "hypotheses", "evidence_for",
               "evidence_against", "analog_links", "status"}
-RESEARCH_KEYS = {"name", "dataset_id", "symbol", "interval", "layout", "units", "focus_event_id"}
+RESEARCH_KEYS = {"name", "dataset_id", "symbol", "interval", "layout", "units", "focus_event_id", "event_window"}
 RENDER_ONLY = {"geometry", "geometry_available_at", "causal_knowledge", "derived"}   # campi di sola resa: ignorati se il client li rimanda
 MAX_EVENTS = 500
 MAX_ITEMS = 200
@@ -146,6 +146,16 @@ class DiscoveryStore:
             if not a < b:
                 raise GeometryError("INVALID_INTERVAL", "from_t deve precedere to_t")
             iv = {"from_t": a, "to_t": b}
+        ew = body.get("event_window")
+        if ew is not None:                                  # barre prima/dopo l'evento per ogni scala: parametro dell'utente, mai una regola di ricerca
+            if not isinstance(ew, dict) or set(ew) - {"pre", "post"}:
+                raise GeometryError("INVALID_WINDOW", "event_window: pre, post")
+            for k, lo in (("pre", 1), ("post", 0)):
+                v = ew.get(k)
+                if isinstance(v, bool) or not isinstance(v, int) or not lo <= v <= 2000:
+                    raise GeometryError("INVALID_WINDOW", f"event_window.{k} intero {lo}..2000")
+            ew = {"pre": ew["pre"], "post": ew["post"]}
+        out["event_window"] = ew
         out["interval"] = iv      # selezione dell'utente: NON e' un confine di autorizzazione (la guardia di partizione resta unica)
         lay = body.get("layout") or {"count": 1, "charts": [{"tf": "H4"}], "sync": {"time_range": True, "crosshair": True, "symbol": True}}
         if not isinstance(lay, dict) or set(lay) - {"count", "charts", "sync"}:

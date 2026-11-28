@@ -309,3 +309,23 @@ def test_api_discovery_end_to_end_isolation(tmp_path):
     assert st[7] == st[8] == 404 and st[9] == 422 and r[9][1]["detail"]["code"] == "UNKNOWN_FIELD"
     assert r[11][1]["research"]["units"]["pip_size"] == 0.1 and st[13] == 200 and st[14] == 422 and st[15] == 200
     assert len(r[13][1]["events"]) == 2 and len(r[16][1]["events"]) == 2
+
+
+def test_event_window_is_a_validated_user_parameter_persisted_with_the_research(ds, sid):
+    r = ds.put_research("alice", sid, {"name": "R", "event_window": {"pre": 120, "post": 0}})
+    assert r["research"]["event_window"] == {"pre": 120, "post": 0}
+    assert ds.put_research("alice", sid, {"name": "R"})["research"]["event_window"] is None         # nessun valore imposto di default dal server
+    for bad in ({"pre": 0, "post": 5}, {"pre": 5, "post": -1}, {"pre": 5000, "post": 5}, {"pre": 1.5, "post": 5}, {"pre": 5}, {"pre": 5, "post": 5, "x": 1}, "70/30"):
+        with pytest.raises(cg.GeometryError):
+            ds.put_research("alice", sid, {"name": "R", "event_window": bad})
+
+
+def test_structure_geometry_link_is_validated_and_survives_roundtrip(gs, ds, sid):
+    g = geom(gs, sid)
+    s = [{"id": "S1", "kind": "GEOMETRY_GROUP", "scale": "MINOR", "origin": anc(T0, 1.0), "destination": anc(T0 + 60, 2.0), "geometry_ids": [g]}]
+    e = ds.create_event("alice", sid, ev(structures=s))
+    assert e["structures"][0]["geometry_ids"] == [g]
+    upd = ds.update_event("alice", sid, e["event_id"], {"structures": [dict(e["structures"][0], geometry_ids=[g, g][:1])]}, 1)
+    assert upd["structures"][0]["geometry_ids"] == [g]
+    with pytest.raises(cg.GeometryError):
+        ds.update_event("alice", sid, e["event_id"], {"structures": [dict(e["structures"][0], geometry_ids=["Gnone"])]}, 2)

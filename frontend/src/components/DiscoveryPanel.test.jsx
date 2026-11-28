@@ -82,3 +82,36 @@ test("utility: tipo di pivot dedotto dal campo della candela e durate leggibili"
   expect(pivotKindFromAnchor({ price: 3, ref: { field: "open" } }, { high: 10, low: 2 })).toBe("LOW");
   expect(formatSpan(14400)).toBe("4h 0m"); expect(formatSpan(90000)).toBe("1g 1h 0m");
 });
+
+
+test("finestre prima/dopo configurabili: default 70/30 solo come valore iniziale, non come regola", () => {
+  const setEventWindow = jest.fn();
+  act(() => root.render(<DiscoveryPanel {...props({ eventWindow: { pre: 70, post: 30 }, setEventWindow })} />));
+  expect(q("lab-win-pre").value).toBe("70"); expect(q("lab-win-post").value).toBe("30");
+  expect(host.textContent).toMatch(/default modificabile, non una regola/);
+  act(() => {
+    const el = q("lab-win-pre");
+    Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set.call(el, "250");
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  expect(setEventWindow).toHaveBeenCalledWith({ pre: 250, post: 30 });
+});
+
+test("collegamento struttura-geometria dall'interfaccia: usa la geometria selezionata, evita doppioni, consente di scollegare", async () => {
+  const update = jest.fn(() => Promise.resolve());
+  const e = ev();
+  e.structures[0].geometry_ids = [];
+  act(() => root.render(<DiscoveryPanel {...props({ events: [e], update, selectedGeomId: "G1", geoms: [{ geometry_id: "G1", type: "trendline" }] })} />));
+  expect(q("lab-struct-link-S1").disabled).toBe(false);
+  await act(async () => { q("lab-struct-link-S1").click(); });
+  expect(update).toHaveBeenCalledWith("E1", { structures: [expect.objectContaining({ id: "S1", geometry_ids: ["G1"] }), expect.objectContaining({ id: "S2" })] });
+  const linked = ev(); linked.structures[0].geometry_ids = ["G1"];
+  act(() => root.render(<DiscoveryPanel {...props({ events: [linked], update, selectedGeomId: "G1", geoms: [{ geometry_id: "G1", type: "trendline" }] })} />));
+  expect(q("lab-struct-link-S1").disabled).toBe(true);                                // gia' collegata: nessun doppione
+  expect(q("lab-struct-geom-S1-G1").textContent).toMatch(/Diagonale/);
+});
+
+test("senza geometria selezionata il collegamento e' disabilitato", () => {
+  act(() => root.render(<DiscoveryPanel {...props({ selectedGeomId: null })} />));
+  expect(q("lab-struct-link-S1").disabled).toBe(true);
+});

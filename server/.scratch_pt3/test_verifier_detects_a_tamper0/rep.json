@@ -1,0 +1,166 @@
+{
+ "schema": "NEXUS_HISTORICAL_STORE_BUILD_REPORT_V1",
+ "dataset_id": "DUKASCOPY_XAUUSD_PHASE7",
+ "window": {
+  "from": "2023-02-06",
+  "to": "2023-02-08"
+ },
+ "built_at": "2026-11-28T17:54:03+00:00",
+ "elapsed_s": 0.0,
+ "data_manifest_sha256": "1fa078bff545ecc0874072583766f940b33b855e8d891152569dd1455076fa08",
+ "days": 3,
+ "files": 3,
+ "files_missing": [],
+ "ticks_total": 18,
+ "count_mismatches": [],
+ "non_monotonic_total": 0,
+ "duplicate_ticks_total": 0,
+ "out_of_band_total": 0,
+ "nonpositive_total": 0,
+ "skipped_rows_total": 3,
+ "zero_tick_weekdays": [],
+ "price_min": 1899.5,
+ "price_max": 1921.0,
+ "n_m1": 7,
+ "coverage": {
+  "first_t": 1675641600,
+  "last_end_t": 1675814760
+ },
+ "calendar": {
+  "status": "UNVERIFIED",
+  "basis": "INFERRED_FROM_DATA_RECURRENCE",
+  "rules": []
+ },
+ "completeness_counts": {
+  "M1": {
+   "COMPLETE": 7,
+   "PARTIAL": 0,
+   "GAP": 0
+  },
+  "M5": {
+   "COMPLETE": 0,
+   "PARTIAL": 1,
+   "GAP": 3
+  },
+  "M15": {
+   "COMPLETE": 0,
+   "PARTIAL": 0,
+   "GAP": 4
+  },
+  "M30": {
+   "COMPLETE": 0,
+   "PARTIAL": 0,
+   "GAP": 4
+  },
+  "H1": {
+   "COMPLETE": 0,
+   "PARTIAL": 0,
+   "GAP": 4
+  },
+  "H4": {
+   "COMPLETE": 0,
+   "PARTIAL": 0,
+   "GAP": 4
+  },
+  "D1": {
+   "COMPLETE": 0,
+   "PARTIAL": 0,
+   "GAP": 3
+  },
+  "W1": {
+   "COMPLETE": 0,
+   "PARTIAL": 0,
+   "GAP": 1
+  },
+  "MN1": {
+   "COMPLETE": 0,
+   "PARTIAL": 0,
+   "GAP": 1
+  }
+ },
+ "bars_per_timeframe": {
+  "M1": 7,
+  "M5": 4,
+  "M15": 4,
+  "M30": 4,
+  "H1": 4,
+  "H4": 4,
+  "D1": 3,
+  "W1": 1,
+  "MN1": 1
+ },
+ "gaps": {
+  "n": 3,
+  "minutes": 2879,
+  "weekend": 1,
+  "daily_break": 0,
+  "other": [
+   {
+    "start_utc": "2023-02-06T00:03:00+00:00",
+    "minutes": 597,
+    "weekday": "Mon"
+   },
+   {
+    "start_utc": "2023-02-06T10:01:00+00:00",
+    "minutes": 839,
+    "weekday": "Mon"
+   }
+  ],
+  "break_start_minutes_utc": {},
+  "other_total": 2
+ },
+ "store_bytes": 960,
+ "per_day": [
+  {
+   "date": "2023-02-06",
+   "rows": 10,
+   "manifest_n_ticks": 10,
+   "count_match": true,
+   "weekday": 0,
+   "minutes": 4,
+   "non_monotonic": 0,
+   "duplicates": 0,
+   "out_of_band": 0,
+   "nonpositive": 0,
+   "skipped": 1,
+   "min_bid": 1899.5,
+   "max_bid": 1906.0
+  },
+  {
+   "date": "2023-02-07",
+   "rows": 5,
+   "manifest_n_ticks": 5,
+   "count_match": true,
+   "weekday": 1,
+   "minutes": 2,
+   "non_monotonic": 0,
+   "duplicates": 0,
+   "out_of_band": 0,
+   "nonpositive": 0,
+   "skipped": 1,
+   "min_bid": 1909.0,
+   "max_bid": 1912.0
+  },
+  {
+   "date": "2023-02-08",
+   "rows": 3,
+   "manifest_n_ticks": 3,
+   "count_match": true,
+   "weekday": 2,
+   "minutes": 1,
+   "non_monotonic": 0,
+   "duplicates": 0,
+   "out_of_band": 0,
+   "nonpositive": 0,
+   "skipped": 1,
+   "min_bid": 1919.0,
+   "max_bid": 1921.0
+  }
+ ],
+ "limitations": [
+  "UTC non verificato in modo indipendente (timestamp epoch del downloader)",
+  "calendario di mercato candidato/non verificato: le barre che attraversano le pause sono PARTIAL, i buchi non spiegati GAP",
+  "barre costruite dal solo prezzo BID; nessun ask, nessun volume",
+  "feed Dukascopy: NON equivalente al feed MT5 XM"
+ ]
+}

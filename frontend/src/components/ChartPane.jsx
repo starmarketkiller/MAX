@@ -38,6 +38,8 @@ export default function ChartPane({ paneId, index, source, symbol, tf, tfs, onTf
   const ignoreXh = useRef(0);
   const pagingRef = useRef(false);
   const pageRef = useRef(null);
+  const ctxKeyRef = useRef("");
+  const anchorRef = useRef(null);          // finestra ancorata: ultimo istante (esclusivo) del dato caricato; null = coda del dataset
   const cbs = useRef({});
   cbs.current = { onRange, onCrosshair, onLoaded };
   const [bars, setBars] = useState([]);
@@ -45,6 +47,8 @@ export default function ChartPane({ paneId, index, source, symbol, tf, tfs, onTf
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [epoch, setEpoch] = useState(0);
+  const [anchorEnd, setAnchorEnd] = useState(null);
+  anchorRef.current = anchorEnd;
 
   // ---- grafico (ricreato solo al cambio tema)
   useEffect(() => {
@@ -65,7 +69,11 @@ export default function ChartPane({ paneId, index, source, symbol, tf, tfs, onTf
       if (r && Date.now() >= ignoreRange.current && !pagingRef.current) cbs.current.onRange?.(paneId, r);
     };
     chart.timeScale().subscribeVisibleTimeRangeChange(onVisible);
-    const onXh = (p) => { if (Date.now() >= ignoreXh.current) cbs.current.onCrosshair?.(paneId, typeof p?.time === "number" ? p.time : null); };
+    const onXh = (p) => {
+      if (Date.now() < ignoreXh.current) return;
+      if (containerRef.current) containerRef.current.parentElement.dataset.xh = typeof p?.time === "number" ? JSON.stringify({ t: p.time, from: "local" }) : "";
+      cbs.current.onCrosshair?.(paneId, typeof p?.time === "number" ? p.time : null);
+    };
     chart.subscribeCrosshairMove(onXh);
     const onLogical = (r) => {                                  // paginazione all'indietro quando si scorre verso il bordo sinistro
       if (!r || r.from > 15 || !hasMoreRef.current || pagingRef.current || !nextBeforeRef.current) return;
@@ -86,8 +94,8 @@ export default function ChartPane({ paneId, index, source, symbol, tf, tfs, onTf
     return incoming.length;
   }, []);
 
-  async function fetchPage(before) {
-    const q = `/chart/ohlc?source=${encodeURIComponent(source)}&symbol=${encodeURIComponent(symbol)}&tf=${tf}&limit=${before ? PAGE : INITIAL}${before ? `&before=${before}` : ""}`;
+  async function fetchPage(before, initial = false) {
+    const q = `/chart/ohlc?source=${encodeURIComponent(source)}&symbol=${encodeURIComponent(symbol)}&tf=${tf}&limit=${before && !initial ? PAGE : INITIAL}${before ? `&before=${before}` : ""}`;
     const ctrl = new AbortController();
     ctrlRef.current = ctrl;
     const { data } = await api.get(q, { signal: ctrl.signal });
@@ -113,13 +121,19 @@ export default function ChartPane({ paneId, index, source, symbol, tf, tfs, onTf
   // ---- caricamento al cambio di contesto (fonte, simbolo, timeframe)
   useEffect(() => {
     if (!source || !symbol || !tf) return undefined;
+    const key = source + "|" + symbol;
+    if (ctxKeyRef.current !== key) {                   // un altro dataset/simbolo ha un'altra copertura: si riparte dalla coda, senza richieste con l'ancora vecchia
+      const had = ctxKeyRef.current !== "" && anchorRef.current != null;
+      ctxKeyRef.current = key;
+      if (had) { anchorRef.current = null; setAnchorEnd(null); return undefined; }
+    }
     const gen = ++genRef.current;
     if (ctrlRef.current) { try { ctrlRef.current.abort(); } catch (err) { void err; } }
     barsRef.current = []; setBars([]); setMeta(null); setError(null); setLoading(true);
     const t0 = performance.now();
     (async () => {
       try {
-        const data = await fetchPage(null);
+        const data = await fetchPage(anchorRef.current, true);
         if (gen !== genRef.current) return;
         if (data.status !== "AVAILABLE_OFFLINE" && data.status !== "AVAILABLE_LIVE") {
           setError(`Dato non disponibile: ${data.reason || data.status}. Nessun dato sintetico viene mostrato.`);
@@ -136,7 +150,7 @@ export default function ChartPane({ paneId, index, source, symbol, tf, tfs, onTf
       } finally { if (gen === genRef.current) setLoading(false); }
     })();
     return undefined;
-  }, [source, symbol, tf]);   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [source, symbol, tf, anchorEnd]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   const setRange = useCallback((r) => {
     const chart = chartRef.current, b = barsRef.current;
@@ -179,23 +193,39 @@ export default function ChartPane({ paneId, index, source, symbol, tf, tfs, onTf
       getRange: () => { try { return chartRef.current?.timeScale().getVisibleRange() || null; } catch (err) { return null; } },
       setRange: (r) => setRange(r),
       // porta la vista su [from, to]; se il dato non e' ancora caricato fin li' pagina all'indietro (guardia di partizione permettendo)
+      // Periodi lunghi: poche pagine all'indietro dalla coda; se la destinazione e' piu' lontana (o oltre la fine di una finestra ancorata) si CARICA UNA FINESTRA
+      // contigua che termina poco dopo la destinazione (parametro `before` gia' supportato dall'API): niente caricamento dell'intero storico nel browser.
       focusRange: async (r) => {
-        for (let i = 0; i < 25 && barsRef.current.length && barsRef.current[0].time > r.from && hasMoreRef.current; i += 1) { if ((await pageRef.current()) === 0) break; }
+        const reanchor = () => {
+          const end = Math.round(r.to + (r.to - r.from) * 0.3);
+          pendingRef.current = { kind: "range", range: r };
+          anchorRef.current = end;
+          setAnchorEnd(end);
+          return true;
+        };
+        const lastT = () => barsRef.current[barsRef.current.length - 1].time + step();
+        if (barsRef.current.length && anchorRef.current != null && r.to > lastT()) return reanchor();
+        for (let i = 0; i < 4 && barsRef.current.length && barsRef.current[0].time > r.from && hasMoreRef.current; i += 1) { if ((await pageRef.current()) === 0) break; }
+        if (barsRef.current.length && barsRef.current[0].time > r.from && hasMoreRef.current) return reanchor();
         if (!barsRef.current.length) { pendingRef.current = { kind: "range", range: r }; return true; }
         pendingRef.current = { kind: "keep" };
         return setRange(r);
       },
+      toTail: () => { pendingRef.current = { kind: "tail" }; anchorRef.current = null; setAnchorEnd(null); },
+      anchored: () => anchorRef.current,
       setPending: (r) => { pendingRef.current = r ? { kind: "range", range: r } : { kind: "tail" }; },
       shiftBy: (sec) => { const cur = api_.getRange(); return cur ? setRange({ from: cur.from + sec, to: cur.to + sec }) : false; },
       setCrosshairTime: (t) => {
         const chart = chartRef.current, series = seriesRef.current, b = barsRef.current;
         if (!chart || !series || !b.length) return;
         ignoreXh.current = Date.now() + 90;
+        const host = containerRef.current && containerRef.current.parentElement;
         try {
-          if (t == null || t < b[0].time || t > b[b.length - 1].time + step()) { chart.clearCrosshairPosition(); return; }
+          if (t == null || t < b[0].time || t > b[b.length - 1].time + step()) { chart.clearCrosshairPosition(); if (host) host.dataset.xh = ""; return; }
           let lo = 0, hi = b.length - 1;
           while (lo < hi) { const m = (lo + hi + 1) >> 1; if (b[m].time <= t) lo = m; else hi = m - 1; }
           chart.setCrosshairPosition(b[lo].close, b[lo].time, series);
+          if (host) host.dataset.xh = JSON.stringify({ t: b[lo].time, close: b[lo].close, from: "sync" });      // diagnostica di sola lettura: barra su cui e' stato proiettato il crosshair
         } catch (err) { void err; }
       },
       chartRef, seriesRef,
@@ -219,8 +249,9 @@ export default function ChartPane({ paneId, index, source, symbol, tf, tfs, onTf
         )}
         <label className="flex items-center gap-1"><input type="checkbox" checked={linked} data-testid={`pane-linked-${index}`} onChange={(e) => onLinked(index, e.target.checked)} />sync</label>
         <span className="text-muted-foreground font-mono truncate" data-testid={`pane-strip-${index}`}>
-          {meta ? `${symbol} ${tf} · ${n} barre · ${meta.dataset_id || source}${meta.has_more ? " · più storico" : " · inizio dataset"}` : loading ? "caricamento…" : "—"}
+          {meta ? `${symbol} ${tf} · ${n} barre · ${meta.dataset_id || source}${meta.has_more ? " · più storico" : " · inizio dataset"}${anchorEnd != null ? ` · finestra fino a ${fmtT(anchorEnd)}` : ""}` : loading ? "caricamento…" : "—"}
         </span>
+        {anchorEnd != null && <button type="button" className="rounded border border-border bg-card px-1.5 py-0.5 hover:bg-muted" data-testid={`pane-tail-${index}`} title="torna ai dati più recenti" onClick={() => registry.current[paneId]?.toTail()}>↦ coda</button>}
       </div>
       <div className="relative flex-1 min-h-0">
         <div ref={containerRef} className="absolute inset-0" data-testid={`pane-canvas-${index}`} />
