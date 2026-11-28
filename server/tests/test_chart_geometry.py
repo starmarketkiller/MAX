@@ -472,3 +472,36 @@ def test_api_export_import_roundtrip_and_tamper():
     ]
     r = run_api(steps2)
     assert r[4][0] == 200 and r[5][0] == 422 and r[5][1]["detail"]["code"] == "IMPORT_HASH_MISMATCH" and r[6][0] == 200
+
+
+# ---------------------------------------------------------------- FASE 07: contesto futuro riservato, memoria separata
+FUTURE = json.loads((SERVER / "chart_geometry_future_context_v1.json").read_text(encoding="utf-8"))
+
+
+def test_future_context_contract_is_reserved_not_implemented_and_separate():
+    assert FUTURE["status"] == "CONTRACT_ONLY_NOT_IMPLEMENTED"
+    assert FUTURE["memory_domains"]["EMPIRICAL"].startswith("eventi osservati") and cg.VOCAB["memory_domain"] == "GRAPHICAL"
+    assert FUTURE["geometric_scales"]["status"] == "NOT_DEFINED" and FUTURE["candle_projections"]["status"] == "NOT_DEFINED_BY_OWNER"
+    # nessun campo riservato e' un campo scrivibile della geometria; gli eventi hanno un proprio registro
+    reserved = set(FUTURE["rejected_geometry_fields"])
+    assert not (reserved & cg.TOP_KEYS)
+    assert set(FUTURE["contact_events"]["event_types"]) >= {"CONTACT", "PENETRATION", "BREAK", "RETEST", "ROLE_CHANGED"}
+    assert "PROJECTION_OF" in cg.VOCAB["link_relations"]                       # collegamento multiscala gia' disponibile
+
+
+@pytest.mark.parametrize("field", FUTURE["rejected_geometry_fields"])
+def test_api_rejects_future_and_operational_fields(store, sess, field):
+    with pytest.raises(cg.GeometryError) as e:
+        store.create_object("alice", sess, diag(**{field: {"x": 1}}))
+    assert e.value.code == "UNKNOWN_FIELD"
+    o = store.create_object("alice", sess, diag())
+    with pytest.raises(cg.GeometryError) as e2:
+        store.update_object("alice", sess, o["geometry_id"], {field: "x"}, 1)
+    assert e2.value.code == "UNKNOWN_FIELD"
+
+
+def test_stored_geometry_carries_the_causal_and_provenance_fields_the_future_replay_needs(store, sess):
+    o = store.create_object("alice", sess, diag())
+    for k in ("created_at", "available_at", "revision", "timeframe_origin", "dataset_id", "clock_basis", "links", "evidence", "origin", "author"):
+        assert k in o
+    assert o["anchors"][0]["ref"]["projection_id"] is None

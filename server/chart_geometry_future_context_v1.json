@@ -1,0 +1,56 @@
+{
+  "schema": "NEXUS_CHART_GEOMETRY_FUTURE_CONTEXT_V1",
+  "status": "CONTRACT_ONLY_NOT_IMPLEMENTED",
+  "purpose": "Campi e eventi RISERVATI per il futuro contesto (multiscala, multitimeframe, replay causale, eventi di contatto, interpretazione Jarvis). Nessuno di questi campi e' accettato oggi dall'API delle geometrie: la memoria grafica (annotazioni dell'utente) resta separata dalla futura memoria empirica (reazioni osservate del mercato).",
+  "memory_domains": {
+    "GRAPHICAL": "geometrie disegnate dall'utente (tabelle chart_geo_*), implementata",
+    "EMPIRICAL": "eventi osservati sul mercato rispetto a una geometria (contatti, penetrazioni, rotture, retest, cambi di ruolo), NON implementata: dominio e tabella separati, scritti solo da un motore causale, mai dall'utente via API delle geometrie"
+  },
+  "geometric_scales": {
+    "status": "NOT_DEFINED",
+    "reserved_field": "scale",
+    "values": ["SCALE_1", "SCALE_2", "SCALE_3"],
+    "note": "Le tre scale geometriche non hanno confini definiti nel repository: nessuna soglia e' imposta. Il campo e' riservato e non scrivibile finche' l'owner non definisce le scale (cfr. MULTISCALE_GEOMETRY_SPEC)."
+  },
+  "multitimeframe": {
+    "status": "SUPPORTED_BY_DATA_MODEL",
+    "rule": "Gli ancoraggi sono (t, price) in coordinate di dato e il campo timeframe_origin registra il TF di tracciamento: una geometria si proietta su qualunque timeframe senza modifica (verificato nel browser reale M15 -> H1 -> H4 -> M15).",
+    "reserved_field": "projected_scale_links",
+    "note": "I collegamenti fra una linea di scala superiore e la sua proiezione sulle barre inferiori usano `links[].relation = PROJECTION_OF` (gia' nel vocabolario)."
+  },
+  "candle_projections": {
+    "status": "NOT_DEFINED_BY_OWNER",
+    "reserved_field": "anchors[].ref.projection_id",
+    "rule": "Resta null: le sei proiezioni delle candele non sono definite. Nessuna teoria e' imposta; l'API rifiuta valori diversi da null (PROJECTION_NOT_DEFINED)."
+  },
+  "causal_replay": {
+    "status": "FIELDS_PRESENT",
+    "fields": ["created_at", "available_at"],
+    "rule": "available_at e' l'istante da cui l'oggetto e' conoscibile; in replay una geometria non deve essere visibile prima di available_at (la UI di replay non e' parte di questa consegna).",
+    "reserved_field": "replay_bar_close"
+  },
+  "contact_events": {
+    "status": "RESERVED_EMPIRICAL_DOMAIN",
+    "event_types": ["APPROACH", "CONTACT", "PENETRATION", "RECOVERY", "REACTION", "BREAK", "RETEST", "ROLE_CHANGED", "INVALIDATED"],
+    "event_record_fields": ["event_id", "geometry_id", "geometry_revision", "event_type", "bar_t", "price", "dataset_id", "timeframe", "available_at", "observed_by", "engine_version", "definition_ref"],
+    "rules": [
+      "observed_by e' sempre un motore causale (ENGINE) con engine_version e definition_ref: mai l'utente tramite l'API delle geometrie",
+      "gli eventi sono append-only e si riferiscono a (geometry_id, geometry_revision): modificare una geometria non riscrive gli eventi passati",
+      "le definizioni di 'incontro' e 'tocco' derivano dal registro TE-02R/X-REC-01; qui non se ne introducono di nuove",
+      "un evento non e' un segnale operativo"
+    ]
+  },
+  "role_change": {
+    "status": "RESERVED",
+    "rule": "Il ruolo di una zona/livello (BUY->SELL, SELL->BUY) e' storia di eventi ROLE_CHANGED nel dominio empirico; la classe semantica dell'utente (`semantic.class`) e' un'etichetta manuale e non e' modificata dagli eventi."
+  },
+  "jarvis_interpretation": {
+    "status": "RESERVED",
+    "reserved_field": "interpretation",
+    "rules": [
+      "Jarvis puo' LEGGERE geometrie ed eventi; non scrive geometrie manuali e non converte automaticamente una geometria in segnale",
+      "ogni interpretazione e' un record separato con autore JARVIS, evidenze e available_at, mai un campo della geometria"
+    ]
+  },
+  "rejected_geometry_fields": ["scale", "projected_scale_links", "replay_bar_close", "events", "interaction_history", "interpretation", "signal", "order", "side", "lots", "sl", "tp", "role", "consumption", "observed_by"]
+}
