@@ -105,3 +105,7 @@ results/sets/**/*.set
 *.swo
 .DS_Store
 Thumbs.db
+
+# cartelle temporanee di lavoro (pytest basetemp e scratch di sessione)
+server/.scratch_pt*/
+.scratch/
