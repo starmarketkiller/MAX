@@ -7497,6 +7497,78 @@ async def chart_geo_import(request: Request, user: str = Depends(require_mutatio
     return _geo_call(_geo_store().import_session, user, b, name=name)
 
 
+# ---- CHART-MULTISCALE-DISCOVERY-01: Reverse Discovery Lab V1 (solo RETROSPECTIVE_DISCOVERY, selezione manuale) ----
+# Le schede sono DISCOVERY_ONLY: nessun segnale, nessun replay causale, nessuna validazione, nessun accesso a dati oltre la guardia di partizione.
+def _disc_store():
+    import chart_discovery
+    return chart_discovery.DiscoveryStore(_geo_store())
+
+
+@app.get("/api/chart/discovery/vocabulary")
+def chart_disc_vocabulary(user: str = Depends(require_user)):
+    import chart_discovery as d
+    return {"modes_implemented": ["RETROSPECTIVE_DISCOVERY"], "modes_contract_only": ["CAUSAL_REPLAY", "EMPIRICAL_VALIDATION"],
+            "pivot_kinds": d.PIVOT_KINDS, "outcomes": d.OUTCOMES, "geometry_timing": d.GEOM_TIMING, "structure_kinds": d.STRUCT_KINDS,
+            "scales": d.SCALES, "hypothesis_status": d.HYP_STATUS, "analog_kinds": d.ANALOG_KINDS, "classifications": d.CLASSIFICATIONS,
+            "default_units_xauusd": {"pip_size": 0.10, "point": None, "tick_size": None}}
+
+
+@app.get("/api/chart/discovery/sessions/{sid}/research")
+def chart_disc_research_get(sid: str, user: str = Depends(require_user)):
+    return _geo_call(_disc_store().get_research, user, sid)
+
+
+@app.put("/api/chart/discovery/sessions/{sid}/research")
+async def chart_disc_research_put(sid: str, request: Request, user: str = Depends(require_mutation)):
+    return _geo_call(_disc_store().put_research, user, sid, await _geo_json(request))
+
+
+@app.get("/api/chart/discovery/sessions/{sid}/events")
+def chart_disc_events(sid: str, include_archived: bool = False, user: str = Depends(require_user)):
+    return {"events": _geo_call(_disc_store().list_events, user, sid, include_archived)}
+
+
+@app.post("/api/chart/discovery/sessions/{sid}/events")
+async def chart_disc_event_create(sid: str, request: Request, user: str = Depends(require_mutation)):
+    return _geo_call(_disc_store().create_event, user, sid, await _geo_json(request))
+
+
+@app.get("/api/chart/discovery/sessions/{sid}/events/{eid}")
+def chart_disc_event_get(sid: str, eid: str, history: bool = False, user: str = Depends(require_user)):
+    st = _disc_store()
+    return {"revisions": _geo_call(st.history, user, sid, eid)} if history else _geo_call(st.get_event, user, sid, eid)
+
+
+@app.put("/api/chart/discovery/sessions/{sid}/events/{eid}")
+async def chart_disc_event_update(sid: str, eid: str, request: Request, user: str = Depends(require_mutation)):
+    b = await _geo_json(request)
+    rev = b.pop("expected_revision", None)
+    if isinstance(rev, bool) or not isinstance(rev, int):
+        raise HTTPException(422, detail={"code": "EXPECTED_REVISION_REQUIRED"})
+    return _geo_call(_disc_store().update_event, user, sid, eid, b, rev)
+
+
+@app.post("/api/chart/discovery/sessions/{sid}/events/{eid}/{action}")
+async def chart_disc_event_action(sid: str, eid: str, action: str, request: Request, user: str = Depends(require_mutation)):
+    if action not in ("archive", "restore"):
+        raise HTTPException(404, detail={"code": "UNKNOWN_ACTION"})
+    b = await _geo_json(request)
+    rev = b.get("expected_revision")
+    if isinstance(rev, bool) or not isinstance(rev, int):
+        raise HTTPException(422, detail={"code": "EXPECTED_REVISION_REQUIRED"})
+    return _geo_call(_disc_store().set_status, user, sid, eid, rev, "ARCHIVED" if action == "archive" else "ACTIVE")
+
+
+@app.get("/api/chart/discovery/sessions/{sid}/compare")
+def chart_disc_compare(sid: str, ids: str, user: str = Depends(require_user)):
+    import chart_discovery as d
+    wanted = [i for i in ids.split(",") if i][:4]
+    if len(wanted) < 2:
+        raise HTTPException(422, detail={"code": "AT_LEAST_TWO_EVENTS"})
+    st = _disc_store()
+    return d.comparison([_geo_call(st.get_event, user, sid, i) for i in wanted])
+
+
 # ---- backtest extra ----
 @app.get("/api/backtest/presets")
 def backtest_presets(user: str = Depends(require_user)):

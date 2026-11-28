@@ -526,7 +526,7 @@ def test_rdl_three_modes_are_strictly_separated():
 def test_rdl_levels_do_not_promote_each_other_and_cover_the_twelve_capabilities():
     assert set(RDL["epistemic_levels"]) == {"GEOMETRIC_ASSOCIATION", "CAUSAL_EXPLANATION_CANDIDATE", "PREDICTIVE_EDGE_VALIDATED"}
     assert "EMPIRICAL_VALIDATION" in RDL["modes"] and "11_analog_no_reversal_cases" in RDL["capabilities"]
-    assert len(RDL["capabilities"]) == 12 and RDL["status"] == "CONTRACT_ONLY_NOT_IMPLEMENTED"
+    assert len(RDL["capabilities"]) == 12 and RDL["status"].startswith("RETROSPECTIVE_DISCOVERY_V1_IMPLEMENTED") and "CONTRACT_ONLY" in RDL["status"]
     assert RDL["capabilities"]["7_manual_explanations"]["level_default"] == "CAUSAL_EXPLANATION_CANDIDATE"
     assert any("holdout" in x for x in RDL["invariants"])
 

@@ -257,6 +257,19 @@ class GeometryStore:
         self.db_path = str(db_path)
         with self._c() as c:
             c.executescript(_SCHEMA_SQL)
+            self._migrate(c)
+        from chart_discovery import DiscoveryStore          # crea le tabelle delle schede evento (stesso database)
+        DiscoveryStore(self)
+
+    @staticmethod
+    def _migrate(c: sqlite3.Connection) -> None:
+        """Migrazione additiva e idempotente: nessun dato esistente viene riscritto."""
+        def cols(t):
+            return {r[1] for r in c.execute(f"PRAGMA table_info({t})")}
+        if "imported_by" not in cols("chart_geo_revisions"):
+            c.execute("ALTER TABLE chart_geo_revisions ADD COLUMN imported_by TEXT")
+        if "epistemic_mode" not in cols("chart_geo_sessions"):
+            c.execute("ALTER TABLE chart_geo_sessions ADD COLUMN epistemic_mode TEXT NOT NULL DEFAULT 'RETROSPECTIVE_DISCOVERY'")
 
     def _c(self) -> sqlite3.Connection:
         c = sqlite3.connect(self.db_path, timeout=15)
@@ -280,7 +293,7 @@ class GeometryStore:
                 raise GeometryError("LIMIT_REACHED", "numero massimo di sessioni raggiunto", 409)
             ts = self._now()
             try:
-                c.execute("INSERT INTO chart_geo_sessions VALUES(?,?,?,?,?,?)", (owner, sid, name, symbol.upper()[:32], ts, ts))
+                c.execute("INSERT INTO chart_geo_sessions(owner,session_id,name,symbol,created_at,updated_at) VALUES(?,?,?,?,?,?)", (owner, sid, name, symbol.upper()[:32], ts, ts))
             except sqlite3.IntegrityError:
                 raise GeometryError("SESSION_EXISTS", "sessione gia' esistente", 409)
             c.execute("INSERT INTO chart_geo_layers VALUES(?,?,?,?,1,0,0)", (owner, sid, "default", "Livello 1"))
@@ -305,6 +318,9 @@ class GeometryStore:
         d = dict(r)
         d.pop("owner")
         return d
+
+    def session_mode(self, owner: str, sid: str) -> str:
+        return self.get_session_meta(owner, sid)["epistemic_mode"]
 
     def rename_session(self, owner: str, sid: str, name: str) -> Dict[str, Any]:
         self.get_session_meta(owner, sid)
@@ -361,11 +377,14 @@ class GeometryStore:
 
     # ---- geometrie ----
     @staticmethod
-    def _row_to_obj(r: sqlite3.Row, sid: str, gid: str) -> Dict[str, Any]:
+    def _row_to_obj(r: sqlite3.Row, sid: str, gid: str, mode: str = "RETROSPECTIVE_DISCOVERY") -> Dict[str, Any]:
         body = json.loads(r["body"])
+        imported_by = r["imported_by"]
+        # `author` e' l'autore DICHIARATO: se l'oggetto e' stato importato non e' autenticato (l'hash prova l'integrita', non l'autore)
         return {"schema": GEOMETRY_SCHEMA, "geometry_id": gid, "session_id": sid, "revision": r["revision"],
                 "created_at": r["created_at"], "available_at": r["available_at"], "origin": r["origin"],
-                "author": r["author"], "memory_domain": "GRAPHICAL", **body}
+                "author": r["author"], "imported_by": imported_by, "author_verified": imported_by is None,
+                "epistemic_mode": mode, "memory_domain": "GRAPHICAL", **body}
 
     def _latest(self, c: sqlite3.Connection, owner: str, sid: str, gid: str) -> Optional[sqlite3.Row]:
         return c.execute("SELECT * FROM chart_geo_revisions WHERE owner=? AND session_id=? AND geometry_id=? "
@@ -376,9 +395,10 @@ class GeometryStore:
         with self._c() as c:
             ids = [r[0] for r in c.execute("SELECT DISTINCT geometry_id FROM chart_geo_revisions WHERE owner=? AND session_id=? "
                                            "ORDER BY geometry_id", (owner, sid))]
+            mode = self.session_mode(owner, sid)
             out = []
             for gid in ids:
-                o = self._row_to_obj(self._latest(c, owner, sid, gid), sid, gid)
+                o = self._row_to_obj(self._latest(c, owner, sid, gid), sid, gid, mode)
                 if include_archived or o["status"] != "ARCHIVED":
                     out.append(o)
         return sorted(out, key=lambda o: (o["created_at"], o["geometry_id"]))
@@ -389,7 +409,7 @@ class GeometryStore:
             r = self._latest(c, owner, sid, gid)
         if not r:
             raise GeometryError("GEOMETRY_NOT_FOUND", "geometria inesistente", 404)
-        return self._row_to_obj(r, sid, gid)
+        return self._row_to_obj(r, sid, gid, self.session_mode(owner, sid))
 
     def history(self, owner: str, sid: str, gid: str) -> List[Dict[str, Any]]:
         self.get_session_meta(owner, sid)
@@ -398,13 +418,15 @@ class GeometryStore:
                              (owner, sid, gid)).fetchall()
         if not rows:
             raise GeometryError("GEOMETRY_NOT_FOUND", "geometria inesistente", 404)
-        return [self._row_to_obj(r, sid, gid) for r in rows]
+        mode = self.session_mode(owner, sid)
+        return [self._row_to_obj(r, sid, gid, mode) for r in rows]
 
     def _insert(self, c: sqlite3.Connection, owner: str, sid: str, gid: str, rev: int, body: Dict[str, Any],
-                created_at: float, available_at: float, origin: str, author: str) -> None:
+                created_at: float, available_at: float, origin: str, author: str, imported_by: Optional[str] = None) -> None:
         try:
-            c.execute("INSERT INTO chart_geo_revisions VALUES(?,?,?,?,?,?,?,?,?)",
-                      (owner, sid, gid, rev, created_at, available_at, origin, author, canonical(body)))
+            c.execute("INSERT INTO chart_geo_revisions(owner,session_id,geometry_id,revision,created_at,available_at,origin,author,body,imported_by) "
+                      "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                      (owner, sid, gid, rev, created_at, available_at, origin, author, canonical(body), imported_by))
         except sqlite3.IntegrityError:
             raise GeometryError("REVISION_CONFLICT", "revisione gia' esistente (modifica concorrente)", 409)
         c.execute("UPDATE chart_geo_sessions SET updated_at=? WHERE owner=? AND session_id=?", (self._now(), owner, sid))
@@ -427,12 +449,13 @@ class GeometryStore:
             if len(self.list_objects(owner, sid, include_archived=True)) >= MAX_GEOMETRIES_PER_SESSION:
                 raise GeometryError("LIMIT_REACHED", "numero massimo di geometrie nella sessione", 409)
             ts = self._now()
-            created, avail, author = ts, ts, owner          # autore = utente autenticato, mai dal client
-            if preserve:                                    # solo import verificato da hash: conserva la provenienza originale
+            created, avail, author, imp = ts, ts, owner, None   # autore = utente autenticato, mai dal client
+            if preserve:                                    # import: l'autore del file e' solo DICHIARATO; l'importatore effettivo e' registrato a parte
                 created = _num(preserve["created_at"], "created_at")
                 avail = _num(preserve["available_at"], "available_at")
                 author = _str(preserve["author"], "author", 80, allow_empty=False)
-            self._insert(c, owner, sid, gid, 1, clean, created, avail, "MANUAL", author)
+                imp = owner
+            self._insert(c, owner, sid, gid, 1, clean, created, avail, "MANUAL", author, imp)
         return self.get_object(owner, sid, gid)
 
     def update_object(self, owner: str, sid: str, gid: str, patch: Dict[str, Any], expected_revision: int) -> Dict[str, Any]:
@@ -460,7 +483,7 @@ class GeometryStore:
         clean = validate_body(body, existing=existing)
         self._ensure_layer(owner, sid, clean["style"]["layer"])
         with self._c() as c:
-            self._insert(c, owner, sid, gid, cur["revision"] + 1, clean, cur["created_at"], cur["available_at"], cur["origin"], cur["author"])
+            self._insert(c, owner, sid, gid, cur["revision"] + 1, clean, cur["created_at"], cur["available_at"], cur["origin"], cur["author"], cur.get("imported_by"))
         return self.get_object(owner, sid, gid)
 
     def archive_object(self, owner: str, sid: str, gid: str, expected_revision: int) -> Dict[str, Any]:
@@ -478,7 +501,7 @@ class GeometryStore:
         body = {k: cur[k] for k in TOP_KEYS if k in cur}
         body["status"] = status
         with self._c() as c:
-            self._insert(c, owner, sid, gid, cur["revision"] + 1, validate_body(body), cur["created_at"], cur["available_at"], cur["origin"], cur["author"])
+            self._insert(c, owner, sid, gid, cur["revision"] + 1, validate_body(body), cur["created_at"], cur["available_at"], cur["origin"], cur["author"], cur.get("imported_by"))
         return self.get_object(owner, sid, gid)
 
     # ---- esportazione / importazione ----
@@ -487,6 +510,8 @@ class GeometryStore:
         payload = {"schema": SCHEMA, "session": {"session_id": sid, "name": meta["name"], "symbol": meta["symbol"], "created_at": meta["created_at"]},
                    "layers": self.list_layers(owner, sid),
                    "geometries": self.list_objects(owner, sid, include_archived=True)}
+        from chart_discovery import DiscoveryStore          # eventi e stato della ricerca viaggiano nello stesso documento con sha256
+        payload.update(DiscoveryStore(self).export_part(owner, sid))
         return {**payload, "sha256": sha256_of(payload)}
 
     def import_session(self, owner: str, doc: Any, *, name: Optional[str] = None) -> Dict[str, Any]:
@@ -495,7 +520,7 @@ class GeometryStore:
         payload = {k: v for k, v in doc.items() if k != "sha256"}
         if sha256_of(payload) != doc["sha256"]:
             raise GeometryError("IMPORT_HASH_MISMATCH", "hash non coincidente: file modificato o corrotto")
-        if set(payload) - {"schema", "session", "layers", "geometries"}:
+        if set(payload) - {"schema", "session", "layers", "geometries", "events", "research"}:
             raise GeometryError("INVALID_IMPORT", "campi non ammessi nel documento")
         geoms = payload.get("geometries")
         if not isinstance(geoms, list) or len(geoms) > MAX_GEOMETRIES_PER_SESSION:
@@ -516,9 +541,11 @@ class GeometryStore:
                                              preserve={k: g.get(k) for k in ("created_at", "available_at", "author")})
                 if status == "ARCHIVED":
                     self.archive_object(owner, sid, created["geometry_id"], created["revision"])
+            from chart_discovery import DiscoveryStore
+            DiscoveryStore(self).import_part(owner, sid, payload.get("events"), payload.get("research"))
         except GeometryError:
             with self._c() as c:                           # import atomico: in caso di errore nulla resta
-                for t in ("chart_geo_revisions", "chart_geo_layers", "chart_geo_sessions"):
+                for t in ("chart_disc_events", "chart_disc_research", "chart_geo_revisions", "chart_geo_layers", "chart_geo_sessions"):
                     c.execute(f"DELETE FROM {t} WHERE owner=? AND session_id=?", (owner, sid))
             raise
         return self.get_session_meta(owner, sid)
