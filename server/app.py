@@ -7385,6 +7385,118 @@ def chart_markers(symbol: str = "XAUUSD", user: str = Depends(require_user)):
             "demo": len(markers) == 0}
 
 
+# ---- CHART-GEOMETRY-01: strumenti geometrici manuali + memoria grafica persistente (per utente) ----
+# Le geometrie sono annotazioni dell'utente in coordinate prezzo/tempo. NON sono segnali, non creano ordini
+# e non toccano ne' i dati OHLC ne' la guardia di partizione (percorso separato dalla lettura dei dati).
+_GEO_STORE = None
+
+
+def _geo_store():
+    global _GEO_STORE
+    import chart_geometry
+    if _GEO_STORE is None or _GEO_STORE.db_path != DB_PATH:
+        _GEO_STORE = chart_geometry.GeometryStore(DB_PATH)
+    return _GEO_STORE
+
+
+def _geo_call(fn, *a, **kw):
+    import chart_geometry
+    try:
+        return fn(*a, **kw)
+    except chart_geometry.GeometryError as e:
+        raise HTTPException(status_code=e.status, detail={"code": e.code, "message": e.message})
+
+
+async def _geo_json(request: Request) -> dict:
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(400, detail={"code": "INVALID_JSON"})
+    if not isinstance(body, dict):
+        raise HTTPException(400, detail={"code": "INVALID_JSON", "message": "atteso un oggetto"})
+    return body
+
+
+@app.get("/api/chart/geometry/vocabulary")
+def chart_geo_vocabulary(user: str = Depends(require_user)):
+    import chart_geometry
+    return chart_geometry.VOCAB
+
+
+@app.get("/api/chart/geometry/sessions")
+def chart_geo_sessions(user: str = Depends(require_user)):
+    return {"sessions": _geo_call(_geo_store().list_sessions, user)}
+
+
+@app.post("/api/chart/geometry/sessions")
+async def chart_geo_session_create(request: Request, user: str = Depends(require_mutation)):
+    b = await _geo_json(request)
+    return _geo_call(_geo_store().create_session, user, b.get("name", ""), str(b.get("symbol", "")))
+
+
+@app.get("/api/chart/geometry/sessions/{sid}")
+def chart_geo_session_get(sid: str, include_archived: bool = False, user: str = Depends(require_user)):
+    st = _geo_store()
+    meta = _geo_call(st.get_session_meta, user, sid)
+    return {"session": meta, "layers": _geo_call(st.list_layers, user, sid),
+            "geometries": _geo_call(st.list_objects, user, sid, include_archived)}
+
+
+@app.put("/api/chart/geometry/sessions/{sid}")
+async def chart_geo_session_rename(sid: str, request: Request, user: str = Depends(require_mutation)):
+    b = await _geo_json(request)
+    return _geo_call(_geo_store().rename_session, user, sid, b.get("name", ""))
+
+
+@app.post("/api/chart/geometry/sessions/{sid}/objects")
+async def chart_geo_object_create(sid: str, request: Request, user: str = Depends(require_mutation)):
+    return _geo_call(_geo_store().create_object, user, sid, await _geo_json(request))
+
+
+@app.get("/api/chart/geometry/sessions/{sid}/objects/{gid}")
+def chart_geo_object_get(sid: str, gid: str, history: bool = False, user: str = Depends(require_user)):
+    st = _geo_store()
+    return {"revisions": _geo_call(st.history, user, sid, gid)} if history else _geo_call(st.get_object, user, sid, gid)
+
+
+@app.put("/api/chart/geometry/sessions/{sid}/objects/{gid}")
+async def chart_geo_object_update(sid: str, gid: str, request: Request, user: str = Depends(require_mutation)):
+    b = await _geo_json(request)
+    rev = b.pop("expected_revision", None)
+    if isinstance(rev, bool) or not isinstance(rev, int):
+        raise HTTPException(422, detail={"code": "EXPECTED_REVISION_REQUIRED"})
+    return _geo_call(_geo_store().update_object, user, sid, gid, b, rev)
+
+
+@app.post("/api/chart/geometry/sessions/{sid}/objects/{gid}/{action}")
+async def chart_geo_object_action(sid: str, gid: str, action: str, request: Request, user: str = Depends(require_mutation)):
+    if action not in ("archive", "restore"):
+        raise HTTPException(404, detail={"code": "UNKNOWN_ACTION"})
+    b = await _geo_json(request)
+    rev = b.get("expected_revision")
+    if isinstance(rev, bool) or not isinstance(rev, int):
+        raise HTTPException(422, detail={"code": "EXPECTED_REVISION_REQUIRED"})
+    st = _geo_store()
+    return _geo_call(st.archive_object if action == "archive" else st.restore_object, user, sid, gid, rev)
+
+
+@app.put("/api/chart/geometry/sessions/{sid}/layers/{lid}")
+async def chart_geo_layer_put(sid: str, lid: str, request: Request, user: str = Depends(require_mutation)):
+    return {"layers": _geo_call(_geo_store().upsert_layer, user, sid, lid, await _geo_json(request))}
+
+
+@app.get("/api/chart/geometry/sessions/{sid}/export")
+def chart_geo_export(sid: str, user: str = Depends(require_user)):
+    return _geo_call(_geo_store().export_session, user, sid)
+
+
+@app.post("/api/chart/geometry/import")
+async def chart_geo_import(request: Request, user: str = Depends(require_mutation)):
+    b = await _geo_json(request)
+    name = b.pop("_import_name", None)       # nome opzionale della nuova sessione; non fa parte dell'hash
+    return _geo_call(_geo_store().import_session, user, b, name=name)
+
+
 # ---- backtest extra ----
 @app.get("/api/backtest/presets")
 def backtest_presets(user: str = Depends(require_user)):

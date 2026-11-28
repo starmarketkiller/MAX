@@ -1,0 +1,47 @@
+{
+  "schema": "NEXUS_CHART_GEOMETRY_VOCABULARY_V1",
+  "types": {
+    "hline":          {"anchors": 1, "needs": ["price"], "label": "Linea orizzontale"},
+    "vline":          {"anchors": 1, "needs": ["time"],  "label": "Linea verticale"},
+    "trendline":      {"anchors": 2, "needs": ["time", "price"], "label": "Diagonale"},
+    "ray":            {"anchors": 2, "needs": ["time", "price"], "label": "Ray (proiezione a destra)"},
+    "extended_line":  {"anchors": 2, "needs": ["time", "price"], "label": "Linea estesa (due direzioni)"},
+    "rectangle":      {"anchors": 2, "needs": ["time", "price"], "label": "Rettangolo"},
+    "price_band":     {"anchors": 2, "needs": ["price"], "label": "Fascia di prezzo"},
+    "text":           {"anchors": 1, "needs": ["time", "price"], "label": "Annotazione"},
+    "fib_retracement":{"anchors": 2, "needs": ["time", "price"], "label": "Fibonacci retracement"},
+    "fib_extension":  {"anchors": 3, "needs": ["time", "price"], "label": "Fibonacci extension"},
+    "ruler":          {"anchors": 2, "needs": ["time", "price"], "label": "Righello prezzo/tempo"}
+  },
+  "anchor_fields": ["open", "high", "low", "close"],
+  "anchor_ref_kinds": ["FREE", "CANDLE"],
+  "semantic_classes": {
+    "NONE":                 {"label": "Nessun significato attribuito", "shape_hint": null},
+    "DIAG_BUY":             {"label": "Diagonale BUY",                      "shape_hint": "trendline"},
+    "DIAG_SELL":            {"label": "Diagonale SELL",                     "shape_hint": "trendline"},
+    "KEY_LEVEL_CLOSES":     {"label": "Key level da chiusure congruenti",   "shape_hint": "hline"},
+    "LIQUIDITY_SPIKES":     {"label": "Livello di liquidita' da spike congruenti", "shape_hint": "hline"},
+    "ZONE_BUY_TO_SELL":     {"label": "Zona BUY TO SELL",                   "shape_hint": "rectangle"},
+    "ZONE_SELL_TO_BUY":     {"label": "Zona SELL TO BUY",                   "shape_hint": "rectangle"},
+    "INNER_SPACE":          {"label": "Spazio interno tra impulsi",         "shape_hint": "rectangle"},
+    "REACTION_ZONE":        {"label": "Zona di possibile reazione",         "shape_hint": "rectangle"},
+    "CONTINUATION_ZONE":    {"label": "Zona di possibile continuazione",    "shape_hint": "rectangle"}
+  },
+  "semantic_set_by": ["USER"],
+  "statuses": ["ACTIVE", "INVALIDATED", "ARCHIVED"],
+  "origins_accepted_by_api": ["MANUAL"],
+  "origins_reserved": ["ENGINE"],
+  "dashes": ["solid", "dashed", "dotted"],
+  "memory_domain": "GRAPHICAL",
+  "link_relations": ["RELATED", "DERIVED_FROM", "PAIRED_WITH", "SUPERSEDES", "PROJECTION_OF"],
+  "fib_defaults": {
+    "fib_retracement": [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1],
+    "fib_extension": [0, 0.618, 1, 1.272, 1.618]
+  },
+  "notes": {
+    "anchors": "Ogni ancoraggio e' (t, price) in coordinate di dato (t = epoch secondi sul clock del dataset). I pixel non sono mai la fonte canonica.",
+    "projections": "Le sei proiezioni delle candele NON sono definite: `ref.projection_id` e' riservato e deve restare null finche' l'owner non le definisce. `ref.field` ammette solo open/high/low/close.",
+    "semantics": "La classe semantica (`semantic.class`) e' il SIGNIFICATO attribuito dall'utente, distinto dalla forma (`type`). Non e' un segnale operativo e non genera ordini.",
+    "fib": "I livelli Fibonacci sono parametri dell'utente, non rapporti NEXUS."
+  }
+}
